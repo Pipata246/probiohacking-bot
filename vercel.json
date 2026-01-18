@@ -1,15 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "mini-app/**",
-      "use": "@vercel/static"
-    }
-  ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/mini-app/$1"
+      "dest": "/public/$1"
     }
   ]
 }

@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "PROBIOHACKING Telegram Bot",
   "scripts": {
-    "bot": "node bot/index.js",
     "start": "node bot/index.js"
   },
   "dependencies": {
