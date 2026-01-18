@@ -52,7 +52,7 @@ function showMainApp() {
   mainApp.style.display = 'block';
   knowledgeBase.classList.remove('active');
   chatOverlay.classList.remove('active');
-  document.body.classList.remove('chat-active'); // Разблокируем скролл body
+  document.body.classList.remove('chat-overlay-visible'); // Разблокируем скролл body
   isChatModeActive = false; // Выходим из режима чата
   
   // Устанавливаем активную кнопку "Главная" во всех навигациях
@@ -69,7 +69,8 @@ function showKnowledgeBase() {
   mainApp.style.display = 'none';
   knowledgeBase.classList.add('active');
   chatOverlay.classList.remove('active');
-  // НЕ меняем isChatModeActive - остаемся в режиме чата если были в нем
+  // ВСЕГДА разблокируем скролл в базе знаний, независимо от режима чата
+  document.body.classList.remove('chat-overlay-visible');
   
   // Устанавливаем активную кнопку "База знаний" во всех навигациях
   document.querySelectorAll('.nav-item').forEach((item, index) => {
@@ -83,7 +84,7 @@ function showKnowledgeBase() {
 
 function showChat() {
   chatOverlay.classList.add('active');
-  document.body.classList.add('chat-active'); // Блокируем скролл body
+  document.body.classList.add('chat-overlay-visible'); // Блокируем скролл body только когда чат видим
   // НЕ скрываем mainApp, так как чат теперь независимый оверлей
   isChatModeActive = true; // Входим в режим чата
   
@@ -98,7 +99,7 @@ function showChat() {
 
 function hideChat() {
   chatOverlay.classList.remove('active');
-  document.body.classList.remove('chat-active'); // Разблокируем скролл body
+  document.body.classList.remove('chat-overlay-visible'); // Разблокируем скролл body
   isChatModeActive = false; // Выходим из режима чата
 }
 
@@ -107,7 +108,7 @@ function returnToChatFromOtherPage() {
   mainApp.style.display = 'none';
   knowledgeBase.classList.remove('active');
   chatOverlay.classList.add('active');
-  document.body.classList.add('chat-active'); // Блокируем скролл body
+  document.body.classList.add('chat-overlay-visible'); // Блокируем скролл body только когда чат видим
   
   // Главная остается активной
   document.querySelectorAll('.nav-item').forEach((item, index) => {
@@ -185,15 +186,26 @@ document.addEventListener('click', (e) => {
     }
   }
   
-  // Обработка кнопок меню (3 полоски)
-  if (e.target.closest('.menu-btn')) {
+  // Обработка кнопок меню (3 полоски) - только для главной и других страниц
+  if (e.target.closest('.menu-btn') || e.target.closest('#menuBtn')) {
+    // Проверяем что мы НЕ в чате
+    if (chatOverlay.classList.contains('active')) {
+      return; // В чате кнопка меню не работает
+    }
+    
     e.preventDefault();
     e.stopPropagation();
+    
+    console.log('Menu button clicked'); // Для отладки
+    
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     if (sidebar && sidebarOverlay) {
       sidebar.classList.add('active');
       sidebarOverlay.classList.add('active');
+      console.log('Sidebar opened'); // Для отладки
+    } else {
+      console.log('Sidebar elements not found'); // Для отладки
     }
     // НЕ переключаем страницы - остаемся там где есть
     return;
@@ -248,6 +260,9 @@ document.addEventListener('click', (e) => {
       showKnowledgeBase();
     } else {
       // Другие страницы в разработке
+      // ВСЕГДА разблокируем скролл для других страниц
+      document.body.classList.remove('chat-overlay-visible');
+      
       if (isChatModeActive) {
         // В режиме чата показываем алерт, но остаемся в режиме чата
         tg.showAlert(`${pages[buttonIndex]}\n\nСтраница в разработке`);
@@ -272,6 +287,11 @@ document.addEventListener('click', (e) => {
   
   // Обработка кнопки поиска
   if (e.target.closest('.search-btn')) {
+    // Проверяем, не активен ли чат
+    if (chatOverlay.classList.contains('active')) {
+      return; // Не обрабатываем если чат активен
+    }
+    
     const searchInput = document.querySelector('.search-input');
     const query = searchInput.value.trim();
     if (query) {
@@ -433,6 +453,11 @@ handleScroll();
 // Обработчик Enter в поле поиска и чата
 document.addEventListener('keypress', (e) => {
   if (e.target.closest('.search-input') && e.key === 'Enter') {
+    // Проверяем, не активен ли чат
+    if (chatOverlay.classList.contains('active')) {
+      return; // Не обрабатываем если чат активен
+    }
+    
     const searchInput = e.target;
     const query = searchInput.value.trim();
     if (query) {
@@ -458,3 +483,27 @@ document.addEventListener('keypress', (e) => {
 });
 
 console.log('Mini App загружен');
+
+// Дополнительный обработчик для кнопок меню (только для главной страницы)
+document.addEventListener('DOMContentLoaded', () => {
+  const menuButtons = document.querySelectorAll('.menu-btn, #menuBtn');
+  menuButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // Проверяем что мы НЕ в чате
+      if (chatOverlay.classList.contains('active')) {
+        return; // В чате кнопка меню не работает
+      }
+      
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Direct menu button handler triggered');
+      
+      const sidebar = document.getElementById('sidebar');
+      const sidebarOverlay = document.getElementById('sidebarOverlay');
+      if (sidebar && sidebarOverlay) {
+        sidebar.classList.add('active');
+        sidebarOverlay.classList.add('active');
+      }
+    });
+  });
+});
