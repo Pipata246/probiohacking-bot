@@ -15,7 +15,7 @@ npm install
 Создайте файл `.env`:
 ```env
 BOT_TOKEN=8313677702:AAFtaix5kgylEZ6sm9VF1nFkdR0ob9f3AMM
-MINI_APP_URL=https://your-mini-app.vercel.app
+MINI_APP_URL=https://probiohacking-bot.vercel.app
 WEBHOOK_URL=https://your-bot-server.com
 PORT=3000
 ```
