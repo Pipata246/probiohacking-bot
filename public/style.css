@@ -36,6 +36,11 @@ body {
   padding: 20px 24px;
 }
 
+/* Хедер в базе знаний без кнопки меню */
+.knowledge-base .header {
+  justify-content: flex-end;
+}
+
 .menu-btn {
   background: none;
   border: none;
@@ -522,4 +527,125 @@ body {
 
 .app.show {
   opacity: 1;
+}
+
+/* База знаний */
+.knowledge-base {
+  display: none;
+  max-width: 100vw;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: 5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.knowledge-base.active {
+  display: block;
+}
+
+.knowledge-header {
+  padding: 0 24px 32px;
+}
+
+.knowledge-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #F5F1E8;
+  line-height: 1.2;
+}
+
+.knowledge-subtitle {
+  font-size: 20px;
+  color: #F5F1E8;
+  opacity: 0.8;
+}
+
+.knowledge-sections {
+  padding: 0 24px;
+}
+
+.knowledge-section {
+  background: #F5F1E8;
+  border-radius: 24px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  padding: 20px 24px;
+  cursor: pointer;
+  gap: 16px;
+}
+
+.section-icon {
+  width: 48px;
+  height: 48px;
+  background: #E5E7EB;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-title {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  color: #3B4F6B;
+  line-height: 1.3;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.expand-btn:hover {
+  background: #E5E7EB;
+}
+
+.section-content {
+  padding: 0 24px 24px;
+  display: none;
+}
+
+.knowledge-section.expanded .section-content {
+  display: block;
+}
+
+.knowledge-section.expanded .expand-btn svg {
+  transform: rotate(45deg);
+}
+
+.section-description {
+  font-size: 15px;
+  color: #8B8B8B;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.subsection {
+  font-size: 15px;
+  color: #8B8B8B;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  padding-left: 16px;
+  position: relative;
+}
+
+.subsection:before {
+  content: "-";
+  position: absolute;
+  left: 0;
+  color: #8B8B8B;
 }
