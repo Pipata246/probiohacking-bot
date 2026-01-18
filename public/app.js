@@ -6,9 +6,48 @@ tg.ready();
 // Получение данных пользователя
 const user = tg.initDataUnsafe?.user;
 const userName = user?.first_name || 'Александр';
+const userFullName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Иван Иванов';
 
 // Обновление имени пользователя
 document.querySelector('.welcome-name').textContent = userName;
+document.getElementById('sidebarUsername').textContent = userFullName;
+
+// Функция обновления аватарки
+function updateAvatar(element, user, userName) {
+  if (user?.photo_url) {
+    element.style.backgroundImage = `url(${user.photo_url})`;
+    element.style.backgroundSize = 'cover';
+    element.style.backgroundPosition = 'center';
+    element.textContent = '';
+  } else {
+    const initials = userName.charAt(0).toUpperCase();
+    element.textContent = initials;
+  }
+}
+
+// Обновление аватарок
+updateAvatar(document.getElementById('avatar'), user, userName);
+updateAvatar(document.getElementById('sidebarAvatar'), user, userName);
+
+// Боковое меню
+const menuBtn = document.getElementById('menuBtn');
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const sidebarClose = document.getElementById('sidebarClose');
+
+function openSidebar() {
+  sidebar.classList.add('active');
+  sidebarOverlay.classList.add('active');
+}
+
+function closeSidebar() {
+  sidebar.classList.remove('active');
+  sidebarOverlay.classList.remove('active');
+}
+
+menuBtn.addEventListener('click', openSidebar);
+sidebarClose.addEventListener('click', closeSidebar);
+sidebarOverlay.addEventListener('click', closeSidebar);
 
 // Обработчики событий
 document.querySelector('.search-btn').addEventListener('click', () => {

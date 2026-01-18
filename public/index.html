@@ -9,14 +9,60 @@
 </head>
 <body>
     <div class="app">
+        <!-- Боковое меню -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Прошлые запросы</h2>
+                <button class="sidebar-close" id="sidebarClose">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Вчера -->
+                <div class="history-section">
+                    <h3 class="history-period">Вчера</h3>
+                    <div class="history-item">Комплексная диагностика поможе...</div>
+                </div>
+
+                <!-- Прошлая неделя -->
+                <div class="history-section">
+                    <h3 class="history-period">Прошлая неделя</h3>
+                    <div class="history-item">Комплексная диагностика поможе...</div>
+                </div>
+
+                <!-- 30 дней -->
+                <div class="history-section">
+                    <h3 class="history-period">30 дней</h3>
+                    <div class="history-item">Комплексная диагностика поможе...</div>
+                    <div class="history-item">Комплексная диагностика поможе...</div>
+                    <div class="history-item">Комплексная диагностика поможе...</div>
+                    <div class="history-item">Комплексная диагностика поможе...</div>
+                    <div class="history-item">Комплексная диагностика поможе...</div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-user">
+                    <div class="sidebar-avatar" id="sidebarAvatar">AM</div>
+                    <span class="sidebar-username" id="sidebarUsername">Иван Иванов</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Хедер -->
         <header class="header">
-            <button class="menu-btn">
+            <button class="menu-btn" id="menuBtn">
                 <span></span>
                 <span></span>
                 <span></span>
             </button>
-            <div class="avatar">AM</div>
+            <div class="avatar" id="avatar">AM</div>
         </header>
 
         <!-- Приветствие -->
