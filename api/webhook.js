@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 
 const token = process.env.BOT_TOKEN;
-const miniAppUrl = process.env.MINI_APP_URL || 'https://probiohacking-bot.vercel.app';
+const miniAppUrl = 'https://probiohacking-bot.vercel.app';
 
 const bot = new TelegramBot(token);
 

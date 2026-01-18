@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 
 const token = process.env.BOT_TOKEN;
-const webhookUrl = process.env.WEBHOOK_URL || 'https://probiohacking-bot.vercel.app';
+const webhookUrl = 'https://probiohacking-bot.vercel.app';
 
 module.exports = async (req, res) => {
   try {
