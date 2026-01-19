@@ -27,6 +27,9 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
+  /* Добавляем отступ для безопасной зоны */
+  padding-top: env(safe-area-inset-top, 44px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Предотвращаем скролл body только когда чат активно отображается */
@@ -42,6 +45,8 @@ body.chat-overlay-visible {
   padding-bottom: 5rem;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Добавляем отступ сверху для безопасной зоны */
+  padding-top: 20px;
 }
 
 /* Хедер */
@@ -50,6 +55,8 @@ body.chat-overlay-visible {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
+  /* Дополнительный отступ сверху для безопасной зоны */
+  margin-top: env(safe-area-inset-top, 0px);
 }
 
 /* Хедер в базе знаний без кнопки меню */
@@ -531,6 +538,10 @@ body.chat-overlay-visible .search-container {
   opacity: 1;
   transition: opacity 0.8s ease;
   cursor: pointer;
+  /* Добавляем отступы для безопасной зоны */
+  padding-top: env(safe-area-inset-top, 44px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
 }
 
 .welcome-screen.fade-out {
@@ -598,6 +609,9 @@ body.chat-overlay-visible .search-container {
   padding-bottom: 5rem;
   overflow-y: auto;
   overflow-x: hidden;
+  /* Добавляем отступ сверху для безопасной зоны */
+  padding-top: env(safe-area-inset-top, 44px);
+  box-sizing: border-box;
 }
 
 .knowledge-base.active {
@@ -616,6 +630,10 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden; /* Убираем скролл у контейнера */
+  /* Добавляем отступы для безопасной зоны */
+  padding-top: env(safe-area-inset-top, 44px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
 }
 
 .chat-overlay.active {

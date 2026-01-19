@@ -69,6 +69,7 @@ function updateAvatar(element, user, userName) {
 // Обновление аватарок
 updateAvatar(document.getElementById('avatar'), user, userName);
 updateAvatar(document.getElementById('sidebarAvatar'), user, userName);
+updateAvatar(document.getElementById('knowledgeAvatar'), user, userName);
 
 // Навигация между страницами
 function showMainApp() {
