@@ -1,7 +1,20 @@
 // Инициализация Telegram Web App
 const tg = window.Telegram.WebApp;
-tg.expand();
+tg.expand(); // Расширяем на весь экран
+tg.enableClosingConfirmation(); // Подтверждение при закрытии
+tg.disableVerticalSwipes(); // Отключаем вертикальные свайпы
 tg.ready();
+
+// Принудительно включаем полноэкранный режим
+if (tg.isExpanded === false) {
+  tg.expand();
+}
+
+// Устанавливаем цвет хедера
+tg.setHeaderColor('#4A8B6C');
+
+// Скрываем кнопку "Назад" если она есть
+tg.BackButton.hide();
 
 // Получение данных пользователя
 const user = tg.initDataUnsafe?.user;
@@ -19,10 +32,20 @@ let isChatModeActive = false;
 
 // Показать приложение после клика на приветственный экран
 welcomeScreen.addEventListener('click', () => {
+  // Еще раз принудительно расширяем перед показом приложения
+  tg.expand();
+  
   welcomeScreen.classList.add('fade-out');
   setTimeout(() => {
     welcomeScreen.style.display = 'none';
     mainApp.classList.add('show');
+    
+    // Финальная проверка полноэкранного режима
+    setTimeout(() => {
+      if (!tg.isExpanded) {
+        tg.expand();
+      }
+    }, 100);
   }, 800);
 });
 
