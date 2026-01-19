@@ -210,7 +210,7 @@ body.chat-overlay-visible .search-container {
 
 /* Быстрые запросы - блок на всю ширину с круглыми углами только сверху и снизу */
 .quick-requests {
-  padding: clamp(20px, 5vw, 24px);
+  padding: clamp(16px, 4vw, 20px);
   background: #3B4F6B;
   margin: 0 0 2vh 0; /* Касается боковых краев экрана */
   border-radius: clamp(20px, 5vw, 28px) clamp(20px, 5vw, 28px) 0 0; /* Только верхние углы круглые */
@@ -225,11 +225,11 @@ body.chat-overlay-visible .search-container {
 /* Заголовок секции - фиксированный */
 .quick-requests .section-title {
   flex-shrink: 0;
-  margin-bottom: clamp(16px, 4vw, 20px);
-  font-size: clamp(20px, 5vw, 24px);
+  margin-bottom: clamp(12px, 3vw, 16px);
+  font-size: clamp(18px, 4.5vw, 22px);
   font-weight: 600;
   color: #B0BCC9;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 /* Контейнер карточек - скроллируемый */
@@ -239,7 +239,7 @@ body.chat-overlay-visible .search-container {
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 3vw, 16px);
+  gap: clamp(8px, 2vw, 12px);
   padding-right: 8px; /* Отступ для скроллбара */
 }
 
@@ -306,15 +306,15 @@ body.chat-overlay-visible .search-container {
 .quick-card {
   display: flex;
   align-items: flex-start;
-  gap: clamp(16px, 4vw, 20px);
-  padding: clamp(18px, 4.5vw, 24px);
+  gap: clamp(12px, 3vw, 16px);
+  padding: clamp(14px, 3.5vw, 18px);
   background: white;
-  border-radius: clamp(16px, 4vw, 20px);
+  border-radius: clamp(14px, 3.5vw, 18px);
   border: none;
   cursor: pointer;
   text-align: left;
   transition: transform 0.2s;
-  min-height: clamp(80px, 18vh, 120px); /* Адаптивная высота карточки */
+  min-height: clamp(65px, 14vh, 85px); /* Уменьшенная высота карточки для помещения 3 карточек */
 }
 
 .quick-card:active {
@@ -322,10 +322,10 @@ body.chat-overlay-visible .search-container {
 }
 
 .quick-icon-bg {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   background: #E5E7EB;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -334,8 +334,8 @@ body.chat-overlay-visible .search-container {
 
 .quick-icon {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
 }
 
 .quick-content {
@@ -343,17 +343,17 @@ body.chat-overlay-visible .search-container {
 }
 
 .quick-title {
-  font-size: clamp(16px, 3.8vw, 18px);
+  font-size: clamp(14px, 3.5vw, 16px);
   font-weight: 600;
   color: #3B4F6B;
-  margin-bottom: clamp(4px, 1vw, 6px);
-  line-height: 1.3;
+  margin-bottom: clamp(3px, 0.8vw, 5px);
+  line-height: 1.2;
 }
 
 .quick-subtitle {
-  font-size: clamp(13px, 3.2vw, 15px);
+  font-size: clamp(11px, 2.8vw, 13px);
   color: #8B8B8B;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 /* Нижняя навигация */
