@@ -87,7 +87,7 @@ function showMainApp() {
     // Убеждаемся что контейнер имеет правильные стили
     quickRequestsContainer.style.display = 'flex';
     quickRequestsContainer.style.flexDirection = 'column';
-    quickRequestsContainer.style.height = 'clamp(280px, 50vh, 350px)'; // ФИКСИРОВАННАЯ высота
+    quickRequestsContainer.style.height = 'clamp(240px, 42vh, 300px)'; // ФИКСИРОВАННАЯ высота для мобильных
     quickRequestsContainer.style.flexShrink = '0'; // Не сжимается
     quickRequestsContainer.style.flex = 'none'; // Убираем flex: 1
     quickCardsContainer.style.overflowY = 'auto';
