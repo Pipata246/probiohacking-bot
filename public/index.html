@@ -2,273 +2,226 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PROBIOHACKING</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <!-- Приветственный экран -->
+    <!-- Экран приветствия -->
     <div class="welcome-screen" id="welcomeScreen">
-        <div class="welcome-screen-content">
-            <h1 class="welcome-screen-title">PROBIOHACKING</h1>
-            <p class="welcome-screen-text">PROBIOHACKING— ваш цифровой наставник по здоровью. Мы создаем индивидуальную, научно обоснованную программу, объединяющую передовые достижения медицины и проверенные временем практики, чтобы вы могли не просто жить дольше, а жить полной жизнью в любом возрасте.</p>
-            <p class="welcome-screen-continue" id="welcomeContinue">нажмите чтобы продолжить</p>
+        <div class="welcome-content">
+            <h1 class="welcome-main-title">PROBIOHACKING</h1>
+            <p class="welcome-description">Персонализированные рекомендации для оптимизации здоровья и производительности</p>
+            <p class="continue-text" id="continueText">нажмите чтобы продолжить</p>
         </div>
     </div>
 
-    <div class="app" id="mainApp">
-        <!-- Боковое меню -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2 class="sidebar-title">Прошлые запросы</h2>
-                <div class="sidebar-header-buttons">
-                    <button class="new-chat-btn" id="newChatBtn">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M10 4V16M4 10H16" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                    <button class="sidebar-close" id="sidebarClose">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
+    <!-- НОВОЕ ГЛАВНОЕ ПРИЛОЖЕНИЕ -->
+    <div class="main-app" id="mainApp">
+        <!-- СТАТИЧНАЯ ВЕРХНЯЯ ЧАСТЬ -->
+        <div class="static-top-section">
+            <!-- Хедер -->
+            <header class="header">
+                <button class="menu-btn" id="menuBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 12H21M3 6H21M3 18H21" stroke="#F5F1E8" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="avatar" id="avatar">AM</div>
+            </header>
+
+            <!-- Приветствие -->
+            <section class="welcome">
+                <h1 class="welcome-title">Добро пожаловать</h1>
+                <p class="welcome-name">Александр</p>
+            </section>
+
+            <!-- Поиск -->
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Спросите о рекомендациях">
+                <button class="search-btn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M7 10L13 10M13 10L10 7M13 10L10 13" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
             </div>
 
-            <div class="sidebar-content">
-                <!-- Вчера -->
-                <div class="history-section">
-                    <h3 class="history-period">Вчера</h3>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
+            <!-- Персональные рекомендации -->
+            <section class="recommendations-card">
+                <h2 class="card-title">Персональные рекомендации</h2>
+                <div class="card-content">
+                    <svg class="card-icon" width="32" height="32" viewBox="0 0 40 40" fill="none">
+                        <path d="M20 12C20 12 16 16 16 20C16 24 20 28 20 28C20 28 24 24 24 20C24 16 20 12 20 12Z" stroke="#6B7280" stroke-width="2"/>
+                        <circle cx="20" cy="20" r="2" fill="#6B7280"/>
+                    </svg>
+                    <p class="card-text">Наш ИИ агент подготовит программу персональные рекомендации и программу для вас</p>
                 </div>
-
-                <!-- Прошлая неделя -->
-                <div class="history-section">
-                    <h3 class="history-period">Прошлая неделя</h3>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                </div>
-
-                <!-- 30 дней -->
-                <div class="history-section">
-                    <h3 class="history-period">30 дней</h3>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                </div>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="sidebar-user">
-                    <div class="sidebar-avatar" id="sidebarAvatar">AM</div>
-                    <span class="sidebar-username" id="sidebarUsername">Иван Иванов</span>
-                </div>
-            </div>
+                <button class="create-program-btn">Создание программу</button>
+            </section>
         </div>
 
-        <!-- Overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-        <!-- Хедер -->
-        <header class="header">
-            <button class="menu-btn" id="menuBtn">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <div class="avatar" id="avatar">AM</div>
-        </header>
-
-        <!-- Приветствие -->
-        <section class="welcome">
-            <h1 class="welcome-title">Добро пожаловать</h1>
-            <p class="welcome-name">Александр</p>
-        </section>
-
-        <!-- Поиск - СТАТИЧНЫЙ -->
-        <div class="search-container">
-            <input type="text" class="search-input" placeholder="Спросите о рекомендациях">
-            <button class="search-btn">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M7 10L13 10M13 10L10 7M13 10L10 13" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Персональные рекомендации - СТАТИЧНЫЕ -->
-        <section class="recommendations-card">
-            <h2 class="card-title">Персональные рекомендации</h2>
-            <div class="card-content">
-                <svg class="card-icon" width="40" height="40" viewBox="0 0 40 40" fill="none">
-                    <path d="M20 12C20 12 16 16 16 20C16 24 20 28 20 28C20 28 24 24 24 20C24 16 20 12 20 12Z" stroke="#6B7280" stroke-width="2"/>
-                    <circle cx="20" cy="20" r="2" fill="#6B7280"/>
-                </svg>
-                <p class="card-text">Наш ИИ агент подготовит программу персональные рекомендации и программу для вас</p>
-            </div>
-            <button class="create-program-btn">Создание программу</button>
-        </section>
-
-        <!-- СКРОЛЛИРУЕМЫЙ КОНТЕЙНЕР ДЛЯ БЫСТРЫХ ЗАПРОСОВ -->
-        <div class="scrollable-requests-container">
-            <section class="quick-requests-section">
-                <h2 class="section-title">Быстрые запросы</h2>
+        <!-- СКРОЛЛИРУЕМАЯ НИЖНЯЯ ЧАСТЬ -->
+        <div class="scrollable-bottom-section">
+            <div class="requests-container">
+                <h2 class="requests-title">Быстрые запросы</h2>
                 
-                <button class="quick-card">
-                    <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                <!-- Основные запросы -->
+                <div class="request-card">
+                    <div class="request-icon">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <div class="quick-content">
-                        <h3 class="quick-title">Энергия и тонус</h3>
-                        <p class="quick-subtitle">Как повысить жизненную энергию и избавиться от хронической усталости?</p>
+                    <div class="request-content">
+                        <h3 class="request-title">Энергия и тонус</h3>
+                        <p class="request-subtitle">Как повысить жизненную энергию и избавиться от хронической усталости?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-card">
-                    <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                <div class="request-card">
+                    <div class="request-icon">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <rect x="12" y="8" width="8" height="16" rx="2" stroke="#000" stroke-width="2"/>
                             <rect x="14" y="14" width="4" height="6" fill="#000"/>
                         </svg>
                     </div>
-                    <div class="quick-content">
-                        <h3 class="quick-title">Память и ясность ума</h3>
-                        <p class="quick-subtitle">Как улучшить память, концентрацию и когнитивные функции?</p>
+                    <div class="request-content">
+                        <h3 class="request-title">Память и ясность ума</h3>
+                        <p class="request-subtitle">Как улучшить память, концентрацию и когнитивные функции?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-card">
-                    <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                <div class="request-card">
+                    <div class="request-icon">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <circle cx="16" cy="12" r="4" stroke="#000" stroke-width="2"/>
                             <path d="M10 24C10 20 12 18 16 18C20 18 22 20 22 24" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                             <path d="M22 10L26 6M10 10L6 6" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <div class="quick-content">
-                        <h3 class="quick-title">Стресс и баланс</h3>
-                        <p class="quick-subtitle">Как повысить стрессоустойчивость и эмоциональную стабильность?</p>
+                    <div class="request-content">
+                        <h3 class="request-title">Стресс и баланс</h3>
+                        <p class="request-subtitle">Как повысить стрессоустойчивость и эмоциональную стабильность?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-card">
-                    <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                <div class="request-card">
+                    <div class="request-icon">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <path d="M16 4L20 12L28 12L22 18L24 26L16 22L8 26L10 18L4 12L12 12L16 4Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <div class="quick-content">
-                        <h3 class="quick-title">Иммунитет и защита</h3>
-                        <p class="quick-subtitle">Как укрепить естественный иммунитет и снизить частоту заболеваний?</p>
+                    <div class="request-content">
+                        <h3 class="request-title">Иммунитет и защита</h3>
+                        <p class="request-subtitle">Как укрепить естественный иммунитет и снизить частоту заболеваний?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-card">
-                    <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                <div class="request-card">
+                    <div class="request-icon">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <circle cx="16" cy="16" r="8" stroke="#000" stroke-width="2"/>
                             <path d="M12 12L20 20M20 12L12 20" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <div class="quick-content">
-                        <h3 class="quick-title">Суставы и подвижность</h3>
-                        <p class="quick-subtitle">Как поддержать здоровье суставов, гибкость и легкость движений?</p>
+                    <div class="request-content">
+                        <h3 class="request-title">Суставы и подвижность</h3>
+                        <p class="request-subtitle">Как поддержать здоровье суставов, гибкость и легкость движений?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-card">
-                    <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                <div class="request-card">
+                    <div class="request-icon">
+                        <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <path d="M8 16L16 8L24 16M16 8V24" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <div class="quick-content">
-                        <h3 class="quick-title">Пищеварение и метаболизм</h3>
-                        <p class="quick-subtitle">Как наладить работу ЖКТ, избавиться от дискомфорта?</p>
+                    <div class="request-content">
+                        <h3 class="request-title">Пищеварение и метаболизм</h3>
+                        <p class="request-subtitle">Как наладить работу ЖКТ, избавиться от дискомфорта?</p>
                     </div>
-                </button>
+                </div>
 
                 <!-- Для спортсменов -->
                 <div class="sports-section">
-                    <h2 class="section-title">Для спортсменов</h2>
+                    <h2 class="requests-title">Для спортсменов</h2>
                     
-                    <button class="quick-card">
-                        <div class="quick-icon-bg">
-                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <div class="request-card">
+                        <div class="request-icon">
+                            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                                 <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <div class="quick-content">
-                            <h3 class="quick-title">Выносливость</h3>
-                            <p class="quick-subtitle">Как увеличить выносливость и работоспособность?</p>
+                        <div class="request-content">
+                            <h3 class="request-title">Выносливость</h3>
+                            <p class="request-subtitle">Как увеличить выносливость и работоспособность?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-card">
-                        <div class="quick-icon-bg">
-                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <div class="request-card">
+                        <div class="request-icon">
+                            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                                 <path d="M8 16L16 8L24 16M16 8V24" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <div class="quick-content">
-                            <h3 class="quick-title">Восстановление</h3>
-                            <p class="quick-subtitle">Как ускорить восстановление после тренировок?</p>
+                        <div class="request-content">
+                            <h3 class="request-title">Восстановление</h3>
+                            <p class="request-subtitle">Как ускорить восстановление после тренировок?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-card">
-                        <div class="quick-icon-bg">
-                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <div class="request-card">
+                        <div class="request-icon">
+                            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                                 <circle cx="16" cy="16" r="8" stroke="#000" stroke-width="2"/>
                             </svg>
                         </div>
-                        <div class="quick-content">
-                            <h3 class="quick-title">Сила и масса</h3>
-                            <p class="quick-subtitle">Как набрать мышечную массу и увеличить силу?</p>
+                        <div class="request-content">
+                            <h3 class="request-title">Сила и масса</h3>
+                            <p class="request-subtitle">Как набрать мышечную массу и увеличить силу?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-card">
-                        <div class="quick-icon-bg">
-                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <div class="request-card">
+                        <div class="request-icon">
+                            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                                 <path d="M16 4L20 12L28 12L22 18L24 26L16 22L8 26L10 18L4 12L12 12L16 4Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <div class="quick-content">
-                            <h3 class="quick-title">Спортивное питание</h3>
-                            <p class="quick-subtitle">Как правильно питаться для достижения спортивных целей?</p>
+                        <div class="request-content">
+                            <h3 class="request-title">Спортивное питание</h3>
+                            <p class="request-subtitle">Как правильно питаться для достижения спортивных целей?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-card">
-                        <div class="quick-icon-bg">
-                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <div class="request-card">
+                        <div class="request-icon">
+                            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                                 <circle cx="16" cy="12" r="4" stroke="#000" stroke-width="2"/>
                             </svg>
                         </div>
-                        <div class="quick-content">
-                            <h3 class="quick-title">Мотивация</h3>
-                            <p class="quick-subtitle">Как поддерживать мотивацию к тренировкам?</p>
+                        <div class="request-content">
+                            <h3 class="request-title">Мотивация</h3>
+                            <p class="request-subtitle">Как поддерживать мотивацию к тренировкам?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-card">
-                        <div class="quick-icon-bg">
-                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                    <div class="request-card">
+                        <div class="request-icon">
+                            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
                                 <rect x="12" y="8" width="8" height="16" rx="2" stroke="#000" stroke-width="2"/>
                             </svg>
                         </div>
-                        <div class="quick-content">
-                            <h3 class="quick-title">Травмы</h3>
-                            <p class="quick-subtitle">Как предотвратить травмы и ускорить заживление?</p>
+                        <div class="request-content">
+                            <h3 class="request-title">Травмы</h3>
+                            <p class="request-subtitle">Как предотвратить травмы и ускорить заживление?</p>
                         </div>
-                    </button>
+                    </div>
                 </div>
-            </section>
+            </div>
         </div>
+
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
             <button class="nav-item active">
@@ -306,29 +259,60 @@
         </nav>
     </div>
 
-    <!-- Чат (оверлей поверх всего) -->
+    <!-- Сайдбар -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar" id="sidebarAvatar">AM</div>
+                <span class="sidebar-username">Александр</span>
+            </div>
+            <button class="new-chat-btn">+ Новый чат</button>
+        </div>
+        
+        <div class="sidebar-content">
+            <div class="history-section">
+                <h3>Вчера</h3>
+                <div class="history-item">Энергия и витамины</div>
+                <div class="history-item">Сон и восстановление</div>
+            </div>
+            
+            <div class="history-section">
+                <h3>Последняя неделя</h3>
+                <div class="history-item">Стресс и адаптогены</div>
+                <div class="history-item">Пищеварение</div>
+                <div class="history-item">Иммунитет</div>
+            </div>
+            
+            <div class="history-section">
+                <h3>30 дней</h3>
+                <div class="history-item">Детокс программа</div>
+                <div class="history-item">Спортивное питание</div>
+                <div class="history-item">Ноотропы</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Чат оверлей -->
     <div class="chat-overlay" id="chatOverlay">
-        <!-- Хедер чата без кнопки меню -->
         <header class="header">
-            <!-- Только пустой хедер для отступа -->
+            <!-- Пустой хедер для отступа -->
         </header>
-
-        <!-- Сообщения чата -->
-        <div class="chat-messages" id="chatMessages">
-            <!-- Сообщения будут добавляться динамически -->
+        
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages"></div>
+            
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Введите ваш вопрос...">
+                <button class="chat-send-btn" id="chatSendBtn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M18 2L9 11M18 2L12 18L9 11M18 2L2 8L9 11" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
         </div>
-
-        <!-- Поле ввода -->
-        <div class="chat-input-container">
-            <input type="text" class="chat-input" placeholder="Спросите о рекомендациях">
-            <button class="chat-send-btn">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M7 10L13 10M13 10L10 7M13 10L10 13" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </div>
-
-        <!-- Нижняя навигация в чате -->
+        
+        <!-- Навигация в чате -->
         <nav class="bottom-nav">
             <button class="nav-item active">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -367,455 +351,56 @@
 
     <!-- База знаний -->
     <div class="knowledge-base" id="knowledgeBase">
-        <!-- Хедер -->
         <header class="header">
+            <button class="menu-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 12H21M3 6H21M3 18H21" stroke="#F5F1E8" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
             <div class="avatar" id="knowledgeAvatar">AM</div>
         </header>
 
-        <!-- Заголовок -->
-        <section class="knowledge-header">
+        <div class="knowledge-content">
             <h1 class="knowledge-title">База знаний</h1>
-            <p class="knowledge-subtitle">Просмотрите свои рекомендации</p>
-        </section>
-
-        <!-- Разделы базы знаний -->
-        <section class="knowledge-sections">
-            <!-- Введение в биохакинг -->
+            
             <div class="knowledge-section">
                 <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Введение в биохакинг</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
+                    <h2 class="section-title">Основы биохакинга</h2>
+                    <button class="expand-btn">+</button>
                 </div>
                 <div class="section-content">
-                    <p class="section-description">Базовые понятия и принципы направления</p>
+                    <div class="subsection">Что такое биохакинг</div>
+                    <div class="subsection">Принципы оптимизации</div>
+                    <div class="subsection">Измерение показателей</div>
                 </div>
             </div>
 
-            <!-- Биология и физиология старения -->
             <div class="knowledge-section">
                 <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M16 4C16 4 12 8 12 12C12 16 16 20 16 20C16 20 20 16 20 12C20 8 16 4 16 4Z" stroke="#3B4F6B" stroke-width="2"/>
-                            <circle cx="16" cy="12" r="2" fill="#3B4F6B"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Биология и физиология старения</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
+                    <h2 class="section-title">Питание и нутрициология</h2>
+                    <button class="expand-btn">+</button>
                 </div>
                 <div class="section-content">
-                    <div class="subsection">- Основные концепции и механизмы старения</div>
-                    <div class="subsection">- Влияние дисфункции митохондрий на старение организма</div>
-                    <div class="subsection">- Взаимосвязь иммунной системы и процессов старения</div>
-                    <div class="subsection">- Участие врожденного и гуморального иммунитета в старении</div>
-                    <div class="subsection">- Вклад метаболических расстройств в механизмы старения</div>
+                    <div class="subsection">Макронутриенты</div>
+                    <div class="subsection">Микронутриенты</div>
+                    <div class="subsection">Добавки и витамины</div>
                 </div>
             </div>
 
-            <!-- Фармакологические аспекты биохакинга -->
             <div class="knowledge-section">
                 <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="16" r="8" stroke="#3B4F6B" stroke-width="2"/>
-                            <path d="M16 8V24M8 16H24" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Фармакологические аспекты биохакинга</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
+                    <h2 class="section-title">Сон и восстановление</h2>
+                    <button class="expand-btn">+</button>
                 </div>
                 <div class="section-content">
-                    <div class="subsection">- Современные формы и технологии доставки нутриентов</div>
-                    <div class="subsection">- Роль антиоксидантов</div>
-                    <div class="subsection">- Витамины: водорастворимые и жирорастворимые</div>
-                    <div class="subsection">- Фитоэстрогены и их применение</div>
-                    <div class="subsection">- Использование пробиотиков</div>
-                    <div class="subsection">- Терапевтический потенциал пептидных препаратов</div>
-                    <div class="subsection">- Борьба со скрытым дефицитом железа как метод профилактики по рекомендациям ВОЗ</div>
-                    <div class="subsection">- Применение системной энзимотерапии</div>
+                    <div class="subsection">Гигиена сна</div>
+                    <div class="subsection">Циркадные ритмы</div>
+                    <div class="subsection">Техники релаксации</div>
                 </div>
             </div>
+        </div>
 
-            <!-- Минорные нутриенты -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="16" r="6" stroke="#3B4F6B" stroke-width="2"/>
-                            <path d="M16 10V6M16 26V22M22 16H26M6 16H10" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Минорные нутриенты: определение и нормативное регулирование</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Биодоступность, качество и безопасность БАД</div>
-                    <div class="subsection">- Характеристика минорных биологически активных веществ</div>
-                    <div class="subsection">- Процедура регистрации лекарственных препаратов в Российской Федерации</div>
-                </div>
-            </div>
-
-            <!-- Биохакинг в контексте женского здоровья -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M8 16C8 16 12 12 16 12C20 12 24 16 24 16M16 12V24" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                            <circle cx="16" cy="8" r="4" stroke="#3B4F6B" stroke-width="2"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Биохакинг в контексте женского здоровья</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Стволовые клетки и биобанкирование</div>
-                    <div class="subsection">- Стратегии предотвращения старения репродуктивной системы</div>
-                    <div class="subsection">- Менопауза и возрастные трансформации. Комплексное обследование для женщин</div>
-                    <div class="subsection">- Значение питания в пери- и постменопаузе</div>
-                    <div class="subsection">- Принципы сбалансированного питания при беременности</div>
-                    <div class="subsection">- Восполнение дефицита микронутриентов в период беременности</div>
-                    <div class="subsection">- Эффективные стратегии биохакинга для женщин: максимум результата при минимуме затрат</div>
-                </div>
-            </div>
-
-            <!-- Аспекты мужского здоровья в биохакинге -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M8 16C8 16 12 12 16 12C20 12 24 16 24 16M16 12V24" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                            <rect x="12" y="6" width="8" height="8" rx="2" stroke="#3B4F6B" stroke-width="2"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Аспекты мужского здоровья в биохакинге</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Возрастные трансформации предстательной железы и методы их коррекции</div>
-                    <div class="subsection">- СНМП: симптомы нижних мочевых путей. Этиология, лечение и профилактика</div>
-                    <div class="subsection">- Эректильная дисфункция: естественный процесс или маркер сердечно-сосудистых патологий?</div>
-                    <div class="subsection">- Воздействие лекарственных препаратов на мужскую репродуктивную функцию</div>
-                </div>
-            </div>
-
-            <!-- Биохакинг и эндокринная система -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="16" r="8" stroke="#3B4F6B" stroke-width="2"/>
-                            <path d="M12 12L20 20M20 12L12 20" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Биохакинг и эндокринная система</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Значение восполнения дефицита йода для профилактики зоба</div>
-                    <div class="subsection">- Индивидуальные методы коррекции гипофункции щитовидной железы</div>
-                    <div class="subsection">- Профилактика и лечение остеопороза у женщин</div>
-                    <div class="subsection">- Ожирение и инсулинорезистентность у женщин: связанные угрозы здоровью</div>
-                    <div class="subsection">- Ожирение и инсулинорезистентность у мужчин: потенциальные риски</div>
-                    <div class="subsection">- Три ключевых периода в жизни мужчины: физиологическая роль тестостерона</div>
-                </div>
-            </div>
-
-            <!-- Технологии биохакинга для профилактики возрастных патологий -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M16 4L20 12L28 12L22 18L24 26L16 22L8 26L10 18L4 12L12 12L16 4Z" stroke="#3B4F6B" stroke-width="2" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Технологии биохакинга для профилактики возрастных патологий</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Оптимизация когнитивных функций у взрослых</div>
-                    <div class="subsection">- Перспективы улучшения когнитивных способностей с помощью биохакинга</div>
-                    <div class="subsection">- Управление здоровьем. Мониторинг контролируемых факторов риска</div>
-                    <div class="subsection">- Роль лабораторных и инструментальных исследований в профилактике болезней старения</div>
-                    <div class="subsection">- Ключевые показатели для мониторинга. Анализ практических случаев</div>
-                    <div class="subsection">- Комплексные обследования и диспансеризация</div>
-                    <div class="subsection">- Скрининг онкологических заболеваний с точки зрения биохакинга. Разбор примеров</div>
-                </div>
-            </div>
-
-            <!-- Роль лабораторной диагностики в биохакинге -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M8 16L16 8L24 16M16 8V24" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="16" cy="20" r="2" fill="#3B4F6B"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Роль лабораторной диагностики в биохакинге. Клинические примеры</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Биомаркеры старения: молекулярные, интегральные и генетические</div>
-                    <div class="subsection">- Лабораторные методы профилактики дефицита питательных веществ</div>
-                    <div class="subsection">- Контролируемые показатели: периодичность и интерпретация результатов</div>
-                    <div class="subsection">- Цитогенетические и молекулярно-генетические тесты</div>
-                    <div class="subsection">- Их характеристики и применение в антивозрастных программах</div>
-                    <div class="subsection">- Разбор клинических случаев</div>
-                    <div class="subsection">- Современные методы оценки биологического возраста</div>
-                    <div class="subsection">- Персонализированная медицина на основе генетических данных</div>
-                    <div class="subsection">- Мониторинг эффективности антивозрастных программ</div>
-                    <div class="subsection">- Интерпретация комплексных лабораторных панелей</div>
-                    <div class="subsection">- Функциональная диагностика систем организма</div>
-                    <div class="subsection">- Превентивная диагностика возрастных заболеваний</div>
-                </div>
-            </div>
-
-            <!-- Принципы рационального питания -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M8 12L16 4L24 12M8 20L16 12L24 20" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="16" cy="16" r="2" fill="#3B4F6B"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Принципы рационального питания</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Основы здорового питания. Ключевые нутриенты</div>
-                    <div class="subsection">- Значение питьевого режима для организма</div>
-                    <div class="subsection">- Структура рациона и механизмы регуляции аппетита</div>
-                    <div class="subsection">- Распространенные метаболические нарушения: диагностика и немедикаментозная коррекция</div>
-                    <div class="subsection">- Диетотерапия для снижения избыточного веса</div>
-                    <div class="subsection">- Питание для профилактики саркопении</div>
-                    <div class="subsection">- Оценка нутритивного статуса. Ведение пищевого дневника</div>
-                    <div class="subsection">- Психология нормального пищевого поведения. Преодоление переедания</div>
-                    <div class="subsection">- Психология расстройств пищевого поведения</div>
-                    <div class="subsection">- Методы диагностики и организация работы. Техники психологической коррекции</div>
-                    <div class="subsection">- Интервальное голодание и его влияние на метаболизм</div>
-                    <div class="subsection">- Кетогенная диета: показания и противопоказания</div>
-                    <div class="subsection">- Персонализированное питание на основе генетических данных</div>
-                    <div class="subsection">- Микробиом кишечника и его роль в пищеварении</div>
-                    <div class="subsection">- Функциональные продукты питания в биохакинге</div>
-                </div>
-            </div>
-
-            <!-- Поддержание здоровья мозга -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="12" r="8" stroke="#3B4F6B" stroke-width="2"/>
-                            <path d="M12 20C12 20 14 22 16 22C18 22 20 20 20 20" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Поддержание здоровья мозга</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- От патологии к здоровью мозга. Взаимосвязь ментального и физического здоровья</div>
-                    <div class="subsection">- Эмоциональное благополучие. Управление стрессом</div>
-                    <div class="subsection">- Когнитивное здоровье. Тренировка мозга. Профилактика болезни Альцгеймера</div>
-                    <div class="subsection">- Сексуальное здоровье</div>
-                    <div class="subsection">- Питание для мозга. Нейронутрициология</div>
-                    <div class="subsection">- Телесная осознанность. Сенсомоторное развитие и биомеханика. Роль физической активности</div>
-                    <div class="subsection">- Здоровье окружающей среды. Салютогенный дизайн</div>
-                    <div class="subsection">- Сон и циркадные ритмы. Пути повышения продуктивности</div>
-                    <div class="subsection">- Теория и практика здорового сна</div>
-                    <div class="subsection">- Влияние искусства на здоровье: развитие интеллекта</div>
-                    <div class="subsection">- Нейропластичность и методы её стимуляции</div>
-                    <div class="subsection">- Медитация и майндфулнесс в биохакинге</div>
-                    <div class="subsection">- Ноотропы: естественные и синтетические стимуляторы мозга</div>
-                    <div class="subsection">- Биофидбек и нейрофидбек технологии</div>
-                    <div class="subsection">- Светотерапия и её влияние на циркадные ритмы</div>
-                </div>
-            </div>
-
-            <!-- Принципы организации физической активности -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M8 16C8 16 12 12 16 12C20 12 24 16 24 16M16 12V24" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M12 8L20 8M12 20L20 20" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Принципы организации физической активности</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Двигательная активность. Функциональные тренировочные режимы</div>
-                    <div class="subsection">- Влияние физических нагрузок на системы организма</div>
-                    <div class="subsection">- Применение биохакинга в кардиотренировках</div>
-                    <div class="subsection">- Программы «Разум и тело» (Mind Body) в биохакинге</div>
-                    <div class="subsection">- Физическая активность при наличии хронических заболеваний</div>
-                    <div class="subsection">- Современные принципы построения тренировок для непрофессиональных спортсменов</div>
-                    <div class="subsection">- Актуальные методы восстановления после нагрузок с использованием БАД</div>
-                    <div class="subsection">- Высокоинтенсивные интервальные тренировки (HIIT)</div>
-                    <div class="subsection">- Силовые тренировки и их влияние на гормональный фон</div>
-                    <div class="subsection">- Йога и пилатес в системе биохакинга</div>
-                    <div class="subsection">- Дыхательные практики и их физиологические эффекты</div>
-                    <div class="subsection">- Холодовая и тепловая терапия</div>
-                    <div class="subsection">- Вибрационные тренировки и их применение</div>
-                    <div class="subsection">- Мониторинг физической активности с помощью носимых устройств</div>
-                    <div class="subsection">- Персонализация тренировочных программ</div>
-                </div>
-            </div>
-
-            <!-- Инструментальные методы профилактики -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M8 8L24 8M8 16L24 16M8 24L24 24" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                            <circle cx="6" cy="8" r="2" fill="#3B4F6B"/>
-                            <circle cx="6" cy="16" r="2" fill="#3B4F6B"/>
-                            <circle cx="6" cy="24" r="2" fill="#3B4F6B"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Инструментальные методы профилактики</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Применение усиленной наружной контрпульсации в биохакинге</div>
-                    <div class="subsection">- Практическое использование метода усиленной наружной контрпульсации</div>
-                    <div class="subsection">- Анализ клинических случаев</div>
-                </div>
-            </div>
-
-            <!-- Эстетическая косметология в контексте биохакинга -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="16" r="10" stroke="#3B4F6B" stroke-width="2"/>
-                            <path d="M12 12L20 20M20 12L12 20" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                            <circle cx="16" cy="16" r="4" stroke="#3B4F6B" stroke-width="2"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Эстетическая косметология в контексте биохакинга</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Анатомия, физиология и типы кожи</div>
-                    <div class="subsection">- Основы ухода за кожей лица</div>
-                    <div class="subsection">- Основы ухода за кожей тела</div>
-                    <div class="subsection">- Аппаратные методики в косметологии</div>
-                </div>
-            </div>
-
-            <!-- Ключевые принципы антивозрастных технологий -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M16 4L20 12L28 12L22 18L24 26L16 22L8 26L10 18L4 12L12 12L16 4Z" stroke="#3B4F6B" stroke-width="2" stroke-linejoin="round"/>
-                            <circle cx="16" cy="16" r="4" stroke="#3B4F6B" stroke-width="2"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Ключевые принципы антивозрастных технологий</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Роль гормезиса в процессах старения и anti-age терапии</div>
-                    <div class="subsection">- Анализ основных теоретических основ антивозрастных методик</div>
-                    <div class="subsection">- Генетика и персональная карта здоровья</div>
-                    <div class="subsection">- Профилактика рассогласования биологического и социального возраста</div>
-                    <div class="subsection">- Аспекты безопасности в биохакинге</div>
-                </div>
-            </div>
-
-            <!-- Психология здоровья -->
-            <div class="knowledge-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="12" r="6" stroke="#3B4F6B" stroke-width="2"/>
-                            <path d="M10 20C10 20 12 18 16 18C20 18 22 20 22 20" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M14 10L18 14M18 10L14 14" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="section-title">Психология здоровья</h3>
-                    <button class="expand-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 5V19M5 12H19" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="section-content">
-                    <div class="subsection">- Взаимосвязь психического и физиологического здоровья. Психосоматические аспекты</div>
-                    <div class="subsection">- Воздействие эмоций и стресса на состояние здоровья</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Нижняя навигация -->
+        <!-- Навигация в базе знаний -->
         <nav class="bottom-nav">
             <button class="nav-item">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
