@@ -266,8 +266,13 @@ function openChatWithMessage(message) {
 }
 
 function handleDiagnosticButton() {
-  // Показываем алерт что функция в разработке
-  tg.showAlert('Диагностика\n\nФункция в разработке');
+  // Закрываем чат и переходим к диагностической форме
+  hideChat();
+  showDiagnostics();
+  // Небольшая задержка для плавного перехода
+  setTimeout(() => {
+    showDiagnosticForm();
+  }, 100);
 }
 
 function showDiagnosticForm() {
@@ -277,18 +282,14 @@ function showDiagnosticForm() {
   diagnosticForm.id = 'diagnosticFormOverlay';
   
   diagnosticForm.innerHTML = `
-    <!-- Хедер формы -->
-    <header class="header">
-      <button class="menu-btn" id="diagnosticFormMenu">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <div class="avatar" id="diagnosticFormAvatar">AM</div>
-    </header>
-    
     <div class="diagnostic-form-content">
+      <!-- Экран заполнения данных -->
       <div class="form-step" id="personalDataStep">
+        <!-- Хедер внутри слайда -->
+        <header class="slide-header">
+          <div class="avatar" id="diagnosticFormAvatar">AM</div>
+        </header>
+        
         <h2 class="form-main-title">Диагностическая анкета:<br>оценка систем организма</h2>
         
         <!-- Выбор пола -->
@@ -358,10 +359,77 @@ function showDiagnosticForm() {
         </div>
       </div>
       
+      <!-- Экран вопросов -->
       <div class="form-step hidden" id="surveyStep">
+        <!-- Хедер внутри слайда -->
+        <header class="slide-header">
+          <div class="avatar" id="surveyFormAvatar">AM</div>
+        </header>
+        
+        <!-- Прогресс бар -->
+        <div class="survey-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-info">
+            <span class="progress-text" id="progressText">Вопрос 1 из 17</span>
+          </div>
+        </div>
+        
+        <!-- Контент вопроса -->
         <div class="survey-question" id="surveyQuestion">
           <!-- Вопросы будут загружаться динамически -->
         </div>
+        
+        <!-- Навигация вопросов -->
+        <div class="survey-navigation">
+          <button class="nav-circle-btn nav-circle-btn-active" id="surveyBackBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M19 12H5M12 19L5 12L12 5" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="nav-circle-btn nav-circle-btn-primary" id="surveyNextBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M12 5L19 12L12 19" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Нижняя навигация в экране вопросов -->
+        <nav class="bottom-nav">
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Главная</span>
+          </button>
+          <button class="nav-item active">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Диагностика</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4.5 16.5C3 14 3 11 3 9C3 5.5 5.5 3 9 3C10 3 11 3.5 12 4C13 3.5 14 3 15 3C18.5 3 21 5.5 21 9C21 11 21 14 19.5 16.5L12 22L4.5 16.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Здоровье</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Дневник</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>База знаний</span>
+          </button>
+        </nav>
       </div>
     </div>
   `;
@@ -370,8 +438,9 @@ function showDiagnosticForm() {
   const diagnosticsPage = document.getElementById('diagnosticsPage');
   diagnosticsPage.appendChild(diagnosticForm);
   
-  // Обновляем аватар в форме
+  // Обновляем аватары в форме
   updateAvatar(document.getElementById('diagnosticFormAvatar'), user, userName);
+  updateAvatar(document.getElementById('surveyFormAvatar'), user, userName);
   
   // Добавляем обработчики событий
   setupDiagnosticFormHandlers();
@@ -379,29 +448,21 @@ function showDiagnosticForm() {
 
 function setupDiagnosticFormHandlers() {
   const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-  const menuBtn = document.getElementById('diagnosticFormMenu');
   const formBackBtn = document.getElementById('formBackBtn');
   const formNextBtn = document.getElementById('formNextBtn');
   const personalDataStep = document.getElementById('personalDataStep');
   const surveyStep = document.getElementById('surveyStep');
   
-  // Кнопка меню - возврат к диагностике
-  menuBtn.addEventListener('click', () => {
-    diagnosticFormOverlay.remove();
-  });
-  
-  // Кнопка "Назад" в навигации формы - АКТИВНА для выхода
+  // Кнопка "Назад" в форме данных - выход из формы
   formBackBtn.addEventListener('click', () => {
     diagnosticFormOverlay.remove();
   });
   
-  // Убираем disabled с кнопки назад
-  formBackBtn.disabled = false;
-  
-  // Кнопка "Вперед" в навигации формы
+  // Кнопка "Вперед" в форме данных - переход к вопросам
   formNextBtn.addEventListener('click', () => {
     if (validatePersonalDataNew()) {
       savePersonalDataNew();
+      // Переходим к экрану вопросов
       personalDataStep.classList.add('hidden');
       surveyStep.classList.remove('hidden');
       initSurvey();
@@ -447,36 +508,46 @@ function savePersonalDataNew() {
 let currentQuestionIndex = 0;
 const surveyQuestions = [
   {
-    id: 1,
-    question: "Как вы оцениваете свой общий уровень энергии в течение дня?",
-    type: "scale",
+    id: "V17",
+    system: "Нервная система",
+    question: "Как вы справляетесь со стрессом и умственной нагрузкой?",
+    type: "multiple_with_custom",
     options: [
-      { value: 1, label: "Очень низкий" },
-      { value: 2, label: "Низкий" },
-      { value: 3, label: "Средний" },
-      { value: 4, label: "Высокий" },
-      { value: 5, label: "Очень высокий" }
+      { value: "good", label: "Умею расслабляться, мысли ясные, концентрация хорошая" },
+      { value: "anxiety", label: "Часто чувствую тревогу, мысли скачут, трудно сфокусироваться" },
+      { value: "irritability", label: "Раздражительность, нетерпение, умственная перегрузка" },
+      { value: "apathy", label: "Апатия, медленное мышление, трудности с принятием решений" }
     ]
   },
-  {
-    id: 2,
-    question: "Как часто вы испытываете усталость без видимых причин?",
-    type: "multiple",
+  // Добавляем заглушки для остальных 16 вопросов
+  ...Array.from({length: 16}, (_, i) => ({
+    id: `V${i + 18}`,
+    system: "Система организма",
+    question: `Вопрос ${i + 2} (будет добавлен позже)`,
+    type: "multiple_with_custom",
     options: [
-      { value: "never", label: "Никогда" },
-      { value: "rarely", label: "Редко" },
-      { value: "sometimes", label: "Иногда" },
-      { value: "often", label: "Часто" },
-      { value: "always", label: "Постоянно" }
+      { value: "option1", label: "Вариант 1" },
+      { value: "option2", label: "Вариант 2" },
+      { value: "option3", label: "Вариант 3" },
+      { value: "option4", label: "Вариант 4" }
     ]
-  },
-  // Добавим остальные вопросы позже, когда получим скриншоты
+  }))
 ];
 
 function initSurvey() {
   currentQuestionIndex = 0;
   showQuestion(currentQuestionIndex);
+  updateProgress();
   setupSurveyNavigation();
+}
+
+function updateProgress() {
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const progress = ((currentQuestionIndex + 1) / surveyQuestions.length) * 100;
+  
+  progressFill.style.width = `${progress}%`;
+  progressText.textContent = `Вопрос ${currentQuestionIndex + 1} из ${surveyQuestions.length}`;
 }
 
 function showQuestion(index) {
@@ -485,43 +556,61 @@ function showQuestion(index) {
   
   let optionsHtml = '';
   
-  if (question.type === 'scale') {
+  if (question.type === 'multiple_with_custom') {
     optionsHtml = question.options.map(option => `
-      <label class="scale-option">
+      <label class="survey-option">
         <input type="radio" name="question_${question.id}" value="${option.value}">
-        <span class="scale-number">${option.value}</span>
-        <span class="scale-label">${option.label}</span>
+        <span class="option-radio"></span>
+        <span class="option-text">${option.label}</span>
       </label>
     `).join('');
-    optionsHtml = `<div class="scale-options">${optionsHtml}</div>`;
-  } else if (question.type === 'multiple') {
-    optionsHtml = question.options.map(option => `
-      <label class="multiple-option">
-        <input type="radio" name="question_${question.id}" value="${option.value}">
-        <span class="option-custom"></span>
-        ${option.label}
-      </label>
-    `).join('');
-    optionsHtml = `<div class="multiple-options">${optionsHtml}</div>`;
+    
+    optionsHtml += `
+      <div class="custom-answer-section">
+        <label class="custom-answer-label">Свой вариант ответа:</label>
+        <input type="text" class="custom-answer-input" placeholder="Например: Плохо, почти никак" name="custom_${question.id}">
+      </div>
+    `;
   }
   
   questionContainer.innerHTML = `
-    <h3 class="question-title">${question.question}</h3>
-    ${optionsHtml}
+    <!-- Заголовки сверху -->
+    <div class="question-titles">
+      <h1 class="main-title">Диагностическая анкета:</h1>
+      <h2 class="sub-title">${question.system}</h2>
+    </div>
+    
+    <!-- Объединенная карточка с прогрессом и вопросом -->
+    <div class="question-progress-card">
+      <div class="progress-section">
+        <span class="progress-counter">${currentQuestionIndex + 1}/17</span>
+        <div class="progress-bar-inline">
+          <div class="progress-fill-inline" style="width: ${((currentQuestionIndex + 1) / surveyQuestions.length) * 100}%"></div>
+        </div>
+      </div>
+      <div class="question-text-section">
+        <h3 class="question-text">${question.question}</h3>
+      </div>
+    </div>
+    
+    <div class="survey-options">
+      ${optionsHtml}
+    </div>
   `;
 }
 
 
 
 function setupSurveyNavigation() {
-  const prevBtn = document.getElementById('formBackBtn');
-  const nextBtn = document.getElementById('formNextBtn');
+  const surveyBackBtn = document.getElementById('surveyBackBtn');
+  const surveyNextBtn = document.getElementById('surveyNextBtn');
   
-  // Обновляем обработчики для режима опроса
-  prevBtn.onclick = () => {
+  // Кнопка "Назад" в опросе
+  surveyBackBtn.onclick = () => {
     if (currentQuestionIndex > 0) {
       currentQuestionIndex--;
       showQuestion(currentQuestionIndex);
+      updateProgress();
       updateNavigationButtons();
     } else {
       // Если это первый вопрос, возвращаемся к форме данных
@@ -529,27 +618,29 @@ function setupSurveyNavigation() {
       const personalDataStep = document.getElementById('personalDataStep');
       surveyStep.classList.add('hidden');
       personalDataStep.classList.remove('hidden');
-      
-      // Восстанавливаем обработчики для формы данных
-      setupDiagnosticFormHandlers();
     }
   };
   
-  nextBtn.onclick = () => {
+  // Кнопка "Вперед" в опросе
+  surveyNextBtn.onclick = () => {
     const currentQuestion = surveyQuestions[currentQuestionIndex];
-    const selectedAnswer = document.querySelector(`input[name="question_${currentQuestion.id}"]:checked`);
+    let selectedAnswer = document.querySelector(`input[name="question_${currentQuestion.id}"]:checked`);
+    let customAnswer = document.querySelector(`input[name="custom_${currentQuestion.id}"]`);
     
-    if (!selectedAnswer) {
-      tg.showAlert('Пожалуйста, выберите ответ');
+    // Проверяем есть ли выбранный ответ или кастомный ответ
+    if (!selectedAnswer && (!customAnswer || !customAnswer.value.trim())) {
+      tg.showAlert('Пожалуйста, выберите ответ или введите свой вариант');
       return;
     }
     
     // Сохраняем ответ
-    saveSurveyAnswer(currentQuestion.id, selectedAnswer.value);
+    let answerValue = selectedAnswer ? selectedAnswer.value : customAnswer.value.trim();
+    saveSurveyAnswer(currentQuestion.id, answerValue);
     
     if (currentQuestionIndex < surveyQuestions.length - 1) {
       currentQuestionIndex++;
       showQuestion(currentQuestionIndex);
+      updateProgress();
       updateNavigationButtons();
     } else {
       completeSurvey();
@@ -560,23 +651,24 @@ function setupSurveyNavigation() {
 }
 
 function updateNavigationButtons() {
-  const prevBtn = document.getElementById('formBackBtn');
-  const nextBtn = document.getElementById('formNextBtn');
+  const surveyBackBtn = document.getElementById('surveyBackBtn');
+  const surveyNextBtn = document.getElementById('surveyNextBtn');
   
-  // Кнопка назад всегда активна (можно вернуться к предыдущему вопросу или к форме данных)
-  prevBtn.classList.remove('nav-circle-btn-active');
-  prevBtn.classList.add('nav-circle-btn-active');
+  // Кнопка назад всегда активна
+  surveyBackBtn.classList.add('nav-circle-btn-active');
   
   if (currentQuestionIndex === surveyQuestions.length - 1) {
-    nextBtn.innerHTML = `
+    // Последний вопрос - показываем галочку
+    surveyNextBtn.innerHTML = `
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M20 6L9 17L4 12" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 6L9 17L4 12" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     `;
   } else {
-    nextBtn.innerHTML = `
+    // Обычная стрелка вперед
+    surveyNextBtn.innerHTML = `
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M5 12H19M12 5L19 12L12 19" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5 12H19M12 5L19 12L12 19" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     `;
   }
@@ -660,12 +752,6 @@ document.addEventListener('click', (e) => {
   
   // Обработка навигации
   if (e.target.closest('.nav-item')) {
-    // Проверяем, не находимся ли мы в форме диагностики
-    if (document.getElementById('diagnosticFormOverlay')) {
-      // Если в форме диагностики, не обрабатываем навигацию
-      return;
-    }
-    
     const navItem = e.target.closest('.nav-item');
     const allNavItems = document.querySelectorAll('.nav-item');
     const navIndex = Array.from(allNavItems).indexOf(navItem);
@@ -688,6 +774,12 @@ document.addEventListener('click', (e) => {
     const buttonIndex = navIndex % 5;
     
     if (buttonIndex === 0) { // Главная
+      // Закрываем диагностическую форму если она открыта
+      const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+      if (diagnosticFormOverlay) {
+        diagnosticFormOverlay.remove();
+      }
+      
       if (isChatModeActive && chatOverlay.classList.contains('active')) {
         // Если в режиме чата И чат открыт - выходим из режима чата
         showMainApp();
@@ -699,8 +791,18 @@ document.addEventListener('click', (e) => {
         showMainApp();
       }
     } else if (buttonIndex === 1) { // Диагностика
+      // Закрываем диагностическую форму если она открыта
+      const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+      if (diagnosticFormOverlay) {
+        diagnosticFormOverlay.remove();
+      }
       showDiagnostics();
     } else if (buttonIndex === 4) { // База знаний
+      // Закрываем диагностическую форму если она открыта
+      const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+      if (diagnosticFormOverlay) {
+        diagnosticFormOverlay.remove();
+      }
       showKnowledgeBase();
     } else {
       // Другие страницы в разработке
