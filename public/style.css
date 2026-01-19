@@ -44,6 +44,7 @@ body.chat-overlay-visible {
   flex-direction: column;
   overflow: hidden; /* Убираем скролл всей страницы */
   /* Убираем padding-bottom так как теперь скролл только внутри quick-cards */
+  justify-content: flex-start; /* Элементы прижимаются к верху */
 }
 
 /* Хедер - адаптивный */
@@ -214,12 +215,12 @@ body.chat-overlay-visible .search-container {
   background: #3B4F6B;
   margin: 0 0 80px 0; /* Отступ снизу для навигации */
   border-radius: clamp(20px, 5vw, 28px) clamp(20px, 5vw, 28px) 0 0; /* Только верхние углы круглые */
-  flex: 1; /* Занимает оставшееся место */
   overflow: hidden;
   display: flex !important;
   flex-direction: column !important;
-  min-height: 0; /* Важно для flex */
-  max-height: calc(100vh - 35vh); /* Увеличиваем высоту чтобы поместились 3 карточки */
+  /* ФИКСИРОВАННАЯ высота под 3 карточки */
+  height: clamp(280px, 50vh, 350px) !important;
+  flex-shrink: 0 !important; /* Не сжимается и не растягивается */
 }
 
 /* Заголовок секции - фиксированный */
