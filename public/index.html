@@ -336,7 +336,234 @@
         </nav>
     </div>
 
-    <!-- Чат (оверлей поверх всего) -->
+    <!-- Страница диагностики -->
+    <div class="diagnostics-page" id="diagnosticsPage">
+        <!-- Хедер -->
+        <header class="header">
+            <button class="menu-btn" id="diagnosticsMenuBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 12H21M3 6H21M3 18H21" stroke="#F5F1E8" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <div class="avatar" id="diagnosticsAvatar">AM</div>
+        </header>
+
+        <!-- Контент диагностики -->
+        <div class="diagnostics-content">
+            <!-- Карточка персональной диагностики -->
+            <section class="personal-diagnostics-card">
+                <h2 class="diagnostics-title">Персональная диагностика</h2>
+                <p class="diagnostics-subtitle">Фундамент вашей программы здоровья</p>
+                
+                <div class="diagnostics-description">
+                    <div class="description-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <p class="description-text">Детальный опрос о состоянии систем вашего организма с учётом подходов фитотерапии, аюрведы, ТКМ и тибетской медицины.</p>
+                </div>
+
+                <button class="fill-form-btn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 4V16M4 10H16" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Заполнить анкету
+                </button>
+
+                <div class="diagnostics-features">
+                    <div class="feature-item">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M8 12L12 8M12 12L8 8M18 10C18 14.4183 14.4183 18 10 18C5.58172 18 2 14.4183 2 10C2 5.58172 5.58172 2 10 2C14.4183 2 18 5.58172 18 10Z" stroke="#3B4F6B" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        <span>Выявление предрасположенностей и особенностей метаболизма</span>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 2L12 8L18 10L12 12L10 18L8 12L2 10L8 8L10 2Z" stroke="#3B4F6B" stroke-width="1.5" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Расчет на основе клинических анализов</span>
+                    </div>
+                </div>
+
+                <button class="my-tests-btn">Мои анализы</button>
+            </section>
+
+            <!-- Заголовок результатов -->
+            <div class="results-header">
+                <h3 class="results-title">Пройди диагностику и получи:</h3>
+            </div>
+
+            <!-- Карточки результатов -->
+            <section class="results-cards">
+                <div class="result-card">
+                    <div class="result-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L15 9L22 9L17 14L19 21L12 17L5 21L7 14L2 9L9 9L12 2Z" stroke="#3B4F6B" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="result-content">
+                        <h4 class="result-title">Рекомендации по фитотерапии</h4>
+                        <p class="result-subtitle">с учётом выявленных дисбалансов</p>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 7.5V9M15 7.5L12 8L9 7.5V9M9 7.5L3 7V9M12 8V22" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="result-content">
+                        <h4 class="result-title">Экстракты растений</h4>
+                        <p class="result-subtitle">ТКМ, аюрведа, тибетская формулы</p>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L14 8L20 8L16 12L18 18L12 15L6 18L8 12L4 8L10 8L12 2Z" stroke="#3B4F6B" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="result-content">
+                        <h4 class="result-title">Адаптогены и тонизирующие растения</h4>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 12H21M12 3V21M8 8L16 16M16 8L8 16" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="result-content">
+                        <h4 class="result-title">Диетические рекомендации по системам</h4>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="3" stroke="#3B4F6B" stroke-width="2"/>
+                            <path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="result-content">
+                        <h4 class="result-title">Дыхательные и двигательные практики</h4>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="result-content">
+                        <h4 class="result-title">Интегративный план коррекции</h4>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="#3B4F6B" stroke-width="2"/>
+                            <path d="M8 14S9.5 16 12 16S16 14 16 14M9 9H9.01M15 9H15.01" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="result-content">
+                        <h4 class="result-title">Советы по режиму дня и детоксу</h4>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Нижняя навигация -->
+        <nav class="bottom-nav">
+            <button class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Главная</span>
+            </button>
+            <button class="nav-item active">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Диагностика</span>
+            </button>
+            <button class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M22 17H14C13.4477 17 13 16.5523 13 16V8C13 7.44772 13.4477 7 14 7H22C22.5523 7 23 7.44772 23 8V16C23 16.5523 22.5523 17 22 17Z" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>Здоровье</span>
+            </button>
+            <button class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+                    <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+                    <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>Дневник</span>
+            </button>
+            <button class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>База знаний</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Боковое меню -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Прошлые запросы</h2>
+            <div class="sidebar-header-buttons">
+                <button class="new-chat-btn" id="newChatBtn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 4V16M4 10H16" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button class="sidebar-close" id="sidebarClose">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            <!-- Вчера -->
+            <div class="history-section">
+                <h3 class="history-period">Вчера</h3>
+                <div class="history-item">Комплексная диагностика поможе...</div>
+            </div>
+
+            <!-- Прошлая неделя -->
+            <div class="history-section">
+                <h3 class="history-period">Прошлая неделя</h3>
+                <div class="history-item">Комплексная диагностика поможе...</div>
+            </div>
+
+            <!-- 30 дней -->
+            <div class="history-section">
+                <h3 class="history-period">30 дней</h3>
+                <div class="history-item">Персональные рекомендации...</div>
+                <div class="history-item">Анализ состояния здоровья...</div>
+            </div>
+
+            <!-- Профиль пользователя -->
+            <div class="sidebar-user">
+                <div class="sidebar-avatar" id="sidebarAvatar">AM</div>
+                <span class="sidebar-username">Александр</span>
+            </div>
+        </div>
     <div class="chat-overlay" id="chatOverlay">
         <!-- Хедер чата без кнопки меню -->
         <header class="header">

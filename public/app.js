@@ -25,6 +25,7 @@ const userFullName = user ? `${user.first_name} ${user.last_name || ''}`.trim() 
 const welcomeScreen = document.getElementById('welcomeScreen');
 const mainApp = document.getElementById('mainApp');
 const knowledgeBase = document.getElementById('knowledgeBase');
+const diagnosticsPage = document.getElementById('diagnosticsPage');
 const chatOverlay = document.getElementById('chatOverlay');
 
 // Состояние чата
@@ -70,11 +71,13 @@ function updateAvatar(element, user, userName) {
 updateAvatar(document.getElementById('avatar'), user, userName);
 updateAvatar(document.getElementById('sidebarAvatar'), user, userName);
 updateAvatar(document.getElementById('knowledgeAvatar'), user, userName);
+updateAvatar(document.getElementById('diagnosticsAvatar'), user, userName);
 
 // Навигация между страницами
 function showMainApp() {
   mainApp.style.display = 'block';
   knowledgeBase.classList.remove('active');
+  diagnosticsPage.classList.remove('active');
   chatOverlay.classList.remove('active');
   document.body.classList.remove('chat-overlay-visible'); // Разблокируем скролл body
   isChatModeActive = false; // Выходим из режима чата
@@ -107,6 +110,7 @@ function showMainApp() {
 function showKnowledgeBase() {
   mainApp.style.display = 'none';
   knowledgeBase.classList.add('active');
+  diagnosticsPage.classList.remove('active');
   chatOverlay.classList.remove('active');
   // ВСЕГДА разблокируем скролл в базе знаний, независимо от режима чата
   document.body.classList.remove('chat-overlay-visible');
@@ -116,6 +120,24 @@ function showKnowledgeBase() {
     item.classList.remove('active');
     // База знаний - пятая кнопка в каждой навигации (4, 9, 14)
     if (index % 5 === 4) {
+      item.classList.add('active');
+    }
+  });
+}
+
+function showDiagnostics() {
+  mainApp.style.display = 'none';
+  knowledgeBase.classList.remove('active');
+  diagnosticsPage.classList.add('active');
+  chatOverlay.classList.remove('active');
+  document.body.classList.remove('chat-overlay-visible');
+  isChatModeActive = false;
+  
+  // Устанавливаем активную кнопку "Диагностика" во всех навигациях
+  document.querySelectorAll('.nav-item').forEach((item, index) => {
+    item.classList.remove('active');
+    // Диагностика - вторая кнопка в каждой навигации (1, 6, 11)
+    if (index % 5 === 1) {
       item.classList.add('active');
     }
   });
@@ -146,6 +168,7 @@ function returnToChatFromOtherPage() {
   // Возвращаемся в чат из другой страницы (если были в режиме чата)
   mainApp.style.display = 'none';
   knowledgeBase.classList.remove('active');
+  diagnosticsPage.classList.remove('active');
   chatOverlay.classList.add('active');
   document.body.classList.add('chat-overlay-visible'); // Блокируем скролл body только когда чат видим
   
@@ -335,6 +358,8 @@ document.addEventListener('click', (e) => {
         // Обычный переход на главную (не в режиме чата)
         showMainApp();
       }
+    } else if (buttonIndex === 1) { // Диагностика
+      showDiagnostics();
     } else if (buttonIndex === 4) { // База знаний
       showKnowledgeBase();
     } else {
