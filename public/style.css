@@ -27,9 +27,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  /* Добавляем отступ для безопасной зоны */
-  padding-top: env(safe-area-inset-top, 44px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Убираем отступы - контент начинается сразу под системной панелью */
 }
 
 /* Предотвращаем скролл body только когда чат активно отображается */
@@ -41,22 +39,20 @@ body.chat-overlay-visible {
 .app {
   max-width: 100vw;
   margin: 0 auto;
-  min-height: 100vh;
-  padding-bottom: 5rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  /* Добавляем отступ сверху для безопасной зоны */
-  padding-top: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Убираем скролл всей страницы */
+  padding-bottom: 100px; /* Отступ от навигации */
 }
 
-/* Хедер */
+/* Хедер - адаптивный */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  /* Дополнительный отступ сверху для безопасной зоны */
-  margin-top: env(safe-area-inset-top, 0px);
+  padding: 3vh 6vw 2vh;
+  flex-shrink: 0;
 }
 
 /* Хедер в базе знаний без кнопки меню */
@@ -97,30 +93,32 @@ body.chat-overlay-visible {
   color: white;
 }
 
-/* Приветствие */
+/* Приветствие - адаптивное */
 .welcome {
-  padding: 0 24px 32px;
+  padding: 0 6vw 3vh;
+  flex-shrink: 0;
 }
 
 .welcome-title {
-  font-size: 32px;
+  font-size: clamp(24px, 6vw, 32px);
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 1vh;
   color: #F5F1E8;
   line-height: 1.2;
 }
 
 .welcome-name {
-  font-size: 20px;
+  font-size: clamp(16px, 4vw, 20px);
   color: #F5F1E8;
   opacity: 0.8;
 }
 
-/* Поиск */
+/* Поиск - статичный и адаптивный */
 .search-container {
-  margin: 0 24px 32px;
+  margin: 0 6vw 2vh;
   position: relative;
   transition: opacity 0.3s ease;
+  flex-shrink: 0; /* Не сжимается */
 }
 
 /* Скрываем поиск когда чат активен */
@@ -131,11 +129,11 @@ body.chat-overlay-visible .search-container {
 
 .search-input {
   width: 100%;
-  padding: 18px 50px 18px 24px;
+  padding: clamp(14px, 3vw, 18px) clamp(40px, 10vw, 50px) clamp(14px, 3vw, 18px) clamp(20px, 5vw, 24px);
   border-radius: 28px;
   border: none;
   background: #F5F1E8;
-  font-size: 16px;
+  font-size: clamp(14px, 3.5vw, 16px);
   color: #3B4F6B;
 }
 
@@ -157,19 +155,20 @@ body.chat-overlay-visible .search-container {
   justify-content: center;
 }
 
-/* Карточка рекомендаций */
+/* Карточка рекомендаций - статичная и адаптивная */
 .recommendations-card {
-  margin: 0 24px 40px;
+  margin: 0 6vw 2vh;
   background: #F5F1E8;
-  border-radius: 24px;
-  padding: 24px;
+  border-radius: clamp(20px, 5vw, 24px);
+  padding: clamp(20px, 5vw, 24px);
   color: #333;
+  flex-shrink: 0; /* Не сжимается */
 }
 
 .card-title {
-  font-size: 22px;
+  font-size: clamp(18px, 4.5vw, 22px);
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: clamp(16px, 4vw, 20px);
   color: #3B4F6B;
   line-height: 1.3;
 }
@@ -209,36 +208,80 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Быстрые запросы */
+/* Быстрые запросы - блок на всю ширину с круглыми углами только сверху и снизу */
 .quick-requests {
-  padding: 24px;
+  padding: clamp(20px, 5vw, 24px);
   background: #3B4F6B;
-  margin: 0 24px;
-  border-radius: 28px;
-  margin-bottom: 40px;
+  margin: 0 0 2vh 0; /* Касается боковых краев экрана */
+  border-radius: clamp(20px, 5vw, 28px) clamp(20px, 5vw, 28px) 0 0; /* Только верхние углы круглые */
+  flex: 1; /* Занимает оставшееся место */
   overflow: hidden;
-  transition: all 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Важно для flex */
+  max-height: calc(100vh - 45vh); /* Ограничиваем высоту чтобы поместились 3 карточки */
 }
 
-.quick-requests:not(.expanded) .quick-card:nth-child(n+4) {
-  display: none;
+/* Заголовок секции - фиксированный */
+.quick-requests .section-title {
+  flex-shrink: 0;
+  margin-bottom: clamp(16px, 4vw, 20px);
+  font-size: clamp(20px, 5vw, 24px);
+  font-weight: 600;
+  color: #B0BCC9;
+  line-height: 1.3;
 }
 
-/* Для спортсменов */
+/* Контейнер карточек - скроллируемый */
+.quick-requests .quick-cards {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 3vw, 16px);
+  padding-right: 8px; /* Отступ для скроллбара */
+}
+
+/* Скрываем webkit scrollbar но оставляем функциональность */
+.quick-requests .quick-cards::-webkit-scrollbar {
+  width: 4px;
+}
+
+.quick-requests .quick-cards::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.quick-requests .quick-cards::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.quick-requests .quick-cards::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Для спортсменов - внутри скроллируемого окна */
 .sports-requests {
-  padding: 24px;
-  background: #3B4F6B;
-  margin: 0 24px;
-  border-radius: 28px;
-  margin-bottom: 40px;
-  opacity: 0;
-  transform: translateY(50px);
-  transition: all 0.5s ease;
+  margin-top: clamp(24px, 6vw, 32px);
+  padding-top: clamp(20px, 5vw, 24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sports-requests.visible {
-  opacity: 1;
-  transform: translateY(0);
+.sports-requests .section-title {
+  font-size: clamp(20px, 5vw, 24px);
+  font-weight: 600;
+  margin-bottom: clamp(16px, 4vw, 20px);
+  color: #B0BCC9;
+  line-height: 1.3;
+}
+
+/* Контейнер карточек спортсменов с отступами */
+.sports-cards {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 3vw, 16px);
 }
 
 .section-title {
@@ -258,23 +301,20 @@ body.chat-overlay-visible .search-container {
   line-height: 1.3;
 }
 
-.quick-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+/* Стили карточек перенесены в .quick-requests .quick-cards */
 
 .quick-card {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
-  padding: 24px;
+  gap: clamp(16px, 4vw, 20px);
+  padding: clamp(18px, 4.5vw, 24px);
   background: white;
-  border-radius: 20px;
+  border-radius: clamp(16px, 4vw, 20px);
   border: none;
   cursor: pointer;
   text-align: left;
   transition: transform 0.2s;
+  min-height: clamp(80px, 18vh, 120px); /* Адаптивная высота карточки */
 }
 
 .quick-card:active {
@@ -303,15 +343,15 @@ body.chat-overlay-visible .search-container {
 }
 
 .quick-title {
-  font-size: 18px;
+  font-size: clamp(16px, 3.8vw, 18px);
   font-weight: 600;
   color: #3B4F6B;
-  margin-bottom: 6px;
+  margin-bottom: clamp(4px, 1vw, 6px);
   line-height: 1.3;
 }
 
 .quick-subtitle {
-  font-size: 15px;
+  font-size: clamp(13px, 3.2vw, 15px);
   color: #8B8B8B;
   line-height: 1.4;
 }
@@ -538,10 +578,7 @@ body.chat-overlay-visible .search-container {
   opacity: 1;
   transition: opacity 0.8s ease;
   cursor: pointer;
-  /* Добавляем отступы для безопасной зоны */
-  padding-top: env(safe-area-inset-top, 44px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-sizing: border-box;
+  /* Убираем отступы - полный экран */
 }
 
 .welcome-screen.fade-out {
@@ -609,9 +646,7 @@ body.chat-overlay-visible .search-container {
   padding-bottom: 5rem;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Добавляем отступ сверху для безопасной зоны */
-  padding-top: env(safe-area-inset-top, 44px);
-  box-sizing: border-box;
+  /* Убираем отступ сверху */
 }
 
 .knowledge-base.active {
@@ -630,10 +665,7 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden; /* Убираем скролл у контейнера */
-  /* Добавляем отступы для безопасной зоны */
-  padding-top: env(safe-area-inset-top, 44px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  box-sizing: border-box;
+  /* Убираем отступы - полный экран */
 }
 
 .chat-overlay.active {

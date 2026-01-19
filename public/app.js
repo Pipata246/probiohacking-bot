@@ -466,58 +466,19 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Обработчик скролла для изменения цвета навигации и показа дополнительных карточек
+// Обработчик скролла для изменения цвета навигации (упрощенная версия)
 const bottomNav = document.querySelector('.bottom-nav');
-const quickRequests = document.querySelector('.quick-requests');
-const sportsRequests = document.querySelector('.sports-requests');
 
 function updateNavBackground() {
-  if (!bottomNav || !quickRequests || !sportsRequests) return;
+  // Простая логика - можно расширить при необходимости
+  if (!bottomNav) return;
   
-  const quickRequestsRect = quickRequests.getBoundingClientRect();
-  const sportsRequestsRect = sportsRequests.getBoundingClientRect();
-  const windowHeight = window.innerHeight;
-  
-  // Если любая из секций быстрых запросов видна в области нижней навигации
-  if ((quickRequestsRect.bottom > windowHeight - 80 && quickRequestsRect.top < windowHeight) ||
-      (sportsRequestsRect.bottom > windowHeight - 80 && sportsRequestsRect.top < windowHeight)) {
-    bottomNav.classList.add('blue-bg');
-  } else {
-    bottomNav.classList.remove('blue-bg');
-  }
-}
-
-function handleQuickRequestsExpansion() {
-  if (!quickRequests) return;
-  
-  const scrollY = window.scrollY;
-  
-  // Показать дополнительные карточки при любом скролле вниз
-  if (scrollY > 50) {
-    quickRequests.classList.add('expanded');
-  } else {
-    quickRequests.classList.remove('expanded');
-  }
-}
-
-function handleSportsRequestsVisibility() {
-  if (!quickRequests || !sportsRequests) return;
-  
-  const quickRequestsRect = quickRequests.getBoundingClientRect();
-  const scrollY = window.scrollY;
-  
-  // Показать секцию для спортсменов когда пользователь прокрутил дальше быстрых запросов
-  if (scrollY > 300 || quickRequestsRect.bottom < window.innerHeight * 0.5) {
-    sportsRequests.classList.add('visible');
-  } else {
-    sportsRequests.classList.remove('visible');
-  }
+  // Всегда используем базовый цвет навигации
+  bottomNav.classList.remove('blue-bg');
 }
 
 function handleScroll() {
   updateNavBackground();
-  handleQuickRequestsExpansion();
-  handleSportsRequestsVisibility();
 }
 
 window.addEventListener('scroll', handleScroll);
