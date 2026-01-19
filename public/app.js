@@ -124,8 +124,17 @@ function addUserMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
   const messageDiv = document.createElement('div');
   messageDiv.className = 'user-message';
+  
+  // Создаем аватар пользователя с учетом данных из Telegram
+  let userAvatarHtml = '';
+  if (user?.photo_url) {
+    userAvatarHtml = `<div class="user-avatar" style="background-image: url(${user.photo_url}); background-size: cover; background-position: center;"></div>`;
+  } else {
+    userAvatarHtml = `<div class="user-avatar">${userName.charAt(0).toUpperCase()}</div>`;
+  }
+  
   messageDiv.innerHTML = `
-    <div class="user-avatar">${userName.charAt(0).toUpperCase()}</div>
+    ${userAvatarHtml}
     <div class="message-bubble">
       <p class="message-text">${text}</p>
     </div>
@@ -155,16 +164,47 @@ function addBotMessage(text) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+function addBotMessageWithButton(text, buttonText, buttonAction) {
+  const chatMessages = document.getElementById('chatMessages');
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'bot-message';
+  messageDiv.innerHTML = `
+    <div class="bot-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="10" cy="11" r="0.5" fill="white"/>
+        <circle cx="14" cy="11" r="0.5" fill="white"/>
+      </svg>
+    </div>
+    <div class="message-bubble">
+      <p class="message-text">${text}</p>
+      <button class="message-button" onclick="${buttonAction}">${buttonText}</button>
+    </div>
+  `;
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 function openChatWithMessage(message) {
   showChat();
   // Очищаем чат
   document.getElementById('chatMessages').innerHTML = '';
   // Добавляем сообщение пользователя
   addUserMessage(message);
-  // Добавляем ответ бота (заглушка)
+  // Добавляем ответ бота с кнопкой диагностики
   setTimeout(() => {
-    addBotMessage('Извините, ИИ-помощник находится в разработке. Скоро мы сможем предоставить вам персональные рекомендации!');
+    addBotMessageWithButton(
+      'Для данного запроса мне требуются твои данные, однако ты не прошел диагностику и я не могу тебе помочь. Пройди диагностику и загрузи свои анализы для лучшего ответа!',
+      'Пройти диагностику',
+      'handleDiagnosticButton()'
+    );
   }, 1000);
+}
+
+function handleDiagnosticButton() {
+  // Показываем алерт что функция в разработке
+  tg.showAlert('Диагностика\n\nФункция в разработке');
 }
 
 function openChatFromHistory() {
@@ -302,15 +342,27 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Обработка кнопки создания программы
-  if (e.target.closest('.create-program-btn')) {
-    tg.showAlert('Создание персональной программы\n\nФункция в разработке');
+  // Обработка кнопки "Создать новый чат"
+  if (e.target.closest('.new-chat-btn') || e.target.closest('#newChatBtn')) {
+    // Сначала закрываем боковое меню
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    if (sidebar && sidebarOverlay) {
+      sidebar.classList.remove('active');
+      sidebarOverlay.classList.remove('active');
+    }
+    
+    // Создаем новый чат
+    showChat();
+    // Очищаем чат для нового разговора
+    document.getElementById('chatMessages').innerHTML = '';
+    
     return;
   }
   
-  // Обработка кнопки "Создать новый чат"
-  if (e.target.closest('.new-chat-btn')) {
-    tg.showAlert('Создание нового чата\n\nФункция в разработке');
+  // Обработка кнопки создания программы
+  if (e.target.closest('.create-program-btn')) {
+    tg.showAlert('Создание персональной программы\n\nФункция в разработке');
     return;
   }
   

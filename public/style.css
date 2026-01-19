@@ -378,6 +378,32 @@ body.chat-overlay-visible .search-container {
   border-bottom: 1px solid #F0EDE6;
 }
 
+.sidebar-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.new-chat-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-chat-btn:hover {
+  background: rgba(59, 79, 107, 0.1);
+}
+
+.new-chat-btn:active {
+  background: rgba(59, 79, 107, 0.2);
+}
+
 .sidebar-title {
   font-size: 20px;
   font-weight: 600;
@@ -643,6 +669,18 @@ body.chat-overlay-visible .search-container {
 .user-avatar {
   background: #FF6B3D;
   color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 16px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .message-bubble {
@@ -670,6 +708,34 @@ body.chat-overlay-visible .search-container {
   margin: 0;
   word-wrap: break-word;
   word-break: break-word;
+}
+
+/* Кнопка в сообщении бота */
+.message-button {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 12px 24px;
+  background: transparent;
+  border: 2px solid #F5F1E8;
+  border-radius: 20px;
+  color: #F5F1E8;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.message-button:hover {
+  background: rgba(245, 241, 232, 0.1);
+}
+
+.message-button:active {
+  background: rgba(245, 241, 232, 0.2);
+  transform: scale(0.98);
 }
 
 .chat-input-container {
