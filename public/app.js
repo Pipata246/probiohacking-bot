@@ -79,18 +79,6 @@ function showMainApp() {
   document.body.classList.remove('chat-overlay-visible'); // Разблокируем скролл body
   isChatModeActive = false; // Выходим из режима чата
   
-  // Принудительно обеспечиваем правильную структуру быстрых запросов
-  const quickRequestsContainer = document.querySelector('.quick-requests');
-  const quickCardsContainer = document.querySelector('.quick-requests .quick-cards');
-  
-  if (quickRequestsContainer && quickCardsContainer) {
-    // Убеждаемся что контейнер имеет правильные стили
-    quickRequestsContainer.style.display = 'flex';
-    quickRequestsContainer.style.flexDirection = 'column';
-    quickCardsContainer.style.overflowY = 'auto';
-    quickCardsContainer.style.flex = '1';
-  }
-  
   // Устанавливаем активную кнопку "Главная" во всех навигациях
   document.querySelectorAll('.nav-item').forEach((item, index) => {
     item.classList.remove('active');
@@ -442,8 +430,8 @@ document.addEventListener('click', (e) => {
   // Обработка карточек быстрых запросов
   if (e.target.closest('.quick-card')) {
     const card = e.target.closest('.quick-card');
-    const quickCards = document.querySelectorAll('.quick-requests .quick-card');
-    const sportsCards = document.querySelectorAll('.sports-requests .quick-card');
+    const quickCards = document.querySelectorAll('.quick-requests-section .quick-card');
+    const sportsCards = document.querySelectorAll('.sports-section .quick-card');
     const allCards = [...quickCards, ...sportsCards];
     const index = allCards.indexOf(card);
     

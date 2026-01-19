@@ -87,7 +87,7 @@
             <p class="welcome-name">Александр</p>
         </section>
 
-        <!-- Поиск -->
+        <!-- Поиск - СТАТИЧНЫЙ -->
         <div class="search-container">
             <input type="text" class="search-input" placeholder="Спросите о рекомендациях">
             <button class="search-btn">
@@ -97,7 +97,7 @@
             </button>
         </div>
 
-        <!-- Персональные рекомендации -->
+        <!-- Персональные рекомендации - СТАТИЧНЫЕ -->
         <section class="recommendations-card">
             <h2 class="card-title">Персональные рекомендации</h2>
             <div class="card-content">
@@ -110,13 +110,14 @@
             <button class="create-program-btn">Создание программу</button>
         </section>
 
-        <!-- Быстрые запросы со скроллом -->
-        <section class="quick-requests">
-            <h2 class="section-title">Быстрые запросы</h2>
-            <div class="quick-cards">
+        <!-- СКРОЛЛИРУЕМЫЙ КОНТЕЙНЕР ДЛЯ БЫСТРЫХ ЗАПРОСОВ -->
+        <div class="scrollable-requests-container">
+            <section class="quick-requests-section">
+                <h2 class="section-title">Быстрые запросы</h2>
+                
                 <button class="quick-card">
                     <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                         </svg>
                     </div>
@@ -128,7 +129,7 @@
 
                 <button class="quick-card">
                     <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <rect x="12" y="8" width="8" height="16" rx="2" stroke="#000" stroke-width="2"/>
                             <rect x="14" y="14" width="4" height="6" fill="#000"/>
                         </svg>
@@ -141,7 +142,7 @@
 
                 <button class="quick-card">
                     <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <circle cx="16" cy="12" r="4" stroke="#000" stroke-width="2"/>
                             <path d="M10 24C10 20 12 18 16 18C20 18 22 20 22 24" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                             <path d="M22 10L26 6M10 10L6 6" stroke="#000" stroke-width="2" stroke-linecap="round"/>
@@ -155,7 +156,7 @@
 
                 <button class="quick-card">
                     <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <path d="M16 4L20 12L28 12L22 18L24 26L16 22L8 26L10 18L4 12L12 12L16 4Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                         </svg>
                     </div>
@@ -167,7 +168,7 @@
 
                 <button class="quick-card">
                     <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <circle cx="16" cy="16" r="8" stroke="#000" stroke-width="2"/>
                             <path d="M12 12L20 20M20 12L12 20" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                         </svg>
@@ -180,7 +181,7 @@
 
                 <button class="quick-card">
                     <div class="quick-icon-bg">
-                        <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
                             <path d="M8 16L16 8L24 16M16 8V24" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
@@ -190,115 +191,84 @@
                     </div>
                 </button>
 
-                <!-- Для спортсменов внутри скроллируемого окна -->
-                <div class="sports-requests" id="sportsRequests">
+                <!-- Для спортсменов -->
+                <div class="sports-section">
                     <h2 class="section-title">Для спортсменов</h2>
-                    <div class="sports-cards">
-                        <button class="quick-card">
-                            <div class="quick-icon-bg">
-                                <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                    <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="quick-content">
-                                <h3 class="quick-title">Восстановление мышц и энергия</h3>
-                                <p class="quick-subtitle">Как ускорить восстановление мышц и сократить усталость после нагрузок?</p>
-                            </div>
-                        </button>
+                    
+                    <button class="quick-card">
+                        <div class="quick-icon-bg">
+                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                                <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="quick-content">
+                            <h3 class="quick-title">Выносливость</h3>
+                            <p class="quick-subtitle">Как увеличить выносливость и работоспособность?</p>
+                        </div>
+                    </button>
 
-                        <button class="quick-card">
-                            <div class="quick-icon-bg">
-                                <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                    <rect x="12" y="8" width="8" height="16" rx="2" stroke="#000" stroke-width="2"/>
-                                    <rect x="14" y="14" width="4" height="6" fill="#000"/>
-                                </svg>
-                            </div>
-                            <div class="quick-content">
-                                <h3 class="quick-title">Сила и мышечная масса</h3>
-                                <p class="quick-subtitle">Как повысить силовые показатели и укрепить соединительные ткани?</p>
-                            </div>
-                        </button>
+                    <button class="quick-card">
+                        <div class="quick-icon-bg">
+                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                                <path d="M8 16L16 8L24 16M16 8V24" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="quick-content">
+                            <h3 class="quick-title">Восстановление</h3>
+                            <p class="quick-subtitle">Как ускорить восстановление после тренировок?</p>
+                        </div>
+                    </button>
 
-                        <button class="quick-card">
-                            <div class="quick-icon-bg">
-                                <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                    <path d="M8 16C8 16 12 12 16 12C20 12 24 16 24 16M16 12V24" stroke="#000" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                            </div>
-                            <div class="quick-content">
-                                <h3 class="quick-title">Выносливость и оксигенация</h3>
-                                <p class="quick-subtitle">Как улучшить использование кислорода и отсрочить утомления?</p>
-                            </div>
-                        </button>
+                    <button class="quick-card">
+                        <div class="quick-icon-bg">
+                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                                <circle cx="16" cy="16" r="8" stroke="#000" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="quick-content">
+                            <h3 class="quick-title">Сила и масса</h3>
+                            <p class="quick-subtitle">Как набрать мышечную массу и увеличить силу?</p>
+                        </div>
+                    </button>
 
-                        <button class="quick-card">
-                            <div class="quick-icon-bg">
-                                <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                    <circle cx="16" cy="16" r="6" stroke="#000" stroke-width="2"/>
-                                    <path d="M16 10V6M16 26V22M22 16H26M6 16H10" stroke="#000" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                            </div>
-                            <div class="quick-content">
-                                <h3 class="quick-title">Фокус и реакция</h3>
-                                <p class="quick-subtitle">Как усилить скорость реакции и стрессоустойчивость на соревнованиях?</p>
-                            </div>
-                        </button>
+                    <button class="quick-card">
+                        <div class="quick-icon-bg">
+                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                                <path d="M16 4L20 12L28 12L22 18L24 26L16 22L8 26L10 18L4 12L12 12L16 4Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="quick-content">
+                            <h3 class="quick-title">Спортивное питание</h3>
+                            <p class="quick-subtitle">Как правильно питаться для достижения спортивных целей?</p>
+                        </div>
+                    </button>
 
-                        <button class="quick-card">
-                            <div class="quick-icon-bg">
-                                <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                    <circle cx="16" cy="16" r="4" stroke="#000" stroke-width="2"/>
-                                    <path d="M16 8L20 12L16 16L12 12L16 8Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
-                                    <path d="M16 16L20 20L16 24L12 20L16 16Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="quick-content">
-                                <h3 class="quick-title">Суставы и связки</h3>
-                                <p class="quick-subtitle">Как укрепить суставы, связки и предотвратить травмы при высоких нагрузках?</p>
-                            </div>
-                        </button>
+                    <button class="quick-card">
+                        <div class="quick-icon-bg">
+                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                                <circle cx="16" cy="12" r="4" stroke="#000" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="quick-content">
+                            <h3 class="quick-title">Мотивация</h3>
+                            <p class="quick-subtitle">Как поддерживать мотивацию к тренировкам?</p>
+                        </div>
+                    </button>
 
-                        <button class="quick-card">
-                            <div class="quick-icon-bg">
-                                <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                    <path d="M8 12L16 4L24 12M8 20L16 12L24 20" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="quick-content">
-                                <h3 class="quick-title">Иммунитет при нагрузках</h3>
-                                <p class="quick-subtitle">Как поддержать иммунитет в периоды интенсивных тренировок и снизить риск инфекций?</p>
-                            </div>
-                        </button>
-
-                        <button class="quick-card">
-                            <div class="quick-icon-bg">
-                                <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                    <path d="M16 4V12M16 20V28M8 16H24" stroke="#000" stroke-width="2" stroke-linecap="round"/>
-                                    <circle cx="16" cy="16" r="2" fill="#000"/>
-                                </svg>
-                            </div>
-                            <div class="quick-content">
-                                <h3 class="quick-title">Детокс и очищение</h3>
-                                <p class="quick-subtitle">Как помочь организму выводить метаболиты и снизить интоксикацию после нагрузок?</p>
-                            </div>
-                        </button>
-
-                        <button class="quick-card">
-                            <div class="quick-icon-bg">
-                                <svg class="quick-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                    <path d="M8 20C8 20 12 16 16 16C20 16 24 20 24 20M12 24C12 24 14 22 16 22C18 22 20 24 20 24" stroke="#000" stroke-width="2" stroke-linecap="round"/>
-                                </svg>
-                            </div>
-                            <div class="quick-content">
-                                <h3 class="quick-title">Качество сна и нейровосстановление</h3>
-                                <p class="quick-subtitle">Как улучшить глубокий сон и ускорить восстановление ЦНС после нагрузок?</p>
-                            </div>
-                        </button>
-                    </div>
+                    <button class="quick-card">
+                        <div class="quick-icon-bg">
+                            <svg class="quick-icon" width="24" height="24" viewBox="0 0 32 32" fill="none">
+                                <rect x="12" y="8" width="8" height="16" rx="2" stroke="#000" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="quick-content">
+                            <h3 class="quick-title">Травмы</h3>
+                            <p class="quick-subtitle">Как предотвратить травмы и ускорить заживление?</p>
+                        </div>
+                    </button>
                 </div>
-            </div>
-        </section>
-
+            </section>
+        </div>
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
             <button class="nav-item active">

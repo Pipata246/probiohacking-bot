@@ -208,95 +208,65 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Быстрые запросы - блок на всю ширину с круглыми углами только сверху и снизу */
-.quick-requests {
-  padding: clamp(16px, 4vw, 20px);
-  background: #3B4F6B;
-  margin: 0 0 2vh 0; /* Касается боковых краев экрана */
-  border-radius: clamp(20px, 5vw, 28px) clamp(20px, 5vw, 28px) 0 0; /* Только верхние углы круглые */
-  flex: 1; /* Занимает оставшееся место */
+/* НОВАЯ СИСТЕМА СКРОЛЛА - ПОЛНОСТЬЮ ПЕРЕПИСАННАЯ */
+
+/* Главный контейнер приложения */
+.main-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   overflow: hidden;
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 0; /* Важно для flex */
-  max-height: calc(100vh - 35vh); /* Увеличиваем высоту чтобы поместились 3 карточки */
 }
 
-/* Заголовок секции - фиксированный */
-.quick-requests .section-title {
-  flex-shrink: 0;
-  margin-bottom: clamp(12px, 3vw, 16px);
-  font-size: clamp(18px, 4.5vw, 22px);
-  font-weight: 600;
-  color: #B0BCC9;
-  line-height: 1.2;
+/* Статичные элементы сверху */
+.search-container,
+.recommendations-card {
+  flex-shrink: 0; /* Не сжимаются */
 }
 
-/* Контейнер карточек - скроллируемый */
-.quick-requests .quick-cards {
-  flex: 1 !important;
-  overflow-y: auto !important;
+/* СКРОЛЛИРУЕМЫЙ КОНТЕЙНЕР ДЛЯ БЫСТРЫХ ЗАПРОСОВ */
+.scrollable-requests-container {
+  flex: 1; /* Занимает все оставшееся место */
+  overflow-y: auto;
   overflow-x: hidden;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: clamp(8px, 2vw, 12px);
-  padding-right: 8px; /* Отступ для скроллбара */
+  background: #3B4F6B;
+  margin: 0;
+  border-radius: clamp(20px, 5vw, 28px) clamp(20px, 5vw, 28px) 0 0;
+  padding: clamp(16px, 4vw, 20px);
+  margin-bottom: 80px; /* Отступ для навигации */
 }
 
-/* Скрываем webkit scrollbar но оставляем функциональность */
-.quick-requests .quick-cards::-webkit-scrollbar {
-  width: 4px;
-}
-
-.quick-requests .quick-cards::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-
-.quick-requests .quick-cards::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-}
-
-.quick-requests .quick-cards::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* Для спортсменов - внутри скроллируемого окна */
-.sports-requests {
-  margin-top: clamp(24px, 6vw, 32px);
-  padding-top: clamp(20px, 5vw, 24px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sports-requests .section-title {
-  font-size: clamp(18px, 4.5vw, 22px);
-  font-weight: 600;
-  margin-bottom: clamp(12px, 3vw, 16px);
-  color: #B0BCC9;
-  line-height: 1.2;
-}
-
-/* Контейнер карточек спортсменов с отступами */
-.sports-cards {
+/* Секция быстрых запросов внутри скроллируемого контейнера */
+.quick-requests-section {
   display: flex;
   flex-direction: column;
   gap: clamp(8px, 2vw, 12px);
 }
 
-/* Заголовки в базе знаний */
-.knowledge-section .section-title {
-  flex: 1;
-  font-size: 18px;
+/* Заголовки секций */
+.quick-requests-section .section-title,
+.sports-section .section-title {
+  font-size: clamp(18px, 4.5vw, 22px);
   font-weight: 600;
-  color: #3B4F6B;
-  line-height: 1.3;
+  margin-bottom: clamp(12px, 3vw, 16px);
+  color: #B0BCC9;
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
-/* Стили карточек перенесены в .quick-requests .quick-cards */
+/* Секция для спортсменов */
+.sports-section {
+  margin-top: clamp(24px, 6vw, 32px);
+  padding-top: clamp(20px, 5vw, 24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 2vw, 12px);
+}
 
+/* Карточки быстрых запросов */
 .quick-card {
-  display: flex !important;
+  display: flex;
   align-items: flex-start;
   gap: clamp(12px, 3vw, 16px);
   padding: clamp(14px, 3.5vw, 18px);
@@ -306,8 +276,10 @@ body.chat-overlay-visible .search-container {
   cursor: pointer;
   text-align: left;
   transition: transform 0.2s;
-  min-height: clamp(65px, 14vh, 85px); /* Уменьшенная высота карточки для помещения 3 карточек */
-  flex-shrink: 0 !important; /* Карточки не сжимаются */
+  min-height: clamp(65px, 14vh, 85px);
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .quick-card:active {
@@ -346,6 +318,34 @@ body.chat-overlay-visible .search-container {
 .quick-subtitle {
   font-size: clamp(11px, 2.8vw, 13px);
   color: #8B8B8B;
+  line-height: 1.3;
+}
+
+/* Скроллбар для контейнера */
+.scrollable-requests-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollable-requests-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.scrollable-requests-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+.scrollable-requests-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Заголовки в базе знаний */
+.knowledge-section .section-title {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  color: #3B4F6B;
   line-height: 1.3;
 }
 
