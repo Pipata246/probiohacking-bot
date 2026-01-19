@@ -27,6 +27,7 @@ const mainApp = document.getElementById('mainApp');
 const knowledgeBase = document.getElementById('knowledgeBase');
 const diagnosticsPage = document.getElementById('diagnosticsPage');
 const chatOverlay = document.getElementById('chatOverlay');
+const diagnosticForm = document.getElementById('diagnosticForm');
 
 // Состояние чата
 let isChatModeActive = false;
@@ -269,6 +270,339 @@ function handleDiagnosticButton() {
   tg.showAlert('Диагностика\n\nФункция в разработке');
 }
 
+function showDiagnosticForm() {
+  // Создаем форму диагностики как полноэкранный оверлей внутри диагностики
+  const diagnosticForm = document.createElement('div');
+  diagnosticForm.className = 'diagnostic-form-overlay';
+  diagnosticForm.id = 'diagnosticFormOverlay';
+  
+  diagnosticForm.innerHTML = `
+    <!-- Хедер формы -->
+    <header class="header">
+      <button class="menu-btn" id="diagnosticFormMenu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="avatar" id="diagnosticFormAvatar">AM</div>
+    </header>
+    
+    <div class="diagnostic-form-content">
+      <div class="form-step" id="personalDataStep">
+        <h2 class="form-main-title">Диагностическая анкета:<br>оценка систем организма</h2>
+        
+        <!-- Выбор пола -->
+        <div class="gender-selection">
+          <label class="gender-option">
+            <input type="radio" name="gender" value="male" required>
+            <span class="gender-radio"></span>
+            <span class="gender-text">Мужчина</span>
+          </label>
+          <label class="gender-option">
+            <input type="radio" name="gender" value="female" required>
+            <span class="gender-radio"></span>
+            <span class="gender-text">Женщина</span>
+          </label>
+        </div>
+        
+        <!-- Поля ввода -->
+        <div class="form-fields">
+          <div class="form-field">
+            <label class="field-label">ФИО</label>
+            <input type="text" class="field-input" id="fullName" placeholder="Иванов Иван Иванович">
+          </div>
+          
+          <div class="form-field">
+            <label class="field-label">Дата рождения</label>
+            <input type="text" class="field-input" id="birthDate" placeholder="01.01.1970г">
+          </div>
+          
+          <div class="form-field">
+            <label class="field-label">Ваша профессия</label>
+            <input type="text" class="field-input" id="profession" placeholder="Инженер">
+          </div>
+          
+          <div class="form-field">
+            <label class="field-label">Город проживания</label>
+            <input type="text" class="field-input" id="city" placeholder="Москва">
+          </div>
+          
+          <div class="form-field">
+            <label class="field-label">Вес</label>
+            <input type="text" class="field-input" id="weight" placeholder="">
+          </div>
+          
+          <div class="form-field">
+            <label class="field-label">Рост</label>
+            <input type="text" class="field-input" id="height" placeholder="">
+          </div>
+          
+          <div class="form-field">
+            <label class="field-label">Спорт</label>
+            <input type="text" class="field-input" id="sport" placeholder="Занимаетесь ли вы спортом?">
+          </div>
+        </div>
+        
+        <!-- Навигация формы -->
+        <div class="form-navigation">
+          <button class="nav-circle-btn nav-circle-btn-active" id="formBackBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M19 12H5M12 19L5 12L12 5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="nav-circle-btn nav-circle-btn-primary" id="formNextBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M12 5L19 12L12 19" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <div class="form-step hidden" id="surveyStep">
+        <div class="survey-question" id="surveyQuestion">
+          <!-- Вопросы будут загружаться динамически -->
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Добавляем форму в страницу диагностики
+  const diagnosticsPage = document.getElementById('diagnosticsPage');
+  diagnosticsPage.appendChild(diagnosticForm);
+  
+  // Обновляем аватар в форме
+  updateAvatar(document.getElementById('diagnosticFormAvatar'), user, userName);
+  
+  // Добавляем обработчики событий
+  setupDiagnosticFormHandlers();
+}
+
+function setupDiagnosticFormHandlers() {
+  const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+  const menuBtn = document.getElementById('diagnosticFormMenu');
+  const formBackBtn = document.getElementById('formBackBtn');
+  const formNextBtn = document.getElementById('formNextBtn');
+  const personalDataStep = document.getElementById('personalDataStep');
+  const surveyStep = document.getElementById('surveyStep');
+  
+  // Кнопка меню - возврат к диагностике
+  menuBtn.addEventListener('click', () => {
+    diagnosticFormOverlay.remove();
+  });
+  
+  // Кнопка "Назад" в навигации формы - АКТИВНА для выхода
+  formBackBtn.addEventListener('click', () => {
+    diagnosticFormOverlay.remove();
+  });
+  
+  // Убираем disabled с кнопки назад
+  formBackBtn.disabled = false;
+  
+  // Кнопка "Вперед" в навигации формы
+  formNextBtn.addEventListener('click', () => {
+    if (validatePersonalDataNew()) {
+      savePersonalDataNew();
+      personalDataStep.classList.add('hidden');
+      surveyStep.classList.remove('hidden');
+      initSurvey();
+    }
+  });
+}
+
+function validatePersonalDataNew() {
+  const gender = document.querySelector('input[name="gender"]:checked');
+  const fullName = document.getElementById('fullName').value.trim();
+  
+  if (!gender) {
+    tg.showAlert('Пожалуйста, выберите ваш пол');
+    return false;
+  }
+  
+  if (!fullName) {
+    tg.showAlert('Пожалуйста, введите ваше ФИО');
+    return false;
+  }
+  
+  return true;
+}
+
+function savePersonalDataNew() {
+  const personalData = {
+    gender: document.querySelector('input[name="gender"]:checked').value,
+    fullName: document.getElementById('fullName').value.trim(),
+    birthDate: document.getElementById('birthDate').value.trim(),
+    profession: document.getElementById('profession').value.trim(),
+    city: document.getElementById('city').value.trim(),
+    weight: document.getElementById('weight').value.trim(),
+    height: document.getElementById('height').value.trim(),
+    sport: document.getElementById('sport').value.trim(),
+    timestamp: new Date().toISOString()
+  };
+  
+  // Сохраняем в localStorage (временно)
+  localStorage.setItem('diagnosticPersonalData', JSON.stringify(personalData));
+  console.log('Личные данные сохранены:', personalData);
+}
+
+let currentQuestionIndex = 0;
+const surveyQuestions = [
+  {
+    id: 1,
+    question: "Как вы оцениваете свой общий уровень энергии в течение дня?",
+    type: "scale",
+    options: [
+      { value: 1, label: "Очень низкий" },
+      { value: 2, label: "Низкий" },
+      { value: 3, label: "Средний" },
+      { value: 4, label: "Высокий" },
+      { value: 5, label: "Очень высокий" }
+    ]
+  },
+  {
+    id: 2,
+    question: "Как часто вы испытываете усталость без видимых причин?",
+    type: "multiple",
+    options: [
+      { value: "never", label: "Никогда" },
+      { value: "rarely", label: "Редко" },
+      { value: "sometimes", label: "Иногда" },
+      { value: "often", label: "Часто" },
+      { value: "always", label: "Постоянно" }
+    ]
+  },
+  // Добавим остальные вопросы позже, когда получим скриншоты
+];
+
+function initSurvey() {
+  currentQuestionIndex = 0;
+  showQuestion(currentQuestionIndex);
+  setupSurveyNavigation();
+}
+
+function showQuestion(index) {
+  const question = surveyQuestions[index];
+  const questionContainer = document.getElementById('surveyQuestion');
+  
+  let optionsHtml = '';
+  
+  if (question.type === 'scale') {
+    optionsHtml = question.options.map(option => `
+      <label class="scale-option">
+        <input type="radio" name="question_${question.id}" value="${option.value}">
+        <span class="scale-number">${option.value}</span>
+        <span class="scale-label">${option.label}</span>
+      </label>
+    `).join('');
+    optionsHtml = `<div class="scale-options">${optionsHtml}</div>`;
+  } else if (question.type === 'multiple') {
+    optionsHtml = question.options.map(option => `
+      <label class="multiple-option">
+        <input type="radio" name="question_${question.id}" value="${option.value}">
+        <span class="option-custom"></span>
+        ${option.label}
+      </label>
+    `).join('');
+    optionsHtml = `<div class="multiple-options">${optionsHtml}</div>`;
+  }
+  
+  questionContainer.innerHTML = `
+    <h3 class="question-title">${question.question}</h3>
+    ${optionsHtml}
+  `;
+}
+
+
+
+function setupSurveyNavigation() {
+  const prevBtn = document.getElementById('formBackBtn');
+  const nextBtn = document.getElementById('formNextBtn');
+  
+  // Обновляем обработчики для режима опроса
+  prevBtn.onclick = () => {
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      showQuestion(currentQuestionIndex);
+      updateNavigationButtons();
+    } else {
+      // Если это первый вопрос, возвращаемся к форме данных
+      const surveyStep = document.getElementById('surveyStep');
+      const personalDataStep = document.getElementById('personalDataStep');
+      surveyStep.classList.add('hidden');
+      personalDataStep.classList.remove('hidden');
+      
+      // Восстанавливаем обработчики для формы данных
+      setupDiagnosticFormHandlers();
+    }
+  };
+  
+  nextBtn.onclick = () => {
+    const currentQuestion = surveyQuestions[currentQuestionIndex];
+    const selectedAnswer = document.querySelector(`input[name="question_${currentQuestion.id}"]:checked`);
+    
+    if (!selectedAnswer) {
+      tg.showAlert('Пожалуйста, выберите ответ');
+      return;
+    }
+    
+    // Сохраняем ответ
+    saveSurveyAnswer(currentQuestion.id, selectedAnswer.value);
+    
+    if (currentQuestionIndex < surveyQuestions.length - 1) {
+      currentQuestionIndex++;
+      showQuestion(currentQuestionIndex);
+      updateNavigationButtons();
+    } else {
+      completeSurvey();
+    }
+  };
+  
+  updateNavigationButtons();
+}
+
+function updateNavigationButtons() {
+  const prevBtn = document.getElementById('formBackBtn');
+  const nextBtn = document.getElementById('formNextBtn');
+  
+  // Кнопка назад всегда активна (можно вернуться к предыдущему вопросу или к форме данных)
+  prevBtn.classList.remove('nav-circle-btn-active');
+  prevBtn.classList.add('nav-circle-btn-active');
+  
+  if (currentQuestionIndex === surveyQuestions.length - 1) {
+    nextBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M20 6L9 17L4 12" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+  } else {
+    nextBtn.innerHTML = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M5 12H19M12 5L19 12L12 19" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+  }
+}
+
+function saveSurveyAnswer(questionId, answer) {
+  let surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
+  surveyAnswers[questionId] = answer;
+  localStorage.setItem('surveyAnswers', JSON.stringify(surveyAnswers));
+}
+
+function completeSurvey() {
+  const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+  
+  // Показываем сообщение о завершении
+  tg.showAlert('Спасибо! Ваши ответы сохранены.\nВ ближайшее время мы подготовим для вас персональные рекомендации.');
+  
+  // Закрываем форму
+  diagnosticFormOverlay.remove();
+  
+  // Можно добавить логику отправки данных на сервер
+  console.log('Опрос завершен');
+  console.log('Личные данные:', JSON.parse(localStorage.getItem('diagnosticPersonalData')));
+  console.log('Ответы на вопросы:', JSON.parse(localStorage.getItem('surveyAnswers')));
+}
+
 function openChatFromHistory() {
   showChat();
   // Очищаем чат и показываем пустой чат
@@ -326,6 +660,12 @@ document.addEventListener('click', (e) => {
   
   // Обработка навигации
   if (e.target.closest('.nav-item')) {
+    // Проверяем, не находимся ли мы в форме диагностики
+    if (document.getElementById('diagnosticFormOverlay')) {
+      // Если в форме диагностики, не обрабатываем навигацию
+      return;
+    }
+    
     const navItem = e.target.closest('.nav-item');
     const allNavItems = document.querySelectorAll('.nav-item');
     const navIndex = Array.from(allNavItems).indexOf(navItem);
@@ -421,6 +761,25 @@ document.addEventListener('click', (e) => {
     // Очищаем чат для нового разговора
     document.getElementById('chatMessages').innerHTML = '';
     
+    return;
+  }
+  
+  // Обработка кнопки "Заполнить анкету"
+  if (e.target.closest('.fill-form-btn')) {
+    showDiagnosticForm();
+    return;
+  }
+  
+  // Обработка кнопок навигации в диагностической форме
+  if (e.target.closest('#formBackBtn')) {
+    hideDiagnosticForm();
+    return;
+  }
+  
+  if (e.target.closest('#formNextBtn')) {
+    // Здесь будет переход к первому вопросу опросника
+    // Пока показываем алерт
+    tg.showAlert('Переход к опроснику\n\nФункция в разработке');
     return;
   }
   
