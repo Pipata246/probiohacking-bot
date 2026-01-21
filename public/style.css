@@ -410,7 +410,7 @@ body.chat-overlay-visible .search-container {
   font-weight: 500;
 }
 
-/* Контент вопроса - занимает оставшееся место с учетом навигации, БЕЗ СКРОЛЛА */
+/* Контент вопроса - правильные отступы без перекрытия */
 .survey-question {
   flex: 1;
   display: flex;
@@ -420,22 +420,23 @@ body.chat-overlay-visible .search-container {
   margin-bottom: 0;
   min-height: 0;
   overflow: hidden; /* Убираем скролл */
-  padding-bottom: clamp(180px, 35vh, 220px); /* Отступ для навигации */
+  padding-bottom: clamp(160px, 30vh, 200px); /* Увеличенный отступ для навигации */
 }
 
-/* Навигация вопросов - СТАТИЧНАЯ позиция */
+/* Навигация вопросов - ближе к центру с правильными отступами */
 .survey-navigation {
   position: fixed;
-  bottom: clamp(100px, 18vh, 120px);
+  bottom: clamp(120px, 22vh, 140px);
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 0 clamp(40px, 8vw, 60px);
+  padding: 0 clamp(60px, 12vw, 80px);
   flex-shrink: 0;
   z-index: 50;
   pointer-events: none; /* Отключаем события для контейнера */
+  gap: clamp(120px, 25vw, 160px); /* Расстояние между кнопками */
 }
 
 .survey-navigation .nav-circle-btn {
@@ -694,12 +695,12 @@ body.chat-overlay-visible .search-container {
   display: none;
 }
 
-/* Опции ответов - увеличенные для мобильных */
+/* Опции ответов - компактнее для лучшего размещения */
 .survey-options {
   display: flex;
   flex-direction: column;
-  gap: clamp(10px, 2vh, 14px);
-  margin: 0 clamp(16px, 4vw, 24px) clamp(12px, 2vh, 16px);
+  gap: clamp(8px, 1.5vh, 12px);
+  margin: 0 clamp(16px, 4vw, 24px) clamp(8px, 1.5vh, 12px);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -708,7 +709,7 @@ body.chat-overlay-visible .search-container {
   display: flex;
   align-items: flex-start;
   gap: clamp(14px, 3.5vw, 18px);
-  padding: clamp(16px, 4vw, 20px);
+  padding: clamp(14px, 3.5vw, 18px);
   background: #F5F1E8;
   border-radius: clamp(12px, 3vw, 16px);
   cursor: pointer;
@@ -777,11 +778,12 @@ body.chat-overlay-visible .search-container {
   order: 1; /* Текст остается слева */
 }
 
-/* Свой вариант ответа - увеличенный для мобильных */
+/* Свой вариант ответа - правильная ширина и позиционирование */
 .custom-answer-section {
   margin-top: clamp(16px, 3vh, 20px);
   padding: 0 clamp(16px, 4vw, 24px);
   flex-shrink: 0;
+  margin-bottom: clamp(140px, 25vh, 160px); /* Отступ для навигационных кнопок */
 }
 
 .custom-answer-label {
