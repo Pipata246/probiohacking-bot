@@ -961,19 +961,6 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Обработка кнопок навигации в диагностической форме
-  if (e.target.closest('#formBackBtn')) {
-    hideDiagnosticForm();
-    return;
-  }
-  
-  if (e.target.closest('#formNextBtn')) {
-    // Здесь будет переход к первому вопросу опросника
-    // Пока показываем алерт
-    tg.showAlert('Переход к опроснику\n\nФункция в разработке');
-    return;
-  }
-  
   // Обработка кнопки создания программы
   if (e.target.closest('.create-program-btn')) {
     tg.showAlert('Создание персональной программы\n\nФункция в разработке');
