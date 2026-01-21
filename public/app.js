@@ -200,9 +200,9 @@ function returnToDiagnosticFromOtherPage() {
   diagnosticsPage.classList.remove('active'); // Скрываем основную страницу диагностики
   chatOverlay.classList.remove('active');
   
-  // Показываем диагностическую форму если она есть
+  // Показываем диагностическую форму если она есть И режим активен
   const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-  if (diagnosticFormOverlay) {
+  if (diagnosticFormOverlay && isDiagnosticModeActive) {
     diagnosticFormOverlay.style.display = 'flex';
     
     // Восстанавливаем текущий шаг
