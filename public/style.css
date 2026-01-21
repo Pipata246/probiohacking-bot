@@ -2029,12 +2029,14 @@ body.chat-overlay-visible .search-container {
   box-shadow: 0 0 0 2px #3B4F6B;
 }
 
-/* Поле для своего ответа */
+/* Поле для своего ответа - ТАКАЯ ЖЕ ширина как опции */
 .quiz-custom-answer {
   margin-top: 16px;
-  padding: 0 24px;
+  padding: 0; /* Убираем padding чтобы использовать margin как у опций */
+  margin-left: 24px;
+  margin-right: 24px;
   flex-shrink: 0;
-  margin-bottom: 180px;
+  margin-bottom: 200px; /* УВЕЛИЧИВАЕМ отступ для кнопок */
 }
 
 .quiz-custom-label {
@@ -2075,10 +2077,10 @@ body.chat-overlay-visible .search-container {
   font-size: 12px;
 }
 
-/* Навигация квиза */
+/* Навигация квиза - НИЖЕ поля ввода */
 .quiz-navigation {
   position: fixed;
-  bottom: 120px;
+  bottom: 100px; /* ОПУСКАЕМ кнопки ниже */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -2140,13 +2142,14 @@ body.chat-overlay-visible .search-container {
   }
   
   .quiz-custom-answer {
-    padding: 0 16px;
-    margin-bottom: 160px;
+    margin-left: 16px;
+    margin-right: 16px;
+    margin-bottom: 180px; /* Меньший отступ для мобильных */
   }
   
   .quiz-navigation {
     gap: 120px;
-    bottom: 100px;
+    bottom: 80px; /* ОПУСКАЕМ еще ниже для мобильных */
   }
   
   .quiz-nav-btn {
