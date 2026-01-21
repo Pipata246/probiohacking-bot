@@ -32,6 +32,11 @@ const diagnosticForm = document.getElementById('diagnosticForm');
 // Состояние чата
 let isChatModeActive = false;
 
+// Состояние диагностического опросника
+let isDiagnosticModeActive = false;
+let diagnosticCurrentStep = null; // 'personalData' или 'survey'
+let diagnosticCurrentQuestionIndex = 0;
+
 // Показать приложение после клика на приветственный экран
 welcomeScreen.addEventListener('click', () => {
   // Еще раз принудительно расширяем перед показом приложения
@@ -134,6 +139,12 @@ function showDiagnostics() {
   document.body.classList.remove('chat-overlay-visible');
   isChatModeActive = false;
   
+  // Если в режиме диагностики - возвращаемся к опроснику
+  if (isDiagnosticModeActive) {
+    returnToDiagnosticFromOtherPage();
+    return;
+  }
+  
   // Устанавливаем активную кнопку "Диагностика" во всех навигациях
   document.querySelectorAll('.nav-item').forEach((item, index) => {
     item.classList.remove('active');
@@ -177,6 +188,43 @@ function returnToChatFromOtherPage() {
   document.querySelectorAll('.nav-item').forEach((item, index) => {
     item.classList.remove('active');
     if (index % 5 === 0) {
+      item.classList.add('active');
+    }
+  });
+}
+
+function returnToDiagnosticFromOtherPage() {
+  // Возвращаемся в диагностику из другой страницы (если были в режиме диагностики)
+  mainApp.style.display = 'none';
+  knowledgeBase.classList.remove('active');
+  diagnosticsPage.classList.remove('active'); // Скрываем основную страницу диагностики
+  chatOverlay.classList.remove('active');
+  
+  // Показываем диагностическую форму если она есть
+  const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+  if (diagnosticFormOverlay) {
+    diagnosticFormOverlay.style.display = 'flex';
+    
+    // Восстанавливаем текущий шаг
+    const personalDataStep = document.getElementById('personalDataStep');
+    const surveyStep = document.getElementById('surveyStep');
+    
+    if (diagnosticCurrentStep === 'survey') {
+      personalDataStep.classList.add('hidden');
+      surveyStep.classList.remove('hidden');
+      // Восстанавливаем текущий вопрос
+      showQuestion(diagnosticCurrentQuestionIndex);
+      updateProgress();
+    } else {
+      personalDataStep.classList.remove('hidden');
+      surveyStep.classList.add('hidden');
+    }
+  }
+  
+  // Диагностика остается активной
+  document.querySelectorAll('.nav-item').forEach((item, index) => {
+    item.classList.remove('active');
+    if (index % 5 === 1) {
       item.classList.add('active');
     }
   });
@@ -276,6 +324,11 @@ function handleDiagnosticButton() {
 }
 
 function showDiagnosticForm() {
+  // Входим в режим диагностики
+  isDiagnosticModeActive = true;
+  diagnosticCurrentStep = 'personalData';
+  diagnosticCurrentQuestionIndex = 0;
+  
   // Создаем форму диагностики как полноэкранный оверлей внутри диагностики
   const diagnosticForm = document.createElement('div');
   diagnosticForm.className = 'diagnostic-form-overlay';
@@ -491,6 +544,10 @@ function setupDiagnosticFormHandlers() {
   
   // Кнопка "Назад" в форме данных - выход из формы
   formBackBtn.addEventListener('click', () => {
+    // Выходим из режима диагностики
+    isDiagnosticModeActive = false;
+    diagnosticCurrentStep = null;
+    diagnosticCurrentQuestionIndex = 0;
     diagnosticFormOverlay.remove();
   });
   
@@ -501,6 +558,9 @@ function setupDiagnosticFormHandlers() {
       // Переходим к экрану вопросов
       personalDataStep.classList.add('hidden');
       surveyStep.classList.remove('hidden');
+      // Обновляем состояние
+      diagnosticCurrentStep = 'survey';
+      diagnosticCurrentQuestionIndex = 0;
       initSurvey();
     }
   });
@@ -734,6 +794,7 @@ function setupSurveyNavigation() {
   surveyBackBtn.onclick = () => {
     if (currentQuestionIndex > 0) {
       currentQuestionIndex--;
+      diagnosticCurrentQuestionIndex = currentQuestionIndex; // Сохраняем состояние
       showQuestion(currentQuestionIndex);
       updateProgress();
       updateNavigationButtons();
@@ -743,6 +804,7 @@ function setupSurveyNavigation() {
       const personalDataStep = document.getElementById('personalDataStep');
       surveyStep.classList.add('hidden');
       personalDataStep.classList.remove('hidden');
+      diagnosticCurrentStep = 'personalData'; // Обновляем состояние
     }
   };
   
@@ -764,6 +826,7 @@ function setupSurveyNavigation() {
     
     if (currentQuestionIndex < surveyQuestions.length - 1) {
       currentQuestionIndex++;
+      diagnosticCurrentQuestionIndex = currentQuestionIndex; // Сохраняем состояние
       showQuestion(currentQuestionIndex);
       updateProgress();
       updateNavigationButtons();
@@ -807,6 +870,11 @@ function saveSurveyAnswer(questionId, answer) {
 
 function completeSurvey() {
   const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+  
+  // Выходим из режима диагностики
+  isDiagnosticModeActive = false;
+  diagnosticCurrentStep = null;
+  diagnosticCurrentQuestionIndex = 0;
   
   // Показываем сообщение о завершении
   tg.showAlert('Спасибо! Ваши ответы сохранены.\nВ ближайшее время мы подготовим для вас персональные рекомендации.');
@@ -901,7 +969,7 @@ document.addEventListener('click', (e) => {
     if (buttonIndex === 0) { // Главная
       // Закрываем диагностическую форму если она открыта
       const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-      if (diagnosticFormOverlay) {
+      if (diagnosticFormOverlay && !isDiagnosticModeActive) {
         diagnosticFormOverlay.remove();
       }
       
@@ -911,22 +979,31 @@ document.addEventListener('click', (e) => {
       } else if (isChatModeActive && !chatOverlay.classList.contains('active')) {
         // Если в режиме чата, но чат закрыт (например, в базе знаний) - возвращаемся в чат
         returnToChatFromOtherPage();
+      } else if (isDiagnosticModeActive) {
+        // Если в режиме диагностики - скрываем форму но не выходим из режима
+        if (diagnosticFormOverlay) {
+          diagnosticFormOverlay.style.display = 'none';
+        }
+        showMainApp();
       } else {
-        // Обычный переход на главную (не в режиме чата)
+        // Обычный переход на главную (не в режиме чата или диагностики)
         showMainApp();
       }
     } else if (buttonIndex === 1) { // Диагностика
-      // Закрываем диагностическую форму если она открыта
+      // Закрываем диагностическую форму если она открыта и мы НЕ в режиме диагностики
       const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-      if (diagnosticFormOverlay) {
+      if (diagnosticFormOverlay && !isDiagnosticModeActive) {
         diagnosticFormOverlay.remove();
       }
       showDiagnostics();
     } else if (buttonIndex === 4) { // База знаний
-      // Закрываем диагностическую форму если она открыта
+      // Закрываем диагностическую форму если она открыта и мы НЕ в режиме диагностики
       const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-      if (diagnosticFormOverlay) {
+      if (diagnosticFormOverlay && !isDiagnosticModeActive) {
         diagnosticFormOverlay.remove();
+      } else if (diagnosticFormOverlay && isDiagnosticModeActive) {
+        // Если в режиме диагностики - просто скрываем форму
+        diagnosticFormOverlay.style.display = 'none';
       }
       showKnowledgeBase();
     } else {
@@ -940,6 +1017,13 @@ document.addEventListener('click', (e) => {
         // Возвращаемся в чат после алерта
         setTimeout(() => {
           returnToChatFromOtherPage();
+        }, 100);
+      } else if (isDiagnosticModeActive) {
+        // В режиме диагностики показываем алерт, но остаемся в режиме диагностики
+        tg.showAlert(`${pages[buttonIndex]}\n\nСтраница в разработке`);
+        // Возвращаемся в диагностику после алерта
+        setTimeout(() => {
+          returnToDiagnosticFromOtherPage();
         }, 100);
       } else {
         tg.showAlert(`${pages[buttonIndex]}\n\nСтраница в разработке`);
