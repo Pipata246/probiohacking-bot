@@ -411,17 +411,17 @@ body.chat-overlay-visible .search-container {
   font-weight: 500;
 }
 
-/* Контент вопроса - правильный отступ для размещения всех элементов */
+/* Контент вопроса - с правильным размещением поля ввода */
 .survey-question {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 0 clamp(16px, 4vw, 24px);
+  padding: 0;
   margin-bottom: 0;
   min-height: 0;
   overflow: hidden;
-  padding-bottom: 0; /* Убираем лишний отступ */
+  padding-bottom: 200px; /* Отступ для навигации и поля ввода */
 }
 
 /* Навигация вопросов - ФИКСИРОВАННОЕ большое расстояние для мобильных */
@@ -2030,52 +2030,89 @@ body.chat-overlay-visible .search-container {
   box-shadow: 0 0 0 2px #3B4F6B;
 }
 
-/* Поле для своего ответа - ТАКАЯ ЖЕ ширина как опции */
+/* ========================================= */
+/* ПОЛЕ ВВОДА СООБЩЕНИЯ В КВИЗЕ - ПОЛНАЯ ПЕРЕЗАПИСЬ */
+/* ========================================= */
+
+/* Контейнер для поля ввода - новый класс */
 .quiz-custom-answer {
-  margin-top: 12px; /* УМЕНЬШАЕМ отступ сверху */
-  padding: 0; /* Убираем padding чтобы использовать margin как у опций */
-  margin-left: 24px;
-  margin-right: 24px;
+  position: relative;
+  width: 100%;
+  padding: 0 24px;
+  margin-top: 16px;
+  margin-bottom: 0;
   flex-shrink: 0;
-  margin-bottom: 200px; /* УВЕЛИЧИВАЕМ отступ еще больше чтобы поле было полностью видно с самого начала */
+  z-index: 10;
 }
 
+/* Лейбл для поля ввода */
 .quiz-custom-label {
   display: block;
   font-size: 14px;
   color: #FFFFFF;
   margin-bottom: 8px;
   font-weight: 600;
+  line-height: 1.2;
 }
 
+/* Само поле ввода - полностью новые стили */
 .quiz-custom-input {
   width: 100%;
-  padding: 16px;
+  height: 48px;
+  padding: 14px 16px;
   border: none;
   border-radius: 12px;
   font-size: 14px;
   color: #333333;
   background: #FFFFFF;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   box-sizing: border-box;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.quiz-custom-input:focus {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
   outline: none;
+  resize: none;
+  overflow: hidden;
+}
+
+/* Фокус на поле ввода */
+.quiz-custom-input:focus {
   background: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(74, 139, 108, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 0 3px rgba(74, 139, 108, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
+/* Отключенное состояние */
 .quiz-custom-input:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
-  background: #F0F0F0;
+  background: #F5F5F5;
+  color: #999999;
 }
 
+/* Плейсхолдер */
 .quiz-custom-input::placeholder {
   color: #999999;
-  font-size: 12px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* Адаптивные стили для мобильных */
+@media (max-width: 480px) {
+  .quiz-custom-answer {
+    padding: 0 16px;
+    margin-top: 12px;
+  }
+  
+  .quiz-custom-input {
+    height: 44px;
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+  
+  .quiz-custom-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
 }
 
 /* Навигация квиза - НИЖЕ поля ввода */
@@ -2121,41 +2158,38 @@ body.chat-overlay-visible .search-container {
   stroke: #000000;
 }
 
-/* Медиа-запросы для мобильных */
+/* Медиа-запросы для мобильных - обновленные */
 @media (max-width: 480px) {
   .quiz-titles {
     padding: 0 16px;
-    margin-bottom: 8px; /* Компактнее */
+    margin-bottom: 8px;
   }
   
   .quiz-question-card {
-    padding: 14px; /* Меньше padding */
-    margin: 0 16px 8px; /* Компактнее */
+    padding: 14px;
+    margin: 0 16px 8px;
   }
   
   .quiz-options {
     gap: 6px;
-    margin: 0 16px 6px; /* Компактнее */
+    margin: 0 16px 6px;
   }
   
   .quiz-option {
-    padding: 12px; /* Меньше padding */
-  }
-  
-  .quiz-custom-answer {
-    margin-left: 16px;
-    margin-right: 16px;
-    margin-top: 10px; /* Компактнее */
-    margin-bottom: 180px; /* УВЕЛИЧИВАЕМ отступ для мобильных чтобы поле было полностью видно с самого начала */
+    padding: 12px;
   }
   
   .quiz-navigation {
     gap: 120px;
-    bottom: 120px; /* ОПУСКАЕМ еще ниже для мобильных */
+    bottom: 120px;
   }
   
   .quiz-nav-btn {
     width: 50px;
     height: 50px;
+  }
+  
+  .survey-question {
+    padding-bottom: 180px; /* Меньший отступ для мобильных */
   }
 }
