@@ -423,7 +423,7 @@ body.chat-overlay-visible .search-container {
   padding-bottom: clamp(180px, 32vh, 200px); /* Отступ для поля ввода + кнопок */
 }
 
-/* Навигация вопросов - БОЛЬШЕЕ расстояние между кнопками */
+/* Навигация вопросов - ФИКСИРОВАННОЕ большое расстояние для мобильных */
 .survey-navigation {
   position: fixed;
   bottom: clamp(100px, 18vh, 120px);
@@ -435,8 +435,14 @@ body.chat-overlay-visible .search-container {
   flex-shrink: 0;
   z-index: 50;
   pointer-events: none;
-  gap: clamp(140px, 30vw, 180px); /* УВЕЛИЧЕННОЕ расстояние между кнопками */
+  gap: 160px; /* ФИКСИРОВАННОЕ расстояние для мобильных */
   width: auto;
+}
+
+@media (max-width: 480px) {
+  .survey-navigation {
+    gap: 120px; /* Для очень маленьких экранов */
+  }
 }
 
 .survey-navigation .nav-circle-btn {
@@ -695,14 +701,20 @@ body.chat-overlay-visible .search-container {
   display: none;
 }
 
-/* Опции ответов - ТОЧНО такая же ширина как карточка с вопросом */
+/* Опции ответов - ФИКСИРОВАННЫЕ отступы для мобильных */
 .survey-options {
   display: flex;
   flex-direction: column;
   gap: clamp(8px, 1.5vh, 12px);
-  margin: 0 clamp(16px, 4vw, 24px) clamp(8px, 1.5vh, 12px);
+  margin: 0 20px clamp(8px, 1.5vh, 12px); /* ФИКСИРОВАННЫЕ отступы 20px */
   overflow: hidden;
   flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .survey-options {
+    margin: 0 16px clamp(8px, 1.5vh, 12px); /* Для очень маленьких экранов */
+  }
 }
 
 .survey-option {
@@ -778,12 +790,18 @@ body.chat-overlay-visible .search-container {
   order: 1; /* Текст остается слева */
 }
 
-/* Свой вариант ответа - ТОЧНО такая же ширина как карточка с вопросом */
+/* Свой вариант ответа - ФИКСИРОВАННЫЕ отступы для мобильных */
 .custom-answer-section {
   margin-top: clamp(16px, 3vh, 20px);
-  padding: 0 clamp(16px, 4vw, 24px); /* ТОЧНО такие же отступы как у карточки */
+  padding: 0 20px; /* ФИКСИРОВАННЫЕ отступы 20px как у карточки */
   flex-shrink: 0;
   margin-bottom: clamp(160px, 28vh, 180px);
+}
+
+@media (max-width: 480px) {
+  .custom-answer-section {
+    padding: 0 16px; /* Для очень маленьких экранов */
+  }
 }
 
 .custom-answer-label {
@@ -1738,14 +1756,20 @@ body.chat-overlay-visible .search-container {
   opacity: 0.9;
 }
 
-/* Объединенная карточка - увеличенная для мобильных */
+/* Объединенная карточка - ФИКСИРОВАННЫЕ отступы для мобильных */
 .question-progress-card {
   background: #F5F1E8;
   border-radius: clamp(16px, 4vw, 20px);
   padding: clamp(18px, 4.5vw, 24px);
-  margin: 0 clamp(16px, 4vw, 24px) clamp(18px, 4vh, 24px);
+  margin: 0 20px clamp(18px, 4vh, 24px); /* ФИКСИРОВАННЫЕ отступы 20px */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .question-progress-card {
+    margin: 0 16px clamp(18px, 4vh, 24px); /* Для очень маленьких экранов */
+  }
 }
 
 /* Секция прогресса - увеличенная для мобильных */
