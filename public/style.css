@@ -1964,12 +1964,12 @@ body.chat-overlay-visible .search-container {
   line-height: 1.2; /* УМЕНЬШАЕМ межстрочный интервал */
 }
 
-/* Опции ответов - увеличиваем расстояние между кнопками */
+/* Опции ответов - увеличиваем расстояние между кнопками еще больше */
 .quiz-options {
   display: flex;
   flex-direction: column;
-  gap: 8px; /* УВЕЛИЧИВАЕМ расстояние между кнопками */
-  margin: 0 24px 8px; /* УВЕЛИЧИВАЕМ отступ снизу */
+  gap: 12px; /* УВЕЛИЧИВАЕМ расстояние между кнопками */
+  margin: 0 24px 12px; /* УВЕЛИЧИВАЕМ отступ снизу */
   flex-shrink: 0;
 }
 
@@ -2180,8 +2180,8 @@ body.chat-overlay-visible .search-container {
   }
   
   .quiz-options {
-    gap: 7px;
-    margin: 0 16px 7px;
+    gap: 10px; /* УВЕЛИЧИВАЕМ расстояние между кнопками на мобильных */
+    margin: 0 16px 10px; /* УВЕЛИЧИВАЕМ отступ */
   }
   
   .quiz-option {
