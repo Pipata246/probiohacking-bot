@@ -1879,36 +1879,36 @@ body.chat-overlay-visible .search-container {
 /* НОВЫЕ СТИЛИ ДЛЯ КВИЗА - ПОЛНАЯ ПЕРЕЗАПИСЬ */
 /* ========================================= */
 
-/* Заголовки квиза - компактнее */
+/* Заголовки квиза - еще компактнее */
 .quiz-titles {
   padding: 0 24px;
-  margin-bottom: 8px; /* УМЕНЬШАЕМ отступ еще больше */
+  margin-bottom: 6px; /* УМЕНЬШАЕМ отступ еще больше */
   flex-shrink: 0;
 }
 
 .quiz-main-title {
-  font-size: 18px; /* Уменьшаем размер */
+  font-size: 17px; /* УМЕНЬШАЕМ размер */
   font-weight: 600;
   color: #FFFFFF;
-  margin: 0 0 4px 0;
-  line-height: 1.2;
+  margin: 0 0 3px 0; /* УМЕНЬШАЕМ отступ */
+  line-height: 1.1; /* УМЕНЬШАЕМ межстрочный интервал */
 }
 
 .quiz-sub-title {
-  font-size: 14px; /* Уменьшаем размер */
+  font-size: 13px; /* УМЕНЬШАЕМ размер */
   font-weight: 500;
   color: #FFFFFF;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.1; /* УМЕНЬШАЕМ межстрочный интервал */
   opacity: 0.9;
 }
 
-/* Карточка с прогрессом и вопросом - компактнее */
+/* Карточка с прогрессом и вопросом - еще компактнее */
 .quiz-question-card {
   background: #F5F1E8;
   border-radius: 16px;
-  padding: 16px; /* Уменьшаем padding */
-  margin: 0 24px 8px; /* УМЕНЬШАЕМ отступ снизу еще больше */
+  padding: 14px; /* УМЕНЬШАЕМ padding */
+  margin: 0 24px 6px; /* УМЕНЬШАЕМ отступ снизу еще больше */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }
@@ -1918,11 +1918,11 @@ body.chat-overlay-visible .search-container {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px; /* Уменьшаем отступ */
+  margin-bottom: 10px; /* УМЕНЬШАЕМ отступ */
 }
 
 .quiz-progress-counter {
-  font-size: 14px;
+  font-size: 13px; /* УМЕНЬШАЕМ размер */
   color: #666666;
   font-weight: 500;
   flex-shrink: 0;
@@ -1930,7 +1930,7 @@ body.chat-overlay-visible .search-container {
 
 .quiz-progress-bar {
   flex: 1;
-  height: 6px;
+  height: 5px; /* УМЕНЬШАЕМ высоту */
   background: rgba(102, 102, 102, 0.2);
   border-radius: 3px;
   overflow: hidden;
@@ -1946,23 +1946,23 @@ body.chat-overlay-visible .search-container {
 /* Текст вопроса - компактнее */
 .quiz-question-section {
   border-top: 1px solid rgba(102, 102, 102, 0.1);
-  padding-top: 12px; /* Уменьшаем отступ */
+  padding-top: 10px; /* УМЕНЬШАЕМ отступ */
 }
 
 .quiz-question-text {
-  font-size: 14px; /* Уменьшаем размер */
+  font-size: 13px; /* УМЕНЬШАЕМ размер */
   font-weight: 500;
   color: #666666;
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2; /* УМЕНЬШАЕМ межстрочный интервал */
 }
 
-/* Опции ответов - компактнее */
+/* Опции ответов - еще компактнее */
 .quiz-options {
   display: flex;
   flex-direction: column;
-  gap: 6px; /* УМЕНЬШАЕМ gap еще больше */
-  margin: 0 24px 6px; /* УМЕНЬШАЕМ отступ снизу еще больше */
+  gap: 5px; /* УМЕНЬШАЕМ gap еще больше */
+  margin: 0 24px 5px; /* УМЕНЬШАЕМ отступ снизу еще больше */
   flex-shrink: 0;
 }
 
@@ -1971,7 +1971,7 @@ body.chat-overlay-visible .search-container {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px; /* Уменьшаем padding */
+  padding: 10px; /* УМЕНЬШАЕМ padding */
   background: #F5F1E8;
   border-radius: 12px;
   cursor: pointer;
@@ -1997,17 +1997,17 @@ body.chat-overlay-visible .search-container {
 }
 
 .quiz-option-text {
-  font-size: 14px;
+  font-size: 13px; /* УМЕНЬШАЕМ размер */
   color: #333333;
-  line-height: 1.3;
+  line-height: 1.2; /* УМЕНЬШАЕМ межстрочный интервал */
   font-weight: 600;
   flex: 1;
   order: 1;
 }
 
 .quiz-option-radio {
-  width: 20px;
-  height: 20px;
+  width: 18px; /* УМЕНЬШАЕМ размер */
+  height: 18px; /* УМЕНЬШАЕМ размер */
   border: 2px solid #CCCCCC;
   border-radius: 50%;
   position: relative;
@@ -2039,7 +2039,7 @@ body.chat-overlay-visible .search-container {
   position: relative;
   width: 100%;
   padding: 0 24px;
-  margin-top: 16px;
+  margin-top: 10px; /* УМЕНЬШАЕМ отступ сверху */
   margin-bottom: 0;
   flex-shrink: 0;
   z-index: 10;
@@ -2048,21 +2048,21 @@ body.chat-overlay-visible .search-container {
 /* Лейбл для поля ввода */
 .quiz-custom-label {
   display: block;
-  font-size: 14px;
+  font-size: 13px; /* УМЕНЬШАЕМ размер */
   color: #FFFFFF;
-  margin-bottom: 8px;
+  margin-bottom: 6px; /* УМЕНЬШАЕМ отступ */
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.1; /* УМЕНЬШАЕМ межстрочный интервал */
 }
 
 /* Само поле ввода - полностью новые стили */
 .quiz-custom-input {
   width: 100%;
-  height: 48px;
-  padding: 14px 16px;
+  height: 44px; /* УМЕНЬШАЕМ высоту */
+  padding: 12px 14px; /* УМЕНЬШАЕМ padding */
   border: none;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 13px; /* УМЕНЬШАЕМ размер */
   color: #333333;
   background: #FFFFFF;
   transition: all 0.3s ease;
@@ -2100,18 +2100,18 @@ body.chat-overlay-visible .search-container {
 @media (max-width: 480px) {
   .quiz-custom-answer {
     padding: 0 16px;
-    margin-top: 12px;
+    margin-top: 8px; /* УМЕНЬШАЕМ отступ */
   }
   
   .quiz-custom-input {
-    height: 44px;
-    padding: 12px 14px;
-    font-size: 14px;
+    height: 40px; /* УМЕНЬШАЕМ высоту */
+    padding: 10px 12px; /* УМЕНЬШАЕМ padding */
+    font-size: 13px;
   }
   
   .quiz-custom-label {
-    font-size: 13px;
-    margin-bottom: 6px;
+    font-size: 12px; /* УМЕНЬШАЕМ размер */
+    margin-bottom: 5px; /* УМЕНЬШАЕМ отступ */
   }
 }
 
@@ -2162,21 +2162,21 @@ body.chat-overlay-visible .search-container {
 @media (max-width: 480px) {
   .quiz-titles {
     padding: 0 16px;
-    margin-bottom: 8px;
+    margin-bottom: 6px; /* УМЕНЬШАЕМ отступ */
   }
   
   .quiz-question-card {
-    padding: 14px;
-    margin: 0 16px 8px;
+    padding: 12px; /* УМЕНЬШАЕМ padding */
+    margin: 0 16px 6px; /* УМЕНЬШАЕМ отступ */
   }
   
   .quiz-options {
-    gap: 6px;
-    margin: 0 16px 6px;
+    gap: 4px; /* УМЕНЬШАЕМ gap */
+    margin: 0 16px 4px; /* УМЕНЬШАЕМ отступ */
   }
   
   .quiz-option {
-    padding: 12px;
+    padding: 9px; /* УМЕНЬШАЕМ padding */
   }
   
   .quiz-navigation {
