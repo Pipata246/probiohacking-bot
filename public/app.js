@@ -1096,6 +1096,47 @@ document.addEventListener('keypress', (e) => {
   }
 });
 
+// Обработчик изменения размера viewport для клавиатуры
+function handleViewportChange() {
+  // Получаем текущую высоту viewport
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+  
+  // Обновляем высоту для элементов с фиксированной позицией
+  const surveyStep = document.getElementById('surveyStep');
+  if (surveyStep && surveyStep.style.display !== 'none') {
+    surveyStep.style.height = `${window.innerHeight}px`;
+  }
+}
+
+// Слушаем изменения размера окна и ориентации
+window.addEventListener('resize', handleViewportChange);
+window.addEventListener('orientationchange', () => {
+  setTimeout(handleViewportChange, 100);
+});
+
+// Инициальная установка
+handleViewportChange();
+
+// Обработчик фокуса на поле ввода
+document.addEventListener('focusin', (e) => {
+  if (e.target.classList.contains('quiz-custom-input')) {
+    // Небольшая задержка для корректной работы с клавиатурой
+    setTimeout(() => {
+      handleViewportChange();
+      // Прокручиваем к полю ввода если нужно
+      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  }
+});
+
+// Обработчик потери фокуса
+document.addEventListener('focusout', (e) => {
+  if (e.target.classList.contains('quiz-custom-input')) {
+    setTimeout(handleViewportChange, 300);
+  }
+});
+
 console.log('Mini App загружен');
 
 // Дополнительный обработчик для кнопок меню (только для главной страницы)
