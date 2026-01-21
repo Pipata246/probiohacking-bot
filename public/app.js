@@ -1,19 +1,15 @@
 // Инициализация Telegram Web App
 const tg = window.Telegram.WebApp;
-tg.expand(); // Расширяем на весь экран
-tg.enableClosingConfirmation(); // Подтверждение при закрытии
-tg.disableVerticalSwipes(); // Отключаем вертикальные свайпы
+tg.expand();
+tg.enableClosingConfirmation();
+tg.disableVerticalSwipes();
 tg.ready();
 
-// Принудительно включаем полноэкранный режим
 if (tg.isExpanded === false) {
   tg.expand();
 }
 
-// Устанавливаем цвет хедера
 tg.setHeaderColor('#4A8B6C');
-
-// Скрываем кнопку "Назад" если она есть
 tg.BackButton.hide();
 
 // Получение данных пользователя
@@ -21,7 +17,7 @@ const user = tg.initDataUnsafe?.user;
 const userName = user?.first_name || 'Александр';
 const userFullName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Иван Иванов';
 
-// Приветственный экран
+// Элементы страниц
 const welcomeScreen = document.getElementById('welcomeScreen');
 const mainApp = document.getElementById('mainApp');
 const knowledgeBase = document.getElementById('knowledgeBase');
@@ -29,145 +25,107 @@ const diagnosticsPage = document.getElementById('diagnosticsPage');
 const chatOverlay = document.getElementById('chatOverlay');
 
 // ========================================
-// НОВАЯ СИСТЕМА НАВИГАЦИИ - ПОЛНАЯ ПЕРЕЗАПИСЬ
+// СИСТЕМА НАВИГАЦИИ И СОСТОЯНИЙ
 // ========================================
 
-// Состояние приложения
-let isChatModeActive = false;
-let isDiagnosticModeActive = false;
+let currentPage = 'main';
+let isChatMode = false;
+let isDiagnosticFormMode = false;
+let diagnosticState = 'main'; // 'main', 'form', 'quiz'
 
-// Функция показа главной страницы
-function showMainApp() {
-  // Скрываем все страницы
-  mainApp.style.display = 'block';
-  knowledgeBase.classList.remove('active');
-  diagnosticsPage.classList.remove('active');
-  chatOverlay.classList.remove('active');
+// Функции навигации
+function showPage(pageName) {
+  console.log('Переход на страницу:', pageName);
   
-  // Скрываем диагностическую форму если она есть и режим неактивен
+  // Закрываем диагностическую форму если она открыта
   const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-  if (diagnosticFormOverlay && !isDiagnosticModeActive) {
-    diagnosticFormOverlay.style.display = 'none';
-  } else if (diagnosticFormOverlay && isDiagnosticModeActive) {
-    diagnosticFormOverlay.style.display = 'none';
-  }
-  
-  // Управление скроллом
-  document.body.classList.remove('chat-overlay-visible');
-  
-  // Сбрасываем режим чата если не в чате
-  if (!chatOverlay.classList.contains('active')) {
-    isChatModeActive = false;
-  }
-  
-  // Принудительно обеспечиваем правильную структуру быстрых запросов
-  const quickRequestsContainer = document.querySelector('.quick-requests');
-  const quickCardsContainer = document.querySelector('.quick-requests .quick-cards');
-  
-  if (quickRequestsContainer && quickCardsContainer) {
-    // Убеждаемся что контейнер имеет правильные стили
-    quickRequestsContainer.style.display = 'flex';
-    quickRequestsContainer.style.flexDirection = 'column';
-    quickRequestsContainer.style.height = 'clamp(240px, 42vh, 300px)'; // ФИКСИРОВАННАЯ высота для мобильных
-    quickRequestsContainer.style.flexShrink = '0'; // Не сжимается
-    quickRequestsContainer.style.flex = 'none'; // Убираем flex: 1
-    quickCardsContainer.style.overflowY = 'auto';
-    quickCardsContainer.style.flex = '1';
-  }
-  
-  // Устанавливаем активную кнопку "Главная"
-  setActiveNavButton(0);
-}
-
-// Функция показа базы знаний
-function showKnowledgeBase() {
-  // Скрываем все страницы
-  mainApp.style.display = 'none';
-  knowledgeBase.classList.add('active');
-  diagnosticsPage.classList.remove('active');
-  chatOverlay.classList.remove('active');
-  
-  // Скрываем диагностическую форму если она есть и режим неактивен
-  const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-  if (diagnosticFormOverlay && !isDiagnosticModeActive) {
-    diagnosticFormOverlay.style.display = 'none';
-  } else if (diagnosticFormOverlay && isDiagnosticModeActive) {
-    diagnosticFormOverlay.style.display = 'none';
-  }
-  
-  // Управление скроллом
-  document.body.classList.remove('chat-overlay-visible');
-  
-  // Устанавливаем активную кнопку "База знаний"
-  setActiveNavButton(4);
-}
-
-// Функция показа диагностики
-function showDiagnostics() {
-  // Скрываем все страницы
-  mainApp.style.display = 'none';
-  knowledgeBase.classList.remove('active');
-  chatOverlay.classList.remove('active');
-  
-  // Проверяем режим диагностики
-  const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-  if (isDiagnosticModeActive && diagnosticFormOverlay) {
-    // Если в режиме диагностики - показываем форму
-    diagnosticsPage.classList.remove('active');
-    diagnosticFormOverlay.style.display = 'flex';
-    document.body.classList.add('chat-overlay-visible');
-  } else {
-    // Иначе показываем обычную страницу диагностики
-    diagnosticsPage.classList.add('active');
-    if (diagnosticFormOverlay) {
-      diagnosticFormOverlay.style.display = 'none';
-    }
+  if (diagnosticFormOverlay && pageName !== 'diagnosticForm') {
+    // НЕ УДАЛЯЕМ ДАННЫЕ при переходе между страницами
+    diagnosticFormOverlay.remove();
     document.body.classList.remove('chat-overlay-visible');
+    isDiagnosticFormMode = false;
   }
   
-  // Устанавливаем активную кнопку "Диагностика"
-  setActiveNavButton(1);
-}
-
-// Функция показа чата
-function showChat() {
-  // Показываем чат как оверлей
-  chatOverlay.classList.add('active');
-  document.body.classList.add('chat-overlay-visible');
-  isChatModeActive = true;
-  
-  // Главная остается активной (чат - часть главной)
-  setActiveNavButton(0);
-}
-
-// Функция скрытия чата
-function hideChat() {
+  // Скрываем все страницы
+  mainApp.style.display = 'none';
+  knowledgeBase.classList.remove('active');
+  diagnosticsPage.classList.remove('active');
   chatOverlay.classList.remove('active');
+  
+  // Убираем классы скролла
   document.body.classList.remove('chat-overlay-visible');
-  isChatModeActive = false;
+  
+  // Показываем нужную страницу
+  switch(pageName) {
+    case 'main':
+      mainApp.style.display = 'block';
+      currentPage = 'main';
+      isChatMode = false;
+      break;
+    case 'diagnostics':
+      diagnosticsPage.classList.add('active');
+      currentPage = 'diagnostics';
+      isChatMode = false;
+      break;
+    case 'knowledge':
+      knowledgeBase.classList.add('active');
+      currentPage = 'knowledge';
+      isChatMode = false;
+      break;
+    case 'chat':
+      chatOverlay.classList.add('active');
+      document.body.classList.add('chat-overlay-visible');
+      isChatMode = true;
+      currentPage = 'main'; // Чат это часть главной
+      break;
+  }
+  
+  // Обновляем все навигации
+  updateAllNavigations();
 }
 
-// Вспомогательная функция установки активной кнопки навигации
-function setActiveNavButton(buttonIndex) {
-  document.querySelectorAll('.nav-item').forEach((item, index) => {
-    item.classList.remove('active');
-    if (index % 5 === buttonIndex) {
-      item.classList.add('active');
-    }
+function updateAllNavigations() {
+  // Находим все навигации
+  const navigations = document.querySelectorAll('.bottom-nav');
+  
+  navigations.forEach(nav => {
+    const navItems = nav.querySelectorAll('.nav-item');
+    
+    navItems.forEach((item, index) => {
+      item.classList.remove('active');
+      
+      // Определяем какая кнопка должна быть активной
+      let shouldBeActive = false;
+      
+      switch(index) {
+        case 0: // Главная
+          shouldBeActive = (currentPage === 'main');
+          break;
+        case 1: // Диагностика
+          shouldBeActive = (currentPage === 'diagnostics' || isDiagnosticFormMode);
+          break;
+        case 4: // База знаний
+          shouldBeActive = (currentPage === 'knowledge');
+          break;
+      }
+      
+      if (shouldBeActive) {
+        item.classList.add('active');
+      }
+    });
   });
 }
 
 // Показать приложение после клика на приветственный экран
 welcomeScreen.addEventListener('click', () => {
-  // Еще раз принудительно расширяем перед показом приложения
   tg.expand();
   
   welcomeScreen.classList.add('fade-out');
   setTimeout(() => {
     welcomeScreen.style.display = 'none';
     mainApp.classList.add('show');
+    showPage('main');
     
-    // Финальная проверка полноэкранного режима
     setTimeout(() => {
       if (!tg.isExpanded) {
         tg.expand();
@@ -176,11 +134,10 @@ welcomeScreen.addEventListener('click', () => {
   }, 800);
 });
 
-// Обновление имени пользователя
+// Обновление имени пользователя и аватарок
 document.querySelector('.welcome-name').textContent = userName;
 document.getElementById('sidebarUsername').textContent = userFullName;
 
-// Функция обновления аватарки
 function updateAvatar(element, user, userName) {
   if (element && user?.photo_url) {
     element.style.backgroundImage = `url(${user.photo_url})`;
@@ -193,124 +150,89 @@ function updateAvatar(element, user, userName) {
   }
 }
 
-// Обновление аватарок
 updateAvatar(document.getElementById('avatar'), user, userName);
 updateAvatar(document.getElementById('sidebarAvatar'), user, userName);
 updateAvatar(document.getElementById('knowledgeAvatar'), user, userName);
 updateAvatar(document.getElementById('diagnosticsAvatar'), user, userName);
 
 // ========================================
-// НОВЫЙ ОБРАБОТЧИК НАВИГАЦИИ - ПРОСТОЙ И ПОНЯТНЫЙ
+// ОБРАБОТЧИК ВСЕХ СОБЫТИЙ
 // ========================================
 
-// Централизованный обработчик всех событий клика
 document.addEventListener('click', (e) => {
-  // Закрытие чата при клике на оверлей (но не на сообщения) - только если НЕ в режиме чата
-  if (e.target.closest('#chatOverlay') && !e.target.closest('.chat-messages') && !e.target.closest('.chat-input-container') && !e.target.closest('.header') && !e.target.closest('.bottom-nav')) {
-    if (isChatModeActive) {
-      // В режиме чата не закрываем по клику вне области
-      return;
-    } else {
-      hideChat();
-      return;
-    }
-  }
-  
-  // Обработка кнопок меню (3 полоски) - только для главной и других страниц
-  if (e.target.closest('.menu-btn') || e.target.closest('#menuBtn')) {
-    // Проверяем что мы НЕ в чате
-    if (chatOverlay.classList.contains('active')) {
-      return; // В чате кнопка меню не работает
-    }
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    if (sidebar && sidebarOverlay) {
-      sidebar.classList.add('active');
-      sidebarOverlay.classList.add('active');
-    }
-    return;
-  }
-  
-  // Обработка закрытия бокового меню
-  if (e.target.closest('#sidebarClose') || e.target.closest('#sidebarOverlay')) {
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    if (sidebar && sidebarOverlay) {
-      sidebar.classList.remove('active');
-      sidebarOverlay.classList.remove('active');
-    }
-    return;
-  }
-  
-  // Обработка навигации - НОВАЯ ПРОСТАЯ ЛОГИКА
+  // НАВИГАЦИЯ - ИСПРАВЛЕННАЯ ЛОГИКА
   if (e.target.closest('.nav-item')) {
     const navItem = e.target.closest('.nav-item');
-    const allNavItems = document.querySelectorAll('.nav-item');
-    const navIndex = Array.from(allNavItems).indexOf(navItem);
+    const nav = navItem.closest('.bottom-nav');
+    const navItems = nav.querySelectorAll('.nav-item');
+    const buttonIndex = Array.from(navItems).indexOf(navItem);
     
-    // Сначала закрываем боковое меню если оно открыто
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    if (sidebar && sidebarOverlay) {
-      sidebar.classList.remove('active');
-      sidebarOverlay.classList.remove('active');
-    }
+    console.log('Нажата кнопка навигации:', buttonIndex);
     
-    const pages = ['Главная', 'Диагностика', 'Здоровье', 'Дневник', 'База знаний'];
+    // Закрываем боковое меню если открыто
+    closeSidebar();
     
-    // Определяем какая кнопка нажата (учитываем что есть три навигации)
-    const buttonIndex = navIndex % 5;
-    
-    if (buttonIndex === 0) { // Главная
-      if (isChatModeActive && chatOverlay.classList.contains('active')) {
-        // Если в режиме чата И чат открыт - выходим из режима чата
-        showMainApp();
-      } else if (isChatModeActive && !chatOverlay.classList.contains('active')) {
-        // Если в режиме чата, но чат закрыт - возвращаемся в чат
-        showChat();
-      } else if (isDiagnosticModeActive) {
-        // Если в режиме диагностики - скрываем форму но не выходим из режима
-        showMainApp();
-      } else {
-        // Обычный переход на главную
-        showMainApp();
-      }
-    } else if (buttonIndex === 1) { // Диагностика
-      if (isDiagnosticModeActive) {
-        // Если в режиме диагностики - возвращаемся к форме
-        showDiagnostics();
-      } else {
-        // Обычный переход на диагностику
-        showDiagnostics();
-      }
-    } else if (buttonIndex === 4) { // База знаний
-      showKnowledgeBase();
-    } else {
-      // Другие страницы в разработке
-      if (isChatModeActive) {
-        // В режиме чата показываем алерт, но остаемся в режиме чата
-        tg.showAlert(`${pages[buttonIndex]}\n\nСтраница в разработке`);
-        setTimeout(() => {
-          showChat();
-        }, 100);
-      } else if (isDiagnosticModeActive) {
-        // В режиме диагностики показываем алерт, но остаемся в режиме диагностики
-        tg.showAlert(`${pages[buttonIndex]}\n\nСтраница в разработке`);
-        setTimeout(() => {
-          showDiagnostics();
-        }, 100);
-      } else {
-        tg.showAlert(`${pages[buttonIndex]}\n\nСтраница в разработке`);
-      }
+    switch(buttonIndex) {
+      case 0: // Главная
+        showPage('main');
+        break;
+      case 1: // Диагностика
+        // УМНАЯ ЛОГИКА для кнопки диагностики
+        if (currentPage === 'diagnostics' && isDiagnosticFormMode) {
+          // Если уже в диагностике И в форме - возвращаемся в главное меню диагностики
+          // И УДАЛЯЕМ ВСЕ СОХРАНЕННЫЕ ДАННЫЕ
+          localStorage.removeItem('surveyAnswers');
+          localStorage.removeItem('diagnosticPersonalData');
+          diagnosticState = 'main';
+          showPage('diagnostics');
+        } else if (currentPage === 'diagnostics' && !isDiagnosticFormMode) {
+          // Если уже в главном меню диагностики - проверяем есть ли прогресс
+          const hasProgress = checkDiagnosticProgress();
+          if (hasProgress) {
+            showDiagnosticForm();
+          }
+        } else {
+          // Если НЕ в диагностике - проверяем есть ли прогресс
+          const hasProgress = checkDiagnosticProgress();
+          if (hasProgress) {
+            // Есть прогресс - возвращаемся к форме
+            showPage('diagnostics');
+            setTimeout(() => {
+              showDiagnosticForm();
+            }, 100);
+          } else {
+            // Нет прогресса - идем в главное меню диагностики
+            showPage('diagnostics');
+          }
+        }
+        break;
+      case 2: // Здоровье
+        tg.showAlert('Здоровье\n\nСтраница в разработке');
+        break;
+      case 3: // Дневник
+        tg.showAlert('Дневник\n\nСтраница в разработке');
+        break;
+      case 4: // База знаний
+        showPage('knowledge');
+        break;
     }
     return;
   }
   
-  // Обработка кнопки поиска
+  // Боковое меню
+  if (e.target.closest('.menu-btn') || e.target.closest('#menuBtn')) {
+    if (!isChatMode) {
+      openSidebar();
+    }
+    return;
+  }
+  
+  if (e.target.closest('#sidebarClose') || e.target.closest('#sidebarOverlay')) {
+    closeSidebar();
+    return;
+  }
+  
+  // Поиск
   if (e.target.closest('.search-btn')) {
     const searchInput = document.querySelector('.search-input');
     const query = searchInput.value.trim();
@@ -321,19 +243,19 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Обработка кнопки "Заполнить анкету"
+  // Кнопка "Заполнить анкету"
   if (e.target.closest('.fill-form-btn')) {
     showDiagnosticForm();
     return;
   }
   
-  // Обработка кнопки создания программы
+  // Кнопка создания программы
   if (e.target.closest('.create-program-btn')) {
     tg.showAlert('Создание персональной программы\n\nФункция в разработке');
     return;
   }
   
-  // Обработка кнопки отправки в чате
+  // Отправка сообщения в чате
   if (e.target.closest('.chat-send-btn')) {
     const chatInput = document.querySelector('.chat-input');
     const message = chatInput.value.trim();
@@ -347,7 +269,7 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Обработка карточек быстрых запросов
+  // Быстрые запросы
   if (e.target.closest('.quick-card')) {
     const card = e.target.closest('.quick-card');
     const quickCards = document.querySelectorAll('.quick-requests .quick-card');
@@ -382,34 +304,84 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Обработка кнопки "Создать новый чат"
+  // Новый чат
   if (e.target.closest('.new-chat-btn') || e.target.closest('#newChatBtn')) {
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    if (sidebar && sidebarOverlay) {
-      sidebar.classList.remove('active');
-      sidebarOverlay.classList.remove('active');
-    }
-    showChat();
+    closeSidebar();
+    showPage('chat');
     document.getElementById('chatMessages').innerHTML = '';
     return;
   }
   
-  // Обработка истории запросов в боковом меню
+  // История запросов
   if (e.target.closest('.history-item')) {
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    if (sidebar && sidebarOverlay) {
-      sidebar.classList.remove('active');
-      sidebarOverlay.classList.remove('active');
+    closeSidebar();
+    showPage('chat');
+    return;
+  }
+  
+  // Раскрытие разделов в базе знаний
+  if (e.target.closest('.expand-btn') || e.target.closest('.section-header')) {
+    const clickedElement = e.target.closest('.expand-btn') || e.target.closest('.section-header');
+    const knowledgeSection = clickedElement.closest('.knowledge-section');
+    const expandBtn = knowledgeSection.querySelector('.expand-btn');
+    
+    // Переключаем состояние раскрытия через CSS класс
+    if (knowledgeSection.classList.contains('expanded')) {
+      // Закрываем - показываем крестик (+)
+      knowledgeSection.classList.remove('expanded');
+      expandBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5V19" stroke="#3B4F6B" stroke-width="3" stroke-linecap="round"/>
+          <path d="M5 12H19" stroke="#3B4F6B" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      `;
+    } else {
+      // Открываем - показываем минус (-)
+      knowledgeSection.classList.add('expanded');
+      expandBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12H19" stroke="#3B4F6B" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      `;
     }
-    openChatFromHistory();
+    return;
+  }
+  
+  // Закрытие чата по клику на оверлей
+  if (e.target.closest('#chatOverlay') && 
+      !e.target.closest('.chat-messages') && 
+      !e.target.closest('.chat-input-container') && 
+      !e.target.closest('.header') && 
+      !e.target.closest('.bottom-nav')) {
+    showPage('main');
     return;
   }
 });
 
 // ========================================
-// ФУНКЦИИ ДЛЯ РАБОТЫ С ЧАТОМ
+// ФУНКЦИИ БОКОВОГО МЕНЮ
+// ========================================
+
+function openSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  if (sidebar && sidebarOverlay) {
+    sidebar.classList.add('active');
+    sidebarOverlay.classList.add('active');
+  }
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  if (sidebar && sidebarOverlay) {
+    sidebar.classList.remove('active');
+    sidebarOverlay.classList.remove('active');
+  }
+}
+
+// ========================================
+// ФУНКЦИИ ЧАТА
 // ========================================
 
 function addUserMessage(text) {
@@ -433,6 +405,7 @@ function addUserMessage(text) {
   chatMessages.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 function addBotMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
   const messageDiv = document.createElement('div');
@@ -477,7 +450,7 @@ function addBotMessageWithButton(text, buttonText, buttonAction) {
 }
 
 function openChatWithMessage(message) {
-  showChat();
+  showPage('chat');
   document.getElementById('chatMessages').innerHTML = '';
   addUserMessage(message);
   setTimeout(() => {
@@ -489,24 +462,46 @@ function openChatWithMessage(message) {
   }, 1000);
 }
 
-function openChatFromHistory() {
-  showChat();
-  document.getElementById('chatMessages').innerHTML = '';
-}
-
 function handleDiagnosticButton() {
-  hideChat();
-  showDiagnostics();
+  showPage('diagnostics');
   setTimeout(() => {
     showDiagnosticForm();
   }, 100);
 }
+
 // ========================================
-// ФУНКЦИИ ДЛЯ РАБОТЫ С ДИАГНОСТИЧЕСКОЙ ФОРМОЙ
+// ФУНКЦИИ ДИАГНОСТИКИ
+// ========================================
+
+// Проверка есть ли сохраненный прогресс диагностики
+function checkDiagnosticProgress() {
+  const savedPersonalData = localStorage.getItem('diagnosticPersonalData');
+  const savedAnswers = localStorage.getItem('surveyAnswers');
+  
+  return savedPersonalData || savedAnswers;
+}
+
+// Определение где остановился пользователь
+function getDiagnosticState() {
+  const savedPersonalData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
+  const savedAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
+  
+  if (Object.keys(savedAnswers).length > 0) {
+    return 'quiz'; // Есть ответы на вопросы - был в квизе
+  } else if (Object.keys(savedPersonalData).length > 0) {
+    return 'form'; // Есть личные данные - был в форме
+  } else {
+    return 'main'; // Нет данных - начинаем с главной
+  }
+}
+
+// ========================================
+// ДИАГНОСТИЧЕСКАЯ ФОРМА
 // ========================================
 
 function showDiagnosticForm() {
-  isDiagnosticModeActive = true;
+  isDiagnosticFormMode = true;
+  diagnosticState = getDiagnosticState();
   
   const diagnosticForm = document.createElement('div');
   diagnosticForm.className = 'diagnostic-form-overlay';
@@ -585,6 +580,7 @@ function showDiagnosticForm() {
           </button>
         </div>
         
+        <!-- Навигация в форме -->
         <nav class="bottom-nav">
           <button class="nav-item">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -621,7 +617,7 @@ function showDiagnosticForm() {
         </nav>
       </div>
       
-      <!-- Экран вопросов -->
+      <!-- Экран квиза -->
       <div class="form-step hidden" id="surveyStep">
         <header class="slide-header">
           <div class="avatar" id="surveyFormAvatar">AM</div>
@@ -644,6 +640,7 @@ function showDiagnosticForm() {
           </button>
         </div>
         
+        <!-- Навигация в квизе -->
         <nav class="bottom-nav">
           <button class="nav-item">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -682,71 +679,77 @@ function showDiagnosticForm() {
     </div>
   `;
   
-  const diagnosticsPage = document.getElementById('diagnosticsPage');
-  diagnosticsPage.appendChild(diagnosticForm);
+  document.body.appendChild(diagnosticForm);
+  diagnosticForm.style.display = 'flex';
+  document.body.classList.add('chat-overlay-visible');
   
   updateAvatar(document.getElementById('diagnosticFormAvatar'), user, userName);
   updateAvatar(document.getElementById('surveyFormAvatar'), user, userName);
   
-  setupDiagnosticFormHandlers();
-}
-
-function setupDiagnosticFormHandlers() {
-  const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-  const formBackBtn = document.getElementById('formBackBtn');
-  const formNextBtn = document.getElementById('formNextBtn');
-  const personalDataStep = document.getElementById('personalDataStep');
-  const surveyStep = document.getElementById('surveyStep');
+  // ВОССТАНАВЛИВАЕМ СОХРАНЕННЫЕ ДАННЫЕ ФОРМЫ
+  restoreFormData();
   
-  formBackBtn.addEventListener('click', () => {
-    isDiagnosticModeActive = false;
-    diagnosticFormOverlay.remove();
-  });
-  
-  formNextBtn.addEventListener('click', () => {
-    if (validatePersonalData()) {
-      savePersonalData();
-      personalDataStep.classList.add('hidden');
-      surveyStep.classList.remove('hidden');
+  // АВТОМАТИЧЕСКИ ПЕРЕХОДИМ К НУЖНОМУ ШАГУ
+  if (diagnosticState === 'quiz') {
+    // Если был в квизе - сразу переходим к квизу
+    setTimeout(() => {
+      document.getElementById('personalDataStep').classList.add('hidden');
+      document.getElementById('surveyStep').classList.remove('hidden');
       initSurvey();
-    }
+    }, 100);
+  }
+  // Если diagnosticState === 'form' или 'main' - остаемся в форме данных
+  
+  // Обработчики формы
+  document.getElementById('formBackBtn').addEventListener('click', () => {
+    // НЕ УДАЛЯЕМ ДАННЫЕ - только закрываем форму и возвращаемся в главное меню диагностики
+    // ДАННЫЕ УДАЛЯЮТСЯ ТОЛЬКО при нажатии кнопки "Диагностика" когда уже в диагностике
+    
+    isDiagnosticFormMode = false;
+    diagnosticForm.remove();
+    document.body.classList.remove('chat-overlay-visible');
+    showPage('diagnostics'); // Возвращаемся на главную диагностики
   });
-}
-function validatePersonalData() {
-  const gender = document.querySelector('input[name="gender"]:checked');
-  const fullName = document.getElementById('fullName').value.trim();
   
-  if (!gender) {
-    tg.showAlert('Пожалуйста, выберите ваш пол');
-    return false;
-  }
-  
-  if (!fullName) {
-    tg.showAlert('Пожалуйста, введите ваше ФИО');
-    return false;
-  }
-  
-  return true;
-}
-
-function savePersonalData() {
-  const personalData = {
-    gender: document.querySelector('input[name="gender"]:checked').value,
-    fullName: document.getElementById('fullName').value.trim(),
-    birthDate: document.getElementById('birthDate').value.trim(),
-    profession: document.getElementById('profession').value.trim(),
-    city: document.getElementById('city').value.trim(),
-    weight: document.getElementById('weight').value.trim(),
-    height: document.getElementById('height').value.trim(),
-    sport: document.getElementById('sport').value.trim(),
-    timestamp: new Date().toISOString()
-  };
-  
-  localStorage.setItem('diagnosticPersonalData', JSON.stringify(personalData));
+  document.getElementById('formNextBtn').addEventListener('click', () => {
+    const gender = document.querySelector('input[name="gender"]:checked');
+    const fullName = document.getElementById('fullName').value.trim();
+    
+    if (!gender) {
+      tg.showAlert('Пожалуйста, выберите ваш пол');
+      return;
+    }
+    
+    if (!fullName) {
+      tg.showAlert('Пожалуйста, введите ваше ФИО');
+      return;
+    }
+    
+    // Сохраняем данные
+    const personalData = {
+      gender: gender.value,
+      fullName: fullName,
+      birthDate: document.getElementById('birthDate').value.trim(),
+      profession: document.getElementById('profession').value.trim(),
+      city: document.getElementById('city').value.trim(),
+      weight: document.getElementById('weight').value.trim(),
+      height: document.getElementById('height').value.trim(),
+      sport: document.getElementById('sport').value.trim(),
+      timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem('diagnosticPersonalData', JSON.stringify(personalData));
+    
+    // ПЕРЕХОДИМ К КВИЗУ
+    diagnosticState = 'quiz';
+    document.getElementById('personalDataStep').classList.add('hidden');
+    document.getElementById('surveyStep').classList.remove('hidden');
+    initSurvey();
+  });
 }
 
 // ========================================
-// СИСТЕМА ОПРОСА
+// СИСТЕМА КВИЗА
 // ========================================
 
 let currentQuestionIndex = 0;
@@ -763,25 +766,54 @@ const surveyQuestions = [
       { value: "apathy", label: "Апатия, медленное мышление, трудности с принятием решений" }
     ]
   },
-  ...Array.from({length: 16}, (_, i) => ({
-    id: `V${i + 18}`,
-    system: "Система организма",
-    question: `Вопрос ${i + 2} (будет добавлен позже)`,
+  {
+    id: "V18",
+    system: "Сердечно-сосудистая система",
+    question: "Как вы оцениваете состояние вашей сердечно-сосудистой системы?",
     type: "multiple_with_custom",
     options: [
-      { value: "option1", label: "Вариант 1" },
-      { value: "option2", label: "Вариант 2" },
-      { value: "option3", label: "Вариант 3" },
-      { value: "option4", label: "Вариант 4" }
+      { value: "excellent", label: "Отличное самочувствие, нормальное давление, хорошая выносливость" },
+      { value: "moderate", label: "Периодические скачки давления, быстрая утомляемость" },
+      { value: "poor", label: "Частые проблемы с давлением, одышка, боли в сердце" },
+      { value: "unknown", label: "Не знаю, не обследовался" }
     ]
-  }))
+  },
+  {
+    id: "V19",
+    system: "Пищеварительная система",
+    question: "Как работает ваша пищеварительная система?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "normal", label: "Нормальное пищеварение, регулярный стул, нет дискомфорта" },
+      { value: "bloating", label: "Вздутие, газообразование, периодические боли" },
+      { value: "irregular", label: "Нерегулярный стул, запоры или диарея" },
+      { value: "serious", label: "Серьезные проблемы, требующие постоянного внимания" }
+    ]
+  }
 ];
 
 function initSurvey() {
-  currentQuestionIndex = 0;
+  // Проверяем, есть ли сохраненный прогресс
+  const savedAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
+  const savedQuestions = Object.keys(savedAnswers);
+  
+  // Если есть сохраненные ответы, начинаем с последнего отвеченного вопроса + 1
+  if (savedQuestions.length > 0) {
+    let lastAnsweredIndex = -1;
+    for (let i = 0; i < surveyQuestions.length; i++) {
+      if (savedAnswers[surveyQuestions[i].id]) {
+        lastAnsweredIndex = i;
+      }
+    }
+    currentQuestionIndex = Math.min(lastAnsweredIndex + 1, surveyQuestions.length - 1);
+  } else {
+    currentQuestionIndex = 0;
+  }
+  
   showQuestion(currentQuestionIndex);
   setupSurveyNavigation();
 }
+
 function showQuestion(index) {
   const question = surveyQuestions[index];
   const questionContainer = document.getElementById('surveyQuestion');
@@ -809,7 +841,7 @@ function showQuestion(index) {
     
     <div class="quiz-question-card">
       <div class="quiz-progress-section">
-        <span class="quiz-progress-counter">${currentQuestionIndex + 1}/17</span>
+        <span class="quiz-progress-counter">${currentQuestionIndex + 1}/${surveyQuestions.length}</span>
         <div class="quiz-progress-bar">
           <div class="quiz-progress-fill" style="width: ${((currentQuestionIndex + 1) / surveyQuestions.length) * 100}%"></div>
         </div>
@@ -824,81 +856,8 @@ function showQuestion(index) {
     </div>
   `;
   
-  setupAnswerExclusion(question.id);
-}
-
-function setupAnswerExclusion(questionId) {
-  const radioButtons = document.querySelectorAll(`input[name="question_${questionId}"]`);
-  const customInput = document.querySelector(`input[name="custom_${questionId}"]`);
-  const quizOptions = document.querySelectorAll('.quiz-option');
-  
-  radioButtons.forEach(radio => {
-    let lastClickTime = 0;
-    
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        customInput.disabled = true;
-        customInput.value = '';
-        customInput.classList.add('disabled');
-      }
-    });
-    
-    radio.parentElement.addEventListener('click', (e) => {
-      e.preventDefault();
-      
-      const currentTime = Date.now();
-      const timeDiff = currentTime - lastClickTime;
-      
-      if (radio.checked && timeDiff < 500) {
-        radio.checked = false;
-        customInput.disabled = false;
-        customInput.classList.remove('disabled');
-        
-        quizOptions.forEach(option => {
-          option.classList.remove('disabled');
-        });
-        radioButtons.forEach(r => {
-          r.disabled = false;
-        });
-      } else if (!radio.checked) {
-        radioButtons.forEach(r => r.checked = false);
-        radio.checked = true;
-        
-        customInput.disabled = true;
-        customInput.value = '';
-        customInput.classList.add('disabled');
-      }
-      
-      lastClickTime = currentTime;
-    });
-  });
-  
-  customInput.addEventListener('input', () => {
-    if (customInput.value.trim()) {
-      radioButtons.forEach(radio => {
-        radio.checked = false;
-        radio.disabled = true;
-      });
-      quizOptions.forEach(option => {
-        option.classList.add('disabled');
-      });
-    } else {
-      radioButtons.forEach(radio => {
-        radio.disabled = false;
-      });
-      quizOptions.forEach(option => {
-        option.classList.remove('disabled');
-      });
-    }
-  });
-  
-  customInput.addEventListener('focus', () => {
-    if (!customInput.disabled) {
-      radioButtons.forEach(radio => {
-        radio.checked = false;
-      });
-    }
-  });
+  // ВОССТАНАВЛИВАЕМ СОХРАНЕННЫЕ ОТВЕТЫ
+  restoreQuestionAnswer(question.id);
 }
 
 function setupSurveyNavigation() {
@@ -906,15 +865,17 @@ function setupSurveyNavigation() {
   const surveyNextBtn = document.getElementById('surveyNextBtn');
   
   surveyBackBtn.onclick = () => {
+    // СОХРАНЯЕМ ТЕКУЩИЙ ОТВЕТ ПЕРЕД ПЕРЕХОДОМ
+    saveCurrentQuestionAnswer();
+    
     if (currentQuestionIndex > 0) {
       currentQuestionIndex--;
       showQuestion(currentQuestionIndex);
-      updateNavigationButtons();
     } else {
-      const surveyStep = document.getElementById('surveyStep');
-      const personalDataStep = document.getElementById('personalDataStep');
-      surveyStep.classList.add('hidden');
-      personalDataStep.classList.remove('hidden');
+      // Возвращаемся к форме данных
+      diagnosticState = 'form';
+      document.getElementById('surveyStep').classList.add('hidden');
+      document.getElementById('personalDataStep').classList.remove('hidden');
     }
   };
   
@@ -928,41 +889,90 @@ function setupSurveyNavigation() {
       return;
     }
     
+    // СОХРАНЯЕМ ТЕКУЩИЙ ОТВЕТ
     let answerValue = selectedAnswer ? selectedAnswer.value : customAnswer.value.trim();
     saveSurveyAnswer(currentQuestion.id, answerValue);
     
     if (currentQuestionIndex < surveyQuestions.length - 1) {
       currentQuestionIndex++;
       showQuestion(currentQuestionIndex);
-      updateNavigationButtons();
     } else {
       completeSurvey();
     }
   };
-  
-  updateNavigationButtons();
 }
 
-function updateNavigationButtons() {
-  const surveyBackBtn = document.getElementById('surveyBackBtn');
-  const surveyNextBtn = document.getElementById('surveyNextBtn');
-  
-  surveyBackBtn.classList.add('nav-circle-btn-active');
-  
-  if (currentQuestionIndex === surveyQuestions.length - 1) {
-    surveyNextBtn.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M20 6L9 17L4 12" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    `;
-  } else {
-    surveyNextBtn.innerHTML = `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M5 12H19M12 5L19 12L12 19" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    `;
+// ФУНКЦИЯ: Сохранение текущего ответа при переходе
+function saveCurrentQuestionAnswer() {
+  if (currentQuestionIndex >= 0 && currentQuestionIndex < surveyQuestions.length) {
+    const currentQuestion = surveyQuestions[currentQuestionIndex];
+    let selectedAnswer = document.querySelector(`input[name="question_${currentQuestion.id}"]:checked`);
+    let customAnswer = document.querySelector(`input[name="custom_${currentQuestion.id}"]`);
+    
+    if (selectedAnswer) {
+      saveSurveyAnswer(currentQuestion.id, selectedAnswer.value);
+    } else if (customAnswer && customAnswer.value.trim()) {
+      saveSurveyAnswer(currentQuestion.id, customAnswer.value.trim());
+    }
   }
 }
+
+// ФУНКЦИЯ: Восстановление сохраненного ответа
+function restoreQuestionAnswer(questionId) {
+  const savedAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
+  const savedAnswer = savedAnswers[questionId];
+  
+  if (savedAnswer) {
+    // Проверяем, это стандартный ответ или кастомный
+    const radioButton = document.querySelector(`input[name="question_${questionId}"][value="${savedAnswer}"]`);
+    const customInput = document.querySelector(`input[name="custom_${questionId}"]`);
+    
+    if (radioButton) {
+      // Это стандартный ответ
+      radioButton.checked = true;
+      if (customInput) {
+        customInput.disabled = true;
+        customInput.classList.add('disabled');
+      }
+    } else if (customInput) {
+      // Это кастомный ответ
+      customInput.value = savedAnswer;
+      // Отключаем радио-кнопки
+      const radioButtons = document.querySelectorAll(`input[name="question_${questionId}"]`);
+      const quizOptions = document.querySelectorAll('.quiz-option');
+      
+      radioButtons.forEach(radio => {
+        radio.disabled = true;
+      });
+      quizOptions.forEach(option => {
+        option.classList.add('disabled');
+      });
+    }
+  }
+}
+
+// ФУНКЦИЯ: Восстановление данных формы
+function restoreFormData() {
+  const savedData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
+  
+  if (Object.keys(savedData).length > 0) {
+    // Восстанавливаем пол
+    if (savedData.gender) {
+      const genderRadio = document.querySelector(`input[name="gender"][value="${savedData.gender}"]`);
+      if (genderRadio) genderRadio.checked = true;
+    }
+    
+    // Восстанавливаем текстовые поля
+    const fields = ['fullName', 'birthDate', 'profession', 'city', 'weight', 'height', 'sport'];
+    fields.forEach(field => {
+      const input = document.getElementById(field);
+      if (input && savedData[field]) {
+        input.value = savedData[field];
+      }
+    });
+  }
+}
+
 function saveSurveyAnswer(questionId, answer) {
   let surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
   surveyAnswers[questionId] = answer;
@@ -972,11 +982,16 @@ function saveSurveyAnswer(questionId, answer) {
 function completeSurvey() {
   const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
   
-  isDiagnosticModeActive = false;
+  isDiagnosticFormMode = false;
   
   tg.showAlert('Спасибо! Ваши ответы сохранены.\nВ ближайшее время мы подготовим для вас персональные рекомендации.');
   
   diagnosticFormOverlay.remove();
+  document.body.classList.remove('chat-overlay-visible');
+  
+  // Переходим на главную диагностики после завершения
+  // ДАННЫЕ НЕ УДАЛЯЕМ - они удалятся только при повторном нажатии "Диагностика"
+  showPage('diagnostics');
   
   console.log('Опрос завершен');
   console.log('Личные данные:', JSON.parse(localStorage.getItem('diagnosticPersonalData')));
@@ -984,7 +999,7 @@ function completeSurvey() {
 }
 
 // ========================================
-// ОБРАБОТЧИКИ КЛАВИАТУРЫ И VIEWPORT
+// ОБРАБОТЧИКИ КЛАВИАТУРЫ
 // ========================================
 
 document.addEventListener('keypress', (e) => {
@@ -1010,36 +1025,4 @@ document.addEventListener('keypress', (e) => {
   }
 });
 
-function handleViewportChange() {
-  const vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--vh', `${vh}px`);
-  
-  const surveyStep = document.getElementById('surveyStep');
-  if (surveyStep && surveyStep.style.display !== 'none') {
-    surveyStep.style.height = `${window.innerHeight}px`;
-  }
-}
-
-window.addEventListener('resize', handleViewportChange);
-window.addEventListener('orientationchange', () => {
-  setTimeout(handleViewportChange, 100);
-});
-
-handleViewportChange();
-
-document.addEventListener('focusin', (e) => {
-  if (e.target.classList.contains('quiz-custom-input')) {
-    setTimeout(() => {
-      handleViewportChange();
-      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 300);
-  }
-});
-
-document.addEventListener('focusout', (e) => {
-  if (e.target.classList.contains('quiz-custom-input')) {
-    setTimeout(handleViewportChange, 300);
-  }
-});
-
-console.log('Новая система навигации загружена');
+console.log('Система навигации загружена - исправлены все проблемы с навигацией и сохранением');

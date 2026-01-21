@@ -1461,9 +1461,15 @@ body.chat-overlay-visible .search-container {
 .section-header {
   display: flex;
   align-items: center;
-  padding: 20px 24px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 20px 24px;
   gap: 16px;
+}
+
+.section-header:hover {
+  background-color: rgba(229, 231, 235, 0.3);
+  border-radius: 8px;
 }
 
 .section-icon {
@@ -1481,9 +1487,14 @@ body.chat-overlay-visible .search-container {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
+  padding: 12px;
   border-radius: 50%;
   transition: all 0.3s ease;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .expand-btn:hover {
