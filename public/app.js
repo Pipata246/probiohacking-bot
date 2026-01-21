@@ -560,8 +560,8 @@ function showQuestion(index) {
     optionsHtml = question.options.map(option => `
       <label class="survey-option">
         <input type="radio" name="question_${question.id}" value="${option.value}">
-        <span class="option-radio"></span>
         <span class="option-text">${option.label}</span>
+        <span class="option-radio"></span>
       </label>
     `).join('');
     
@@ -597,6 +597,95 @@ function showQuestion(index) {
       ${optionsHtml}
     </div>
   `;
+  
+  // Добавляем обработчики для взаимоисключения и отмены выбора
+  setupAnswerExclusion(question.id);
+}
+
+function setupAnswerExclusion(questionId) {
+  const radioButtons = document.querySelectorAll(`input[name="question_${questionId}"]`);
+  const customInput = document.querySelector(`input[name="custom_${questionId}"]`);
+  const surveyOptions = document.querySelectorAll('.survey-option');
+  
+  // Обработчик для радио-кнопок с возможностью отмены
+  radioButtons.forEach(radio => {
+    let lastClickTime = 0;
+    
+    radio.addEventListener('change', () => {
+      if (radio.checked) {
+        // Отключаем поле ввода
+        customInput.disabled = true;
+        customInput.value = '';
+        customInput.classList.add('disabled');
+      }
+    });
+    
+    // Добавляем обработчик клика для отмены выбора
+    radio.parentElement.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastClickTime;
+      
+      if (radio.checked && timeDiff < 500) {
+        // Двойной клик - отменяем выбор
+        radio.checked = false;
+        customInput.disabled = false;
+        customInput.classList.remove('disabled');
+        
+        // Включаем все опции обратно
+        surveyOptions.forEach(option => {
+          option.classList.remove('disabled');
+        });
+        radioButtons.forEach(r => {
+          r.disabled = false;
+        });
+      } else if (!radio.checked) {
+        // Первый клик - выбираем
+        radioButtons.forEach(r => r.checked = false); // Снимаем выбор с других
+        radio.checked = true;
+        
+        // Отключаем поле ввода
+        customInput.disabled = true;
+        customInput.value = '';
+        customInput.classList.add('disabled');
+      }
+      
+      lastClickTime = currentTime;
+    });
+  });
+  
+  // Обработчик для поля ввода
+  customInput.addEventListener('input', () => {
+    if (customInput.value.trim()) {
+      // Отключаем все радио-кнопки
+      radioButtons.forEach(radio => {
+        radio.checked = false;
+        radio.disabled = true;
+      });
+      surveyOptions.forEach(option => {
+        option.classList.add('disabled');
+      });
+    } else {
+      // Включаем радио-кнопки обратно
+      radioButtons.forEach(radio => {
+        radio.disabled = false;
+      });
+      surveyOptions.forEach(option => {
+        option.classList.remove('disabled');
+      });
+    }
+  });
+  
+  // Обработчик для очистки при фокусе на поле ввода
+  customInput.addEventListener('focus', () => {
+    if (!customInput.disabled) {
+      // Снимаем выбор с радио-кнопок
+      radioButtons.forEach(radio => {
+        radio.checked = false;
+      });
+    }
+  });
 }
 
 

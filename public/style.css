@@ -209,12 +209,12 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Быстрые запросы - блок на всю ширину с круглыми углами только сверху и снизу */
+/* Быстрые запросы - блок на всю ширину с круглыми углами сверху и снизу */
 .quick-requests {
   padding: clamp(14px, 3.5vw, 18px);
   background: #3B4F6B;
   margin: 0 0 70px 0; /* Отступ снизу для навигации */
-  border-radius: clamp(18px, 4.5vw, 24px) clamp(18px, 4.5vw, 24px) 0 0; /* Только верхние углы круглые */
+  border-radius: clamp(18px, 4.5vw, 24px); /* Закругление со всех сторон */
   overflow: hidden;
   display: flex !important;
   flex-direction: column !important;
@@ -331,7 +331,7 @@ body.chat-overlay-visible .search-container {
   overflow: hidden;
 }
 
-/* Экран вопросов - полноэкранный слайд */
+/* Экран вопросов - полноэкранный слайд БЕЗ СКРОЛЛА */
 #surveyStep {
   position: absolute;
   top: 0;
@@ -343,7 +343,7 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   padding: 0;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: hidden; /* Убираем скролл полностью */
 }
 
 #surveyStep.hidden {
@@ -378,11 +378,9 @@ body.chat-overlay-visible .search-container {
   flex-shrink: 0;
 }
 
-/* Прогресс бар - белый как на скриншоте, совмещен с вопросом */
+/* Убираем старый прогресс бар из хедера */
 .survey-progress {
-  flex-shrink: 0;
-  padding: clamp(8px, 1.5vh, 12px) clamp(16px, 4vw, 24px);
-  margin-bottom: clamp(8px, 1.5vh, 12px);
+  display: none;
 }
 
 .progress-bar {
@@ -412,7 +410,7 @@ body.chat-overlay-visible .search-container {
   font-weight: 500;
 }
 
-/* Контент вопроса - занимает оставшееся место с учетом навигации */
+/* Контент вопроса - занимает оставшееся место с учетом навигации, БЕЗ СКРОЛЛА */
 .survey-question {
   flex: 1;
   display: flex;
@@ -421,13 +419,13 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(16px, 4vw, 24px);
   margin-bottom: 0;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden; /* Убираем скролл */
   padding-bottom: clamp(180px, 35vh, 220px); /* Отступ для навигации */
 }
 
-/* Навигация вопросов */
+/* Навигация вопросов - СТАТИЧНАЯ позиция */
 .survey-navigation {
-  position: absolute;
+  position: fixed;
   bottom: clamp(100px, 18vh, 120px);
   left: 0;
   right: 0;
@@ -437,6 +435,11 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(40px, 8vw, 60px);
   flex-shrink: 0;
   z-index: 50;
+  pointer-events: none; /* Отключаем события для контейнера */
+}
+
+.survey-navigation .nav-circle-btn {
+  pointer-events: auto; /* Включаем события только для кнопок */
 }
 
 /* Нижняя навигация в экране вопросов */
@@ -466,7 +469,7 @@ body.chat-overlay-visible .search-container {
   text-align: left;
 }
 
-/* Выбор пола */
+/* Выбор пола - белое заполнение с зазором */
 .gender-selection {
   display: flex;
   gap: clamp(20px, 5vw, 32px);
@@ -493,22 +496,17 @@ body.chat-overlay-visible .search-container {
   position: relative;
   transition: all 0.3s;
   flex-shrink: 0;
+  background: transparent;
 }
 
 .gender-option input[type="radio"]:checked + .gender-radio {
-  background: #F5F1E8;
+  background: #FFFFFF;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 2px #F5F1E8;
 }
 
 .gender-option input[type="radio"]:checked + .gender-radio::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: clamp(8px, 2vw, 10px);
-  height: clamp(8px, 2vw, 10px);
-  background: #4A8B6C;
-  border-radius: 50%;
+  display: none;
 }
 
 .gender-text {
@@ -591,7 +589,11 @@ body.chat-overlay-visible .search-container {
 }
 
 .nav-circle-btn svg {
-  stroke: #000000;
+  stroke: #000000 !important;
+}
+
+.nav-circle-btn svg path {
+  stroke: #000000 !important;
 }
 
 .nav-circle-btn:hover {
@@ -692,25 +694,28 @@ body.chat-overlay-visible .search-container {
   display: none;
 }
 
-/* Опции ответов - молочные карточки */
+/* Опции ответов - без синего фона в квизе */
 .survey-options {
   display: flex;
   flex-direction: column;
-  gap: clamp(8px, 1.8vh, 12px);
-  margin: 0 clamp(16px, 4vw, 24px) clamp(16px, 3vh, 20px);
+  gap: clamp(6px, 1.2vh, 8px);
+  margin: 0 clamp(16px, 4vw, 24px) clamp(8px, 1.5vh, 12px);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .survey-option {
   display: flex;
   align-items: flex-start;
-  gap: clamp(12px, 3vw, 16px);
-  padding: clamp(12px, 3vw, 16px);
+  gap: clamp(10px, 2.5vw, 14px);
+  padding: clamp(10px, 2.5vw, 14px);
   background: #F5F1E8;
-  border-radius: clamp(10px, 2.5vw, 14px);
+  border-radius: clamp(8px, 2vw, 12px);
   cursor: pointer;
   transition: all 0.3s ease;
   border: 2px solid transparent;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  justify-content: space-between; /* Размещаем элементы по краям */
 }
 
 .survey-option:hover {
@@ -719,66 +724,69 @@ body.chat-overlay-visible .search-container {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
+.survey-option.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .survey-option input[type="radio"] {
   display: none;
 }
 
-.survey-option input[type="radio"]:checked + .option-radio {
-  background: #3B4F6B;
-  border-color: #3B4F6B;
-}
-
-.survey-option input[type="radio"]:checked + .option-radio::after {
-  opacity: 0;
-}
-
-.survey-option input[type="radio"]:checked ~ .option-text {
+/* Радио-кнопки в квизе - синее заполнение с правильным зазором */
+.survey-option input[type="radio"]:checked + .option-text {
   color: #333333;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.survey-option input[type="radio"]:checked ~ .option-radio {
+  background: #3B4F6B !important;
+  border: 2px solid transparent !important;
+  box-shadow: 0 0 0 2px #3B4F6B !important;
+}
+
+.survey-option input[type="radio"]:checked ~ .option-radio::after {
+  display: none;
 }
 
 .option-radio {
-  width: clamp(18px, 4.5vw, 22px);
-  height: clamp(18px, 4.5vw, 22px);
+  width: clamp(16px, 4vw, 20px);
+  height: clamp(16px, 4vw, 20px);
   border: 2px solid #CCCCCC;
   border-radius: 50%;
   position: relative;
   transition: all 0.3s ease;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 1px;
+  order: 2; /* Перемещаем радио-кнопку вправо */
+  background: transparent;
 }
 
 .option-radio::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: clamp(8px, 2vw, 10px);
-  height: clamp(8px, 2vw, 10px);
-  background: white;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  display: none;
 }
 
 .option-text {
-  font-size: clamp(12px, 3vw, 14px);
+  font-size: clamp(11px, 2.8vw, 13px);
   color: #333333;
-  line-height: 1.4;
+  line-height: 1.25;
   transition: all 0.3s ease;
-  font-weight: 500;
+  font-weight: 600; /* Делаем текст жирным */
+  flex: 1;
+  order: 1; /* Текст остается слева */
 }
 
-/* Свой вариант ответа - белое поле ввода */
+/* Свой вариант ответа - без синего фона */
 .custom-answer-section {
   margin-top: clamp(12px, 2.5vh, 16px);
   padding: 0 clamp(16px, 4vw, 24px);
+  flex-shrink: 0;
 }
 
 .custom-answer-label {
   display: block;
-  font-size: clamp(12px, 3vw, 14px);
+  font-size: clamp(11px, 2.8vw, 13px);
   color: #FFFFFF;
   margin-bottom: clamp(6px, 1.2vh, 8px);
   font-weight: 600;
@@ -786,10 +794,10 @@ body.chat-overlay-visible .search-container {
 
 .custom-answer-input {
   width: 100%;
-  padding: clamp(12px, 3vw, 16px);
+  padding: clamp(10px, 2.5vw, 14px);
   border: none;
-  border-radius: clamp(10px, 2.5vw, 14px);
-  font-size: clamp(12px, 3vw, 14px);
+  border-radius: clamp(8px, 2vw, 12px);
+  font-size: clamp(11px, 2.8vw, 13px);
   color: #333333;
   background: #FFFFFF;
   transition: all 0.3s;
@@ -803,9 +811,15 @@ body.chat-overlay-visible .search-container {
   box-shadow: 0 0 0 3px rgba(74, 139, 108, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
+.custom-answer-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #F0F0F0;
+}
+
 .custom-answer-input::placeholder {
   color: #999999;
-  font-size: clamp(11px, 2.8vw, 13px);
+  font-size: clamp(10px, 2.5vw, 12px);
 }
 
 .quick-card {
@@ -1695,4 +1709,141 @@ body.chat-overlay-visible .search-container {
   color: #8B8B8B;
   margin: 0;
   line-height: 1.4;
+}
+/* Адаптивные стили для экрана вопросов */
+
+/* Заголовки сверху слева - адаптивные */
+.question-titles {
+  padding: 0 clamp(16px, 4vw, 24px);
+  margin-bottom: clamp(12px, 2.5vh, 16px);
+  flex-shrink: 0;
+}
+
+.main-title {
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: 0 0 clamp(4px, 1vh, 6px) 0;
+  line-height: 1.2;
+}
+
+.sub-title {
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 500;
+  color: #FFFFFF;
+  margin: 0;
+  line-height: 1.2;
+  opacity: 0.9;
+}
+
+/* Объединенная карточка - адаптивная */
+.question-progress-card {
+  background: #F5F1E8;
+  border-radius: clamp(12px, 3vw, 16px);
+  padding: clamp(14px, 3.5vw, 18px);
+  margin: 0 clamp(16px, 4vw, 24px) clamp(12px, 2.5vh, 16px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+/* Секция прогресса - адаптивная */
+.progress-section {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 12px);
+  margin-bottom: clamp(10px, 2vh, 14px);
+}
+
+.progress-counter {
+  font-size: clamp(11px, 2.5vw, 13px);
+  color: #666666;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.progress-bar-inline {
+  flex: 1;
+  height: clamp(4px, 1vw, 6px);
+  background: rgba(102, 102, 102, 0.2);
+  border-radius: clamp(2px, 0.5vw, 3px);
+  overflow: hidden;
+}
+
+.progress-fill-inline {
+  height: 100%;
+  background: #4A8B6C;
+  border-radius: clamp(2px, 0.5vw, 3px);
+  transition: width 0.3s ease;
+}
+
+/* Секция с текстом вопроса - адаптивная */
+.question-text-section {
+  border-top: 1px solid rgba(102, 102, 102, 0.1);
+  padding-top: clamp(10px, 2vh, 14px);
+}
+
+.question-text {
+  font-size: clamp(13px, 3.2vw, 15px);
+  font-weight: 500;
+  color: #666666;
+  margin: 0;
+  line-height: 1.3;
+  text-align: left;
+}
+
+/* Убираем старые стили заголовков и карточек */
+.question-header,
+.question-card {
+  display: none;
+}
+
+/* Медиа-запросы для лучшей адаптивности */
+@media (max-width: 480px) {
+  .question-titles {
+    margin-bottom: clamp(8px, 2vh, 12px);
+  }
+  
+  .question-progress-card {
+    padding: clamp(12px, 3vw, 16px);
+    margin: 0 clamp(12px, 3vw, 20px) clamp(10px, 2vh, 14px);
+  }
+  
+  .progress-section {
+    margin-bottom: clamp(8px, 1.5vh, 12px);
+  }
+  
+  .survey-options {
+    gap: clamp(4px, 1vh, 6px);
+    margin: 0 clamp(12px, 3vw, 20px) 0;
+    padding: clamp(12px, 3vw, 16px);
+  }
+  
+  .survey-option {
+    padding: clamp(8px, 2vw, 12px);
+  }
+  
+  .custom-answer-section {
+    margin-top: clamp(6px, 1.2vh, 10px);
+  }
+}
+
+@media (min-width: 768px) {
+  #surveyStep {
+    max-width: 480px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .survey-navigation {
+    max-width: 480px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  #surveyStep .bottom-nav {
+    max-width: 456px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
