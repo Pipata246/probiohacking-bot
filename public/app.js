@@ -382,13 +382,13 @@ function showDiagnosticForm() {
         </div>
         
         <!-- Навигация вопросов -->
-        <div class="survey-navigation">
-          <button class="nav-circle-btn nav-circle-btn-active" id="surveyBackBtn">
+        <div class="quiz-navigation">
+          <button class="quiz-nav-btn" id="surveyBackBtn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M19 12H5M12 19L5 12L12 5" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <button class="nav-circle-btn nav-circle-btn-primary" id="surveyNextBtn">
+          <button class="quiz-nav-btn" id="surveyNextBtn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M5 12H19M12 5L19 12L12 19" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -558,42 +558,42 @@ function showQuestion(index) {
   
   if (question.type === 'multiple_with_custom') {
     optionsHtml = question.options.map(option => `
-      <label class="survey-option">
+      <label class="quiz-option">
         <input type="radio" name="question_${question.id}" value="${option.value}">
-        <span class="option-text">${option.label}</span>
-        <span class="option-radio"></span>
+        <span class="quiz-option-text">${option.label}</span>
+        <span class="quiz-option-radio"></span>
       </label>
     `).join('');
     
     optionsHtml += `
-      <div class="custom-answer-section">
-        <label class="custom-answer-label">Свой вариант ответа:</label>
-        <input type="text" class="custom-answer-input" placeholder="Например: Плохо, почти никак" name="custom_${question.id}">
+      <div class="quiz-custom-answer">
+        <label class="quiz-custom-label">Свой вариант ответа:</label>
+        <input type="text" class="quiz-custom-input" placeholder="Например: Плохо, почти никак" name="custom_${question.id}">
       </div>
     `;
   }
   
   questionContainer.innerHTML = `
     <!-- Заголовки сверху -->
-    <div class="question-titles">
-      <h1 class="main-title">Диагностическая анкета:</h1>
-      <h2 class="sub-title">${question.system}</h2>
+    <div class="quiz-titles">
+      <h1 class="quiz-main-title">Диагностическая анкета:</h1>
+      <h2 class="quiz-sub-title">${question.system}</h2>
     </div>
     
     <!-- Объединенная карточка с прогрессом и вопросом -->
-    <div class="question-progress-card">
-      <div class="progress-section">
-        <span class="progress-counter">${currentQuestionIndex + 1}/17</span>
-        <div class="progress-bar-inline">
-          <div class="progress-fill-inline" style="width: ${((currentQuestionIndex + 1) / surveyQuestions.length) * 100}%"></div>
+    <div class="quiz-question-card">
+      <div class="quiz-progress-section">
+        <span class="quiz-progress-counter">${currentQuestionIndex + 1}/17</span>
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" style="width: ${((currentQuestionIndex + 1) / surveyQuestions.length) * 100}%"></div>
         </div>
       </div>
-      <div class="question-text-section">
-        <h3 class="question-text">${question.question}</h3>
+      <div class="quiz-question-section">
+        <h3 class="quiz-question-text">${question.question}</h3>
       </div>
     </div>
     
-    <div class="survey-options">
+    <div class="quiz-options">
       ${optionsHtml}
     </div>
   `;
@@ -605,7 +605,7 @@ function showQuestion(index) {
 function setupAnswerExclusion(questionId) {
   const radioButtons = document.querySelectorAll(`input[name="question_${questionId}"]`);
   const customInput = document.querySelector(`input[name="custom_${questionId}"]`);
-  const surveyOptions = document.querySelectorAll('.survey-option');
+  const quizOptions = document.querySelectorAll('.quiz-option');
   
   // Обработчик для радио-кнопок с возможностью отмены
   radioButtons.forEach(radio => {
@@ -634,7 +634,7 @@ function setupAnswerExclusion(questionId) {
         customInput.classList.remove('disabled');
         
         // Включаем все опции обратно
-        surveyOptions.forEach(option => {
+        quizOptions.forEach(option => {
           option.classList.remove('disabled');
         });
         radioButtons.forEach(r => {
@@ -663,7 +663,7 @@ function setupAnswerExclusion(questionId) {
         radio.checked = false;
         radio.disabled = true;
       });
-      surveyOptions.forEach(option => {
+      quizOptions.forEach(option => {
         option.classList.add('disabled');
       });
     } else {
@@ -671,7 +671,7 @@ function setupAnswerExclusion(questionId) {
       radioButtons.forEach(radio => {
         radio.disabled = false;
       });
-      surveyOptions.forEach(option => {
+      quizOptions.forEach(option => {
         option.classList.remove('disabled');
       });
     }
