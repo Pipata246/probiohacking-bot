@@ -1957,12 +1957,12 @@ body.chat-overlay-visible .search-container {
   line-height: 1.2; /* УМЕНЬШАЕМ межстрочный интервал */
 }
 
-/* Опции ответов - еще компактнее */
+/* Опции ответов - увеличиваем расстояние между кнопками */
 .quiz-options {
   display: flex;
   flex-direction: column;
-  gap: 5px; /* УМЕНЬШАЕМ gap еще больше */
-  margin: 0 24px 5px; /* УМЕНЬШАЕМ отступ снизу еще больше */
+  gap: 8px; /* УВЕЛИЧИВАЕМ расстояние между кнопками */
+  margin: 0 24px 8px; /* УВЕЛИЧИВАЕМ отступ снизу */
   flex-shrink: 0;
 }
 
@@ -2034,35 +2034,35 @@ body.chat-overlay-visible .search-container {
 /* ПОЛЕ ВВОДА СООБЩЕНИЯ В КВИЗЕ - ПОЛНАЯ ПЕРЕЗАПИСЬ */
 /* ========================================= */
 
-/* Контейнер для поля ввода - новый класс */
+/* Контейнер для поля ввода - увеличиваем отступ */
 .quiz-custom-answer {
   position: relative;
   width: 100%;
   padding: 0 24px;
-  margin-top: 10px; /* УМЕНЬШАЕМ отступ сверху */
+  margin-top: 12px; /* УВЕЛИЧИВАЕМ отступ сверху */
   margin-bottom: 0;
   flex-shrink: 0;
   z-index: 10;
 }
 
-/* Лейбл для поля ввода */
+/* Лейбл для поля ввода - увеличиваем */
 .quiz-custom-label {
   display: block;
-  font-size: 13px; /* УМЕНЬШАЕМ размер */
+  font-size: 14px; /* УВЕЛИЧИВАЕМ размер */
   color: #FFFFFF;
-  margin-bottom: 6px; /* УМЕНЬШАЕМ отступ */
+  margin-bottom: 8px; /* УВЕЛИЧИВАЕМ отступ */
   font-weight: 600;
-  line-height: 1.1; /* УМЕНЬШАЕМ межстрочный интервал */
+  line-height: 1.2; /* УВЕЛИЧИВАЕМ межстрочный интервал */
 }
 
-/* Само поле ввода - полностью новые стили */
+/* Само поле ввода - увеличиваем размер */
 .quiz-custom-input {
   width: 100%;
-  height: 44px; /* УМЕНЬШАЕМ высоту */
-  padding: 12px 14px; /* УМЕНЬШАЕМ padding */
+  height: 52px; /* УВЕЛИЧИВАЕМ высоту */
+  padding: 16px; /* УВЕЛИЧИВАЕМ padding */
   border: none;
   border-radius: 12px;
-  font-size: 13px; /* УМЕНЬШАЕМ размер */
+  font-size: 14px; /* УВЕЛИЧИВАЕМ размер шрифта */
   color: #333333;
   background: #FFFFFF;
   transition: all 0.3s ease;
@@ -2096,22 +2096,22 @@ body.chat-overlay-visible .search-container {
   opacity: 0.8;
 }
 
-/* Адаптивные стили для мобильных */
+/* Адаптивные стили для мобильных - увеличиваем поле ввода */
 @media (max-width: 480px) {
   .quiz-custom-answer {
     padding: 0 16px;
-    margin-top: 8px; /* УМЕНЬШАЕМ отступ */
+    margin-top: 10px;
   }
   
   .quiz-custom-input {
-    height: 40px; /* УМЕНЬШАЕМ высоту */
-    padding: 10px 12px; /* УМЕНЬШАЕМ padding */
-    font-size: 13px;
+    height: 48px; /* УВЕЛИЧИВАЕМ высоту для мобильных */
+    padding: 14px; /* УВЕЛИЧИВАЕМ padding */
+    font-size: 14px; /* УВЕЛИЧИВАЕМ размер шрифта */
   }
   
   .quiz-custom-label {
-    font-size: 12px; /* УМЕНЬШАЕМ размер */
-    margin-bottom: 5px; /* УМЕНЬШАЕМ отступ */
+    font-size: 13px;
+    margin-bottom: 7px; /* УВЕЛИЧИВАЕМ отступ */
   }
 }
 
@@ -2158,25 +2158,25 @@ body.chat-overlay-visible .search-container {
   stroke: #000000;
 }
 
-/* Медиа-запросы для мобильных - обновленные */
+/* Медиа-запросы для мобильных - увеличиваем расстояние между кнопками */
 @media (max-width: 480px) {
   .quiz-titles {
     padding: 0 16px;
-    margin-bottom: 6px; /* УМЕНЬШАЕМ отступ */
+    margin-bottom: 6px;
   }
   
   .quiz-question-card {
-    padding: 12px; /* УМЕНЬШАЕМ padding */
-    margin: 0 16px 6px; /* УМЕНЬШАЕМ отступ */
+    padding: 12px;
+    margin: 0 16px 6px;
   }
   
   .quiz-options {
-    gap: 4px; /* УМЕНЬШАЕМ gap */
-    margin: 0 16px 4px; /* УМЕНЬШАЕМ отступ */
+    gap: 7px; /* УВЕЛИЧИВАЕМ расстояние между кнопками на мобильных */
+    margin: 0 16px 7px; /* УВЕЛИЧИВАЕМ отступ */
   }
   
   .quiz-option {
-    padding: 9px; /* УМЕНЬШАЕМ padding */
+    padding: 9px;
   }
   
   .quiz-navigation {
@@ -2190,6 +2190,6 @@ body.chat-overlay-visible .search-container {
   }
   
   .survey-question {
-    padding-bottom: 180px; /* Меньший отступ для мобильных */
+    padding-bottom: 180px;
   }
 }
