@@ -134,15 +134,17 @@ function showKnowledgeBase() {
 function showDiagnostics() {
   mainApp.style.display = 'none';
   knowledgeBase.classList.remove('active');
-  diagnosticsPage.classList.add('active');
   chatOverlay.classList.remove('active');
   document.body.classList.remove('chat-overlay-visible');
   isChatModeActive = false;
   
   // Если в режиме диагностики - возвращаемся к опроснику
   if (isDiagnosticModeActive) {
+    diagnosticsPage.classList.remove('active'); // Скрываем основную страницу только в режиме диагностики
     returnToDiagnosticFromOtherPage();
-    return;
+  } else {
+    // Показываем обычную страницу диагностики
+    diagnosticsPage.classList.add('active');
   }
   
   // Устанавливаем активную кнопку "Диагностика" во всех навигациях
