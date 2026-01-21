@@ -2037,7 +2037,7 @@ body.chat-overlay-visible .search-container {
   margin-left: 24px;
   margin-right: 24px;
   flex-shrink: 0;
-  margin-bottom: 160px; /* УВЕЛИЧИВАЕМ отступ чтобы поле было видно полностью */
+  margin-bottom: 200px; /* УВЕЛИЧИВАЕМ отступ еще больше чтобы поле было полностью видно с самого начала */
 }
 
 .quiz-custom-label {
@@ -2146,7 +2146,7 @@ body.chat-overlay-visible .search-container {
     margin-left: 16px;
     margin-right: 16px;
     margin-top: 10px; /* Компактнее */
-    margin-bottom: 140px; /* УВЕЛИЧИВАЕМ отступ для мобильных чтобы поле было видно */
+    margin-bottom: 180px; /* УВЕЛИЧИВАЕМ отступ для мобильных чтобы поле было полностью видно с самого начала */
   }
   
   .quiz-navigation {
