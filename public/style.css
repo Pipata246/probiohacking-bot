@@ -410,7 +410,7 @@ body.chat-overlay-visible .search-container {
   font-weight: 500;
 }
 
-/* Контент вопроса - правильные отступы без перекрытия */
+/* Контент вопроса - увеличенный отступ снизу */
 .survey-question {
   flex: 1;
   display: flex;
@@ -419,24 +419,24 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(16px, 4vw, 24px);
   margin-bottom: 0;
   min-height: 0;
-  overflow: hidden; /* Убираем скролл */
-  padding-bottom: clamp(160px, 30vh, 200px); /* Увеличенный отступ для навигации */
+  overflow: hidden;
+  padding-bottom: clamp(220px, 40vh, 260px); /* БОЛЬШОЙ отступ для навигации и поля ввода */
 }
 
-/* Навигация вопросов - ближе к центру с правильными отступами */
+/* Навигация вопросов - кнопки под полем ввода, ближе к центру */
 .survey-navigation {
   position: fixed;
-  bottom: clamp(120px, 22vh, 140px);
-  left: 0;
-  right: 0;
+  bottom: clamp(140px, 25vh, 160px);
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 clamp(60px, 12vw, 80px);
   flex-shrink: 0;
   z-index: 50;
-  pointer-events: none; /* Отключаем события для контейнера */
-  gap: clamp(120px, 25vw, 160px); /* Расстояние между кнопками */
+  pointer-events: none;
+  gap: clamp(80px, 18vw, 120px); /* Расстояние между кнопками - ближе к центру */
+  width: auto;
 }
 
 .survey-navigation .nav-circle-btn {
@@ -569,8 +569,8 @@ body.chat-overlay-visible .search-container {
 }
 
 .nav-circle-btn {
-  width: clamp(56px, 14vw, 64px);
-  height: clamp(56px, 14vw, 64px);
+  width: clamp(50px, 12vw, 60px);
+  height: clamp(50px, 12vw, 60px);
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -778,12 +778,12 @@ body.chat-overlay-visible .search-container {
   order: 1; /* Текст остается слева */
 }
 
-/* Свой вариант ответа - правильная ширина и позиционирование */
+/* Свой вариант ответа - НЕ налезает на кнопки, правильная ширина */
 .custom-answer-section {
   margin-top: clamp(16px, 3vh, 20px);
   padding: 0 clamp(16px, 4vw, 24px);
   flex-shrink: 0;
-  margin-bottom: clamp(140px, 25vh, 160px); /* Отступ для навигационных кнопок */
+  margin-bottom: clamp(200px, 35vh, 240px); /* БОЛЬШОЙ отступ чтобы НЕ налезало на кнопки */
 }
 
 .custom-answer-label {
