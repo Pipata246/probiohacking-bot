@@ -352,7 +352,7 @@ body.chat-overlay-visible .search-container {
   display: none;
 }
 
-/* Экран данных - полноэкранный слайд */
+/* Экран данных - полноэкранный слайд с нижней навигацией */
 #personalDataStep {
   position: absolute;
   top: 0;
@@ -365,6 +365,7 @@ body.chat-overlay-visible .search-container {
   padding: clamp(16px, 4vw, 24px);
   box-sizing: border-box;
   overflow-y: auto;
+  padding-bottom: 120px; /* Отступ для нижней навигации */
 }
 
 #personalDataStep.hidden {
@@ -453,6 +454,23 @@ body.chat-overlay-visible .search-container {
 
 .survey-navigation .nav-circle-btn {
   pointer-events: auto; /* Включаем события только для кнопок */
+}
+
+/* Нижняя навигация в экране ввода данных */
+#personalDataStep .bottom-nav {
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: rgba(74, 139, 108, 0.85);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 12px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  transition: background-color 0.3s ease;
+  border-radius: 20px;
+  flex-shrink: 0;
 }
 
 /* Нижняя навигация в экране вопросов - адаптивная к клавиатуре */
@@ -1945,7 +1963,7 @@ body.chat-overlay-visible .search-container {
 
 .quiz-progress-fill {
   height: 100%;
-  background: #4A8B6C;
+  background: #FF8C42; /* ОРАНЖЕВЫЙ цвет как на скриншоте */
   border-radius: 3px;
   transition: width 0.3s ease;
 }
