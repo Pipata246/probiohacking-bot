@@ -216,12 +216,19 @@ function returnToDiagnosticFromOtherPage() {
   // Возвращаемся в диагностику из другой страницы (если были в режиме диагностики)
   mainApp.style.display = 'none';
   knowledgeBase.classList.remove('active');
-  diagnosticsPage.classList.remove('active');
+  chatOverlay.classList.remove('active');
+  
   const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-  if (diagnosticFormOverlay) {
+  if (diagnosticFormOverlay && isDiagnosticModeActive) {
+    // Если есть форма и режим активен - показываем форму
+    diagnosticsPage.classList.remove('active');
     diagnosticFormOverlay.style.display = 'flex';
+    document.body.classList.add('chat-overlay-visible');
+  } else {
+    // Иначе показываем обычную страницу диагностики
+    diagnosticsPage.classList.add('active');
+    document.body.classList.remove('chat-overlay-visible');
   }
-  document.body.classList.add('chat-overlay-visible'); // Блокируем скролл body
   
   // Диагностика остается активной
   document.querySelectorAll('.nav-item').forEach((item, index) => {
@@ -986,7 +993,7 @@ document.addEventListener('click', (e) => {
         diagnosticFormOverlay.remove();
       }
       
-      if (isDiagnosticModeActive && diagnosticFormOverlay) {
+      if (isDiagnosticModeActive) {
         // Если в режиме диагностики - возвращаемся к форме
         returnToDiagnosticFromOtherPage();
       } else {
