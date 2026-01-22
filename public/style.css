@@ -1,7 +1,12 @@
+/* Импорт тонкого шрифта */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
 }
 
 html {
@@ -13,8 +18,8 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   color: #fff;
   overflow-x: hidden;
   min-height: 100vh;
@@ -48,18 +53,65 @@ body.chat-overlay-visible {
   box-sizing: border-box;
 }
 
-/* Хедер - адаптивный */
+/* Хедер - унифицированный для всех страниц */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: clamp(12px, 2vh, 20px) clamp(16px, 4vw, 24px) clamp(8px, 1.5vh, 16px);
   flex-shrink: 0;
+  position: relative;
 }
 
-/* Хедер в базе знаний без кнопки меню */
+/* Хедер в базе знаний - аватар всегда справа */
 .knowledge-base .header {
-  justify-content: flex-end;
+  justify-content: space-between;
+}
+
+/* Добавляем невидимый элемент слева для выравнивания */
+.knowledge-base .header::before {
+  content: '';
+  width: 40px; /* Ширина аватара */
+  height: 40px;
+}
+
+/* Хедер в диагностической форме - аватар всегда справа */
+.diagnostic-form-overlay .header {
+  justify-content: space-between;
+}
+
+/* Добавляем невидимый элемент слева для выравнивания */
+.diagnostic-form-overlay .header::before {
+  content: '';
+  width: 40px; /* Ширина аватара */
+  height: 40px;
+}
+
+/* Хедер в диагностике - аватар всегда справа */
+.diagnostics-page .header {
+  justify-content: space-between;
+}
+
+/* Добавляем невидимый элемент слева для выравнивания */
+.diagnostics-page .header::before {
+  content: '';
+  width: 40px; /* Ширина аватара */
+  height: 40px;
+}
+
+/* Хедер в чате - аватар всегда справа */
+.chat-overlay .header {
+  justify-content: space-between;
+  flex-shrink: 0;
+  z-index: 1002;
+  position: relative;
+}
+
+/* Добавляем невидимый элемент слева для выравнивания */
+.chat-overlay .header::before {
+  content: '';
+  width: 40px; /* Ширина аватара */
+  height: 40px;
 }
 
 .menu-btn {
@@ -78,21 +130,27 @@ body.chat-overlay-visible {
 .menu-btn span {
   width: 24px;
   height: 2px;
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: 2px;
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 40px !important;
+  height: 40px !important;
   border-radius: 50%;
   background: #FF6B3D;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 16px;
   color: white;
+  flex-shrink: 0;
+  position: relative;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
 }
 
 /* Приветствие - адаптивное */
@@ -105,13 +163,13 @@ body.chat-overlay-visible {
   font-size: clamp(20px, 5vw, 28px);
   font-weight: 600;
   margin-bottom: clamp(4px, 0.8vh, 8px);
-  color: #F5F1E8;
+  color: #FEF7EC;
   line-height: 1.2;
 }
 
 .welcome-name {
   font-size: clamp(14px, 3.5vw, 18px);
-  color: #F5F1E8;
+  color: #FEF7EC;
   opacity: 0.8;
 }
 
@@ -134,9 +192,9 @@ body.chat-overlay-visible .search-container {
   padding: clamp(12px, 2.5vw, 16px) clamp(36px, 8vw, 44px) clamp(12px, 2.5vw, 16px) clamp(16px, 4vw, 20px);
   border-radius: clamp(20px, 5vw, 24px);
   border: none;
-  background: #F5F1E8;
+  background: #FEF7EC;
   font-size: clamp(13px, 3vw, 15px);
-  color: #3B4F6B;
+  color: #2A3F5F;
 }
 
 .search-input::placeholder {
@@ -160,7 +218,7 @@ body.chat-overlay-visible .search-container {
 /* Карточка рекомендаций - статичная и адаптивная */
 .recommendations-card {
   margin: 0 clamp(16px, 4vw, 24px) clamp(8px, 1.5vh, 12px);
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: clamp(16px, 4vw, 20px);
   padding: clamp(14px, 3.5vw, 18px);
   color: #333;
@@ -171,7 +229,7 @@ body.chat-overlay-visible .search-container {
   font-size: clamp(15px, 3.5vw, 18px);
   font-weight: 600;
   margin-bottom: clamp(10px, 2.5vw, 14px);
-  color: #3B4F6B;
+  color: #2A3F5F;
   line-height: 1.3;
 }
 
@@ -197,9 +255,9 @@ body.chat-overlay-visible .search-container {
   width: 100%;
   padding: 10px;
   border-radius: 10px;
-  border: 2px solid #3B4F6B;
-  background: #F5F1E8;
-  color: #3B4F6B;
+  border: 2px solid #2A3F5F;
+  background: #FEF7EC;
+  color: #2A3F5F;
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -213,7 +271,7 @@ body.chat-overlay-visible .search-container {
 /* Быстрые запросы - блок на всю ширину с круглыми углами сверху и снизу */
 .quick-requests {
   padding: clamp(14px, 3.5vw, 18px);
-  background: #3B4F6B;
+  background: #2A3F5F;
   margin: 0 0 20px 0; /* Уменьшенный отступ снизу */
   border-radius: clamp(18px, 4.5vw, 24px);
   overflow: hidden;
@@ -291,7 +349,7 @@ body.chat-overlay-visible .search-container {
   flex: 1;
   font-size: 18px;
   font-weight: 600;
-  color: #3B4F6B;
+  color: #2A3F5F;
   line-height: 1.3;
 }
 
@@ -302,25 +360,29 @@ body.chat-overlay-visible .search-container {
   left: 0;
   width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   z-index: 1000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Хедер в диагностической форме без кнопки меню */
-.diagnostic-form-overlay .header {
-  justify-content: flex-end;
-}
+
 
 /* Хедер внутри слайдов */
 .slide-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   padding: clamp(12px, 2vh, 20px) 0 clamp(8px, 1.5vh, 16px);
   flex-shrink: 0;
+}
+
+/* Добавляем невидимый элемент слева для выравнивания */
+.slide-header::before {
+  content: '';
+  width: 40px; /* Ширина аватара */
+  height: 40px;
 }
 
 /* Диагностическая форма - контейнер для слайдов */
@@ -340,7 +402,7 @@ body.chat-overlay-visible .search-container {
   width: 100%;
   height: 100vh;
   height: 100dvh; /* Динамическая высота viewport для мобильных */
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -360,7 +422,7 @@ body.chat-overlay-visible .search-container {
   left: 0;
   width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   display: flex;
   flex-direction: column;
   padding: clamp(16px, 4vw, 24px);
@@ -376,10 +438,17 @@ body.chat-overlay-visible .search-container {
 /* Хедер в экране вопросов */
 #surveyStep .slide-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   padding: clamp(12px, 2vh, 20px) clamp(16px, 4vw, 24px) 0;
   flex-shrink: 0;
+}
+
+/* Добавляем невидимый элемент слева для выравнивания */
+#surveyStep .slide-header::before {
+  content: '';
+  width: 40px; /* Ширина аватара */
+  height: 40px;
 }
 
 /* Убираем старый прогресс бар из хедера */
@@ -464,7 +533,7 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(74, 139, 108, 0.85);
+  background: rgba(60, 128, 91, 0.85);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
@@ -481,7 +550,7 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(74, 139, 108, 0.85);
+  background: rgba(60, 128, 91, 0.85);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
@@ -498,7 +567,7 @@ body.chat-overlay-visible .search-container {
 .form-main-title {
   font-size: clamp(18px, 4.5vw, 22px);
   font-weight: 600;
-  color: #F5F1E8;
+  color: #FEF7EC;
   margin: clamp(16px, 3vh, 24px) 0 clamp(24px, 5vh, 32px) 0;
   line-height: 1.3;
   text-align: left;
@@ -526,7 +595,7 @@ body.chat-overlay-visible .search-container {
 .gender-radio {
   width: clamp(18px, 4.5vw, 22px);
   height: clamp(18px, 4.5vw, 22px);
-  border: 2px solid #F5F1E8;
+  border: 2px solid #FEF7EC;
   border-radius: 50%;
   position: relative;
   transition: all 0.3s;
@@ -537,7 +606,7 @@ body.chat-overlay-visible .search-container {
 .gender-option input[type="radio"]:checked + .gender-radio {
   background: #FFFFFF;
   border: 2px solid transparent;
-  box-shadow: 0 0 0 2px #F5F1E8;
+  box-shadow: 0 0 0 2px #FEF7EC;
 }
 
 .gender-option input[type="radio"]:checked + .gender-radio::after {
@@ -546,7 +615,7 @@ body.chat-overlay-visible .search-container {
 
 .gender-text {
   font-size: clamp(14px, 3.5vw, 16px);
-  color: #F5F1E8;
+  color: #FEF7EC;
   font-weight: 500;
 }
 
@@ -565,7 +634,7 @@ body.chat-overlay-visible .search-container {
 
 .field-label {
   font-size: clamp(13px, 3vw, 15px);
-  color: #F5F1E8;
+  color: #FEF7EC;
   margin-bottom: clamp(6px, 1.5vh, 8px);
   font-weight: 500;
 }
@@ -584,8 +653,8 @@ body.chat-overlay-visible .search-container {
 
 .field-input:focus {
   outline: none;
-  background: #F5F1E8;
-  box-shadow: 0 0 0 2px rgba(245, 241, 232, 0.5);
+  background: #FEF7EC;
+  box-shadow: 0 0 0 2px rgba(254, 247, 236, 0.5);
 }
 
 .field-input::placeholder {
@@ -612,15 +681,15 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
-  background: #F5F1E8;
+  background: #FEF7EC;
 }
 
 .nav-circle-btn-active {
-  background: #F5F1E8 !important;
+  background: #FEF7EC !important;
 }
 
 .nav-circle-btn-primary {
-  background: #F5F1E8 !important;
+  background: #FEF7EC !important;
 }
 
 .nav-circle-btn svg {
@@ -671,7 +740,7 @@ body.chat-overlay-visible .search-container {
 
 /* Объединенная карточка с прогрессом и вопросом */
 .question-progress-card {
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: clamp(12px, 3vw, 16px);
   padding: clamp(16px, 4vw, 20px);
   margin: 0 clamp(16px, 4vw, 24px) clamp(16px, 3vh, 20px);
@@ -750,7 +819,7 @@ body.chat-overlay-visible .search-container {
   align-items: flex-start;
   gap: clamp(14px, 3.5vw, 18px);
   padding: clamp(14px, 3.5vw, 18px);
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: clamp(12px, 3vw, 16px);
   cursor: pointer;
   transition: all 0.3s ease;
@@ -782,9 +851,9 @@ body.chat-overlay-visible .search-container {
 }
 
 .survey-option input[type="radio"]:checked ~ .option-radio {
-  background: #3B4F6B !important;
+  background: #2A3F5F !important;
   border: 2px solid transparent !important;
-  box-shadow: 0 0 0 2px #3B4F6B !important;
+  box-shadow: 0 0 0 2px #2A3F5F !important;
 }
 
 .survey-option input[type="radio"]:checked ~ .option-radio::after {
@@ -856,7 +925,7 @@ body.chat-overlay-visible .search-container {
 .custom-answer-input:focus {
   outline: none;
   background: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(74, 139, 108, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.2), 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .custom-answer-input:disabled {
@@ -913,7 +982,7 @@ body.chat-overlay-visible .search-container {
 .quick-title {
   font-size: clamp(13px, 3vw, 15px);
   font-weight: 600;
-  color: #3B4F6B;
+  color: #2A3F5F;
   margin-bottom: clamp(2px, 0.5vw, 4px);
   line-height: 1.2;
 }
@@ -930,7 +999,7 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(74, 139, 108, 0.85);
+  background: rgba(60, 128, 91, 0.85);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
@@ -1093,16 +1162,21 @@ body.chat-overlay-visible .search-container {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 56px;
-  height: 56px;
+  width: 40px !important;
+  height: 40px !important;
   border-radius: 50%;
   background: #6366F1;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 20px;
+  font-size: 16px;
   color: white;
+  flex-shrink: 0;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
 }
 
 .sidebar-username {
@@ -1138,7 +1212,7 @@ body.chat-overlay-visible .search-container {
   left: 0;
   width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1171,14 +1245,14 @@ body.chat-overlay-visible .search-container {
 .welcome-screen-text {
   font-size: 16px;
   line-height: 1.6;
-  color: #F5F1E8;
+  color: #FEF7EC;
   opacity: 0.9;
   margin-bottom: 40px;
 }
 
 .welcome-screen-continue {
   font-size: 14px;
-  color: #F5F1E8;
+  color: #FEF7EC;
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 1.2s ease 2s forwards;
@@ -1212,7 +1286,7 @@ body.chat-overlay-visible .search-container {
   left: 0;
   width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   z-index: 500;
   display: none;
   flex-direction: column;
@@ -1232,7 +1306,7 @@ body.chat-overlay-visible .search-container {
   left: 0;
   width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   z-index: 1000;
   display: none;
   flex-direction: column;
@@ -1244,13 +1318,7 @@ body.chat-overlay-visible .search-container {
   display: flex;
 }
 
-/* Хедер в чате без кнопки меню */
-.chat-overlay .header {
-  justify-content: center;
-  flex-shrink: 0; /* Не сжимается */
-  z-index: 1002; /* Поверх сообщений */
-  position: relative;
-}
+
 
 .chat-messages {
   flex: 1;
@@ -1283,8 +1351,8 @@ body.chat-overlay-visible .search-container {
 }
 
 .bot-avatar, .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 40px !important;
+  height: 40px !important;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1292,24 +1360,19 @@ body.chat-overlay-visible .search-container {
   flex-shrink: 0;
   font-weight: 600;
   font-size: 16px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
 }
 
 .bot-avatar {
-  background: #F5F1E8;
+  background: #FEF7EC;
 }
 
 .user-avatar {
   background: #FF6B3D;
   color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-weight: 600;
-  font-size: 16px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -1335,7 +1398,7 @@ body.chat-overlay-visible .search-container {
 
 .message-text {
   font-size: 15px;
-  color: #F5F1E8;
+  color: #FEF7EC;
   line-height: 1.4;
   margin: 0;
   word-wrap: break-word;
@@ -1348,9 +1411,9 @@ body.chat-overlay-visible .search-container {
   margin-top: 12px;
   padding: 12px 24px;
   background: transparent;
-  border: 2px solid #F5F1E8;
+  border: 2px solid #FEF7EC;
   border-radius: 20px;
-  color: #F5F1E8;
+  color: #FEF7EC;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -1375,7 +1438,7 @@ body.chat-overlay-visible .search-container {
   bottom: 110px; /* Увеличиваем отступ от навигации */
   left: 12px;
   right: 12px;
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: 28px;
   padding: 4px;
   display: flex;
@@ -1402,7 +1465,7 @@ body.chat-overlay-visible .search-container {
   border: none;
   background: transparent;
   font-size: 16px;
-  color: #3B4F6B;
+  color: #2A3F5F;
   outline: none;
 }
 
@@ -1436,13 +1499,13 @@ body.chat-overlay-visible .search-container {
   font-size: clamp(24px, 6vw, 32px);
   font-weight: 600;
   margin-bottom: clamp(8px, 2vh, 12px);
-  color: #F5F1E8;
+  color: #FEF7EC;
   line-height: 1.2;
 }
 
 .knowledge-subtitle {
   font-size: clamp(16px, 4vw, 20px);
-  color: #F5F1E8;
+  color: #FEF7EC;
   opacity: 0.8;
 }
 
@@ -1455,7 +1518,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .knowledge-section {
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: 24px;
   margin-bottom: 16px;
   overflow: hidden;
@@ -1560,12 +1623,12 @@ body.chat-overlay-visible .search-container {
 .gender-option input[type="radio"] {
   width: 20px;
   height: 20px;
-  accent-color: #F5F1E8;
+  accent-color: #FEF7EC;
 }
 
 .gender-option label {
   font-size: clamp(14px, 3.5vw, 16px);
-  color: #F5F1E8;
+  color: #FEF7EC;
   cursor: pointer;
 }
 
@@ -1583,7 +1646,7 @@ body.chat-overlay-visible .search-container {
   left: 0;
   width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   z-index: 500;
   display: none;
   flex-direction: column;
@@ -1596,11 +1659,6 @@ body.chat-overlay-visible .search-container {
   display: flex;
 }
 
-/* Хедер в диагностике без кнопки меню */
-.diagnostics-page .header {
-  justify-content: flex-end;
-}
-
 .diagnostics-content {
   flex: 1;
   padding: 0 clamp(16px, 4vw, 24px) clamp(16px, 3vh, 24px);
@@ -1611,7 +1669,7 @@ body.chat-overlay-visible .search-container {
 
 /* Карточка персональной диагностики */
 .personal-diagnostics-card {
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: clamp(16px, 4vw, 20px);
   padding: clamp(16px, 4vw, 20px);
   margin-bottom: clamp(20px, 4vh, 28px);
@@ -1657,9 +1715,9 @@ body.chat-overlay-visible .search-container {
   width: 100%;
   padding: clamp(12px, 3vw, 16px);
   border-radius: clamp(12px, 3vw, 16px);
-  border: 2px solid #3B4F6B;
-  background: #F5F1E8;
-  color: #3B4F6B;
+  border: 2px solid #2A3F5F;
+  background: #FEF7EC;
+  color: #2A3F5F;
   font-size: clamp(14px, 3.5vw, 16px);
   font-weight: 600;
   cursor: pointer;
@@ -1672,8 +1730,8 @@ body.chat-overlay-visible .search-container {
 }
 
 .fill-form-btn:hover {
-  background: #3B4F6B;
-  color: #F5F1E8;
+  background: #2A3F5F;
+  color: #FEF7EC;
 }
 
 .diagnostics-features {
@@ -1702,9 +1760,9 @@ body.chat-overlay-visible .search-container {
   width: 100%;
   padding: clamp(10px, 2.5vw, 14px);
   border-radius: clamp(10px, 2.5vw, 14px);
-  border: 1px solid #3B4F6B;
+  border: 1px solid #2A3F5F;
   background: transparent;
-  color: #3B4F6B;
+  color: #2A3F5F;
   font-size: clamp(13px, 3vw, 15px);
   font-weight: 500;
   cursor: pointer;
@@ -1712,7 +1770,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .my-tests-btn:hover {
-  background: rgba(59, 79, 107, 0.1);
+  background: rgba(42, 63, 95, 0.1);
 }
 
 /* Заголовок результатов */
@@ -1723,7 +1781,7 @@ body.chat-overlay-visible .search-container {
 .results-title {
   font-size: clamp(16px, 4vw, 20px);
   font-weight: 600;
-  color: #F5F1E8;
+  color: #FEF7EC;
   margin: 0;
   line-height: 1.3;
 }
@@ -1736,7 +1794,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .result-card {
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: clamp(12px, 3vw, 16px);
   padding: clamp(12px, 3vw, 16px);
   display: flex;
@@ -1763,7 +1821,7 @@ body.chat-overlay-visible .search-container {
 .result-title {
   font-size: clamp(13px, 3.2vw, 15px);
   font-weight: 600;
-  color: #3B4F6B;
+  color: #2A3F5F;
   margin: 0 0 clamp(2px, 0.5vh, 4px) 0;
   line-height: 1.3;
 }
@@ -1802,7 +1860,7 @@ body.chat-overlay-visible .search-container {
 
 /* Объединенная карточка - ФИКСИРОВАННЫЕ отступы для мобильных */
 .question-progress-card {
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: clamp(16px, 4vw, 20px);
   padding: clamp(18px, 4.5vw, 24px);
   margin: 0 20px clamp(18px, 4vh, 24px); /* ФИКСИРОВАННЫЕ отступы 20px */
@@ -1948,7 +2006,7 @@ body.chat-overlay-visible .search-container {
 
 /* Карточка с прогрессом и вопросом - с учетом увеличенных заголовков */
 .quiz-question-card {
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: 16px;
   padding: 14px; /* УМЕНЬШАЕМ padding */
   margin: 0 24px 8px; /* НЕМНОГО УВЕЛИЧИВАЕМ отступ снизу */
@@ -2015,7 +2073,7 @@ body.chat-overlay-visible .search-container {
   justify-content: space-between;
   gap: 16px;
   padding: 10px; /* УМЕНЬШАЕМ padding */
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -2068,9 +2126,9 @@ body.chat-overlay-visible .search-container {
 }
 
 .quiz-option input[type="radio"]:checked ~ .quiz-option-radio {
-  background: #3B4F6B;
+  background: #2A3F5F;
   border: 2px solid transparent;
-  box-shadow: 0 0 0 2px #3B4F6B;
+  box-shadow: 0 0 0 2px #2A3F5F;
 }
 
 /* ========================================= */
@@ -2120,7 +2178,7 @@ body.chat-overlay-visible .search-container {
 /* Фокус на поле ввода */
 .quiz-custom-input:focus {
   background: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(74, 139, 108, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
   transform: translateY(-1px);
 }
 
@@ -2183,7 +2241,7 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   justify-content: center;
   transition: all 0.3s;
-  background: #F5F1E8;
+  background: #FEF7EC;
   pointer-events: auto;
 }
 
@@ -2288,7 +2346,7 @@ body.chat-overlay-visible .search-container {
   left: 0;
   width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   display: flex;
   flex-direction: column;
   padding: clamp(16px, 4vw, 24px);
@@ -2318,7 +2376,7 @@ body.chat-overlay-visible .search-container {
 
 /* Карточка вопроса с прогрессом внутри */
 .question-card-small {
-  background: #F5F1E8;
+  background: #FEF7EC;
   border-radius: clamp(12px, 3vw, 16px);
   padding: clamp(14px, 3.5vw, 18px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -2395,8 +2453,8 @@ body.chat-overlay-visible .search-container {
 
 .answer-textarea:focus {
   outline: none;
-  background: #F5F1E8;
-  box-shadow: 0 0 0 2px rgba(245, 241, 232, 0.5);
+  background: #FEF7EC;
+  box-shadow: 0 0 0 2px rgba(254, 247, 236, 0.5);
 }
 
 .answer-textarea::placeholder {
@@ -2409,8 +2467,8 @@ body.chat-overlay-visible .search-container {
   padding: clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px);
   border-radius: clamp(20px, 5vw, 24px);
   border: none;
-  background: #F5F1E8;
-  color: #3B4F6B;
+  background: #FEF7EC;
+  color: #2A3F5F;
   font-size: clamp(14px, 3.5vw, 16px);
   font-weight: 600;
   cursor: pointer;
@@ -2439,5 +2497,459 @@ body.chat-overlay-visible .search-container {
   
   .answer-textarea {
     min-height: clamp(60px, 12vh, 100px);
+  }
+}
+
+/* Импорт тонкого шрифта */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+/* ========================================
+   СТРАНИЦА "МОИ АНАЛИЗЫ"
+   ======================================== */
+
+/* Основной контейнер страницы анализов */
+#myTestsStep {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Контейнер для скроллируемого контента */
+.my-tests-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 clamp(16px, 4vw, 20px);
+  padding-bottom: clamp(100px, 25vh, 140px); /* Отступ от навигации */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.my-tests-content::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.my-tests-title {
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 600;
+  color: #F8F6F0;
+  margin: clamp(20px, 5vh, 32px) 0 clamp(8px, 2vh, 12px) 0;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.my-tests-subtitle {
+  font-size: clamp(13px, 3.2vw, 15px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: clamp(24px, 6vh, 32px);
+  text-align: left;
+}
+
+/* Секция загрузки файлов */
+.file-upload-section {
+  margin-bottom: clamp(24px, 6vh, 32px);
+}
+
+.file-upload-card {
+  background: #F8F6F0;
+  border-radius: clamp(16px, 4vw, 20px);
+  padding: clamp(24px, 6vw, 32px);
+  text-align: center;
+  border: 2px dashed #B0B0B0;
+  position: relative;
+}
+
+.upload-icon {
+  margin-bottom: clamp(16px, 4vh, 20px);
+  display: flex;
+  justify-content: center;
+}
+
+.upload-icon svg {
+  width: clamp(24px, 6vw, 28px);
+  height: clamp(24px, 6vw, 28px);
+  background: #E5E7EB;
+  border-radius: 50%;
+  padding: clamp(12px, 3vw, 16px);
+  box-sizing: content-box;
+}
+
+.upload-title {
+  font-size: clamp(16px, 4vw, 18px);
+  font-weight: 600;
+  color: #4A8B6C;
+  margin-bottom: clamp(8px, 2vh, 12px);
+}
+
+.upload-subtitle {
+  font-size: clamp(12px, 3vw, 14px);
+  font-weight: 400;
+  color: #6B7280;
+  margin-bottom: clamp(20px, 5vh, 24px);
+}
+
+.upload-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(12px, 3vw, 16px);
+  justify-content: center;
+}
+
+.upload-btn-primary {
+  background: #4A8B6C;
+  color: white;
+  border: none;
+  border-radius: clamp(12px, 3vw, 16px);
+  padding: clamp(12px, 3vw, 16px) clamp(20px, 5vw, 24px);
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-btn-primary:hover {
+  background: #3A7A5C;
+  transform: translateY(-1px);
+}
+
+.upload-btn-secondary {
+  background: transparent;
+  color: #4A8B6C;
+  border: 2px solid #4A8B6C;
+  border-radius: clamp(12px, 3vw, 16px);
+  padding: clamp(10px, 2.5vw, 14px) clamp(18px, 4.5vw, 22px);
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-btn-secondary:hover {
+  background: #4A8B6C;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Секция типов анализов */
+.test-type-section {
+  margin-bottom: clamp(24px, 6vh, 32px);
+}
+
+.section-title {
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: clamp(16px, 4vh, 20px);
+}
+
+.test-type-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: clamp(12px, 3vw, 16px);
+  margin-bottom: clamp(8px, 2vw, 12px);
+}
+
+#myTestsStep .test-type-btn {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: clamp(20px, 5vw, 25px) !important;
+  padding: clamp(14px, 3.5vw, 18px) !important;
+  font-size: clamp(11px, 2.8vw, 13px) !important;
+  font-weight: 300 !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  height: clamp(44px, 11vw, 52px) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+#myTestsStep .test-type-btn.active {
+  background: #2A3F5F !important;
+  color: #FFFFFF !important;
+  border-color: #2A3F5F !important;
+  box-shadow: 0 2px 8px rgba(42, 63, 95, 0.3) !important;
+}
+
+#myTestsStep .test-type-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+#myTestsStep .test-type-btn.active:hover {
+  background: #1E2D42 !important;
+  border-color: #1E2D42 !important;
+  transform: translateY(-1px);
+}
+
+/* Секция загруженных анализов */
+.uploaded-tests-section {
+  margin-bottom: clamp(24px, 6vh, 32px);
+}
+
+.uploaded-tests-list {
+  background: #2A3F5F;
+  border-radius: clamp(18px, 4.5vw, 24px);
+  padding: clamp(14px, 3.5vw, 18px);
+  margin: 0 -clamp(16px, 4vw, 24px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.uploaded-tests-title {
+  color: #B0BCC9;
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 600;
+  margin: 0 0 clamp(10px, 2.5vw, 14px) 0;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.test-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 16px);
+  padding: clamp(12px, 3vw, 16px) 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.test-item:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.test-icon {
+  flex-shrink: 0;
+}
+
+.test-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.test-info:hover {
+  opacity: 0.8;
+}
+
+.test-name {
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 500;
+  color: #FFFFFF;
+  margin: 0 0 clamp(4px, 1vw, 6px) 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.test-date {
+  font-size: clamp(12px, 3vw, 14px);
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.test-actions {
+  display: flex;
+  gap: clamp(8px, 2vw, 12px);
+  flex-shrink: 0;
+}
+
+.test-action-btn {
+  width: clamp(32px, 8vw, 40px);
+  height: clamp(32px, 8vw, 40px);
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.test-action-btn.success {
+  background: #6B7280;
+  color: white;
+  cursor: default;
+  pointer-events: none;
+}
+
+.test-action-btn.delete {
+  background: white;
+  color: #EF4444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.test-action-btn.delete:hover {
+  background: #F3F4F6;
+  transform: scale(1.05);
+}
+
+.test-action-btn.delete:active {
+  background: #E5E7EB;
+  transform: scale(0.95);
+}
+
+/* Секция рекомендаций */
+.recommendations-section {
+  margin-bottom: clamp(20px, 5vh, 28px);
+}
+
+.recommendations-btn {
+  width: 100%;
+  background: #FEF7EC;
+  border: none;
+  border-radius: clamp(16px, 4vw, 20px);
+  padding: clamp(16px, 4vw, 20px);
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 16px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  position: relative;
+}
+
+.recommendations-btn:hover {
+  background: #F5F0E8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.recommendations-btn svg:first-child {
+  color: #4A8B6C;
+  flex-shrink: 0;
+  width: clamp(20px, 5vw, 24px);
+  height: clamp(20px, 5vw, 24px);
+}
+
+.recommendations-btn span {
+  flex: 1;
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 500;
+  color: #374151;
+}
+
+.help-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: clamp(6px, 1.5vw, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2A3F5F;
+  flex-shrink: 0;
+  width: clamp(28px, 7vw, 32px);
+  height: clamp(28px, 7vw, 32px);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 10;
+}
+
+.help-icon:hover {
+  background: rgba(42, 63, 95, 0.1);
+  transform: scale(1.1);
+}
+
+.help-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(80px, 15vh, 120px) clamp(20px, 5vw, 40px) clamp(20px, 5vw, 40px);
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  background: #31674A;
+  border: 2px solid white;
+  border-radius: clamp(16px, 4vw, 20px);
+  padding: clamp(20px, 5vw, 24px);
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-close {
+  position: absolute;
+  top: clamp(12px, 3vw, 16px);
+  right: clamp(12px, 3vw, 16px);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: white;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 300;
+}
+
+.modal-text {
+  margin-bottom: 0;
+  padding-right: clamp(32px, 8vw, 40px);
+}
+
+.modal-text p {
+  font-family: 'Roboto', sans-serif;
+  font-size: clamp(14px, 3.5vw, 16px);
+  line-height: 1.5;
+  color: white;
+  font-weight: normal;
+  margin: 0;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+  .upload-buttons {
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(10px, 2.5vw, 14px);
+  }
+  
+  .upload-btn-primary,
+  .upload-btn-secondary {
+    width: 100%;
+  }
+
+  .test-type-buttons {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  
+  .test-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.3;
   }
 }

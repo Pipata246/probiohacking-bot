@@ -75,6 +75,14 @@ function showPage(pageName) {
     isDiagnosticFormMode = false;
   }
   
+  // Закрываем страницу "Мои анализы" если она открыта
+  const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
+  if (myTestsFormOverlay && pageName !== 'myTests') {
+    myTestsFormOverlay.remove();
+    document.body.classList.remove('chat-overlay-visible');
+    isDiagnosticFormMode = false;
+  }
+  
   // Скрываем все страницы
   mainApp.style.display = 'none';
   knowledgeBase.classList.remove('active');
@@ -203,36 +211,72 @@ document.addEventListener('click', (e) => {
     
     switch(buttonIndex) {
       case 0: // Главная
+        // Если находимся в режиме диагностической формы или мои анализы - закрываем их
+        if (isDiagnosticFormMode) {
+          const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+          const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
+          
+          if (diagnosticFormOverlay) {
+            diagnosticFormOverlay.remove();
+          }
+          
+          if (myTestsFormOverlay) {
+            myTestsFormOverlay.remove();
+          }
+          
+          isDiagnosticFormMode = false;
+          document.body.classList.remove('chat-overlay-visible');
+        }
         showPage('main');
         break;
       case 1: // Диагностика
         // УМНАЯ ЛОГИКА для кнопки диагностики
-        if (currentPage === 'diagnostics' && isDiagnosticFormMode) {
-          // Если уже в диагностике И в форме - возвращаемся в главное меню диагностики
-          // И УДАЛЯЕМ ВСЕ СОХРАНЕННЫЕ ДАННЫЕ
-          localStorage.removeItem('surveyAnswers');
-          localStorage.removeItem('diagnosticPersonalData');
-          diagnosticState = 'main';
+        const hasProgress = checkDiagnosticProgress();
+        const isCompleted = isDiagnosticCompleted();
+        
+        // ЕСЛИ УЖЕ В ФОРМЕ ДИАГНОСТИКИ ИЛИ НА СТРАНИЦЕ АНАЛИЗОВ - ВЫХОДИМ НА ГЛАВНУЮ ДИАГНОСТИКИ И СБРАСЫВАЕМ
+        if (isDiagnosticFormMode) {
+          console.log('Выход из формы диагностики на главную страницу диагностики');
+          
+          // Проверяем какая именно форма открыта
+          const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+          const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
+          
+          if (diagnosticFormOverlay) {
+            // Если это диагностическая форма - сбрасываем данные
+            clearDiagnosticData();
+            diagnosticFormOverlay.remove();
+          }
+          
+          if (myTestsFormOverlay) {
+            // Если это страница анализов - просто закрываем
+            myTestsFormOverlay.remove();
+          }
+          
+          isDiagnosticFormMode = false;
+          document.body.classList.remove('chat-overlay-visible');
           showPage('diagnostics');
-        } else if (currentPage === 'diagnostics' && !isDiagnosticFormMode) {
-          // Если уже в главном меню диагностики - проверяем есть ли прогресс
-          const hasProgress = checkDiagnosticProgress();
-          if (hasProgress) {
-            showDiagnosticForm();
-          }
+          return;
+        }
+        
+        // ЕСЛИ УЖЕ НА ГЛАВНОЙ СТРАНИЦЕ ДИАГНОСТИКИ - НИЧЕГО НЕ ДЕЛАЕМ
+        if (currentPage === 'diagnostics' && !isDiagnosticFormMode) {
+          console.log('Уже на главной странице диагностики - ничего не делаем');
+          return;
+        }
+        
+        // ЕСЛИ НЕ В ДИАГНОСТИКЕ - ПЕРЕХОДИМ К ДИАГНОСТИКЕ
+        if (isCompleted) {
+          // Если диагностика завершена - очищаем и идем на главную диагностики
+          console.log('Диагностика завершена - очищаем данные и идем на главную');
+          clearDiagnosticData();
+          showPage('diagnostics');
+        } else if (hasProgress) {
+          // Есть незавершенный прогресс - идем на главную диагностики
+          showPage('diagnostics');
         } else {
-          // Если НЕ в диагностике - проверяем есть ли прогресс
-          const hasProgress = checkDiagnosticProgress();
-          if (hasProgress) {
-            // Есть прогресс - возвращаемся к форме
-            showPage('diagnostics');
-            setTimeout(() => {
-              showDiagnosticForm();
-            }, 100);
-          } else {
-            // Нет прогресса - идем в главное меню диагностики
-            showPage('diagnostics');
-          }
+          // Нет прогресса - идем на главную диагностики
+          showPage('diagnostics');
         }
         break;
       case 2: // Здоровье
@@ -275,6 +319,12 @@ document.addEventListener('click', (e) => {
   // Кнопка "Заполнить анкету"
   if (e.target.closest('.fill-form-btn')) {
     showDiagnosticForm();
+    return;
+  }
+  
+  // Кнопка "Мои анализы"
+  if (e.target.closest('.my-tests-btn')) {
+    showMyTestsPage();
     return;
   }
   
@@ -360,8 +410,8 @@ document.addEventListener('click', (e) => {
       knowledgeSection.classList.remove('expanded');
       expandBtn.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M12 5V19" stroke="#3B4F6B" stroke-width="3" stroke-linecap="round"/>
-          <path d="M5 12H19" stroke="#3B4F6B" stroke-width="3" stroke-linecap="round"/>
+          <path d="M12 5V19" stroke="#2A3F5F" stroke-width="3" stroke-linecap="round"/>
+          <path d="M5 12H19" stroke="#2A3F5F" stroke-width="3" stroke-linecap="round"/>
         </svg>
       `;
     } else {
@@ -369,7 +419,7 @@ document.addEventListener('click', (e) => {
       knowledgeSection.classList.add('expanded');
       expandBtn.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M5 12H19" stroke="#3B4F6B" stroke-width="3" stroke-linecap="round"/>
+          <path d="M5 12H19" stroke="#2A3F5F" stroke-width="3" stroke-linecap="round"/>
         </svg>
       `;
     }
@@ -450,6 +500,43 @@ document.addEventListener('click', (e) => {
       allQuizOptions.forEach(option => {
         option.classList.add('disabled');
       });
+    }
+    return;
+  }
+  
+  // Основная кнопка рекомендаций (заглушка) - только если НЕ нажата иконка помощи
+  if (e.target.closest('#viewRecommendationsBtn') && !e.target.closest('#helpIcon')) {
+    console.log('Основная кнопка рекомендаций нажата (заглушка)');
+    return;
+  }
+  
+  // Иконка помощи - открывает модальное окно
+  if (e.target.closest('#helpIcon')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const modal = document.getElementById('recommendationsModal');
+    if (modal) {
+      modal.classList.add('active');
+    }
+    return;
+  }
+  
+  // Закрытие модального окна
+  if (e.target.closest('#closeModal')) {
+    e.preventDefault();
+    e.stopPropagation();
+    const modal = document.getElementById('recommendationsModal');
+    if (modal) {
+      modal.classList.remove('active');
+    }
+    return;
+  }
+  
+  // Закрытие модального окна по клику на фон
+  if (e.target.id === 'recommendationsModal') {
+    const modal = document.getElementById('recommendationsModal');
+    if (modal) {
+      modal.classList.remove('active');
     }
     return;
   }
@@ -584,8 +671,15 @@ function handleDiagnosticButton() {
 function checkDiagnosticProgress() {
   const savedPersonalData = localStorage.getItem('diagnosticPersonalData');
   const savedAnswers = localStorage.getItem('surveyAnswers');
+  const savedAdditionalAnswers = localStorage.getItem('additionalAnswers');
   
-  return savedPersonalData || savedAnswers;
+  return savedPersonalData || savedAnswers || savedAdditionalAnswers;
+}
+
+// Проверка завершена ли диагностика полностью
+function isDiagnosticCompleted() {
+  const savedAdditionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
+  return Object.keys(savedAdditionalAnswers).length > 0;
 }
 
 // Определение где остановился пользователь
@@ -595,7 +689,7 @@ function getDiagnosticState() {
   const savedAdditionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
   
   if (Object.keys(savedAdditionalAnswers).length > 0) {
-    return 'additional'; // Есть дополнительные ответы - был в дополнительных вопросах
+    return 'completed'; // Диагностика завершена
   } else if (Object.keys(savedAnswers).length > 0) {
     return 'quiz'; // Есть ответы на вопросы - был в квизе
   } else if (Object.keys(savedPersonalData).length > 0) {
@@ -1046,6 +1140,403 @@ function showDiagnosticForm() {
     console.log('Ответы на вопросы:', JSON.parse(localStorage.getItem('surveyAnswers')));
     console.log('Дополнительные ответы:', JSON.parse(localStorage.getItem('additionalAnswers')));
   });
+}
+
+// ========================================
+// СТРАНИЦА "МОИ АНАЛИЗЫ"
+// ========================================
+
+function showMyTestsPage() {
+  isDiagnosticFormMode = true; // Устанавливаем флаг что мы в специальном режиме
+  
+  const myTestsForm = document.createElement('div');
+  myTestsForm.className = 'diagnostic-form-overlay';
+  myTestsForm.id = 'myTestsFormOverlay';
+  
+  myTestsForm.innerHTML = `
+    <div class="diagnostic-form-content">
+      <div class="form-step" id="myTestsStep">
+        <header class="slide-header">
+          <div class="avatar" id="myTestsAvatar">AM</div>
+        </header>
+        
+        <div class="my-tests-content">
+          <h2 class="my-tests-title">Мои анализы</h2>
+          <p class="my-tests-subtitle">Загрузите результаты исследований</p>
+          
+          <div class="file-upload-section">
+            <div class="file-upload-card">
+              <div class="upload-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 10L12 5L17 10" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 5V15" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <h3 class="upload-title">Загрузить файл</h3>
+              <p class="upload-subtitle">Поддерживаются форматы PDF, JPG, PNG или сделайте фото</p>
+              <div class="upload-buttons">
+                <button class="upload-btn-primary" id="selectFileBtn">Выбрать файл</button>
+                <button class="upload-btn-secondary" id="takePhotoBtn">Сделать фото</button>
+              </div>
+              <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
+              <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+            </div>
+          </div>
+          
+          <div class="test-type-section">
+            <h3 class="section-title">Тип анализа</h3>
+            <div class="test-type-buttons">
+              <button class="test-type-btn active" data-type="blood">Анализ крови</button>
+              <button class="test-type-btn" data-type="hormones">Гормоны</button>
+              <button class="test-type-btn" data-type="vitamins">Витамины</button>
+              <button class="test-type-btn" data-type="other">Другое</button>
+            </div>
+          </div>
+          
+          <div class="uploaded-tests-section">
+            <div class="uploaded-tests-list" id="uploadedTestsList">
+              <h3 class="uploaded-tests-title">Загруженные анализы</h3>
+              <div class="test-item">
+                <div class="test-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#6B7280"/>
+                    <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="test-info" onclick="viewTestFile(this)">
+                  <h4 class="test-name">Общий анализ крови</h4>
+                  <p class="test-date">01.11.2025</p>
+                </div>
+                <div class="test-actions">
+                  <div class="test-action-btn success">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <button class="test-action-btn delete" onclick="deleteTestFile(this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="test-item">
+                <div class="test-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" fill="#6B7280"/>
+                    <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="test-info" onclick="viewTestFile(this)">
+                  <h4 class="test-name">Биохимия крови</h4>
+                  <p class="test-date">01.11.2025</p>
+                </div>
+                <div class="test-actions">
+                  <div class="test-action-btn success">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <button class="test-action-btn delete" onclick="deleteTestFile(this)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="recommendations-section">
+            <button class="recommendations-btn" id="viewRecommendationsBtn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 11H15M9 15H15M17 21L21 17M3 5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V15C21 16.1046 20.1046 17 19 17H7L3 21V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Посмотреть рекомендованные анализы</span>
+              <div class="help-icon" id="helpIcon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Модальное окно с информацией -->
+        <div class="modal-overlay" id="recommendationsModal">
+          <div class="modal-content">
+            <button class="modal-close" id="closeModal">×</button>
+            <div class="modal-text">
+              <p>Следует отметить, что высокотехнологичная концепция общественного уклада, в своём классическом представлении, допускает внедрение как самодостаточных, так и внешне зависимых концептуальных решений. Являясь всего лишь частью общей картины, представители современных социальных резервов лишь добавляют фракционных разногласий и объявлены нарушающими общечеловеческие нормы этики и морали.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Навигация -->
+        <nav class="bottom-nav">
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Главная</span>
+          </button>
+          <button class="nav-item active">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Диагностика</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4.5 16.5C3 14 3 11 3 9C3 5.5 5.5 3 9 3C10 3 11 3.5 12 4C13 3.5 14 3 15 3C18.5 3 21 5.5 21 9C21 11 21 14 19.5 16.5L12 22L4.5 16.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Здоровье</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Дневник</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>База знаний</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(myTestsForm);
+  myTestsForm.style.display = 'flex';
+  document.body.classList.add('chat-overlay-visible');
+  
+  updateAvatar(document.getElementById('myTestsAvatar'), user, userName);
+  
+  // Обработчики событий
+  setupMyTestsHandlers();
+}
+
+function setupMyTestsHandlers() {
+  // Кнопка назад (закрытие)
+  document.getElementById('myTestsBackBtn').addEventListener('click', () => {
+    closeMyTestsPage();
+  });
+  
+  // Выбор файла
+  document.getElementById('selectFileBtn').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+  });
+  
+  // Обработка выбора файла
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  });
+  
+  // Обработка фото с камеры
+  document.getElementById('cameraInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  });
+  
+  // Сделать фото
+  document.getElementById('takePhotoBtn').addEventListener('click', () => {
+    document.getElementById('cameraInput').click();
+  });
+  
+  // Переключение типов анализов
+  document.querySelectorAll('.test-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.test-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  
+  // Действия с тестами
+  document.querySelectorAll('.test-action-btn.delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const testItem = btn.closest('.test-item');
+      const testName = testItem.querySelector('.test-name').textContent;
+      
+      tg.showConfirm(`Удалить анализ "${testName}"?`, (confirmed) => {
+        if (confirmed) {
+          testItem.remove();
+        }
+      });
+    });
+  });
+}
+
+function handleFileUpload(file) {
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  
+  if (file.size > maxSize) {
+    tg.showAlert('Файл слишком большой. Максимальный размер: 10MB');
+    return;
+  }
+  
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    tg.showAlert('Неподдерживаемый формат файла. Используйте PDF, JPG, PNG или WebP');
+    return;
+  }
+
+  // Создаем URL для файла для возможности просмотра
+  const fileURL = URL.createObjectURL(file);
+  
+  // Определяем источник файла для более понятного названия
+  let displayName = file.name;
+  if (file.name.startsWith('image') && file.type.startsWith('image/')) {
+    // Если это фото с камеры, даем ему более понятное название
+    const now = new Date();
+    const timestamp = now.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).replace(/[,\s:]/g, '_');
+    displayName = `Фото_${timestamp}.${file.type.split('/')[1]}`;
+  }
+  
+  // Добавляем новый элемент в список с данными файла
+  addUploadedTest(displayName, file.type, fileURL);
+  
+  // Показываем уведомление об успешной загрузке
+  const sourceText = file.name.startsWith('image') && file.type.startsWith('image/') ? 'Фото' : 'Файл';
+  tg.showAlert(`${sourceText} успешно загружен!`);
+}
+
+function addUploadedTest(fileName, fileType, fileURL) {
+  const testsList = document.getElementById('uploadedTestsList');
+  const activeType = document.querySelector('.test-type-btn.active').textContent;
+  const currentDate = new Date().toLocaleDateString('ru-RU');
+  
+  const testItem = document.createElement('div');
+  testItem.className = 'test-item';
+  testItem.setAttribute('data-file-url', fileURL);
+  testItem.setAttribute('data-file-type', fileType);
+  testItem.innerHTML = `
+    <div class="test-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="#6B7280"/>
+        <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="test-info" onclick="viewTestFile(this)">
+      <h4 class="test-name">${activeType} - ${fileName}</h4>
+      <p class="test-date">${currentDate}</p>
+    </div>
+    <div class="test-actions">
+      <div class="test-action-btn success">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <button class="test-action-btn delete" onclick="deleteTestFile(this)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  `;
+  
+  testsList.appendChild(testItem);
+}
+
+// Функция просмотра файла анализа
+function viewTestFile(testInfo) {
+  const testItem = testInfo.closest('.test-item');
+  const fileURL = testItem.getAttribute('data-file-url');
+  const fileType = testItem.getAttribute('data-file-type');
+  const fileName = testInfo.querySelector('.test-name').textContent;
+  
+  if (!fileURL) {
+    tg.showAlert('Это демо-файл. Загрузите свой файл для просмотра.');
+    return;
+  }
+  
+  // Открываем файл в новом окне/вкладке
+  if (fileType.startsWith('image/')) {
+    // Для изображений показываем в новом окне
+    window.open(fileURL, '_blank');
+  } else if (fileType === 'application/pdf') {
+    // Для PDF тоже открываем в новом окне
+    window.open(fileURL, '_blank');
+  } else {
+    // Для других типов файлов предлагаем скачать
+    const link = document.createElement('a');
+    link.href = fileURL;
+    link.download = fileName;
+    link.click();
+  }
+}
+
+// Функция удаления файла анализа
+function deleteTestFile(button) {
+  const testItem = button.closest('.test-item');
+  const testName = testItem.querySelector('.test-name').textContent;
+  
+  // Простое подтверждение через стандартный confirm
+  if (confirm(`Удалить анализ "${testName}"?`)) {
+    testItem.remove();
+  }
+}
+
+// Добавляем обработчики для всех существующих кнопок удаления
+document.addEventListener('DOMContentLoaded', function() {
+  // Добавляем обработчики для кнопок удаления при загрузке страницы
+  function attachDeleteHandlers() {
+    const deleteButtons = document.querySelectorAll('.test-action-btn.delete');
+    deleteButtons.forEach(button => {
+      if (!button.hasAttribute('data-handler-attached')) {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          deleteTestFile(this);
+        });
+        button.setAttribute('data-handler-attached', 'true');
+      }
+    });
+  }
+  
+  // Вызываем при загрузке
+  attachDeleteHandlers();
+  
+  // Также вызываем при открытии страницы анализов
+  const originalShowMyTestsPage = window.showMyTestsPage;
+  if (originalShowMyTestsPage) {
+    window.showMyTestsPage = function() {
+      originalShowMyTestsPage();
+      setTimeout(attachDeleteHandlers, 100);
+    };
+  }
+});
+
+function closeMyTestsPage() {
+  isDiagnosticFormMode = false;
+  const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
+  if (myTestsFormOverlay) {
+    myTestsFormOverlay.remove();
+    document.body.classList.remove('chat-overlay-visible');
+  }
+  showPage('diagnostics');
 }
 
 // ========================================
