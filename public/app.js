@@ -1179,8 +1179,8 @@ function showMyTestsPage() {
                 <button class="upload-btn-primary" id="selectFileBtn">Выбрать файл</button>
                 <button class="upload-btn-secondary" id="takePhotoBtn">Сделать фото</button>
               </div>
-              <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" style="display: none;">
-              <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+              <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic" style="display: none;">
+              <input type="file" id="cameraInput" accept="image/*" capture style="display: none;">
             </div>
           </div>
           
@@ -1343,6 +1343,8 @@ function setupMyTestsHandlers() {
     if (file) {
       handleFileUpload(file);
     }
+    // Очищаем input для повторного выбора того же файла
+    e.target.value = '';
   });
   
   // Обработка фото с камеры
@@ -1351,6 +1353,8 @@ function setupMyTestsHandlers() {
     if (file) {
       handleFileUpload(file);
     }
+    // Очищаем input для повторного выбора
+    e.target.value = '';
   });
   
   // Сделать фото
@@ -1383,6 +1387,8 @@ function setupMyTestsHandlers() {
 }
 
 function handleFileUpload(file) {
+  console.log('Загружается файл:', file.name, 'Тип:', file.type, 'Размер:', file.size);
+  
   const maxSize = 10 * 1024 * 1024; // 10MB
   
   if (file.size > maxSize) {
@@ -1390,9 +1396,10 @@ function handleFileUpload(file) {
     return;
   }
   
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
   if (!allowedTypes.includes(file.type)) {
-    tg.showAlert('Неподдерживаемый формат файла. Используйте PDF, JPG, PNG или WebP');
+    console.log('Неподдерживаемый тип файла:', file.type);
+    tg.showAlert('Неподдерживаемый формат файла. Используйте PDF, JPG, PNG, WebP или HEIC');
     return;
   }
 
@@ -1401,7 +1408,7 @@ function handleFileUpload(file) {
   
   // Определяем источник файла для более понятного названия
   let displayName = file.name;
-  if (file.name.startsWith('image') && file.type.startsWith('image/')) {
+  if (file.name.startsWith('image') || file.name.includes('IMG_') || file.type.startsWith('image/')) {
     // Если это фото с камеры, даем ему более понятное название
     const now = new Date();
     const timestamp = now.toLocaleString('ru-RU', {
@@ -1411,15 +1418,18 @@ function handleFileUpload(file) {
       hour: '2-digit',
       minute: '2-digit'
     }).replace(/[,\s:]/g, '_');
-    displayName = `Фото_${timestamp}.${file.type.split('/')[1]}`;
+    const extension = file.type.split('/')[1] || 'jpg';
+    displayName = `Фото_${timestamp}.${extension}`;
   }
   
   // Добавляем новый элемент в список с данными файла
   addUploadedTest(displayName, file.type, fileURL);
   
   // Показываем уведомление об успешной загрузке
-  const sourceText = file.name.startsWith('image') && file.type.startsWith('image/') ? 'Фото' : 'Файл';
+  const sourceText = (file.name.startsWith('image') || file.name.includes('IMG_') || file.type.startsWith('image/')) ? 'Фото' : 'Файл';
   tg.showAlert(`${sourceText} успешно загружен!`);
+  
+  console.log('Файл успешно обработан:', displayName);
 }
 
 function addUploadedTest(fileName, fileType, fileURL) {

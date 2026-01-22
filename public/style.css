@@ -49,7 +49,7 @@ body.chat-overlay-visible {
   flex-direction: column;
   overflow: hidden;
   justify-content: flex-start;
-  padding-bottom: 120px; /* УВЕЛИЧЕННЫЙ отступ для навигации на мобильных */
+  padding-bottom: 100px; /* УМЕНЬШЕННЫЙ отступ для навигации на мобильных */
   box-sizing: border-box;
 }
 
@@ -60,7 +60,7 @@ body.chat-overlay-visible {
   align-items: center;
   padding: clamp(12px, 2vh, 20px) clamp(16px, 4vw, 24px) clamp(8px, 1.5vh, 16px);
   flex-shrink: 0;
-  position: relative;
+  position: static; /* СТАТИЧНАЯ позиция вместо relative */
 }
 
 /* Хедер в базе знаний - аватар всегда справа */
@@ -146,7 +146,7 @@ body.chat-overlay-visible {
   font-size: 16px;
   color: white;
   flex-shrink: 0;
-  position: relative;
+  position: static; /* СТАТИЧНАЯ позиция */
   min-width: 40px;
   min-height: 40px;
   max-width: 40px;
@@ -272,13 +272,13 @@ body.chat-overlay-visible .search-container {
 .quick-requests {
   padding: clamp(14px, 3.5vw, 18px);
   background: #2A3F5F;
-  margin: 0 0 20px 0; /* Уменьшенный отступ снизу */
+  margin: 0 0 8px 0; /* УМЕНЬШЕННЫЙ отступ снизу для мобильных */
   border-radius: clamp(18px, 4.5vw, 24px);
   overflow: hidden;
   display: flex !important;
   flex-direction: column !important;
-  /* Адаптивная высота для лучшего отображения */
-  height: clamp(200px, 35vh, 280px) !important;
+  /* УВЕЛИЧЕННАЯ адаптивная высота для лучшего отображения */
+  height: clamp(240px, 42vh, 320px) !important;
   flex-shrink: 0 !important;
 }
 
