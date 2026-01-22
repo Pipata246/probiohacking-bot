@@ -99,6 +99,11 @@ body.chat-overlay-visible {
   pointer-events: auto !important;
   border-radius: 8px;
   transition: background-color 0.2s ease;
+  /* Убеждаемся что кнопка кликабельна */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .menu-btn:active {
@@ -110,6 +115,7 @@ body.chat-overlay-visible {
   height: 2px;
   background: #FEF7EC;
   border-radius: 2px;
+  pointer-events: none; /* Предотвращаем клики по span элементам */
 }
 
 .avatar {
@@ -1032,7 +1038,7 @@ body.chat-overlay-visible .search-container {
   max-width: 360px;
   height: 100vh;
   background: #FAF8F3;
-  z-index: 2001; /* Поверх чата и всего остального */
+  z-index: 9999; /* Максимальный z-index для отображения поверх всех страниц */
   transition: left 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -1173,7 +1179,7 @@ body.chat-overlay-visible .search-container {
   width: 100%;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 2000; /* Поверх чата, но под боковым меню */
+  z-index: 9998; /* Чуть ниже сайдбара, но поверх всех страниц */
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
