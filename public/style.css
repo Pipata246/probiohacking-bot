@@ -44,7 +44,7 @@ body.chat-overlay-visible {
   flex-direction: column;
   overflow: hidden;
   justify-content: flex-start;
-  padding-bottom: 90px; /* Отступ для навигации */
+  padding-bottom: 120px; /* УВЕЛИЧЕННЫЙ отступ для навигации на мобильных */
   box-sizing: border-box;
 }
 
@@ -1217,7 +1217,7 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden;
-  padding-bottom: 90px; /* Отступ для навигации */
+  padding-bottom: 120px; /* УВЕЛИЧЕННЫЙ отступ для навигации на мобильных */
   box-sizing: border-box;
 }
 
@@ -1451,7 +1451,7 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(16px, 4vw, 24px);
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 120px; /* Отступ для навигации */
+  padding-bottom: 140px; /* УВЕЛИЧЕННЫЙ отступ для навигации на мобильных */
 }
 
 .knowledge-section {
@@ -1588,7 +1588,7 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden;
-  padding-bottom: 90px; /* Отступ для навигации */
+  padding-bottom: 120px; /* УВЕЛИЧЕННЫЙ отступ для навигации на мобильных */
   box-sizing: border-box;
 }
 
@@ -2252,5 +2252,18 @@ body.chat-overlay-visible .search-container {
     /* ДОБАВЛЯЕМ принудительный сброс viewport при проблемах с клавиатурой */
     min-height: 100vh;
     min-height: -webkit-fill-available;
+  }
+  
+  /* УВЕЛИЧЕННЫЕ отступы для мобильных устройств */
+  .knowledge-sections {
+    padding-bottom: 160px !important; /* Еще больший отступ для мобильных */
+  }
+  
+  .diagnostics-content {
+    padding-bottom: 160px !important; /* Еще больший отступ для мобильных */
+  }
+  
+  .app {
+    padding-bottom: 140px !important; /* Увеличенный отступ для главной страницы */
   }
 }
