@@ -12,6 +12,34 @@ if (tg.isExpanded === false) {
 tg.setHeaderColor('#4A8B6C');
 tg.BackButton.hide();
 
+// ========================================
+// ФУНКЦИИ СБРОСА ДАННЫХ ДИАГНОСТИКИ
+// ========================================
+
+// Функция сброса всех данных диагностики
+function clearDiagnosticData() {
+  localStorage.removeItem('surveyAnswers');
+  localStorage.removeItem('diagnosticPersonalData');
+  console.log('Данные диагностики сброшены');
+}
+
+// Сброс данных при закрытии мини-апп
+tg.onEvent('mainButtonClicked', clearDiagnosticData);
+tg.onEvent('backButtonClicked', clearDiagnosticData);
+
+// Сброс данных при обновлении страницы
+window.addEventListener('beforeunload', clearDiagnosticData);
+
+// Сброс данных при закрытии/скрытии мини-апп
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    clearDiagnosticData();
+  }
+});
+
+// Сброс данных при потере фокуса окна
+window.addEventListener('blur', clearDiagnosticData);
+
 // Получение данных пользователя
 const user = tg.initDataUnsafe?.user;
 const userName = user?.first_name || 'Александр';
@@ -327,7 +355,7 @@ document.addEventListener('click', (e) => {
     
     // Переключаем состояние раскрытия через CSS класс
     if (knowledgeSection.classList.contains('expanded')) {
-      // Закрываем - показываем крестик (+)
+      // Закрываем - показываем плюс (+)
       knowledgeSection.classList.remove('expanded');
       expandBtn.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -343,6 +371,84 @@ document.addEventListener('click', (e) => {
           <path d="M5 12H19" stroke="#3B4F6B" stroke-width="3" stroke-linecap="round"/>
         </svg>
       `;
+    }
+    return;
+  }
+  
+  // Обработка кликов по опциям квиза - НОВАЯ ЛОГИКА ОТМЕНЫ ВЫБОРА
+  if (e.target.closest('.quiz-option')) {
+    const quizOption = e.target.closest('.quiz-option');
+    const radioInput = quizOption.querySelector('input[type="radio"]');
+    const customInput = document.querySelector('.quiz-custom-input');
+    
+    // Проверяем, была ли эта опция уже выбрана
+    if (radioInput.checked) {
+      // Если опция уже выбрана - отменяем выбор
+      radioInput.checked = false;
+      
+      // Включаем обратно поле для кастомного ответа
+      if (customInput) {
+        customInput.disabled = false;
+        customInput.classList.remove('disabled');
+      }
+      
+      // Включаем обратно все опции
+      const allQuizOptions = document.querySelectorAll('.quiz-option');
+      allQuizOptions.forEach(option => {
+        option.classList.remove('disabled');
+        const radio = option.querySelector('input[type="radio"]');
+        if (radio) {
+          radio.disabled = false;
+        }
+      });
+    } else {
+      // Если опция не была выбрана - выбираем её
+      radioInput.checked = true;
+      
+      // Отключаем поле для кастомного ответа
+      if (customInput) {
+        customInput.value = '';
+        customInput.disabled = true;
+        customInput.classList.add('disabled');
+      }
+      
+      // Отключаем другие опции (оставляем только выбранную активной)
+      const allQuizOptions = document.querySelectorAll('.quiz-option');
+      allQuizOptions.forEach(option => {
+        if (option !== quizOption) {
+          option.classList.add('disabled');
+          const radio = option.querySelector('input[type="radio"]');
+          if (radio) {
+            radio.disabled = true;
+          }
+        }
+      });
+    }
+    
+    // Предотвращаем стандартное поведение
+    e.preventDefault();
+    return;
+  }
+  
+  // Обработка ввода в поле кастомного ответа
+  if (e.target.closest('.quiz-custom-input')) {
+    const customInput = e.target.closest('.quiz-custom-input');
+    
+    // При фокусе на кастомном поле - отключаем все радио-кнопки
+    if (e.type === 'focus' || e.type === 'click') {
+      const allQuizOptions = document.querySelectorAll('.quiz-option');
+      const allRadioInputs = document.querySelectorAll('.quiz-option input[type="radio"]');
+      
+      // Снимаем выбор со всех радио-кнопок
+      allRadioInputs.forEach(radio => {
+        radio.checked = false;
+        radio.disabled = true;
+      });
+      
+      // Отключаем все опции визуально
+      allQuizOptions.forEach(option => {
+        option.classList.add('disabled');
+      });
     }
     return;
   }
@@ -829,7 +935,7 @@ function showQuestion(index) {
   optionsHtml += `
     <div class="quiz-custom-answer">
       <label class="quiz-custom-label">Свой вариант ответа:</label>
-      <input type="text" class="quiz-custom-input" placeholder="Например: Плохо, почти никак" name="custom_${question.id}">
+      <input type="text" class="quiz-custom-input" placeholder="Например: Плохо, почти никак">
     </div>
   `;
   
@@ -882,7 +988,7 @@ function setupSurveyNavigation() {
   surveyNextBtn.onclick = () => {
     const currentQuestion = surveyQuestions[currentQuestionIndex];
     let selectedAnswer = document.querySelector(`input[name="question_${currentQuestion.id}"]:checked`);
-    let customAnswer = document.querySelector(`input[name="custom_${currentQuestion.id}"]`);
+    let customAnswer = document.querySelector('.quiz-custom-input');
     
     if (!selectedAnswer && (!customAnswer || !customAnswer.value.trim())) {
       tg.showAlert('Пожалуйста, выберите ответ или введите свой вариант');
@@ -907,7 +1013,7 @@ function saveCurrentQuestionAnswer() {
   if (currentQuestionIndex >= 0 && currentQuestionIndex < surveyQuestions.length) {
     const currentQuestion = surveyQuestions[currentQuestionIndex];
     let selectedAnswer = document.querySelector(`input[name="question_${currentQuestion.id}"]:checked`);
-    let customAnswer = document.querySelector(`input[name="custom_${currentQuestion.id}"]`);
+    let customAnswer = document.querySelector('.quiz-custom-input');
     
     if (selectedAnswer) {
       saveSurveyAnswer(currentQuestion.id, selectedAnswer.value);
@@ -925,26 +1031,48 @@ function restoreQuestionAnswer(questionId) {
   if (savedAnswer) {
     // Проверяем, это стандартный ответ или кастомный
     const radioButton = document.querySelector(`input[name="question_${questionId}"][value="${savedAnswer}"]`);
-    const customInput = document.querySelector(`input[name="custom_${questionId}"]`);
+    const customInput = document.querySelector('.quiz-custom-input');
     
     if (radioButton) {
-      // Это стандартный ответ
+      // Это стандартный ответ - выбираем его и отключаем остальные
       radioButton.checked = true;
+      
+      // Отключаем поле для кастомного ответа
       if (customInput) {
         customInput.disabled = true;
         customInput.classList.add('disabled');
+        customInput.value = '';
       }
-    } else if (customInput) {
-      // Это кастомный ответ
-      customInput.value = savedAnswer;
-      // Отключаем радио-кнопки
-      const radioButtons = document.querySelectorAll(`input[name="question_${questionId}"]`);
-      const quizOptions = document.querySelectorAll('.quiz-option');
       
-      radioButtons.forEach(radio => {
+      // Отключаем другие опции (оставляем только выбранную активной)
+      const allQuizOptions = document.querySelectorAll('.quiz-option');
+      const selectedOption = radioButton.closest('.quiz-option');
+      
+      allQuizOptions.forEach(option => {
+        if (option !== selectedOption) {
+          option.classList.add('disabled');
+          const radio = option.querySelector('input[type="radio"]');
+          if (radio) {
+            radio.disabled = true;
+          }
+        }
+      });
+      
+    } else if (customInput) {
+      // Это кастомный ответ - заполняем поле и отключаем радио-кнопки
+      customInput.value = savedAnswer;
+      
+      // Отключаем все радио-кнопки
+      const allQuizOptions = document.querySelectorAll('.quiz-option');
+      const allRadioInputs = document.querySelectorAll('.quiz-option input[type="radio"]');
+      
+      allRadioInputs.forEach(radio => {
+        radio.checked = false;
         radio.disabled = true;
       });
-      quizOptions.forEach(option => {
+      
+      // Отключаем все опции визуально
+      allQuizOptions.forEach(option => {
         option.classList.add('disabled');
       });
     }
@@ -999,7 +1127,7 @@ function completeSurvey() {
 }
 
 // ========================================
-// ОБРАБОТЧИКИ КЛАВИАТУРЫ
+// ОБРАБОТЧИКИ КЛАВИАТУРЫ И ДОПОЛНИТЕЛЬНЫХ СОБЫТИЙ
 // ========================================
 
 document.addEventListener('keypress', (e) => {
@@ -1022,6 +1150,112 @@ document.addEventListener('keypress', (e) => {
         addBotMessage('Извините, ИИ-помощник находится в разработке. Скоро мы сможем предоставить вам персональные рекомендации!');
       }, 1000);
     }
+  }
+});
+
+// Обработчики для поля кастомного ввода в квизе
+document.addEventListener('focus', (e) => {
+  if (e.target.closest('.quiz-custom-input')) {
+    const allQuizOptions = document.querySelectorAll('.quiz-option');
+    const allRadioInputs = document.querySelectorAll('.quiz-option input[type="radio"]');
+    
+    // Снимаем выбор со всех радио-кнопок
+    allRadioInputs.forEach(radio => {
+      radio.checked = false;
+      radio.disabled = true;
+    });
+    
+    // Отключаем все опции визуально
+    allQuizOptions.forEach(option => {
+      option.classList.add('disabled');
+    });
+  }
+}, true);
+
+// Обработчик потери фокуса для кастомного поля ввода
+document.addEventListener('blur', (e) => {
+  if (e.target.closest('.quiz-custom-input')) {
+    const customInput = e.target.closest('.quiz-custom-input');
+    
+    // Проверяем, пустое ли поле после потери фокуса
+    if (!customInput.value.trim()) {
+      // Если поле пустое - включаем обратно все варианты ответов
+      const allQuizOptions = document.querySelectorAll('.quiz-option');
+      const allRadioInputs = document.querySelectorAll('.quiz-option input[type="radio"]');
+      
+      // Включаем обратно все радио-кнопки
+      allRadioInputs.forEach(radio => {
+        radio.disabled = false;
+      });
+      
+      // Включаем обратно все опции визуально
+      allQuizOptions.forEach(option => {
+        option.classList.remove('disabled');
+      });
+    }
+  }
+}, true);
+
+// Обработчик изменения текста в кастомном поле (для мгновенной реакции)
+document.addEventListener('input', (e) => {
+  if (e.target.closest('.quiz-custom-input')) {
+    const customInput = e.target.closest('.quiz-custom-input');
+    
+    // Если поле стало пустым во время ввода - включаем варианты ответов
+    if (!customInput.value.trim()) {
+      const allQuizOptions = document.querySelectorAll('.quiz-option');
+      const allRadioInputs = document.querySelectorAll('.quiz-option input[type="radio"]');
+      
+      // Включаем обратно все радио-кнопки
+      allRadioInputs.forEach(radio => {
+        radio.disabled = false;
+      });
+      
+      // Включаем обратно все опции визуально
+      allQuizOptions.forEach(option => {
+        option.classList.remove('disabled');
+      });
+    } else {
+      // Если в поле есть текст - отключаем варианты ответов
+      const allQuizOptions = document.querySelectorAll('.quiz-option');
+      const allRadioInputs = document.querySelectorAll('.quiz-option input[type="radio"]');
+      
+      // Снимаем выбор и отключаем все радио-кнопки
+      allRadioInputs.forEach(radio => {
+        radio.checked = false;
+        radio.disabled = true;
+      });
+      
+      // Отключаем все опции визуально
+      allQuizOptions.forEach(option => {
+        option.classList.add('disabled');
+      });
+    }
+  }
+});
+
+// Обработчик для очистки кастомного поля при двойном клике
+document.addEventListener('dblclick', (e) => {
+  if (e.target.closest('.quiz-custom-input')) {
+    const customInput = e.target.closest('.quiz-custom-input');
+    
+    // Очищаем поле и включаем обратно все опции
+    customInput.value = '';
+    customInput.disabled = false;
+    customInput.classList.remove('disabled');
+    
+    const allQuizOptions = document.querySelectorAll('.quiz-option');
+    const allRadioInputs = document.querySelectorAll('.quiz-option input[type="radio"]');
+    
+    // Включаем обратно все радио-кнопки
+    allRadioInputs.forEach(radio => {
+      radio.disabled = false;
+    });
+    
+    // Включаем обратно все опции визуально
+    allQuizOptions.forEach(option => {
+      option.classList.remove('disabled');
+    });
   }
 });
 

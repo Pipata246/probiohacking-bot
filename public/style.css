@@ -1514,7 +1514,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .knowledge-section.expanded .expand-btn svg {
-  transform: rotate(45deg);
+  /* Убираем поворот - иконки меняются через JavaScript */
 }
 
 .section-description {
