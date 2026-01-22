@@ -1157,6 +1157,11 @@ function showMyTestsPage() {
     <div class="diagnostic-form-content">
       <div class="form-step" id="myTestsStep">
         <header class="slide-header">
+          <button class="nav-circle-btn" id="myTestsBackBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M19 12H5M12 19L5 12L12 5" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <div class="avatar" id="myTestsAvatar">AM</div>
         </header>
         
@@ -1179,8 +1184,8 @@ function showMyTestsPage() {
                 <button class="upload-btn-primary" id="selectFileBtn">Выбрать файл</button>
                 <button class="upload-btn-secondary" id="takePhotoBtn">Сделать фото</button>
               </div>
-              <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic" style="display: none;">
-              <input type="file" id="cameraInput" accept="image/*" capture style="display: none;">
+              <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif" style="display: none;">
+              <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
             </div>
           </div>
           
@@ -1205,7 +1210,7 @@ function showMyTestsPage() {
                     <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <div class="test-info" onclick="viewTestFile(this)">
+                <div class="test-info">
                   <h4 class="test-name">Общий анализ крови</h4>
                   <p class="test-date">01.11.2025</p>
                 </div>
@@ -1215,7 +1220,7 @@ function showMyTestsPage() {
                       <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </div>
-                  <button class="test-action-btn delete" onclick="deleteTestFile(this)">
+                  <button class="test-action-btn delete">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -1231,7 +1236,7 @@ function showMyTestsPage() {
                     <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <div class="test-info" onclick="viewTestFile(this)">
+                <div class="test-info">
                   <h4 class="test-name">Биохимия крови</h4>
                   <p class="test-date">01.11.2025</p>
                 </div>
@@ -1241,7 +1246,7 @@ function showMyTestsPage() {
                       <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </div>
-                  <button class="test-action-btn delete" onclick="deleteTestFile(this)">
+                  <button class="test-action-btn delete">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                       <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -1328,108 +1333,163 @@ function showMyTestsPage() {
 
 function setupMyTestsHandlers() {
   // Кнопка назад (закрытие)
-  document.getElementById('myTestsBackBtn').addEventListener('click', () => {
-    closeMyTestsPage();
-  });
+  const backBtn = document.getElementById('myTestsBackBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      closeMyTestsPage();
+    });
+  }
   
   // Выбор файла
-  document.getElementById('selectFileBtn').addEventListener('click', () => {
-    document.getElementById('fileInput').click();
-  });
+  const selectFileBtn = document.getElementById('selectFileBtn');
+  const fileInput = document.getElementById('fileInput');
+  if (selectFileBtn && fileInput) {
+    selectFileBtn.addEventListener('click', () => {
+      console.log('Кнопка выбора файла нажата');
+      fileInput.click();
+    });
+  }
   
   // Обработка выбора файла
-  document.getElementById('fileInput').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-    // Очищаем input для повторного выбора того же файла
-    e.target.value = '';
-  });
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      console.log('Файл выбран:', e.target.files);
+      const file = e.target.files[0];
+      if (file) {
+        console.log('Обрабатываем файл:', file.name);
+        handleFileUpload(file);
+      }
+      // Очищаем input для повторного выбора того же файла
+      e.target.value = '';
+    });
+  }
   
   // Обработка фото с камеры
-  document.getElementById('cameraInput').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      handleFileUpload(file);
-    }
-    // Очищаем input для повторного выбора
-    e.target.value = '';
-  });
+  const cameraInput = document.getElementById('cameraInput');
+  if (cameraInput) {
+    cameraInput.addEventListener('change', (e) => {
+      console.log('Фото с камеры выбрано:', e.target.files);
+      const file = e.target.files[0];
+      if (file) {
+        console.log('Обрабатываем фото:', file.name);
+        handleFileUpload(file);
+      }
+      // Очищаем input для повторного выбора
+      e.target.value = '';
+    });
+  }
   
   // Сделать фото
-  document.getElementById('takePhotoBtn').addEventListener('click', () => {
-    document.getElementById('cameraInput').click();
-  });
+  const takePhotoBtn = document.getElementById('takePhotoBtn');
+  if (takePhotoBtn && cameraInput) {
+    takePhotoBtn.addEventListener('click', () => {
+      console.log('Кнопка камеры нажата');
+      cameraInput.click();
+    });
+  }
   
-  // Переключение типов анализов
-  document.querySelectorAll('.test-type-btn').forEach(btn => {
+  // Переключение типов анализов - ИСПРАВЛЕННАЯ ЛОГИКА
+  const testTypeBtns = document.querySelectorAll('.test-type-btn');
+  console.log('Найдено кнопок типов анализов:', testTypeBtns.length);
+  
+  testTypeBtns.forEach((btn, index) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.test-type-btn').forEach(b => b.classList.remove('active'));
+      console.log('Кнопка типа анализа нажата:', btn.textContent);
+      // Убираем active у всех кнопок
+      testTypeBtns.forEach(b => b.classList.remove('active'));
+      // Добавляем active к нажатой кнопке
       btn.classList.add('active');
     });
   });
   
   // Действия с тестами
-  document.querySelectorAll('.test-action-btn.delete').forEach(btn => {
+  const deleteButtons = document.querySelectorAll('.test-action-btn.delete');
+  deleteButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const testItem = btn.closest('.test-item');
       const testName = testItem.querySelector('.test-name').textContent;
       
-      tg.showConfirm(`Удалить анализ "${testName}"?`, (confirmed) => {
-        if (confirmed) {
-          testItem.remove();
-        }
-      });
+      if (confirm(`Удалить анализ "${testName}"?`)) {
+        testItem.remove();
+      }
     });
   });
 }
 
 function handleFileUpload(file) {
-  console.log('Загружается файл:', file.name, 'Тип:', file.type, 'Размер:', file.size);
+  console.log('=== НАЧАЛО ЗАГРУЗКИ ФАЙЛА ===');
+  console.log('Имя файла:', file.name);
+  console.log('Тип файла:', file.type);
+  console.log('Размер файла:', file.size, 'байт');
   
   const maxSize = 10 * 1024 * 1024; // 10MB
   
   if (file.size > maxSize) {
-    tg.showAlert('Файл слишком большой. Максимальный размер: 10MB');
+    console.log('ОШИБКА: Файл слишком большой');
+    alert('Файл слишком большой. Максимальный размер: 10MB');
     return;
   }
   
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+  const allowedTypes = [
+    'application/pdf', 
+    'image/jpeg', 
+    'image/jpg', 
+    'image/png', 
+    'image/webp', 
+    'image/heic', 
+    'image/heif'
+  ];
+  
+  console.log('Проверяем тип файла...');
   if (!allowedTypes.includes(file.type)) {
-    console.log('Неподдерживаемый тип файла:', file.type);
-    tg.showAlert('Неподдерживаемый формат файла. Используйте PDF, JPG, PNG, WebP или HEIC');
+    console.log('ОШИБКА: Неподдерживаемый тип файла:', file.type);
+    alert('Неподдерживаемый формат файла. Используйте PDF, JPG, PNG, WebP или HEIC');
     return;
   }
+  
+  console.log('Тип файла поддерживается');
 
-  // Создаем URL для файла для возможности просмотра
-  const fileURL = URL.createObjectURL(file);
-  
-  // Определяем источник файла для более понятного названия
-  let displayName = file.name;
-  if (file.name.startsWith('image') || file.name.includes('IMG_') || file.type.startsWith('image/')) {
-    // Если это фото с камеры, даем ему более понятное название
-    const now = new Date();
-    const timestamp = now.toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).replace(/[,\s:]/g, '_');
-    const extension = file.type.split('/')[1] || 'jpg';
-    displayName = `Фото_${timestamp}.${extension}`;
+  try {
+    // Создаем URL для файла для возможности просмотра
+    const fileURL = URL.createObjectURL(file);
+    console.log('URL файла создан:', fileURL);
+    
+    // Определяем источник файла для более понятного названия
+    let displayName = file.name;
+    const isImage = file.type.startsWith('image/') || 
+                   file.name.toLowerCase().includes('img_') || 
+                   file.name.toLowerCase().includes('photo');
+    
+    if (isImage) {
+      // Если это фото с камеры, даем ему более понятное название
+      const now = new Date();
+      const timestamp = now.toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).replace(/[,\s:]/g, '_');
+      const extension = file.type.split('/')[1] || 'jpg';
+      displayName = `Фото_${timestamp}.${extension}`;
+    }
+    
+    console.log('Отображаемое имя:', displayName);
+    
+    // Добавляем новый элемент в список с данными файла
+    addUploadedTest(displayName, file.type, fileURL);
+    
+    // Показываем уведомление об успешной загрузке
+    const sourceText = isImage ? 'Фото' : 'Файл';
+    alert(`${sourceText} успешно загружен!`);
+    
+    console.log('=== ФАЙЛ УСПЕШНО ОБРАБОТАН ===');
+    
+  } catch (error) {
+    console.error('ОШИБКА при обработке файла:', error);
+    alert('Произошла ошибка при загрузке файла');
   }
-  
-  // Добавляем новый элемент в список с данными файла
-  addUploadedTest(displayName, file.type, fileURL);
-  
-  // Показываем уведомление об успешной загрузке
-  const sourceText = (file.name.startsWith('image') || file.name.includes('IMG_') || file.type.startsWith('image/')) ? 'Фото' : 'Файл';
-  tg.showAlert(`${sourceText} успешно загружен!`);
-  
-  console.log('Файл успешно обработан:', displayName);
 }
 
 function addUploadedTest(fileName, fileType, fileURL) {
@@ -1449,7 +1509,7 @@ function addUploadedTest(fileName, fileType, fileURL) {
         <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <div class="test-info" onclick="viewTestFile(this)">
+    <div class="test-info">
       <h4 class="test-name">${activeType} - ${fileName}</h4>
       <p class="test-date">${currentDate}</p>
     </div>
@@ -1459,7 +1519,7 @@ function addUploadedTest(fileName, fileType, fileURL) {
           <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <button class="test-action-btn delete" onclick="deleteTestFile(this)">
+      <button class="test-action-btn delete">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
           <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -1471,74 +1531,6 @@ function addUploadedTest(fileName, fileType, fileURL) {
 }
 
 // Функция просмотра файла анализа
-function viewTestFile(testInfo) {
-  const testItem = testInfo.closest('.test-item');
-  const fileURL = testItem.getAttribute('data-file-url');
-  const fileType = testItem.getAttribute('data-file-type');
-  const fileName = testInfo.querySelector('.test-name').textContent;
-  
-  if (!fileURL) {
-    tg.showAlert('Это демо-файл. Загрузите свой файл для просмотра.');
-    return;
-  }
-  
-  // Открываем файл в новом окне/вкладке
-  if (fileType.startsWith('image/')) {
-    // Для изображений показываем в новом окне
-    window.open(fileURL, '_blank');
-  } else if (fileType === 'application/pdf') {
-    // Для PDF тоже открываем в новом окне
-    window.open(fileURL, '_blank');
-  } else {
-    // Для других типов файлов предлагаем скачать
-    const link = document.createElement('a');
-    link.href = fileURL;
-    link.download = fileName;
-    link.click();
-  }
-}
-
-// Функция удаления файла анализа
-function deleteTestFile(button) {
-  const testItem = button.closest('.test-item');
-  const testName = testItem.querySelector('.test-name').textContent;
-  
-  // Простое подтверждение через стандартный confirm
-  if (confirm(`Удалить анализ "${testName}"?`)) {
-    testItem.remove();
-  }
-}
-
-// Добавляем обработчики для всех существующих кнопок удаления
-document.addEventListener('DOMContentLoaded', function() {
-  // Добавляем обработчики для кнопок удаления при загрузке страницы
-  function attachDeleteHandlers() {
-    const deleteButtons = document.querySelectorAll('.test-action-btn.delete');
-    deleteButtons.forEach(button => {
-      if (!button.hasAttribute('data-handler-attached')) {
-        button.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          deleteTestFile(this);
-        });
-        button.setAttribute('data-handler-attached', 'true');
-      }
-    });
-  }
-  
-  // Вызываем при загрузке
-  attachDeleteHandlers();
-  
-  // Также вызываем при открытии страницы анализов
-  const originalShowMyTestsPage = window.showMyTestsPage;
-  if (originalShowMyTestsPage) {
-    window.showMyTestsPage = function() {
-      originalShowMyTestsPage();
-      setTimeout(attachDeleteHandlers, 100);
-    };
-  }
-});
-
 function closeMyTestsPage() {
   isDiagnosticFormMode = false;
   const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
