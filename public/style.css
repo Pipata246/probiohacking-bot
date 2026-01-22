@@ -42,9 +42,10 @@ body.chat-overlay-visible {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Убираем скролл всей страницы */
-  /* Убираем padding-bottom так как теперь скролл только внутри quick-cards */
-  justify-content: flex-start; /* Элементы прижимаются к верху */
+  overflow: hidden;
+  justify-content: flex-start;
+  padding-bottom: 90px; /* Отступ для навигации */
+  box-sizing: border-box;
 }
 
 /* Хедер - адаптивный */
@@ -213,14 +214,14 @@ body.chat-overlay-visible .search-container {
 .quick-requests {
   padding: clamp(14px, 3.5vw, 18px);
   background: #3B4F6B;
-  margin: 0 0 70px 0; /* Отступ снизу для навигации */
-  border-radius: clamp(18px, 4.5vw, 24px); /* Закругление со всех сторон */
+  margin: 0 0 20px 0; /* Уменьшенный отступ снизу */
+  border-radius: clamp(18px, 4.5vw, 24px);
   overflow: hidden;
   display: flex !important;
   flex-direction: column !important;
-  /* ФИКСИРОВАННАЯ высота под 3 карточки - уменьшенная для мобильных */
-  height: clamp(240px, 42vh, 300px) !important;
-  flex-shrink: 0 !important; /* Не сжимается и не растягивается */
+  /* Адаптивная высота для лучшего отображения */
+  height: clamp(200px, 35vh, 280px) !important;
+  flex-shrink: 0 !important;
 }
 
 /* Заголовок секции - фиксированный */
@@ -872,15 +873,15 @@ body.chat-overlay-visible .search-container {
   display: flex !important;
   align-items: flex-start;
   gap: clamp(10px, 2.5vw, 14px);
-  padding: clamp(12px, 3vw, 16px);
+  padding: clamp(10px, 2.5vw, 14px);
   background: white;
   border-radius: clamp(12px, 3vw, 16px);
   border: none;
   cursor: pointer;
   text-align: left;
   transition: transform 0.2s;
-  min-height: clamp(55px, 12vh, 75px); /* Уменьшенная высота карточки для мобильных */
-  flex-shrink: 0 !important; /* Карточки не сжимаются */
+  min-height: clamp(50px, 10vh, 65px); /* Еще более компактные карточки */
+  flex-shrink: 0 !important;
 }
 
 .quick-card:active {
@@ -888,8 +889,8 @@ body.chat-overlay-visible .search-container {
 }
 
 .quick-icon-bg {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background: #E5E7EB;
   border-radius: 8px;
   display: flex;
@@ -1215,6 +1216,8 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden;
+  padding-bottom: 90px; /* Отступ для навигации */
+  box-sizing: border-box;
 }
 
 .knowledge-base.active {
@@ -1583,6 +1586,8 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden;
+  padding-bottom: 90px; /* Отступ для навигации */
+  box-sizing: border-box;
 }
 
 .diagnostics-page.active {
