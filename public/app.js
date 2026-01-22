@@ -1156,14 +1156,8 @@ function showMyTestsPage() {
   myTestsForm.innerHTML = `
     <div class="diagnostic-form-content">
       <div class="form-step" id="myTestsStep">
-        <header class="slide-header">
-          <button class="nav-circle-btn" id="myTestsBackBtn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M19 12H5M12 19L5 12L12 5" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <div class="avatar" id="myTestsAvatar">AM</div>
-        </header>
+        <!-- Статичный аватар в правом верхнем углу -->
+        <div class="static-avatar" id="myTestsAvatar">AM</div>
         
         <div class="my-tests-content">
           <h2 class="my-tests-title">Мои анализы</h2>
@@ -1325,6 +1319,7 @@ function showMyTestsPage() {
   myTestsForm.style.display = 'flex';
   document.body.classList.add('chat-overlay-visible');
   
+  // Обновляем аватар в статичной позиции
   updateAvatar(document.getElementById('myTestsAvatar'), user, userName);
   
   // Обработчики событий
@@ -1332,14 +1327,6 @@ function showMyTestsPage() {
 }
 
 function setupMyTestsHandlers() {
-  // Кнопка назад (закрытие)
-  const backBtn = document.getElementById('myTestsBackBtn');
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      closeMyTestsPage();
-    });
-  }
-  
   // Выбор файла
   const selectFileBtn = document.getElementById('selectFileBtn');
   const fileInput = document.getElementById('fileInput');
@@ -1392,6 +1379,12 @@ function setupMyTestsHandlers() {
   const testTypeBtns = document.querySelectorAll('.test-type-btn');
   console.log('Найдено кнопок типов анализов:', testTypeBtns.length);
   
+  // Убеждаемся что первая кнопка активна по умолчанию
+  if (testTypeBtns.length > 0) {
+    testTypeBtns.forEach(btn => btn.classList.remove('active'));
+    testTypeBtns[0].classList.add('active');
+  }
+  
   testTypeBtns.forEach((btn, index) => {
     btn.addEventListener('click', () => {
       console.log('Кнопка типа анализа нажата:', btn.textContent);
@@ -1402,7 +1395,7 @@ function setupMyTestsHandlers() {
     });
   });
   
-  // Действия с тестами
+  // Действия с тестами - ВОССТАНОВЛЕННАЯ ФУНКЦИОНАЛЬНОСТЬ
   const deleteButtons = document.querySelectorAll('.test-action-btn.delete');
   deleteButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -1412,6 +1405,63 @@ function setupMyTestsHandlers() {
       
       if (confirm(`Удалить анализ "${testName}"?`)) {
         testItem.remove();
+      }
+    });
+  });
+  
+  // Просмотр файлов - ВОССТАНОВЛЕННАЯ ФУНКЦИОНАЛЬНОСТЬ
+  const testInfos = document.querySelectorAll('.test-info');
+  testInfos.forEach(testInfo => {
+    testInfo.addEventListener('click', () => {
+      const testItem = testInfo.closest('.test-item');
+      const fileURL = testItem.getAttribute('data-file-url');
+      const fileType = testItem.getAttribute('data-file-type');
+      const fileName = testInfo.querySelector('.test-name').textContent;
+      
+      if (!fileURL) {
+        alert('Это демо-файл. Загрузите свой файл для просмотра.');
+        return;
+      }
+      
+      // Для изображений показываем в модальном окне
+      if (fileType && fileType.startsWith('image/')) {
+        showImageModal(fileURL, fileName);
+      } else if (fileType === 'application/pdf') {
+        // Для PDF открываем в новом окне
+        window.open(fileURL, '_blank');
+      } else {
+        // Для других типов файлов предлагаем скачать
+        const link = document.createElement('a');
+        link.href = fileURL;
+        link.download = fileName;
+        link.click();
+      }
+    });
+  });
+}stInfos.forEach(testInfo => {
+    testInfo.addEventListener('click', () => {
+      const testItem = testInfo.closest('.test-item');
+      const fileURL = testItem.getAttribute('data-file-url');
+      const fileType = testItem.getAttribute('data-file-type');
+      const fileName = testInfo.querySelector('.test-name').textContent;
+      
+      if (!fileURL) {
+        alert('Это демо-файл. Загрузите свой файл для просмотра.');
+        return;
+      }
+      
+      // Для изображений показываем в модальном окне
+      if (fileType && fileType.startsWith('image/')) {
+        showImageModal(fileURL, fileName);
+      } else if (fileType === 'application/pdf') {
+        // Для PDF открываем в новом окне
+        window.open(fileURL, '_blank');
+      } else {
+        // Для других типов файлов предлагаем скачать
+        const link = document.createElement('a');
+        link.href = fileURL;
+        link.download = fileName;
+        link.click();
       }
     });
   });
@@ -1528,9 +1578,67 @@ function addUploadedTest(fileName, fileType, fileURL) {
   `;
   
   testsList.appendChild(testItem);
+  
+  // ДОБАВЛЯЕМ ОБРАБОТЧИКИ К НОВОМУ ЭЛЕМЕНТУ
+  const testInfo = testItem.querySelector('.test-info');
+  const deleteBtn = testItem.querySelector('.test-action-btn.delete');
+  
+  // Обработчик просмотра
+  testInfo.addEventListener('click', () => {
+    console.log('Клик по файлу:', fileName, 'Тип:', fileType);
+    
+    if (fileType && fileType.startsWith('image/')) {
+      showImageModal(fileURL, fileName);
+    } else if (fileType === 'application/pdf') {
+      window.open(fileURL, '_blank');
+    } else {
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = fileName;
+      link.click();
+    }
+  });
+  
+  // Обработчик удаления
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    console.log('Удаление файла:', fileName);
+    
+    if (confirm(`Удалить анализ "${fileName}"?`)) {
+      testItem.remove();
+    }
+  });
 }
 
 // Функция просмотра файла анализа
+// Функция показа изображения в модальном окне
+function showImageModal(imageURL, fileName) {
+  // Создаем модальное окно для просмотра изображения
+  const modal = document.createElement('div');
+  modal.className = 'image-modal-overlay';
+  modal.innerHTML = `
+    <div class="image-modal-content">
+      <button class="image-modal-close">&times;</button>
+      <img src="${imageURL}" alt="${fileName}" class="modal-image">
+      <p class="modal-image-title">${fileName}</p>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Обработчики закрытия
+  const closeBtn = modal.querySelector('.image-modal-close');
+  closeBtn.addEventListener('click', () => {
+    document.body.removeChild(modal);
+  });
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  });
+}
+
 function closeMyTestsPage() {
   isDiagnosticFormMode = false;
   const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
