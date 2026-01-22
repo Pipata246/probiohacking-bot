@@ -332,7 +332,7 @@ body.chat-overlay-visible .search-container {
   overflow: hidden;
 }
 
-/* Экран вопросов - фиксированная высота для работы с клавиатурой */
+/* Экран вопросов - ИСПРАВЛЕННАЯ версия для мобильных */
 #surveyStep {
   position: absolute;
   top: 0;
@@ -346,7 +346,7 @@ body.chat-overlay-visible .search-container {
   padding: 0;
   box-sizing: border-box;
   overflow: hidden;
-  padding-bottom: 200px;
+  /* УБИРАЕМ padding-bottom - он создавал огромный отступ */
 }
 
 #surveyStep.hidden {
@@ -414,7 +414,7 @@ body.chat-overlay-visible .search-container {
   font-weight: 500;
 }
 
-/* Контент вопроса - адаптивный к клавиатуре */
+/* Контент вопроса - ИСПРАВЛЕННАЯ версия без избыточных отступов */
 .survey-question {
   flex: 1;
   display: flex;
@@ -425,16 +425,17 @@ body.chat-overlay-visible .search-container {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 200px;
+  /* УБИРАЕМ padding-bottom: 200px - он создавал огромный отступ */
+  padding-bottom: 120px; /* Только минимальный отступ для навигации */
   /* Поддержка динамической высоты viewport */
-  max-height: calc(100vh - 200px);
-  max-height: calc(100dvh - 200px);
+  max-height: calc(100vh - 120px);
+  max-height: calc(100dvh - 120px);
 }
 
-/* Навигация вопросов - ФИКСИРОВАННОЕ большое расстояние для мобильных */
+/* Навигация вопросов - ИСПРАВЛЕННАЯ позиция для мобильных */
 .survey-navigation {
   position: fixed;
-  bottom: clamp(100px, 18vh, 120px);
+  bottom: clamp(80px, 12vh, 100px); /* УМЕНЬШАЕМ отступ снизу */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1515,6 +1516,7 @@ body.chat-overlay-visible .search-container {
 
 .knowledge-section.expanded .expand-btn svg {
   /* Убираем поворот - иконки меняются через JavaScript */
+  transform: none;
 }
 
 .section-description {
@@ -2232,10 +2234,11 @@ body.chat-overlay-visible .search-container {
     height: 50px;
   }
   
+  /* ИСПРАВЛЕННЫЕ стили для survey-question на мобильных */
   .survey-question {
-    padding-bottom: 180px;
-    max-height: calc(100vh - 180px);
-    max-height: calc(100dvh - 180px);
+    padding-bottom: 100px; /* УМЕНЬШАЕМ отступ */
+    max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 100px);
   }
   
   #surveyStep .bottom-nav {
@@ -2246,5 +2249,8 @@ body.chat-overlay-visible .search-container {
   #surveyStep {
     height: 100vh;
     height: -webkit-fill-available;
+    /* ДОБАВЛЯЕМ принудительный сброс viewport при проблемах с клавиатурой */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
 }

@@ -602,6 +602,43 @@ function getDiagnosticState() {
 }
 
 // ========================================
+// ИСПРАВЛЕНИЕ ПРОБЛЕМ С VIEWPORT НА МОБИЛЬНЫХ
+// ========================================
+
+// Функция для принудительного сброса viewport
+function resetViewport() {
+  // Принудительно сбрасываем высоту viewport
+  const surveyStep = document.getElementById('surveyStep');
+  if (surveyStep && surveyStep.classList.contains('active')) {
+    surveyStep.style.height = '100vh';
+    surveyStep.style.minHeight = '100vh';
+    
+    // Через небольшую задержку восстанавливаем правильные значения
+    setTimeout(() => {
+      surveyStep.style.height = '100dvh';
+      surveyStep.style.minHeight = '100dvh';
+    }, 100);
+  }
+}
+
+// Обработчики для сброса viewport при проблемах с клавиатурой
+window.addEventListener('resize', resetViewport);
+window.addEventListener('orientationchange', resetViewport);
+
+// Сброс viewport при скрытии клавиатуры
+document.addEventListener('focusout', (e) => {
+  if (e.target.closest('.quiz-custom-input')) {
+    // Небольшая задержка для корректного сброса после скрытия клавиатуры
+    setTimeout(resetViewport, 300);
+  }
+});
+
+// Дополнительный сброс при переходе между вопросами
+function resetViewportOnQuestionChange() {
+  setTimeout(resetViewport, 100);
+}
+
+// ========================================
 // ДИАГНОСТИЧЕСКАЯ ФОРМА
 // ========================================
 
@@ -964,6 +1001,9 @@ function showQuestion(index) {
   
   // ВОССТАНАВЛИВАЕМ СОХРАНЕННЫЕ ОТВЕТЫ
   restoreQuestionAnswer(question.id);
+  
+  // СБРАСЫВАЕМ VIEWPORT при смене вопроса
+  resetViewportOnQuestionChange();
 }
 
 function setupSurveyNavigation() {
