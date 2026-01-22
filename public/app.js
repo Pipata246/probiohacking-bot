@@ -309,7 +309,7 @@ document.addEventListener('click', (e) => {
   }
   
   // Боковое меню
-  if (e.target.closest('.menu-btn') || e.target.closest('#menuBtn')) {
+  if (e.target.closest('.menu-btn')) {
     openSidebar();
     return;
   }

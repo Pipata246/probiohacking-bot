@@ -68,35 +68,14 @@ body.chat-overlay-visible {
   justify-content: space-between;
 }
 
-/* Добавляем невидимый элемент слева для выравнивания */
-.knowledge-base .header::before {
-  content: '';
-  width: 40px; /* Ширина аватара */
-  height: 40px;
-}
-
 /* Хедер в диагностической форме - аватар всегда справа */
 .diagnostic-form-overlay .header {
   justify-content: space-between;
 }
 
-/* Добавляем невидимый элемент слева для выравнивания */
-.diagnostic-form-overlay .header::before {
-  content: '';
-  width: 40px; /* Ширина аватара */
-  height: 40px;
-}
-
 /* Хедер в диагностике - аватар всегда справа */
 .diagnostics-page .header {
   justify-content: space-between;
-}
-
-/* Добавляем невидимый элемент слева для выравнивания */
-.diagnostics-page .header::before {
-  content: '';
-  width: 40px; /* Ширина аватара */
-  height: 40px;
 }
 
 /* Хедер в чате - аватар всегда справа */
@@ -107,17 +86,9 @@ body.chat-overlay-visible {
   position: relative;
 }
 
-/* Добавляем невидимый элемент слева для выравнивания */
-.chat-overlay .header::before {
-  content: '';
-  width: 40px; /* Ширина аватара */
-  height: 40px;
-}
-
 .menu-btn {
-  background: #FEF7EC;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  background: none;
+  border: none;
   cursor: pointer;
   padding: 8px;
   display: flex;
@@ -126,16 +97,18 @@ body.chat-overlay-visible {
   position: relative;
   z-index: 10;
   pointer-events: auto !important;
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.menu-btn:active {
+  background: #FEF7EC;
 }
 
 .menu-btn span {
-  width: 20px;
+  width: 24px;
   height: 2px;
-  background: #2A3F5F;
+  background: #FEF7EC;
   border-radius: 2px;
 }
 
