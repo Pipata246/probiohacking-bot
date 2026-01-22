@@ -98,12 +98,12 @@ body.chat-overlay-visible {
   z-index: 10;
   pointer-events: auto !important;
   border-radius: 8px;
-  transition: background-color 0.2s ease;
-  /* Убеждаемся что кнопка кликабельна */
+  transition: background-color 0.1s ease; /* Ускоренный переход */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  -webkit-tap-highlight-color: transparent; /* Убираем подсветку на мобильных */
 }
 
 .menu-btn:active {
@@ -115,7 +115,8 @@ body.chat-overlay-visible {
   height: 2px;
   background: #FEF7EC;
   border-radius: 2px;
-  pointer-events: none; /* Предотвращаем клики по span элементам */
+  pointer-events: none;
+  transition: none; /* Убираем переходы для span элементов */
 }
 
 .avatar {
@@ -1038,10 +1039,11 @@ body.chat-overlay-visible .search-container {
   max-width: 360px;
   height: 100vh;
   background: #FAF8F3;
-  z-index: 9999; /* Максимальный z-index для отображения поверх всех страниц */
-  transition: left 0.3s ease;
+  z-index: 9999;
+  transition: left 0.2s ease; /* Ускоренная анимация */
   display: flex;
   flex-direction: column;
+  will-change: transform; /* Оптимизация для GPU */
 }
 
 .sidebar.active {
@@ -1179,10 +1181,11 @@ body.chat-overlay-visible .search-container {
   width: 100%;
   height: 100vh;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 9998; /* Чуть ниже сайдбара, но поверх всех страниц */
+  z-index: 9998;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease; /* Ускоренная анимация */
+  will-change: opacity; /* Оптимизация для GPU */
 }
 
 .sidebar-overlay.active {

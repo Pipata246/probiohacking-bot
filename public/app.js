@@ -308,11 +308,8 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Боковое меню - ПРИОРИТЕТНАЯ ОБРАБОТКА
+  // Боковое меню - ОПТИМИЗИРОВАННАЯ ОБРАБОТКА
   if (e.target.closest('.menu-btn')) {
-    e.preventDefault(); // Предотвращаем любые конфликты
-    e.stopPropagation(); // Останавливаем всплытие события
-    console.log('Menu button clicked!'); // Отладка
     openSidebar();
     return;
   }
@@ -578,17 +575,14 @@ document.addEventListener('click', (e) => {
 // ========================================
 
 function openSidebar() {
-  console.log('openSidebar called'); // Отладка
   const sidebar = document.getElementById('sidebar');
   const sidebarOverlay = document.getElementById('sidebarOverlay');
-  console.log('Sidebar element:', sidebar); // Отладка
-  console.log('Overlay element:', sidebarOverlay); // Отладка
   if (sidebar && sidebarOverlay) {
-    sidebar.classList.add('active');
-    sidebarOverlay.classList.add('active');
-    console.log('Sidebar opened successfully'); // Отладка
-  } else {
-    console.log('Sidebar or overlay not found!'); // Отладка
+    // Используем requestAnimationFrame для плавности
+    requestAnimationFrame(() => {
+      sidebar.classList.add('active');
+      sidebarOverlay.classList.add('active');
+    });
   }
 }
 
