@@ -18,59 +18,6 @@
     </div>
 
     <div class="app" id="mainApp">
-        <!-- Боковое меню -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2 class="sidebar-title">Прошлые запросы</h2>
-                <div class="sidebar-header-buttons">
-                    <button class="new-chat-btn" id="newChatBtn">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <path d="M10 4V16M4 10H16" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                    <button class="sidebar-close" id="sidebarClose">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <div class="sidebar-content">
-                <!-- Вчера -->
-                <div class="history-section">
-                    <h3 class="history-period">Вчера</h3>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                </div>
-
-                <!-- Прошлая неделя -->
-                <div class="history-section">
-                    <h3 class="history-period">Прошлая неделя</h3>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                </div>
-
-                <!-- 30 дней -->
-                <div class="history-section">
-                    <h3 class="history-period">30 дней</h3>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                    <div class="history-item">Комплексная диагностика поможе...</div>
-                </div>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="sidebar-user">
-                    <div class="sidebar-avatar" id="sidebarAvatar">AM</div>
-                    <span class="sidebar-username" id="sidebarUsername">Иван Иванов</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
         <!-- Хедер -->
         <header class="header">
             <button class="menu-btn" id="menuBtn">
@@ -336,6 +283,56 @@
             </button>
         </nav>
     </div>
+
+    <!-- Боковое меню -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Прошлые запросы</h2>
+            <div class="sidebar-header-buttons">
+                <button class="new-chat-btn" id="newChatBtn">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 4V16M4 10H16" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button class="sidebar-close" id="sidebarClose">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="sidebar-content">
+            <!-- Вчера -->
+            <div class="history-section">
+                <h3 class="history-period">Вчера</h3>
+                <div class="history-item">Комплексная диагностика поможе...</div>
+            </div>
+
+            <!-- Прошлая неделя -->
+            <div class="history-section">
+                <h3 class="history-period">Прошлая неделя</h3>
+                <div class="history-item">Комплексная диагностика поможе...</div>
+            </div>
+
+            <!-- 30 дней -->
+            <div class="history-section">
+                <h3 class="history-period">30 дней</h3>
+                <div class="history-item">Персональные рекомендации...</div>
+                <div class="history-item">Анализ состояния здоровья...</div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar" id="sidebarAvatar">AM</div>
+                <span class="sidebar-username" id="sidebarUsername">Александр</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- Страница диагностики -->
     <div class="diagnostics-page" id="diagnosticsPage">
@@ -687,51 +684,6 @@
         </nav>
     </div>
 
-    <!-- Боковое меню -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h2 class="sidebar-title">Прошлые запросы</h2>
-            <div class="sidebar-header-buttons">
-                <button class="new-chat-btn" id="newChatBtn">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M10 4V16M4 10H16" stroke="#3B4F6B" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
-                <button class="sidebar-close" id="sidebarClose">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M18 6L6 18M6 6L18 18" stroke="#333" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <div class="sidebar-content">
-            <!-- Вчера -->
-            <div class="history-section">
-                <h3 class="history-period">Вчера</h3>
-                <div class="history-item">Комплексная диагностика поможе...</div>
-            </div>
-
-            <!-- Прошлая неделя -->
-            <div class="history-section">
-                <h3 class="history-period">Прошлая неделя</h3>
-                <div class="history-item">Комплексная диагностика поможе...</div>
-            </div>
-
-            <!-- 30 дней -->
-            <div class="history-section">
-                <h3 class="history-period">30 дней</h3>
-                <div class="history-item">Персональные рекомендации...</div>
-                <div class="history-item">Анализ состояния здоровья...</div>
-            </div>
-
-            <!-- Профиль пользователя -->
-            <div class="sidebar-user">
-                <div class="sidebar-avatar" id="sidebarAvatar">AM</div>
-                <span class="sidebar-username">Александр</span>
-            </div>
-        </div>
     <div class="chat-overlay" id="chatOverlay">
         <!-- Хедер чата без кнопки меню -->
         <header class="header">
