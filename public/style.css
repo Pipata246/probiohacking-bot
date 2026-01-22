@@ -512,34 +512,34 @@ body.chat-overlay-visible .search-container {
   pointer-events: auto; /* Включаем события только для кнопок */
 }
 
-/* Нижняя навигация в экране ввода данных */
+/* Нижняя навигация в экране ввода данных - ПРОЗРАЧНАЯ */
 #personalDataStep .bottom-nav {
   position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(60, 128, 91, 0.85);
+  background: transparent; /* Прозрачная */
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: none; /* Убираем тень */
   z-index: 100;
   transition: background-color 0.3s ease;
   border-radius: 20px;
   flex-shrink: 0;
 }
 
-/* Нижняя навигация в экране вопросов - адаптивная к клавиатуре */
+/* Нижняя навигация в экране вопросов - ПРОЗРАЧНАЯ */
 #surveyStep .bottom-nav {
   position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(60, 128, 91, 0.85);
+  background: transparent; /* Прозрачная */
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: none; /* Убираем тень */
   z-index: 100;
   transition: background-color 0.3s ease;
   border-radius: 20px;
@@ -978,20 +978,26 @@ body.chat-overlay-visible .search-container {
   line-height: 1.3;
 }
 
-/* Нижняя навигация */
+/* Нижняя навигация - ПРОЗРАЧНАЯ для всех страниц кроме главной */
 .bottom-nav {
   position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(60, 128, 91, 0.85);
+  background: transparent; /* Прозрачная по умолчанию */
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: none; /* Убираем тень */
   z-index: 100;
   transition: background-color 0.3s ease;
   border-radius: 20px;
+}
+
+/* Главная страница - оставляем как есть с фоном */
+.app .bottom-nav {
+  background: rgba(60, 128, 91, 0.85);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .bottom-nav.blue-bg {
@@ -1278,7 +1284,6 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden;
-  padding-bottom: 120px; /* УВЕЛИЧЕННЫЙ отступ для навигации на мобильных */
   box-sizing: border-box;
 }
 
@@ -1312,7 +1317,7 @@ body.chat-overlay-visible .search-container {
   padding: 20px 24px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 180px; /* Увеличиваем отступ снизу для большего зазора */
+  padding-bottom: clamp(100px, 20vh, 120px); /* ОТСТУП ВМЕСТО ФИКСИРОВАННОЙ НАВИГАЦИИ */
   margin-top: 0;
   /* Убираем webkit scrollbar для чистого вида */
   -webkit-overflow-scrolling: touch;
@@ -1436,12 +1441,14 @@ body.chat-overlay-visible .search-container {
   min-height: 48px; /* Минимальная высота */
 }
 
-/* Навигация в чате */
+/* Навигация в чате - ПРОЗРАЧНАЯ */
 .chat-overlay .bottom-nav {
   position: absolute;
   bottom: 12px;
   left: 12px;
   right: 12px;
+  background: transparent; /* Прозрачная */
+  box-shadow: none; /* Убираем тень */
   flex-shrink: 0;
   min-height: 80px; /* Минимальная высота навигации */
 }
@@ -1501,7 +1508,7 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(16px, 4vw, 24px);
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 140px; /* УВЕЛИЧЕННЫЙ отступ для навигации на мобильных */
+  padding-bottom: clamp(100px, 20vh, 120px); /* ОТСТУП ВМЕСТО ФИКСИРОВАННОЙ НАВИГАЦИИ */
 }
 
 .knowledge-section {
@@ -1638,7 +1645,6 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden;
-  padding-bottom: 120px; /* УВЕЛИЧЕННЫЙ отступ для навигации на мобильных */
   box-sizing: border-box;
 }
 
@@ -1651,7 +1657,7 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(16px, 4vw, 24px) clamp(16px, 3vh, 24px);
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 120px; /* Увеличенный отступ для навигации */
+  padding-bottom: clamp(100px, 20vh, 120px); /* ОТСТУП ВМЕСТО ФИКСИРОВАННОЙ НАВИГАЦИИ */
 }
 
 /* Карточка персональной диагностики */
@@ -2308,17 +2314,13 @@ body.chat-overlay-visible .search-container {
     min-height: -webkit-fill-available;
   }
   
-  /* УВЕЛИЧЕННЫЕ отступы для мобильных устройств */
+  /* ОПТИМИЗИРОВАННЫЕ отступы для мобильных устройств */
   .knowledge-sections {
-    padding-bottom: 160px !important; /* Еще больший отступ для мобильных */
+    padding-bottom: clamp(110px, 22vh, 130px) !important; /* Как на странице здоровья */
   }
   
   .diagnostics-content {
-    padding-bottom: 160px !important; /* Еще больший отступ для мобильных */
-  }
-  
-  .app {
-    padding-bottom: 140px !important; /* Увеличенный отступ для главной страницы */
+    padding-bottom: clamp(110px, 22vh, 130px) !important; /* Как на странице здоровья */
   }
 }
 
