@@ -1438,33 +1438,6 @@ function setupMyTestsHandlers() {
       }
     });
   });
-}stInfos.forEach(testInfo => {
-    testInfo.addEventListener('click', () => {
-      const testItem = testInfo.closest('.test-item');
-      const fileURL = testItem.getAttribute('data-file-url');
-      const fileType = testItem.getAttribute('data-file-type');
-      const fileName = testInfo.querySelector('.test-name').textContent;
-      
-      if (!fileURL) {
-        alert('Это демо-файл. Загрузите свой файл для просмотра.');
-        return;
-      }
-      
-      // Для изображений показываем в модальном окне
-      if (fileType && fileType.startsWith('image/')) {
-        showImageModal(fileURL, fileName);
-      } else if (fileType === 'application/pdf') {
-        // Для PDF открываем в новом окне
-        window.open(fileURL, '_blank');
-      } else {
-        // Для других типов файлов предлагаем скачать
-        const link = document.createElement('a');
-        link.href = fileURL;
-        link.download = fileName;
-        link.click();
-      }
-    });
-  });
 }
 
 function handleFileUpload(file) {
