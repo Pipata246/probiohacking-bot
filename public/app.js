@@ -20,6 +20,7 @@ tg.BackButton.hide();
 function clearDiagnosticData() {
   localStorage.removeItem('surveyAnswers');
   localStorage.removeItem('diagnosticPersonalData');
+  localStorage.removeItem('additionalAnswers');
   console.log('Данные диагностики сброшены');
 }
 
@@ -591,8 +592,11 @@ function checkDiagnosticProgress() {
 function getDiagnosticState() {
   const savedPersonalData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
   const savedAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
+  const savedAdditionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
   
-  if (Object.keys(savedAnswers).length > 0) {
+  if (Object.keys(savedAdditionalAnswers).length > 0) {
+    return 'additional'; // Есть дополнительные ответы - был в дополнительных вопросах
+  } else if (Object.keys(savedAnswers).length > 0) {
     return 'quiz'; // Есть ответы на вопросы - был в квизе
   } else if (Object.keys(savedPersonalData).length > 0) {
     return 'form'; // Есть личные данные - был в форме
@@ -819,6 +823,113 @@ function showDiagnosticForm() {
           </button>
         </nav>
       </div>
+      
+      <!-- Экран дополнительных вопросов -->
+      <div class="form-step hidden" id="additionalQuestionsStep">
+        <header class="slide-header">
+          <div class="avatar" id="additionalFormAvatar">AM</div>
+        </header>
+        
+        <h2 class="form-main-title">Диагностическая анкета:<br>Нервная система</h2>
+        
+        <div class="additional-questions-container">
+          <!-- Вопрос 1 -->
+          <div class="additional-question-block">
+            <div class="question-card-small">
+              <div class="question-progress">
+                <span class="progress-number">15/17</span>
+                <div class="progress-bar-small">
+                  <div class="progress-fill-small" style="width: 88%"></div>
+                </div>
+              </div>
+              <p class="question-text-small">Напишите всё, что приносит вам дискомфорт</p>
+            </div>
+            <div class="answer-field">
+              <label class="answer-label">Свой вариант ответа:</label>
+              <textarea class="answer-textarea" id="additionalAnswer1" placeholder="Например: Плохо, часто ужасно..."></textarea>
+            </div>
+          </div>
+
+          <!-- Вопрос 2 -->
+          <div class="additional-question-block">
+            <div class="question-card-small">
+              <div class="question-progress">
+                <span class="progress-number">16/17</span>
+                <div class="progress-bar-small">
+                  <div class="progress-fill-small" style="width: 94%"></div>
+                </div>
+              </div>
+              <p class="question-text-small">Заключение врачей при предыдущих диагнозах</p>
+            </div>
+            <div class="answer-field">
+              <label class="answer-label">Свой вариант ответа:</label>
+              <textarea class="answer-textarea" id="additionalAnswer2" placeholder="Например: нет, никого..."></textarea>
+            </div>
+          </div>
+
+          <!-- Вопрос 3 -->
+          <div class="additional-question-block">
+            <div class="question-card-small">
+              <div class="question-progress">
+                <span class="progress-number">17/17</span>
+                <div class="progress-bar-small">
+                  <div class="progress-fill-small" style="width: 100%"></div>
+                </div>
+              </div>
+              <p class="question-text-small">Чем лечились при предыдущих диагнозах</p>
+            </div>
+            <div class="answer-field">
+              <label class="answer-label">Свой вариант ответа:</label>
+              <textarea class="answer-textarea" id="additionalAnswer3" placeholder="Например: препарат..."></textarea>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-navigation">
+          <button class="nav-circle-btn nav-circle-btn-active" id="additionalBackBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M19 12H5M12 19L5 12L12 5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="create-program-final-btn" id="additionalNextBtn">Создать программу</button>
+        </div>
+        
+        <!-- Навигация в дополнительных вопросах -->
+        <nav class="bottom-nav">
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Главная</span>
+          </button>
+          <button class="nav-item active">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Диагностика</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4.5 16.5C3 14 3 11 3 9C3 5.5 5.5 3 9 3C10 3 11 3.5 12 4C13 3.5 14 3 15 3C18.5 3 21 5.5 21 9C21 11 21 14 19.5 16.5L12 22L4.5 16.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Здоровье</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span>Дневник</span>
+          </button>
+          <button class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>База знаний</span>
+          </button>
+        </nav>
+      </div>
     </div>
   `;
   
@@ -828,12 +939,20 @@ function showDiagnosticForm() {
   
   updateAvatar(document.getElementById('diagnosticFormAvatar'), user, userName);
   updateAvatar(document.getElementById('surveyFormAvatar'), user, userName);
+  updateAvatar(document.getElementById('additionalFormAvatar'), user, userName);
   
   // ВОССТАНАВЛИВАЕМ СОХРАНЕННЫЕ ДАННЫЕ ФОРМЫ
   restoreFormData();
   
   // АВТОМАТИЧЕСКИ ПЕРЕХОДИМ К НУЖНОМУ ШАГУ
-  if (diagnosticState === 'quiz') {
+  if (diagnosticState === 'additional') {
+    // Если был в дополнительных вопросах - переходим к ним
+    setTimeout(() => {
+      document.getElementById('personalDataStep').classList.add('hidden');
+      document.getElementById('additionalQuestionsStep').classList.remove('hidden');
+      restoreAdditionalAnswers();
+    }, 100);
+  } else if (diagnosticState === 'quiz') {
     // Если был в квизе - сразу переходим к квизу
     setTimeout(() => {
       document.getElementById('personalDataStep').classList.add('hidden');
@@ -889,6 +1008,44 @@ function showDiagnosticForm() {
     document.getElementById('surveyStep').classList.remove('hidden');
     initSurvey();
   });
+  
+  // Обработчики дополнительных вопросов
+  document.getElementById('additionalBackBtn').addEventListener('click', () => {
+    // Возвращаемся к последнему вопросу квиза
+    diagnosticState = 'quiz';
+    document.getElementById('additionalQuestionsStep').classList.add('hidden');
+    document.getElementById('surveyStep').classList.remove('hidden');
+    currentQuestionIndex = surveyQuestions.length - 1;
+    showQuestion(currentQuestionIndex);
+  });
+  
+  document.getElementById('additionalNextBtn').addEventListener('click', () => {
+    // Сохраняем дополнительные ответы
+    const additionalAnswers = {
+      discomfort: document.getElementById('additionalAnswer1').value.trim(),
+      diagnosis: document.getElementById('additionalAnswer2').value.trim(),
+      treatment: document.getElementById('additionalAnswer3').value.trim(),
+      timestamp: new Date().toISOString()
+    };
+    
+    localStorage.setItem('additionalAnswers', JSON.stringify(additionalAnswers));
+    
+    // Завершаем диагностику
+    const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+    isDiagnosticFormMode = false;
+    
+    tg.showAlert('Спасибо! Ваши ответы сохранены.\nВ ближайшее время мы подготовим для вас персональные рекомендации.');
+    
+    diagnosticFormOverlay.remove();
+    document.body.classList.remove('chat-overlay-visible');
+    
+    showPage('diagnostics');
+    
+    console.log('Диагностика завершена');
+    console.log('Личные данные:', JSON.parse(localStorage.getItem('diagnosticPersonalData')));
+    console.log('Ответы на вопросы:', JSON.parse(localStorage.getItem('surveyAnswers')));
+    console.log('Дополнительные ответы:', JSON.parse(localStorage.getItem('additionalAnswers')));
+  });
 }
 
 // ========================================
@@ -912,25 +1069,157 @@ const surveyQuestions = [
   {
     id: "V18",
     system: "Сердечно-сосудистая система",
-    question: "Как вы оцениваете состояние вашей сердечно-сосудистой системы?",
+    question: "Как вы ощущаете своё сердце и кровообращение?",
     type: "multiple_with_custom",
     options: [
-      { value: "excellent", label: "Отличное самочувствие, нормальное давление, хорошая выносливость" },
-      { value: "moderate", label: "Периодические скачки давления, быстрая утомляемость" },
-      { value: "poor", label: "Частые проблемы с давлением, одышка, боли в сердце" },
-      { value: "unknown", label: "Не знаю, не обследовался" }
+      { value: "excellent", label: "Сердцебиение ровное, давление стабильное, конечности тёплые" },
+      { value: "stress", label: "Чувствую сердцебиение при стрессе, иногда головокружение" },
+      { value: "heat", label: "Приступы жара, ощущение пульсации в голове" },
+      { value: "cold", label: "Чувство тяжести в груди, холодные руки и ноги, низкое давление" }
     ]
   },
   {
     id: "V19",
-    system: "Пищеварительная система",
-    question: "Как работает ваша пищеварительная система?",
+    system: "Дыхательная система",
+    question: "Как ваше дыхание в покое и при нагрузке?",
     type: "multiple_with_custom",
     options: [
-      { value: "normal", label: "Нормальное пищеварение, регулярный стул, нет дискомфорта" },
-      { value: "bloating", label: "Вздутие, газообразование, периодические боли" },
-      { value: "irregular", label: "Нерегулярный стул, запоры или диарея" },
-      { value: "serious", label: "Серьезные проблемы, требующие постоянного внимания" }
+      { value: "normal", label: "Дышу свободно, глубоко, нет одышки" },
+      { value: "bloating", label: "Часто вздыхаю, чувство нехватки воздуха, поверхностное дыхание" },
+      { value: "heat", label: "Ощущение жара в груди, потребность в прохладном воздухе" },
+      { value: "heavy", label: "Дыхание тяжёлое, склонность к заложенности носа" }
+    ]
+  },
+  {
+    id: "V20",
+    system: "Пищеварительная система",
+    question: "Как вы оцениваете своё пищеварение?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "excellent", label: "Аппетит регулярный, стул ежедневный, без дискомфорта" },
+      { value: "slow", label: "Замедленное пищеварение, тяжесть после еды, запоры" },
+      { value: "fast", label: "Быстрое чувство голода, изжога, склонность к диарее" },
+      { value: "unstable", label: "Нестабильный стул, непереносимость некоторых продуктов" }
+    ]
+  },
+  {
+    id: "V21",
+    system: "Иммунная система",
+    question: "Как часто вы болеете и как восстанавливаетесь?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "rarely", label: "Болею редко, быстро выздоравливаю" },
+      { value: "frequent", label: "Частые простуды, долгое восстановление, аллергии" },
+      { value: "inflammatory", label: "Воспалительные реакции, склонность к инфекциям с жаром" },
+      { value: "chronic", label: "Хронические вялотекущие инфекции, отёки, слизь" }
+    ]
+  },
+  {
+    id: "V22",
+    system: "Эндокринная система",
+    question: "Как вы ощущаете свой гормональный баланс?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "stable", label: "Энергия стабильна, настроение ровное, вес постоянный" },
+      { value: "emotional", label: "Эмоциональные качели, проблемы со сном, нестабильный аппетит" },
+      { value: "heat", label: "Приступы жара, потливости, раздражительность, жажда" },
+      { value: "fatigue", label: "Усталость, снижение либидо, набор веса, ощущение холода" }
+    ]
+  },
+  {
+    id: "V23",
+    system: "Опорно-двигательная система",
+    question: "Как вы чувствуете свои мышцы, суставы и кости?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "flexible", label: "Гибкость, сила, нет болей" },
+      { value: "stiff", label: "Суставы хрустят, скованность, мышечные спазмы" },
+      { value: "inflammatory", label: "Воспаления, отёки, чувство жара в суставах" },
+      { value: "heavy", label: "Тяжесть, отёки, ноющие боли, скованность по утрам" }
+    ]
+  },
+  {
+    id: "V24",
+    system: "Мочевыделительная система",
+    question: "Голова утром:",
+    type: "multiple_with_custom",
+    options: [
+      { value: "normal", label: "Мочеиспускание регулярное, цвет светлый, нет отёков" },
+      { value: "frequent", label: "Частые позывы, особенно при стрессе" },
+      { value: "burning", label: "Моча тёмная, жжение, ощущение жара в почках" },
+      { value: "rare", label: "Редкие позывы, отёки, бледная моча" }
+    ]
+  },
+  {
+    id: "V25",
+    system: "Репродуктивная система",
+    question: "Как вы оцениваете своё репродуктивное здоровье?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "regular", label: "Цикл регулярный (у женщин), либидо в норме, нет дискомфорта" },
+      { value: "irregular", label: "Нерегулярный цикл, ПМС, спазмы, перепады либидо" },
+      { value: "painful", label: "Обильные менструации, жар в области таза, раздражительность" },
+      { value: "weak", label: "Скудные менструации, холод внизу живота, сниженное либидо" }
+    ]
+  },
+  {
+    id: "V26",
+    system: "Покровная система",
+    question: "Как выглядит и чувствуется ваша кожа?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "clean", label: "Чистая, увлажнённая, эластичная" },
+      { value: "dry", label: "Сухая, шелушащаяся, тонкая" },
+      { value: "oily", label: "Жирная, склонная к высыпаниям, покраснениям" },
+      { value: "swollen", label: "Отёчная, бледная, склонная к отёкам" }
+    ]
+  },
+  {
+    id: "V27",
+    system: "Лимфатическая система",
+    question: "Есть ли признаки застоя лимфы?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "normal", label: "Нет отёков, лёгкость в теле, чистые миндалины" },
+      { value: "frequent", label: "Частые простуды, увеличенные лимфоузлы, аллергии" },
+      { value: "inflammatory", label: "Воспалённые гланды, чувство жара в лимфоузлах" },
+      { value: "stagnant", label: "Отёки, тяжесть, ощущение \"забитости\"" }
+    ]
+  },
+  {
+    id: "V28",
+    system: "Сенсорная система",
+    question: "Как вы воспринимаете мир через органы чувств?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "sharp", label: "Зрение, слух, обоняние острые, реакция быстрая" },
+      { value: "sensitive", label: "Чувствительность к звукам, свету, тактильные перегрузки" },
+      { value: "dull", label: "Притуплённость чувств, потребность в ярких стимулах" },
+      { value: "irritated", label: "Раздражение от яркого света, громких звуков, острое восприятие запахов" }
+    ]
+  },
+  {
+    id: "V29",
+    system: "Состояние",
+    question: "Как выглядит ваш язык по утрам? (условно)",
+    type: "multiple_with_custom",
+    options: [
+      { value: "clean", label: "Чистый, розовый, умеренно влажный" },
+      { value: "white", label: "С белым налётом" },
+      { value: "yellow", label: "С жёлтым налётом" },
+      { value: "marks", label: "С отпечатками зубов по краям" }
+    ]
+  },
+  {
+    id: "V30",
+    system: "Состояние",
+    question: "Какую главную цель в здоровье вы ставите?",
+    type: "multiple_with_custom",
+    options: [
+      { value: "energy", label: "Повысить энергию и продуктивность" },
+      { value: "sleep", label: "Улучшить сон и эмоциональный баланс" },
+      { value: "digestion", label: "Нормализовать пищеварение и обмен веществ" },
+      { value: "fatigue", label: "Избавиться от хронической усталости и тяжести" }
     ]
   }
 ];
@@ -984,9 +1273,9 @@ function showQuestion(index) {
     
     <div class="quiz-question-card">
       <div class="quiz-progress-section">
-        <span class="quiz-progress-counter">${currentQuestionIndex + 1}/${surveyQuestions.length}</span>
+        <span class="quiz-progress-counter">${currentQuestionIndex + 1}/17</span>
         <div class="quiz-progress-bar">
-          <div class="quiz-progress-fill" style="width: ${((currentQuestionIndex + 1) / surveyQuestions.length) * 100}%"></div>
+          <div class="quiz-progress-fill" style="width: ${((currentQuestionIndex + 1) / 17) * 100}%"></div>
         </div>
       </div>
       <div class="quiz-question-section">
@@ -1141,6 +1430,21 @@ function restoreFormData() {
   }
 }
 
+// ФУНКЦИЯ: Восстановление дополнительных ответов
+function restoreAdditionalAnswers() {
+  const savedAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
+  
+  if (Object.keys(savedAnswers).length > 0) {
+    const answer1 = document.getElementById('additionalAnswer1');
+    const answer2 = document.getElementById('additionalAnswer2');
+    const answer3 = document.getElementById('additionalAnswer3');
+    
+    if (answer1 && savedAnswers.discomfort) answer1.value = savedAnswers.discomfort;
+    if (answer2 && savedAnswers.diagnosis) answer2.value = savedAnswers.diagnosis;
+    if (answer3 && savedAnswers.treatment) answer3.value = savedAnswers.treatment;
+  }
+}
+
 function saveSurveyAnswer(questionId, answer) {
   let surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
   surveyAnswers[questionId] = answer;
@@ -1148,22 +1452,15 @@ function saveSurveyAnswer(questionId, answer) {
 }
 
 function completeSurvey() {
-  const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+  // СОХРАНЯЕМ ТЕКУЩИЙ ОТВЕТ ПЕРЕД ЗАВЕРШЕНИЕМ
+  saveCurrentQuestionAnswer();
   
-  isDiagnosticFormMode = false;
+  // ПЕРЕХОДИМ К ДОПОЛНИТЕЛЬНЫМ ВОПРОСАМ
+  diagnosticState = 'additional';
+  document.getElementById('surveyStep').classList.add('hidden');
+  document.getElementById('additionalQuestionsStep').classList.remove('hidden');
   
-  tg.showAlert('Спасибо! Ваши ответы сохранены.\nВ ближайшее время мы подготовим для вас персональные рекомендации.');
-  
-  diagnosticFormOverlay.remove();
-  document.body.classList.remove('chat-overlay-visible');
-  
-  // Переходим на главную диагностики после завершения
-  // ДАННЫЕ НЕ УДАЛЯЕМ - они удалятся только при повторном нажатии "Диагностика"
-  showPage('diagnostics');
-  
-  console.log('Опрос завершен');
-  console.log('Личные данные:', JSON.parse(localStorage.getItem('diagnosticPersonalData')));
-  console.log('Ответы на вопросы:', JSON.parse(localStorage.getItem('surveyAnswers')));
+  console.log('Переход к дополнительным вопросам');
 }
 
 // ========================================

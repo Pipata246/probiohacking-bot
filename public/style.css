@@ -1922,36 +1922,36 @@ body.chat-overlay-visible .search-container {
 /* НОВЫЕ СТИЛИ ДЛЯ КВИЗА - ПОЛНАЯ ПЕРЕЗАПИСЬ */
 /* ========================================= */
 
-/* Заголовки квиза - еще компактнее */
+/* Заголовки квиза - увеличенные и с большим расстоянием */
 .quiz-titles {
   padding: 0 24px;
-  margin-bottom: 6px; /* УМЕНЬШАЕМ отступ еще больше */
+  margin-bottom: 16px; /* УВЕЛИЧИВАЕМ отступ снизу */
   flex-shrink: 0;
 }
 
 .quiz-main-title {
-  font-size: 17px; /* УМЕНЬШАЕМ размер */
-  font-weight: 600;
+  font-size: 22px; /* УВЕЛИЧИВАЕМ размер */
+  font-weight: 500; /* ДЕЛАЕМ мягче - было 600 */
   color: #FFFFFF;
-  margin: 0 0 3px 0; /* УМЕНЬШАЕМ отступ */
-  line-height: 1.1; /* УМЕНЬШАЕМ межстрочный интервал */
+  margin: 0 0 12px 0; /* УВЕЛИЧИВАЕМ отступ между заголовками */
+  line-height: 1.3; /* УВЕЛИЧИВАЕМ межстрочный интервал */
 }
 
 .quiz-sub-title {
-  font-size: 13px; /* УМЕНЬШАЕМ размер */
-  font-weight: 500;
+  font-size: 16px; /* УВЕЛИЧИВАЕМ размер */
+  font-weight: 400; /* ДЕЛАЕМ мягче - было 500 */
   color: #FFFFFF;
   margin: 0;
-  line-height: 1.1; /* УМЕНЬШАЕМ межстрочный интервал */
-  opacity: 0.9;
+  line-height: 1.3; /* УВЕЛИЧИВАЕМ межстрочный интервал */
+  opacity: 0.85; /* НЕМНОГО УМЕНЬШАЕМ прозрачность для мягкости */
 }
 
-/* Карточка с прогрессом и вопросом - еще компактнее */
+/* Карточка с прогрессом и вопросом - с учетом увеличенных заголовков */
 .quiz-question-card {
   background: #F5F1E8;
   border-radius: 16px;
   padding: 14px; /* УМЕНЬШАЕМ padding */
-  margin: 0 24px 6px; /* УМЕНЬШАЕМ отступ снизу еще больше */
+  margin: 0 24px 8px; /* НЕМНОГО УВЕЛИЧИВАЕМ отступ снизу */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }
@@ -2207,12 +2207,21 @@ body.chat-overlay-visible .search-container {
 @media (max-width: 480px) {
   .quiz-titles {
     padding: 0 16px;
-    margin-bottom: 6px;
+    margin-bottom: 12px; /* УВЕЛИЧИВАЕМ отступ для мобильных */
+  }
+  
+  .quiz-main-title {
+    font-size: 20px; /* УВЕЛИЧИВАЕМ размер для мобильных */
+    margin: 0 0 10px 0; /* УВЕЛИЧИВАЕМ отступ между заголовками */
+  }
+
+  .quiz-sub-title {
+    font-size: 15px; /* УВЕЛИЧИВАЕМ размер для мобильных */
   }
   
   .quiz-question-card {
     padding: 12px;
-    margin: 0 16px 6px;
+    margin: 0 16px 8px; /* УВЕЛИЧИВАЕМ отступ */
   }
   
   .quiz-options {
@@ -2265,5 +2274,170 @@ body.chat-overlay-visible .search-container {
   
   .app {
     padding-bottom: 140px !important; /* Увеличенный отступ для главной страницы */
+  }
+}
+
+/* ========================================= */
+/* СТИЛИ ДЛЯ ДОПОЛНИТЕЛЬНЫХ ВОПРОСОВ */
+/* ========================================= */
+
+/* Экран дополнительных вопросов - как personalDataStep */
+#additionalQuestionsStep {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(180deg, #4A8B6C 0%, #2D5A4A 100%);
+  display: flex;
+  flex-direction: column;
+  padding: clamp(16px, 4vw, 24px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding-bottom: 120px; /* Отступ для нижней навигации */
+}
+
+#additionalQuestionsStep.hidden {
+  display: none;
+}
+
+/* Контейнер дополнительных вопросов */
+.additional-questions-container {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 5vh, 32px);
+  margin-bottom: clamp(32px, 6vh, 48px);
+}
+
+/* Блок одного вопроса */
+.additional-question-block {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.5vh, 16px);
+}
+
+/* Карточка вопроса с прогрессом внутри */
+.question-card-small {
+  background: #F5F1E8;
+  border-radius: clamp(12px, 3vw, 16px);
+  padding: clamp(14px, 3.5vw, 18px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.5vh, 16px);
+}
+
+/* Прогресс вопроса внутри карточки */
+.question-progress {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 16px);
+}
+
+.progress-number {
+  font-size: clamp(13px, 3vw, 15px);
+  color: #666666;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.progress-bar-small {
+  flex: 1;
+  height: clamp(4px, 1vw, 6px);
+  background: rgba(102, 102, 102, 0.2);
+  border-radius: clamp(2px, 0.5vw, 3px);
+  overflow: hidden;
+}
+
+.progress-fill-small {
+  height: 100%;
+  background: #FF8C42; /* Оранжевый цвет как в квизе */
+  border-radius: clamp(2px, 0.5vw, 3px);
+  transition: width 0.3s ease;
+}
+
+.question-text-small {
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 500;
+  color: #666666;
+  margin: 0;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Поле ответа */
+.answer-field {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 2vh, 12px);
+}
+
+.answer-label {
+  font-size: clamp(13px, 3vw, 15px);
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.answer-textarea {
+  width: 100%;
+  min-height: clamp(80px, 15vh, 120px);
+  padding: clamp(12px, 3vw, 16px);
+  border: none;
+  border-radius: clamp(8px, 2vw, 12px);
+  font-size: clamp(14px, 3.5vw, 16px);
+  color: #333;
+  background: rgba(245, 241, 232, 0.95);
+  transition: all 0.3s;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.answer-textarea:focus {
+  outline: none;
+  background: #F5F1E8;
+  box-shadow: 0 0 0 2px rgba(245, 241, 232, 0.5);
+}
+
+.answer-textarea::placeholder {
+  color: #999;
+  font-size: clamp(13px, 3vw, 15px);
+}
+
+/* Кнопка "Создать программу" */
+.create-program-final-btn {
+  padding: clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px);
+  border-radius: clamp(20px, 5vw, 24px);
+  border: none;
+  background: #F5F1E8;
+  color: #3B4F6B;
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.create-program-final-btn:hover {
+  transform: scale(1.02);
+  background: #FFFFFF;
+}
+
+.create-program-final-btn:active {
+  transform: scale(0.98);
+}
+
+/* Адаптивные стили для мобильных */
+@media (max-width: 480px) {
+  .additional-questions-container {
+    gap: clamp(16px, 4vh, 24px);
+  }
+  
+  .additional-question-block {
+    gap: clamp(8px, 2vh, 12px);
+  }
+  
+  .answer-textarea {
+    min-height: clamp(60px, 12vh, 100px);
   }
 }
