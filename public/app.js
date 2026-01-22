@@ -310,9 +310,7 @@ document.addEventListener('click', (e) => {
   
   // Боковое меню
   if (e.target.closest('.menu-btn') || e.target.closest('#menuBtn')) {
-    if (!isChatMode) {
-      openSidebar();
-    }
+    openSidebar();
     return;
   }
   

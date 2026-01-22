@@ -115,22 +115,27 @@ body.chat-overlay-visible {
 }
 
 .menu-btn {
-  background: none;
-  border: none;
+  background: #FEF7EC;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   cursor: pointer;
   padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   position: relative;
-  z-index: 10; /* Базовый z-index для всех кнопок меню */
+  z-index: 10;
   pointer-events: auto !important;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
 }
 
 .menu-btn span {
-  width: 24px;
+  width: 20px;
   height: 2px;
-  background: #FEF7EC;
+  background: #2A3F5F;
   border-radius: 2px;
 }
 
