@@ -89,6 +89,12 @@ function showPage(pageName) {
   diagnosticsPage.classList.remove('active');
   chatOverlay.classList.remove('active');
   
+  // Скрываем страницу здоровье
+  const healthPage = document.getElementById('healthPage');
+  if (healthPage) {
+    healthPage.classList.remove('active');
+  }
+  
   // Убираем классы скролла
   document.body.classList.remove('chat-overlay-visible');
   
@@ -107,6 +113,12 @@ function showPage(pageName) {
     case 'knowledge':
       knowledgeBase.classList.add('active');
       currentPage = 'knowledge';
+      isChatMode = false;
+      break;
+    case 'health':
+      const healthPage = document.getElementById('healthPage');
+      healthPage.classList.add('active');
+      currentPage = 'health';
       isChatMode = false;
       break;
     case 'chat':
@@ -140,6 +152,9 @@ function updateAllNavigations() {
           break;
         case 1: // Диагностика
           shouldBeActive = (currentPage === 'diagnostics' || isDiagnosticFormMode);
+          break;
+        case 2: // Здоровье
+          shouldBeActive = (currentPage === 'health');
           break;
         case 4: // База знаний
           shouldBeActive = (currentPage === 'knowledge');
@@ -191,6 +206,7 @@ updateAvatar(document.getElementById('avatar'), user, userName);
 updateAvatar(document.getElementById('sidebarAvatar'), user, userName);
 updateAvatar(document.getElementById('knowledgeAvatar'), user, userName);
 updateAvatar(document.getElementById('diagnosticsAvatar'), user, userName);
+updateAvatar(document.getElementById('healthAvatar'), user, userName);
 
 // ========================================
 // ОБРАБОТЧИК ВСЕХ СОБЫТИЙ
@@ -280,7 +296,7 @@ document.addEventListener('click', (e) => {
         }
         break;
       case 2: // Здоровье
-        tg.showAlert('Здоровье\n\nСтраница в разработке');
+        showPage('health');
         break;
       case 3: // Дневник
         tg.showAlert('Дневник\n\nСтраница в разработке');
@@ -504,7 +520,11 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Основная кнопка рекомендаций (заглушка) - только если НЕ нажата иконка помощи
+  // Кнопки плюсов в рекомендациях на странице Здоровье
+  if (e.target.closest('.rec-add-btn')) {
+    tg.showAlert('Эта функция пока в разработке');
+    return;
+  }
   if (e.target.closest('#viewRecommendationsBtn') && !e.target.closest('#helpIcon')) {
     console.log('Основная кнопка рекомендаций нажата (заглушка)');
     return;
