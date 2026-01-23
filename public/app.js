@@ -132,6 +132,8 @@ function showPage(pageName) {
       diaryPage.classList.add('active');
       currentPage = 'diary';
       isChatMode = false;
+      // Инициализируем дневник при первом открытии
+      initializeDiary();
       break;
     case 'chat':
       chatOverlay.classList.add('active');
@@ -570,10 +572,7 @@ document.addEventListener('click', (e) => {
   // Дневник - переключение дней
   if (e.target.closest('.diary-day')) {
     const clickedDay = e.target.closest('.diary-day');
-    const allDays = document.querySelectorAll('.diary-day');
-    
-    allDays.forEach(day => day.classList.remove('active'));
-    clickedDay.classList.add('active');
+    switchToDay(clickedDay);
     return;
   }
   if (e.target.closest('#viewRecommendationsBtn') && !e.target.closest('#helpIcon')) {
@@ -2247,10 +2246,105 @@ document.addEventListener('dblclick', (e) => {
 console.log('Система навигации загружена - исправлены все проблемы с навигацией и сохранением');
 
 // ========================================
-// ФУНКЦИИ ДНЕВНИКА
+// ========================================
+// ФУНКЦИИ ДНЕВНИКА С ПОДДЕРЖКОЙ РАЗНЫХ ДНЕЙ
 // ========================================
 
 let currentEditingEntryId = null;
+let currentSelectedDay = 'ВТ-25'; // По умолчанию активный день
+
+// Структура для хранения записей по дням
+let diaryData = {
+  'ВТ-25': [
+    { id: '1', time: '08:00', text: 'Магний 400 mg' },
+    { id: '2', time: '09:00', text: 'Ашваганда 500mg' },
+    { id: '3', time: '12:00', text: 'Омега-3' },
+    { id: '4', time: '12:30', text: 'Магний 400 mg' },
+    { id: '5', time: '13:00', text: 'Цинк' },
+    { id: '6', time: '15:00', text: 'Витамин Б' },
+    { id: '7', time: '16:00', text: 'Витамин С' },
+    { id: '8', time: '17:00', text: 'Омега-3' },
+    { id: '9', time: '18:00', text: 'Прием в больнице' }
+  ],
+  'СР-26': [],
+  'ЧТ-27': [],
+  'ПТ-28': [],
+  'СБ-28': [],
+  'ВС-29': []
+};
+
+// Функция инициализации дневника
+function initializeDiary() {
+  // Находим активный день или устанавливаем первый день как активный
+  let activeDay = document.querySelector('.diary-day.active');
+  if (!activeDay) {
+    activeDay = document.querySelector('.diary-day');
+    if (activeDay) {
+      activeDay.classList.add('active');
+    }
+  }
+  
+  if (activeDay) {
+    const dayKey = getDayKey(activeDay);
+    currentSelectedDay = dayKey;
+    loadDayEntries(dayKey);
+  }
+}
+
+// Функция для получения ключа дня из элемента
+function getDayKey(dayElement) {
+  const dayName = dayElement.querySelector('.day-name').textContent;
+  const dayNumber = dayElement.querySelector('.day-number').textContent;
+  return `${dayName}-${dayNumber}`;
+}
+
+// Функция для загрузки записей выбранного дня
+function loadDayEntries(dayKey) {
+  const entriesContainer = document.querySelector('.diary-entries');
+  const entries = diaryData[dayKey] || [];
+  
+  entriesContainer.innerHTML = '';
+  
+  entries.forEach(entry => {
+    const entryElement = document.createElement('div');
+    entryElement.className = 'diary-entry';
+    entryElement.setAttribute('data-entry-id', entry.id);
+    entryElement.innerHTML = `
+      <span class="entry-time">${entry.time}</span>
+      <span class="entry-text">${entry.text}</span>
+    `;
+    entriesContainer.appendChild(entryElement);
+  });
+  
+  // Обновляем заголовок
+  updateEntriesTitle(dayKey);
+}
+
+// Функция для обновления заголовка записей
+function updateEntriesTitle(dayKey) {
+  const entriesTitle = document.querySelector('.entries-title');
+  const [dayName, dayNumber] = dayKey.split('-');
+  entriesTitle.textContent = `Записи на ${dayName} ${dayNumber}`;
+}
+
+// Функция для переключения дня
+function switchToDay(dayElement) {
+  // Убираем активный класс у всех дней
+  const allDays = document.querySelectorAll('.diary-day');
+  allDays.forEach(day => day.classList.remove('active'));
+  
+  // Добавляем активный класс выбранному дню
+  dayElement.classList.add('active');
+  
+  // Получаем ключ нового дня
+  const newDayKey = getDayKey(dayElement);
+  currentSelectedDay = newDayKey;
+  
+  // Загружаем записи для нового дня
+  loadDayEntries(newDayKey);
+  
+  console.log(`Переключились на день: ${newDayKey}`);
+}
 
 function openDiaryModal(entryId = null, entryText = '') {
   const modal = document.getElementById('diaryModal');
@@ -2295,32 +2389,38 @@ function saveDiaryEntry() {
     return;
   }
   
+  // Инициализируем массив для текущего дня если его нет
+  if (!diaryData[currentSelectedDay]) {
+    diaryData[currentSelectedDay] = [];
+  }
+  
   if (currentEditingEntryId) {
     // Редактирование существующей записи
-    const entry = document.querySelector(`[data-entry-id="${currentEditingEntryId}"]`);
-    if (entry) {
-      const entryTextElement = entry.querySelector('.entry-text');
-      entryTextElement.textContent = entryText;
+    const entryIndex = diaryData[currentSelectedDay].findIndex(entry => entry.id === currentEditingEntryId);
+    if (entryIndex !== -1) {
+      diaryData[currentSelectedDay][entryIndex].text = entryText;
     }
   } else {
     // Создание новой записи
-    const entriesContainer = document.querySelector('.diary-entries');
-    const newEntryId = Date.now().toString(); // Простой ID на основе времени
+    const newEntryId = Date.now().toString();
     const currentTime = new Date().toLocaleTimeString('ru-RU', { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
     
-    const newEntry = document.createElement('div');
-    newEntry.className = 'diary-entry';
-    newEntry.setAttribute('data-entry-id', newEntryId);
-    newEntry.innerHTML = `
-      <span class="entry-time">${currentTime}</span>
-      <span class="entry-text">${entryText}</span>
-    `;
+    const newEntry = {
+      id: newEntryId,
+      time: currentTime,
+      text: entryText
+    };
     
-    entriesContainer.appendChild(newEntry);
+    diaryData[currentSelectedDay].push(newEntry);
   }
   
+  // Перезагружаем записи для текущего дня
+  loadDayEntries(currentSelectedDay);
+  
   closeDiaryModal();
+  
+  console.log(`Запись сохранена для дня ${currentSelectedDay}:`, entryText);
 }
