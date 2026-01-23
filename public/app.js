@@ -552,6 +552,11 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('.diary-entry')) {
     const entry = e.target.closest('.diary-entry');
     
+    // Если кликнули по крестику удаления - не обрабатываем как клик по записи
+    if (e.target.closest('.delete-entry-x')) {
+      return;
+    }
+    
     // Если в режиме редактирования - не открываем модальное окно
     if (isEditMode) {
       return;
@@ -2441,16 +2446,12 @@ function loadDayEntries(dayKey) {
     entryElement.className = 'diary-entry';
     entryElement.setAttribute('data-entry-id', entry.id);
     
-    // В режиме редактирования добавляем кнопку удаления
+    // В режиме редактирования добавляем простой синий крестик
     if (isEditMode) {
       entryElement.innerHTML = `
         <span class="entry-time">${entry.time}</span>
         <span class="entry-text">${entry.text}</span>
-        <button class="delete-entry-btn" onclick="deleteEntry('${entry.id}')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
+        <span class="delete-entry-x" onclick="confirmDeleteEntry('${entry.id}')">×</span>
       `;
     } else {
       entryElement.innerHTML = `
@@ -2611,12 +2612,15 @@ function toggleEditMode() {
   if (isEditMode) {
     editBtn.classList.add('active');
     entriesContainer.classList.add('edit-mode');
-    enableDragAndDrop();
+    // ПЕРЕЗАГРУЖАЕМ ЗАПИСИ ЧТОБЫ КРЕСТИКИ ПОЯВИЛИСЬ СРАЗУ
+    loadDayEntries(currentSelectedDay);
     console.log('🖊️ Режим редактирования включен');
   } else {
     editBtn.classList.remove('active');
     entriesContainer.classList.remove('edit-mode');
     disableDragAndDrop();
+    // ПЕРЕЗАГРУЖАЕМ ЗАПИСИ ЧТОБЫ КРЕСТИКИ ИСЧЕЗЛИ
+    loadDayEntries(currentSelectedDay);
     console.log('✅ Режим редактирования выключен');
   }
 }
@@ -2631,7 +2635,6 @@ function enableDragAndDrop() {
     entry.addEventListener('dragover', handleDragOver);
     entry.addEventListener('drop', handleDrop);
     entry.addEventListener('dragend', handleDragEnd);
-    entry.addEventListener('dragenter', handleDragEnter);
   });
 }
 
@@ -2645,7 +2648,6 @@ function disableDragAndDrop() {
     entry.removeEventListener('dragover', handleDragOver);
     entry.removeEventListener('drop', handleDrop);
     entry.removeEventListener('dragend', handleDragEnd);
-    entry.removeEventListener('dragenter', handleDragEnter);
   });
 }
 
@@ -2656,34 +2658,18 @@ function handleDragStart(e) {
   draggedElement = this;
   this.classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/html', this.outerHTML);
-}
-
-function handleDragEnter(e) {
-  e.preventDefault();
 }
 
 function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
-  
-  // Добавляем визуальную подсветку
-  if (this !== draggedElement) {
-    this.style.borderColor = '#2A3F5F';
-    this.style.backgroundColor = '#E5E7EB';
-  }
 }
 
 function handleDrop(e) {
   e.preventDefault();
-  e.stopPropagation();
-  
-  // Убираем визуальную подсветку
-  this.style.borderColor = '';
-  this.style.backgroundColor = '';
   
   if (draggedElement !== this && draggedElement) {
-    // Получаем данные обеих записей
+    // Получаем ID записей
     const draggedId = draggedElement.getAttribute('data-entry-id');
     const targetId = this.getAttribute('data-entry-id');
     
@@ -2704,20 +2690,29 @@ function handleDrop(e) {
       console.log(`🔄 Поменяли местами записи: "${draggedEntry.text}" ↔ "${targetEntry.text}"`);
     }
   }
-  
-  return false;
 }
 
 function handleDragEnd(e) {
-  // Убираем визуальную подсветку со всех элементов
-  const entries = document.querySelectorAll('.diary-entry');
-  entries.forEach(entry => {
-    entry.style.borderColor = '';
-    entry.style.backgroundColor = '';
-    entry.classList.remove('dragging');
-  });
-  
+  this.classList.remove('dragging');
   draggedElement = null;
+}
+
+// Функция подтверждения удаления записи
+function confirmDeleteEntry(entryId) {
+  if (!currentSelectedDay || !diaryData[currentSelectedDay]) {
+    return;
+  }
+  
+  // Находим запись для отображения в подтверждении
+  const entry = diaryData[currentSelectedDay].find(entry => entry.id === entryId);
+  if (!entry) return;
+  
+  // Показываем подтверждение
+  const confirmed = confirm(`Удалить запись?\n\n${entry.time} - ${entry.text}`);
+  
+  if (confirmed) {
+    deleteEntry(entryId);
+  }
 }
 
 // Функция удаления записи
