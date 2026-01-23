@@ -3336,6 +3336,7 @@ body.chat-overlay-visible .search-container {
   flex: 1;
   overflow: hidden;
   padding: 0 clamp(16px, 4vw, 20px);
+  padding-bottom: clamp(100px, 20vh, 120px); /* Добавляем отступ от навигации */
   display: flex;
   flex-direction: column;
   height: calc(100vh - 60px - 100px);
@@ -3419,7 +3420,7 @@ body.chat-overlay-visible .search-container {
   background: #FEF7EC;
   border-radius: clamp(15px, 3.8vw, 19px);
   padding: clamp(14px, 3.5vw, 18px);
-  margin-bottom: 0;
+  margin-bottom: clamp(16px, 4vh, 24px); /* Добавляем отступ снизу */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   flex: 1;
@@ -3630,6 +3631,7 @@ body.chat-overlay-visible .search-container {
 @media (max-width: 480px) {
   .diary-content {
     height: calc(100vh - 50px - 90px);
+    padding-bottom: clamp(110px, 22vh, 130px); /* Увеличиваем отступ для мобильных */
   }
   
   .diary-title {
@@ -3662,6 +3664,7 @@ body.chat-overlay-visible .search-container {
   
   .diary-entries-card {
     padding: clamp(12px, 3vw, 16px);
+    margin-bottom: clamp(20px, 5vh, 28px); /* Больше отступ для мобильных */
   }
   
   .entries-title {
