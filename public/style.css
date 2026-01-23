@@ -3370,14 +3370,14 @@ body.chat-overlay-visible .search-container {
   gap: clamp(6px, 1.5vw, 10px);
   margin-bottom: clamp(18px, 4.5vh, 26px);
   overflow-x: auto;
-  padding: 0 2px;
+  padding: 0 clamp(16px, 4vw, 20px); /* Добавляем отступы как у контента */
   -webkit-overflow-scrolling: touch;
   flex-shrink: 0;
 }
 
 .diary-day {
-  flex-shrink: 0;
-  width: clamp(46px, 11.5vw, 54px);
+  flex: 1; /* Кнопки растягиваются равномерно */
+  min-width: clamp(46px, 11.5vw, 54px); /* Минимальная ширина */
   height: clamp(62px, 15.5vw, 70px);
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: clamp(15px, 3.8vw, 19px);
@@ -3647,10 +3647,12 @@ body.chat-overlay-visible .search-container {
   .diary-calendar {
     gap: clamp(4px, 1vw, 8px);
     margin-bottom: clamp(14px, 3.5vh, 20px);
+    padding: 0 clamp(16px, 4vw, 20px); /* Сохраняем отступы для мобильных */
   }
   
   .diary-day {
-    width: clamp(42px, 10.5vw, 50px);
+    flex: 1; /* Растягиваем на всю ширину */
+    min-width: clamp(42px, 10.5vw, 50px);
     height: clamp(58px, 14.5vw, 66px);
   }
   
