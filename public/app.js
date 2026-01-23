@@ -551,9 +551,16 @@ document.addEventListener('click', (e) => {
   // Дневник - клик по записи для редактирования
   if (e.target.closest('.diary-entry')) {
     const entry = e.target.closest('.diary-entry');
+    
+    // Если в режиме редактирования - не открываем модальное окно
+    if (isEditMode) {
+      return;
+    }
+    
     const entryId = entry.getAttribute('data-entry-id');
     const entryText = entry.querySelector('.entry-text').textContent;
-    openDiaryModal(entryId, entryText);
+    const entryTime = entry.querySelector('.entry-time').textContent;
+    openDiaryModal(entryId, entryText, entryTime);
     return;
   }
   
@@ -573,6 +580,12 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('.diary-day')) {
     const clickedDay = e.target.closest('.diary-day');
     switchToDay(clickedDay);
+    return;
+  }
+  
+  // Дневник - кнопка режима редактирования
+  if (e.target.closest('.edit-mode-btn')) {
+    toggleEditMode();
     return;
   }
   if (e.target.closest('#viewRecommendationsBtn') && !e.target.closest('#helpIcon')) {
@@ -2252,6 +2265,25 @@ console.log('Система навигации загружена - исправ
 
 let currentEditingEntryId = null;
 let currentSelectedDay = null; // Будет установлен динамически
+let isEditMode = false; // Режим редактирования для перестановки записей
+
+// Функция для инициализации селекторов времени
+function initializeTimeSelectors() {
+  const hourSelect = document.getElementById('hourSelect');
+  const minuteSelect = document.getElementById('minuteSelect');
+  
+  // Инициализируем часы (0-23) только если селектор пустой
+  if (hourSelect && hourSelect.children.length === 0) {
+    for (let i = 0; i < 24; i++) {
+      const option = document.createElement('option');
+      option.value = i.toString().padStart(2, '0');
+      option.textContent = i.toString().padStart(2, '0');
+      hourSelect.appendChild(option);
+    }
+  }
+  
+  // Минуты уже инициализированы в HTML (00, 15, 30, 45)
+}
 
 // Функция для получения 6 дней начиная с сегодня (сегодня всегда первый)
 function generateWeekDays() {
@@ -2366,6 +2398,9 @@ function cleanupOldEntries() {
 function initializeDiary() {
   console.log('🗓️ Инициализация дневника с динамическим календарем');
   
+  // Инициализируем селекторы времени
+  initializeTimeSelectors();
+  
   // Обновляем календарь с актуальными датами (сегодня всегда первый)
   updateCalendarHTML();
   
@@ -2412,6 +2447,11 @@ function loadDayEntries(dayKey) {
     entriesContainer.appendChild(entryElement);
   });
   
+  // Если режим редактирования активен, включаем drag & drop для новых элементов
+  if (isEditMode) {
+    enableDragAndDrop();
+  }
+  
   // Обновляем заголовок
   updateEntriesTitle(dayKey);
 }
@@ -2442,11 +2482,16 @@ function switchToDay(dayElement) {
   console.log(`Переключились на день: ${newDayKey}`);
 }
 
-function openDiaryModal(entryId = null, entryText = '') {
+function openDiaryModal(entryId = null, entryText = '', entryTime = '') {
   const modal = document.getElementById('diaryModal');
   const modalTitle = document.getElementById('diaryModalTitle');
   const modalInput = document.getElementById('diaryModalInput');
   const modalBtn = document.getElementById('diaryModalBtn');
+  const hourSelect = document.getElementById('hourSelect');
+  const minuteSelect = document.getElementById('minuteSelect');
+  
+  // Инициализируем селекторы времени если они пустые
+  initializeTimeSelectors();
   
   if (entryId) {
     // Режим редактирования
@@ -2454,12 +2499,24 @@ function openDiaryModal(entryId = null, entryText = '') {
     modalTitle.textContent = 'Редактировать запись';
     modalInput.value = entryText;
     modalBtn.textContent = 'Сохранить';
+    
+    // Устанавливаем время из записи
+    if (entryTime) {
+      const [hours, minutes] = entryTime.split(':');
+      hourSelect.value = hours;
+      minuteSelect.value = minutes;
+    }
   } else {
     // Режим создания новой записи
     currentEditingEntryId = null;
     modalTitle.textContent = 'Новая запись';
     modalInput.value = '';
     modalBtn.textContent = 'Закрепить';
+    
+    // Устанавливаем текущее время по умолчанию
+    const now = new Date();
+    hourSelect.value = now.getHours().toString().padStart(2, '0');
+    minuteSelect.value = Math.floor(now.getMinutes() / 15) * 15; // Округляем до ближайших 15 минут
   }
   
   modal.classList.add('active');
@@ -2478,12 +2535,17 @@ function closeDiaryModal() {
 
 function saveDiaryEntry() {
   const modalInput = document.getElementById('diaryModalInput');
+  const hourSelect = document.getElementById('hourSelect');
+  const minuteSelect = document.getElementById('minuteSelect');
   const entryText = modalInput.value.trim();
   
   if (!entryText) {
     tg.showAlert('Пожалуйста, введите текст записи');
     return;
   }
+  
+  // Получаем выбранное время
+  const selectedTime = `${hourSelect.value}:${minuteSelect.value}`;
   
   // Инициализируем массив для текущего дня если его нет
   if (!diaryData[currentSelectedDay]) {
@@ -2495,28 +2557,126 @@ function saveDiaryEntry() {
     const entryIndex = diaryData[currentSelectedDay].findIndex(entry => entry.id === currentEditingEntryId);
     if (entryIndex !== -1) {
       diaryData[currentSelectedDay][entryIndex].text = entryText;
+      diaryData[currentSelectedDay][entryIndex].time = selectedTime;
     }
   } else {
     // Создание новой записи
     const newEntryId = Date.now().toString();
-    const currentTime = new Date().toLocaleTimeString('ru-RU', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
     
     const newEntry = {
       id: newEntryId,
-      time: currentTime,
+      time: selectedTime,
       text: entryText
     };
     
     diaryData[currentSelectedDay].push(newEntry);
   }
   
+  // Сортируем записи по времени
+  diaryData[currentSelectedDay].sort((a, b) => {
+    const timeA = a.time.split(':').map(Number);
+    const timeB = b.time.split(':').map(Number);
+    return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+  });
+  
   // Перезагружаем записи для текущего дня
   loadDayEntries(currentSelectedDay);
   
   closeDiaryModal();
   
-  console.log(`Запись сохранена для дня ${currentSelectedDay}:`, entryText);
+  console.log(`Запись сохранена для дня ${currentSelectedDay}: ${selectedTime} - ${entryText}`);
+}
+
+// Функция переключения режима редактирования
+function toggleEditMode() {
+  isEditMode = !isEditMode;
+  const editBtn = document.getElementById('editModeBtn');
+  const entriesContainer = document.querySelector('.diary-entries');
+  
+  if (isEditMode) {
+    editBtn.classList.add('active');
+    entriesContainer.classList.add('edit-mode');
+    enableDragAndDrop();
+    console.log('🖊️ Режим редактирования включен');
+  } else {
+    editBtn.classList.remove('active');
+    entriesContainer.classList.remove('edit-mode');
+    disableDragAndDrop();
+    console.log('✅ Режим редактирования выключен');
+  }
+}
+
+// Функция включения drag & drop
+function enableDragAndDrop() {
+  const entries = document.querySelectorAll('.diary-entry');
+  
+  entries.forEach(entry => {
+    entry.draggable = true;
+    entry.addEventListener('dragstart', handleDragStart);
+    entry.addEventListener('dragover', handleDragOver);
+    entry.addEventListener('drop', handleDrop);
+    entry.addEventListener('dragend', handleDragEnd);
+  });
+}
+
+// Функция отключения drag & drop
+function disableDragAndDrop() {
+  const entries = document.querySelectorAll('.diary-entry');
+  
+  entries.forEach(entry => {
+    entry.draggable = false;
+    entry.removeEventListener('dragstart', handleDragStart);
+    entry.removeEventListener('dragover', handleDragOver);
+    entry.removeEventListener('drop', handleDrop);
+    entry.removeEventListener('dragend', handleDragEnd);
+  });
+}
+
+let draggedElement = null;
+
+// Обработчики drag & drop
+function handleDragStart(e) {
+  draggedElement = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  
+  if (draggedElement !== this) {
+    // Получаем данные обеих записей
+    const draggedId = draggedElement.getAttribute('data-entry-id');
+    const targetId = this.getAttribute('data-entry-id');
+    
+    const draggedTime = draggedElement.querySelector('.entry-time').textContent;
+    const targetTime = this.querySelector('.entry-time').textContent;
+    
+    // Находим записи в данных
+    const entries = diaryData[currentSelectedDay];
+    const draggedEntry = entries.find(entry => entry.id === draggedId);
+    const targetEntry = entries.find(entry => entry.id === targetId);
+    
+    if (draggedEntry && targetEntry) {
+      // Меняем местами только текст, время остается прежним
+      const tempText = draggedEntry.text;
+      draggedEntry.text = targetEntry.text;
+      targetEntry.text = tempText;
+      
+      // Перезагружаем записи
+      loadDayEntries(currentSelectedDay);
+      
+      console.log(`🔄 Поменяли местами записи: "${draggedEntry.text}" (${draggedTime}) ↔ "${targetEntry.text}" (${targetTime})`);
+    }
+  }
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  draggedElement = null;
 }
