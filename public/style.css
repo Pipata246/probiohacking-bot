@@ -3503,35 +3503,6 @@ body.chat-overlay-visible .search-container {
   font-family: 'Inter', sans-serif;
 }
 
-/* Кнопка добавления записи */
-.add-entry-btn {
-  position: absolute;
-  bottom: clamp(14px, 3.5vw, 18px);
-  right: clamp(14px, 3.5vw, 18px);
-  width: clamp(38px, 9.5vw, 46px);
-  height: clamp(38px, 9.5vw, 46px);
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: #2A3F5F;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.add-entry-btn:hover {
-  background: rgba(42, 63, 95, 0.1);
-  transform: scale(1.1);
-}
-
-.add-entry-btn:active {
-  background: rgba(42, 63, 95, 0.2);
-  transform: scale(0.95);
-}
-
 /* Модальное окно для записей */
 .diary-modal-overlay {
   position: fixed;
@@ -3693,12 +3664,41 @@ body.chat-overlay-visible .search-container {
   color: #2A3F5F;
 }
 
-/* Стили для заголовка записей с кнопкой редактирования */
+/* Стили для заголовка записей с кнопками */
 .entries-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: clamp(12px, 3vw, 16px);
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 12px);
+}
+
+.add-entry-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: clamp(6px, 1.5vw, 8px);
+  border-radius: clamp(6px, 1.5vw, 8px);
+  color: #6B7280;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-entry-btn:hover {
+  background: rgba(107, 114, 128, 0.1);
+  color: #2A3F5F;
+}
+
+.add-entry-btn:active {
+  background: rgba(107, 114, 128, 0.2);
+  transform: scale(0.95);
 }
 
 .edit-mode-btn {
@@ -3731,12 +3731,13 @@ body.chat-overlay-visible .search-container {
 
 /* Стили для режима редактирования записей */
 .diary-entries.edit-mode .diary-entry {
-  cursor: move;
+  cursor: pointer;
   border: 2px dashed #E5E7EB;
   background: #F9FAFB;
   position: relative;
   padding-right: clamp(30px, 8vw, 35px); /* Место для крестика */
   transition: all 0.2s ease;
+  pointer-events: auto; /* Убеждаемся что события работают */
 }
 
 .diary-entries.edit-mode .diary-entry:hover {
@@ -3744,10 +3745,10 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-.diary-entries.edit-mode .diary-entry.dragging {
-  opacity: 0.6;
-  transform: rotate(2deg);
-  z-index: 1000;
+.diary-entries.edit-mode .diary-entry.selected {
+  border-color: #2A3F5F;
+  background: #E5E7EB;
+  box-shadow: 0 0 0 2px rgba(42, 63, 95, 0.2);
 }
 
 /* Простой синий крестик для удаления */

@@ -2271,6 +2271,7 @@ console.log('Система навигации загружена - исправ
 let currentEditingEntryId = null;
 let currentSelectedDay = null; // Будет установлен динамически
 let isEditMode = false; // Режим редактирования для перестановки записей
+let selectedEntryId = null; // ID выбранной записи для обмена местами
 
 // Функция для инициализации селекторов времени
 function initializeTimeSelectors() {
@@ -2453,6 +2454,15 @@ function loadDayEntries(dayKey) {
         <span class="entry-text">${entry.text}</span>
         <span class="delete-entry-x" onclick="confirmDeleteEntry('${entry.id}')">×</span>
       `;
+      
+      // Добавляем обработчик клика для обмена местами
+      entryElement.addEventListener('click', function(e) {
+        // Если кликнули по крестику - не обрабатываем
+        if (e.target.closest('.delete-entry-x')) {
+          return;
+        }
+        handleEntryClick(this);
+      });
     } else {
       entryElement.innerHTML = `
         <span class="entry-time">${entry.time}</span>
@@ -2462,11 +2472,6 @@ function loadDayEntries(dayKey) {
     
     entriesContainer.appendChild(entryElement);
   });
-  
-  // Если режим редактирования активен, включаем drag & drop для новых элементов
-  if (isEditMode) {
-    enableDragAndDrop();
-  }
   
   // Обновляем заголовок
   updateEntriesTitle(dayKey);
@@ -2618,83 +2623,58 @@ function toggleEditMode() {
   } else {
     editBtn.classList.remove('active');
     entriesContainer.classList.remove('edit-mode');
-    disableDragAndDrop();
+    // Сбрасываем выбранную запись
+    selectedEntryId = null;
     // ПЕРЕЗАГРУЖАЕМ ЗАПИСИ ЧТОБЫ КРЕСТИКИ ИСЧЕЗЛИ
     loadDayEntries(currentSelectedDay);
     console.log('✅ Режим редактирования выключен');
   }
 }
 
-// Функция включения drag & drop
-function enableDragAndDrop() {
-  const entries = document.querySelectorAll('.diary-entry');
+// Функция обработки клика по записи в режиме редактирования
+function handleEntryClick(entryElement) {
+  const entryId = entryElement.getAttribute('data-entry-id');
   
-  entries.forEach(entry => {
-    entry.draggable = true;
-    entry.addEventListener('dragstart', handleDragStart);
-    entry.addEventListener('dragover', handleDragOver);
-    entry.addEventListener('drop', handleDrop);
-    entry.addEventListener('dragend', handleDragEnd);
-  });
-}
-
-// Функция отключения drag & drop
-function disableDragAndDrop() {
-  const entries = document.querySelectorAll('.diary-entry');
-  
-  entries.forEach(entry => {
-    entry.draggable = false;
-    entry.removeEventListener('dragstart', handleDragStart);
-    entry.removeEventListener('dragover', handleDragOver);
-    entry.removeEventListener('drop', handleDrop);
-    entry.removeEventListener('dragend', handleDragEnd);
-  });
-}
-
-let draggedElement = null;
-
-// Обработчики drag & drop
-function handleDragStart(e) {
-  draggedElement = this;
-  this.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-}
-
-function handleDrop(e) {
-  e.preventDefault();
-  
-  if (draggedElement !== this && draggedElement) {
-    // Получаем ID записей
-    const draggedId = draggedElement.getAttribute('data-entry-id');
-    const targetId = this.getAttribute('data-entry-id');
-    
-    // Находим записи в данных
-    const entries = diaryData[currentSelectedDay];
-    const draggedEntry = entries.find(entry => entry.id === draggedId);
-    const targetEntry = entries.find(entry => entry.id === targetId);
-    
-    if (draggedEntry && targetEntry) {
-      // Меняем местами только текст, время остается прежним
-      const tempText = draggedEntry.text;
-      draggedEntry.text = targetEntry.text;
-      targetEntry.text = tempText;
-      
-      // Перезагружаем записи
-      loadDayEntries(currentSelectedDay);
-      
-      console.log(`🔄 Поменяли местами записи: "${draggedEntry.text}" ↔ "${targetEntry.text}"`);
-    }
+  if (!selectedEntryId) {
+    // Первый клик - выбираем запись
+    selectedEntryId = entryId;
+    entryElement.classList.add('selected');
+    console.log(`✅ Выбрана запись: ${entryId}`);
+  } else if (selectedEntryId === entryId) {
+    // Клик по той же записи - отменяем выбор
+    selectedEntryId = null;
+    entryElement.classList.remove('selected');
+    console.log(`❌ Отменен выбор записи: ${entryId}`);
+  } else {
+    // Второй клик - меняем местами
+    swapEntries(selectedEntryId, entryId);
+    selectedEntryId = null;
+    // Перезагружаем записи чтобы убрать выделение
+    loadDayEntries(currentSelectedDay);
   }
 }
 
-function handleDragEnd(e) {
-  this.classList.remove('dragging');
-  draggedElement = null;
+// Функция обмена записями местами
+function swapEntries(entryId1, entryId2) {
+  if (!currentSelectedDay || !diaryData[currentSelectedDay]) {
+    console.log('❌ Нет данных для текущего дня');
+    return;
+  }
+  
+  const entries = diaryData[currentSelectedDay];
+  const entry1 = entries.find(entry => entry.id === entryId1);
+  const entry2 = entries.find(entry => entry.id === entryId2);
+  
+  if (entry1 && entry2) {
+    // Меняем местами только текст, время остается прежним
+    const tempText = entry1.text;
+    entry1.text = entry2.text;
+    entry2.text = tempText;
+    
+    console.log(`🔄 Поменяли местами: "${entry1.text}" ↔ "${entry2.text}"`);
+  } else {
+    console.log('❌ Не найдены записи для обмена');
+  }
 }
 
 // Функция подтверждения удаления записи
