@@ -3377,10 +3377,10 @@ body.chat-overlay-visible .search-container {
 
 .diary-day {
   flex: 1; /* Кнопки растягиваются равномерно */
-  min-width: clamp(56px, 14vw, 68px); /* Увеличиваем минимальную ширину для вытянутости */
-  height: clamp(62px, 15.5vw, 70px);
+  min-width: clamp(46px, 11.5vw, 54px); /* Возвращаем прежнюю ширину */
+  height: clamp(72px, 18vw, 82px); /* Увеличиваем высоту для вытянутости */
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: clamp(31px, 7.8vw, 35px); /* Оставляем круглыми */
+  border-radius: clamp(36px, 9vw, 41px); /* Увеличиваем радиус пропорционально высоте */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3652,9 +3652,9 @@ body.chat-overlay-visible .search-container {
   
   .diary-day {
     flex: 1; /* Растягиваем на всю ширину */
-    min-width: clamp(52px, 13vw, 62px); /* Увеличиваем для вытянутости на мобильных */
-    height: clamp(58px, 14.5vw, 66px);
-    border-radius: clamp(29px, 7.25vw, 33px); /* Круглые для мобильных тоже */
+    min-width: clamp(42px, 10.5vw, 50px); /* Возвращаем прежнюю ширину */
+    height: clamp(68px, 17vw, 78px); /* Увеличиваем высоту для мобильных */
+    border-radius: clamp(34px, 8.5vw, 39px); /* Увеличиваем радиус пропорционально */
   }
   
   .day-name {
