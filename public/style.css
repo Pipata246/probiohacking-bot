@@ -3380,7 +3380,7 @@ body.chat-overlay-visible .search-container {
   min-width: clamp(46px, 11.5vw, 54px); /* Минимальная ширина */
   height: clamp(62px, 15.5vw, 70px);
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: clamp(15px, 3.8vw, 19px);
+  border-radius: clamp(31px, 7.8vw, 35px); /* Делаем очень круглыми - половина высоты */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3654,6 +3654,7 @@ body.chat-overlay-visible .search-container {
     flex: 1; /* Растягиваем на всю ширину */
     min-width: clamp(42px, 10.5vw, 50px);
     height: clamp(58px, 14.5vw, 66px);
+    border-radius: clamp(29px, 7.25vw, 33px); /* Круглые для мобильных тоже */
   }
   
   .day-name {
