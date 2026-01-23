@@ -2440,10 +2440,25 @@ function loadDayEntries(dayKey) {
     const entryElement = document.createElement('div');
     entryElement.className = 'diary-entry';
     entryElement.setAttribute('data-entry-id', entry.id);
-    entryElement.innerHTML = `
-      <span class="entry-time">${entry.time}</span>
-      <span class="entry-text">${entry.text}</span>
-    `;
+    
+    // В режиме редактирования добавляем кнопку удаления
+    if (isEditMode) {
+      entryElement.innerHTML = `
+        <span class="entry-time">${entry.time}</span>
+        <span class="entry-text">${entry.text}</span>
+        <button class="delete-entry-btn" onclick="deleteEntry('${entry.id}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      `;
+    } else {
+      entryElement.innerHTML = `
+        <span class="entry-time">${entry.time}</span>
+        <span class="entry-text">${entry.text}</span>
+      `;
+    }
+    
     entriesContainer.appendChild(entryElement);
   });
   
@@ -2616,6 +2631,7 @@ function enableDragAndDrop() {
     entry.addEventListener('dragover', handleDragOver);
     entry.addEventListener('drop', handleDrop);
     entry.addEventListener('dragend', handleDragEnd);
+    entry.addEventListener('dragenter', handleDragEnter);
   });
 }
 
@@ -2629,6 +2645,7 @@ function disableDragAndDrop() {
     entry.removeEventListener('dragover', handleDragOver);
     entry.removeEventListener('drop', handleDrop);
     entry.removeEventListener('dragend', handleDragEnd);
+    entry.removeEventListener('dragenter', handleDragEnter);
   });
 }
 
@@ -2639,23 +2656,36 @@ function handleDragStart(e) {
   draggedElement = this;
   this.classList.add('dragging');
   e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/html', this.outerHTML);
+}
+
+function handleDragEnter(e) {
+  e.preventDefault();
 }
 
 function handleDragOver(e) {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'move';
+  
+  // Добавляем визуальную подсветку
+  if (this !== draggedElement) {
+    this.style.borderColor = '#2A3F5F';
+    this.style.backgroundColor = '#E5E7EB';
+  }
 }
 
 function handleDrop(e) {
   e.preventDefault();
+  e.stopPropagation();
   
-  if (draggedElement !== this) {
+  // Убираем визуальную подсветку
+  this.style.borderColor = '';
+  this.style.backgroundColor = '';
+  
+  if (draggedElement !== this && draggedElement) {
     // Получаем данные обеих записей
     const draggedId = draggedElement.getAttribute('data-entry-id');
     const targetId = this.getAttribute('data-entry-id');
-    
-    const draggedTime = draggedElement.querySelector('.entry-time').textContent;
-    const targetTime = this.querySelector('.entry-time').textContent;
     
     // Находим записи в данных
     const entries = diaryData[currentSelectedDay];
@@ -2671,12 +2701,43 @@ function handleDrop(e) {
       // Перезагружаем записи
       loadDayEntries(currentSelectedDay);
       
-      console.log(`🔄 Поменяли местами записи: "${draggedEntry.text}" (${draggedTime}) ↔ "${targetEntry.text}" (${targetTime})`);
+      console.log(`🔄 Поменяли местами записи: "${draggedEntry.text}" ↔ "${targetEntry.text}"`);
     }
   }
+  
+  return false;
 }
 
 function handleDragEnd(e) {
-  this.classList.remove('dragging');
+  // Убираем визуальную подсветку со всех элементов
+  const entries = document.querySelectorAll('.diary-entry');
+  entries.forEach(entry => {
+    entry.style.borderColor = '';
+    entry.style.backgroundColor = '';
+    entry.classList.remove('dragging');
+  });
+  
   draggedElement = null;
+}
+
+// Функция удаления записи
+function deleteEntry(entryId) {
+  if (!currentSelectedDay || !diaryData[currentSelectedDay]) {
+    return;
+  }
+  
+  // Находим индекс записи
+  const entryIndex = diaryData[currentSelectedDay].findIndex(entry => entry.id === entryId);
+  
+  if (entryIndex !== -1) {
+    const deletedEntry = diaryData[currentSelectedDay][entryIndex];
+    
+    // Удаляем запись из массива
+    diaryData[currentSelectedDay].splice(entryIndex, 1);
+    
+    // Перезагружаем записи
+    loadDayEntries(currentSelectedDay);
+    
+    console.log(`🗑️ Удалена запись: ${deletedEntry.time} - ${deletedEntry.text}`);
+  }
 }

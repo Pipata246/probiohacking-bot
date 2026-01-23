@@ -3428,6 +3428,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
+  /* ДОБАВЛЯЕМ ФИКСИРОВАННУЮ ВЫСОТУ ДЛЯ СКРОЛЛА */
+  height: clamp(300px, 50vh, 400px);
 }
 
 .entries-title {
@@ -3444,7 +3446,28 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   gap: clamp(10px, 2.5vh, 14px);
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto; /* ДОБАВЛЯЕМ СКРОЛЛ */
+  overflow-x: hidden;
+  padding-right: 6px; /* Отступ для скроллбара */
+}
+
+/* Стили скроллбара для записей дневника */
+.diary-entries::-webkit-scrollbar {
+  width: 4px;
+}
+
+.diary-entries::-webkit-scrollbar-track {
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: 2px;
+}
+
+.diary-entries::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.3);
+  border-radius: 2px;
+}
+
+.diary-entries::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.5);
 }
 
 .diary-entry {
@@ -3711,16 +3734,61 @@ body.chat-overlay-visible .search-container {
   cursor: move;
   border: 2px dashed #E5E7EB;
   background: #F9FAFB;
+  position: relative;
+  padding-right: clamp(40px, 10vw, 50px); /* Место для кнопки удаления */
+  transition: all 0.2s ease;
 }
 
 .diary-entries.edit-mode .diary-entry:hover {
   border-color: #2A3F5F;
   background: #F3F4F6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .diary-entries.edit-mode .diary-entry.dragging {
-  opacity: 0.5;
-  transform: rotate(2deg);
+  opacity: 0.6;
+  transform: rotate(3deg) scale(1.02);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+/* Анимация при перетаскивании */
+.diary-entries.edit-mode .diary-entry[style*="border-color"] {
+  border-color: #2A3F5F !important;
+  background: #E5E7EB !important;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(42, 63, 95, 0.2);
+}
+
+/* Кнопка удаления записи */
+.delete-entry-btn {
+  position: absolute;
+  right: clamp(8px, 2vw, 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #EF4444;
+  border: none;
+  border-radius: 50%;
+  width: clamp(24px, 6vw, 28px);
+  height: clamp(24px, 6vw, 28px);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.delete-entry-btn:hover {
+  background: #DC2626;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.delete-entry-btn:active {
+  background: #B91C1C;
+  transform: translateY(-50%) scale(0.95);
 }
 
 /* Адаптивность для мобильных */
