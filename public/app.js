@@ -2247,48 +2247,144 @@ console.log('Система навигации загружена - исправ
 
 // ========================================
 // ========================================
-// ФУНКЦИИ ДНЕВНИКА С ПОДДЕРЖКОЙ РАЗНЫХ ДНЕЙ
+// ФУНКЦИИ ДНЕВНИКА С ДИНАМИЧЕСКИМ КАЛЕНДАРЕМ
 // ========================================
 
 let currentEditingEntryId = null;
-let currentSelectedDay = 'ВТ-25'; // По умолчанию активный день
+let currentSelectedDay = null; // Будет установлен динамически
 
-// Структура для хранения записей по дням
-let diaryData = {
-  'ВТ-25': [
-    { id: '1', time: '08:00', text: 'Магний 400 mg' },
-    { id: '2', time: '09:00', text: 'Ашваганда 500mg' },
-    { id: '3', time: '12:00', text: 'Омега-3' },
-    { id: '4', time: '12:30', text: 'Магний 400 mg' },
-    { id: '5', time: '13:00', text: 'Цинк' },
-    { id: '6', time: '15:00', text: 'Витамин Б' },
-    { id: '7', time: '16:00', text: 'Витамин С' },
-    { id: '8', time: '17:00', text: 'Омега-3' },
-    { id: '9', time: '18:00', text: 'Прием в больнице' }
-  ],
-  'СР-26': [],
-  'ЧТ-27': [],
-  'ПТ-28': [],
-  'СБ-28': [],
-  'ВС-29': []
-};
+// Функция для получения 6 дней начиная с сегодня (сегодня всегда первый)
+function generateWeekDays() {
+  const today = new Date();
+  const days = [];
+  const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
+  
+  // Генерируем 6 дней: сегодня + 5 следующих дней
+  for (let i = 0; i < 6; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    
+    const dayName = dayNames[date.getDay()];
+    const dayNumber = date.getDate();
+    const fullDate = date.toISOString().split('T')[0];
+    
+    days.push({
+      name: dayName,
+      number: dayNumber,
+      key: `${dayName}-${dayNumber}`,
+      fullDate: fullDate,
+      isToday: i === 0 // Первый день всегда сегодня
+    });
+  }
+  
+  return days;
+}
+
+// Функция для обновления HTML календаря
+function updateCalendarHTML() {
+  const calendarContainer = document.querySelector('.diary-calendar');
+  if (!calendarContainer) return;
+  
+  const weekDays = generateWeekDays();
+  
+  calendarContainer.innerHTML = '';
+  
+  weekDays.forEach((day, index) => {
+    const dayElement = document.createElement('div');
+    dayElement.className = `diary-day ${day.isToday ? 'active' : ''}`;
+    dayElement.setAttribute('data-date', day.fullDate);
+    dayElement.innerHTML = `
+      <span class="day-name">${day.name}</span>
+      <span class="day-number">${day.number}</span>
+    `;
+    
+    calendarContainer.appendChild(dayElement);
+  });
+  
+  // Устанавливаем сегодняшний день как активный по умолчанию
+  const todayDay = weekDays.find(day => day.isToday);
+  if (todayDay) {
+    currentSelectedDay = todayDay.key;
+  }
+}
+
+// Структура для хранения записей по дням (теперь с датами)
+let diaryData = {};
+
+// Функция для инициализации данных дневника с примерами для сегодня
+function initializeDiaryData() {
+  const today = new Date();
+  const todayKey = `${['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'][today.getDay()]}-${today.getDate()}`;
+  
+  console.log(`📝 Инициализация данных для сегодняшнего дня: ${todayKey}`);
+  
+  // Добавляем примеры записей только для сегодняшнего дня (если их еще нет)
+  if (!diaryData[todayKey]) {
+    diaryData[todayKey] = [
+      { id: '1', time: '08:00', text: 'Магний 400 mg' },
+      { id: '2', time: '09:00', text: 'Ашваганда 500mg' },
+      { id: '3', time: '12:00', text: 'Омега-3' },
+      { id: '4', time: '12:30', text: 'Магний 400 mg' },
+      { id: '5', time: '13:00', text: 'Цинк' },
+      { id: '6', time: '15:00', text: 'Витамин Б' },
+      { id: '7', time: '16:00', text: 'Витамин С' },
+      { id: '8', time: '17:00', text: 'Омега-3' },
+      { id: '9', time: '18:00', text: 'Прием в больнице' }
+    ];
+    console.log(`✅ Добавлены примеры записей для ${todayKey}`);
+  } else {
+    console.log(`ℹ️ Записи для ${todayKey} уже существуют`);
+  }
+}
+
+// Функция для очистки старых записей (старше 7 дней)
+function cleanupOldEntries() {
+  const today = new Date();
+  const weekAgo = new Date(today);
+  weekAgo.setDate(today.getDate() - 7);
+  
+  Object.keys(diaryData).forEach(dayKey => {
+    // Извлекаем дату из ключа и проверяем, не старше ли она недели
+    const [dayName, dayNumber] = dayKey.split('-');
+    
+    // Создаем дату для сравнения, учитывая возможность перехода между месяцами
+    let dayDate = new Date(today.getFullYear(), today.getMonth(), parseInt(dayNumber));
+    
+    // Если дата в будущем (например, 30 число в начале месяца), значит это предыдущий месяц
+    if (dayDate > today) {
+      dayDate = new Date(today.getFullYear(), today.getMonth() - 1, parseInt(dayNumber));
+    }
+    
+    if (dayDate < weekAgo) {
+      delete diaryData[dayKey];
+      console.log(`Удалены старые записи для ${dayKey}`);
+    }
+  });
+}
 
 // Функция инициализации дневника
 function initializeDiary() {
-  // Находим активный день или устанавливаем первый день как активный
-  let activeDay = document.querySelector('.diary-day.active');
-  if (!activeDay) {
-    activeDay = document.querySelector('.diary-day');
-    if (activeDay) {
-      activeDay.classList.add('active');
-    }
+  console.log('🗓️ Инициализация дневника с динамическим календарем');
+  
+  // Обновляем календарь с актуальными датами (сегодня всегда первый)
+  updateCalendarHTML();
+  
+  // Инициализируем данные для сегодняшнего дня
+  initializeDiaryData();
+  
+  // Очищаем старые записи (старше 7 дней)
+  cleanupOldEntries();
+  
+  // Автоматически выбираем сегодняшний день (первый в списке)
+  const todayElement = document.querySelector('.diary-day.active');
+  if (todayElement) {
+    const todayKey = getDayKey(todayElement);
+    currentSelectedDay = todayKey;
+    loadDayEntries(todayKey);
+    console.log(`📅 Активный день: ${todayKey}`);
   }
   
-  if (activeDay) {
-    const dayKey = getDayKey(activeDay);
-    currentSelectedDay = dayKey;
-    loadDayEntries(dayKey);
-  }
+  console.log('✅ Дневник инициализирован. Сегодня первый в списке, календарь обновляется автоматически');
 }
 
 // Функция для получения ключа дня из элемента
