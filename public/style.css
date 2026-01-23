@@ -3334,48 +3334,52 @@ body.chat-overlay-visible .search-container {
 
 .diary-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden; /* Убираем скролл */
   padding: 0 clamp(16px, 4vw, 20px);
-  padding-bottom: clamp(100px, 20vh, 120px);
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px - 100px); /* Высота минус хедер и навигация */
+  box-sizing: border-box;
 }
 
 .diary-title {
-  font-size: clamp(24px, 6vw, 32px);
+  font-size: clamp(20px, 5vw, 26px); /* Уменьшаем размер */
   font-weight: 600;
   color: #FFFFFF;
-  margin: clamp(20px, 5vh, 32px) 0 clamp(8px, 2vh, 12px) 0;
+  margin: clamp(12px, 3vh, 20px) 0 clamp(4px, 1vh, 8px) 0; /* Уменьшаем отступы */
   text-align: left;
   line-height: 1.2;
   font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
 }
 
 .diary-subtitle {
-  font-size: clamp(13px, 3.2vw, 15px);
+  font-size: clamp(12px, 3vw, 14px); /* Уменьшаем размер */
   font-weight: 400;
   color: rgba(255, 255, 255, 0.7);
-  margin-bottom: clamp(24px, 6vh, 32px);
+  margin-bottom: clamp(16px, 4vh, 24px); /* Уменьшаем отступ */
   text-align: left;
   font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
 }
 
 /* Календарь дней недели */
 .diary-calendar {
   display: flex;
-  gap: clamp(8px, 2vw, 12px);
-  margin-bottom: clamp(24px, 6vh, 32px);
+  gap: clamp(6px, 1.5vw, 10px); /* Уменьшаем зазоры */
+  margin-bottom: clamp(16px, 4vh, 24px); /* Уменьшаем отступ */
   overflow-x: auto;
   padding: 0 2px;
   -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
 }
 
 .diary-day {
   flex-shrink: 0;
-  width: clamp(48px, 12vw, 56px);
-  height: clamp(64px, 16vw, 72px);
+  width: clamp(44px, 11vw, 52px); /* Уменьшаем размер */
+  height: clamp(56px, 14vw, 64px); /* Уменьшаем размер */
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: clamp(16px, 4vw, 20px);
+  border-radius: clamp(14px, 3.5vw, 18px); /* Уменьшаем радиус */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3413,53 +3417,61 @@ body.chat-overlay-visible .search-container {
 /* Карточка записей */
 .diary-entries-card {
   background: #FEF7EC;
-  border-radius: clamp(16px, 4vw, 20px);
-  padding: clamp(16px, 4vw, 20px);
-  margin-bottom: clamp(16px, 3vh, 20px);
+  border-radius: clamp(14px, 3.5vw, 18px); /* Уменьшаем радиус */
+  padding: clamp(12px, 3vw, 16px); /* Уменьшаем padding */
+  margin-bottom: clamp(12px, 2vh, 16px); /* Уменьшаем отступ */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
+  flex: 1; /* Занимает оставшееся место */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Позволяет сжиматься */
 }
 
 .entries-title {
-  font-size: clamp(16px, 4vw, 18px);
+  font-size: clamp(14px, 3.5vw, 16px); /* Уменьшаем размер */
   font-weight: 600;
   color: #6B7280;
-  margin: 0 0 clamp(16px, 4vh, 20px) 0;
+  margin: 0 0 clamp(12px, 3vh, 16px) 0; /* Уменьшаем отступ */
   font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
 }
 
 .diary-entries {
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 3vh, 16px);
+  gap: clamp(8px, 2vh, 12px); /* Уменьшаем зазоры */
+  flex: 1;
+  overflow: hidden; /* Убираем возможность скролла */
 }
 
 .diary-entry {
   display: flex;
   align-items: center;
-  gap: clamp(16px, 4vw, 20px);
-  padding: clamp(8px, 2vw, 12px) 0;
+  gap: clamp(12px, 3vw, 16px); /* Уменьшаем зазор */
+  padding: clamp(6px, 1.5vw, 8px) 0; /* Уменьшаем padding */
   cursor: pointer;
   transition: all 0.2s ease;
-  border-radius: 8px;
+  border-radius: 6px; /* Уменьшаем радиус */
+  flex-shrink: 0;
 }
 
 .diary-entry:hover {
   background: rgba(107, 114, 128, 0.05);
-  padding-left: clamp(8px, 2vw, 12px);
-  padding-right: clamp(8px, 2vw, 12px);
+  padding-left: clamp(6px, 1.5vw, 8px); /* Уменьшаем padding */
+  padding-right: clamp(6px, 1.5vw, 8px); /* Уменьшаем padding */
 }
 
 .entry-time {
-  font-size: clamp(13px, 3.2vw, 15px);
+  font-size: clamp(12px, 3vw, 14px); /* Уменьшаем размер */
   font-weight: 500;
   color: #6B7280;
-  min-width: clamp(40px, 10vw, 48px);
+  min-width: clamp(36px, 9vw, 44px); /* Уменьшаем ширину */
   font-family: 'Inter', sans-serif;
 }
 
 .entry-text {
-  font-size: clamp(14px, 3.5vw, 16px);
+  font-size: clamp(13px, 3.2vw, 15px); /* Уменьшаем размер */
   font-weight: 500;
   color: #2A3F5F;
   flex: 1;
@@ -3469,10 +3481,10 @@ body.chat-overlay-visible .search-container {
 /* Кнопка добавления записи */
 .add-entry-btn {
   position: absolute;
-  bottom: clamp(16px, 4vw, 20px);
-  right: clamp(16px, 4vw, 20px);
-  width: clamp(40px, 10vw, 48px);
-  height: clamp(40px, 10vw, 48px);
+  bottom: clamp(12px, 3vw, 16px); /* Уменьшаем отступ */
+  right: clamp(12px, 3vw, 16px); /* Уменьшаем отступ */
+  width: clamp(36px, 9vw, 44px); /* Уменьшаем размер */
+  height: clamp(36px, 9vw, 44px); /* Уменьшаем размер */
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -3482,6 +3494,7 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .add-entry-btn:hover {
@@ -3615,23 +3628,68 @@ body.chat-overlay-visible .search-container {
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
   .diary-content {
-    padding-bottom: clamp(110px, 22vh, 130px);
+    height: calc(100vh - 50px - 90px); /* Корректируем высоту для мобильных */
+  }
+  
+  .diary-title {
+    font-size: clamp(18px, 4.5vw, 22px); /* Еще больше уменьшаем для мобильных */
+    margin: clamp(8px, 2vh, 16px) 0 clamp(4px, 1vh, 6px) 0;
+  }
+  
+  .diary-subtitle {
+    font-size: clamp(11px, 2.8vw, 13px);
+    margin-bottom: clamp(12px, 3vh, 18px);
   }
   
   .diary-calendar {
-    gap: clamp(6px, 1.5vw, 10px);
+    gap: clamp(4px, 1vw, 8px); /* Еще меньше зазоры */
+    margin-bottom: clamp(12px, 3vh, 18px);
   }
   
   .diary-day {
-    width: clamp(44px, 11vw, 52px);
-    height: clamp(60px, 15vw, 68px);
+    width: clamp(40px, 10vw, 48px); /* Еще меньше размер */
+    height: clamp(52px, 13vw, 60px);
+  }
+  
+  .day-name {
+    font-size: clamp(9px, 2.2vw, 11px);
+  }
+  
+  .day-number {
+    font-size: clamp(12px, 3vw, 14px);
+  }
+  
+  .diary-entries-card {
+    padding: clamp(10px, 2.5vw, 14px);
+  }
+  
+  .entries-title {
+    font-size: clamp(13px, 3.2vw, 15px);
+    margin-bottom: clamp(8px, 2vh, 12px);
   }
   
   .diary-entries {
-    gap: clamp(10px, 2.5vh, 14px);
+    gap: clamp(6px, 1.5vh, 10px); /* Еще меньше зазоры */
   }
   
   .diary-entry {
-    gap: clamp(12px, 3vw, 16px);
+    gap: clamp(10px, 2.5vw, 14px);
+    padding: clamp(4px, 1vw, 6px) 0;
+  }
+  
+  .entry-time {
+    font-size: clamp(11px, 2.8vw, 13px);
+    min-width: clamp(32px, 8vw, 40px);
+  }
+  
+  .entry-text {
+    font-size: clamp(12px, 3vw, 14px);
+  }
+  
+  .add-entry-btn {
+    width: clamp(32px, 8vw, 40px);
+    height: clamp(32px, 8vw, 40px);
+    bottom: clamp(8px, 2vw, 12px);
+    right: clamp(8px, 2vw, 12px);
   }
 }
