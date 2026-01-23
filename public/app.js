@@ -52,6 +52,7 @@ const mainApp = document.getElementById('mainApp');
 const knowledgeBase = document.getElementById('knowledgeBase');
 const diagnosticsPage = document.getElementById('diagnosticsPage');
 const chatOverlay = document.getElementById('chatOverlay');
+const recommendedTestsPage = document.getElementById('recommendedTestsPage');
 
 // ========================================
 // СИСТЕМА НАВИГАЦИИ И СОСТОЯНИЙ
@@ -61,10 +62,11 @@ let currentPage = 'main';
 let isChatMode = false;
 let isDiagnosticFormMode = false;
 let diagnosticState = 'main'; // 'main', 'form', 'quiz'
+let isInRecommendedTests = false; // Флаг для отслеживания нахождения в рекомендуемых анализах
 
 // Функции навигации
 function showPage(pageName) {
-  console.log('Переход на страницу:', pageName);
+  console.log('🚀 showPage вызвана с параметром:', pageName);
   
   // Закрываем диагностическую форму если она открыта
   const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
@@ -88,6 +90,7 @@ function showPage(pageName) {
   knowledgeBase.classList.remove('active');
   diagnosticsPage.classList.remove('active');
   chatOverlay.classList.remove('active');
+  recommendedTestsPage.classList.remove('active');
   
   // Скрываем страницу здоровье
   const healthPage = document.getElementById('healthPage');
@@ -110,28 +113,41 @@ function showPage(pageName) {
       mainApp.style.display = 'block';
       currentPage = 'main';
       isChatMode = false;
+      isInRecommendedTests = false;
       break;
     case 'diagnostics':
       diagnosticsPage.classList.add('active');
       currentPage = 'diagnostics';
       isChatMode = false;
+      isInRecommendedTests = false;
       break;
     case 'knowledge':
       knowledgeBase.classList.add('active');
       currentPage = 'knowledge';
       isChatMode = false;
+      isInRecommendedTests = false;
       break;
     case 'health':
+      console.log('🏥 Переходим на страницу здоровья!');
+      // Показываем страницу здоровья
       const healthPage = document.getElementById('healthPage');
-      healthPage.classList.add('active');
+      if (healthPage) {
+        console.log('✅ Элемент healthPage найден, добавляем класс active');
+        healthPage.classList.add('active');
+      } else {
+        console.error('❌ Элемент healthPage НЕ НАЙДЕН!');
+      }
       currentPage = 'health';
       isChatMode = false;
+      isInRecommendedTests = false;
+      console.log('🎯 Текущая страница установлена:', currentPage);
       break;
     case 'diary':
       const diaryPage = document.getElementById('diaryPage');
       diaryPage.classList.add('active');
       currentPage = 'diary';
       isChatMode = false;
+      isInRecommendedTests = false;
       // Инициализируем дневник при первом открытии
       initializeDiary();
       break;
@@ -140,6 +156,13 @@ function showPage(pageName) {
       document.body.classList.add('chat-overlay-visible');
       isChatMode = true;
       currentPage = 'main'; // Чат это часть главной
+      isInRecommendedTests = false;
+      break;
+    case 'recommendedTests':
+      recommendedTestsPage.classList.add('active');
+      currentPage = 'recommendedTests';
+      isChatMode = false;
+      isInRecommendedTests = true;
       break;
   }
   
@@ -165,7 +188,7 @@ function updateAllNavigations() {
           shouldBeActive = (currentPage === 'main');
           break;
         case 1: // Диагностика
-          shouldBeActive = (currentPage === 'diagnostics' || isDiagnosticFormMode);
+          shouldBeActive = (currentPage === 'diagnostics' || currentPage === 'recommendedTests' || isDiagnosticFormMode);
           break;
         case 2: // Здоровье
           shouldBeActive = (currentPage === 'health');
@@ -225,6 +248,7 @@ updateAvatar(document.getElementById('knowledgeAvatar'), user, userName);
 updateAvatar(document.getElementById('diagnosticsAvatar'), user, userName);
 updateAvatar(document.getElementById('healthAvatar'), user, userName);
 updateAvatar(document.getElementById('diaryAvatar'), user, userName);
+updateAvatar(document.getElementById('recommendedTestsAvatar'), user, userName);
 
 // ========================================
 // ОБРАБОТЧИК ВСЕХ СОБЫТИЙ
@@ -264,34 +288,41 @@ document.addEventListener('click', (e) => {
         showPage('main');
         break;
       case 1: // Диагностика
-        // УМНАЯ ЛОГИКА для кнопки диагностики
-        const hasProgress = checkDiagnosticProgress();
-        const isCompleted = isDiagnosticCompleted();
+        // УМНАЯ ЛОГИКА для кнопки диагностики с учетом рекомендуемых анализов
         
-        // ЕСЛИ УЖЕ В ФОРМЕ ДИАГНОСТИКИ ИЛИ НА СТРАНИЦЕ АНАЛИЗОВ - ВЫХОДИМ НА ГЛАВНУЮ ДИАГНОСТИКИ И СБРАСЫВАЕМ
-        if (isDiagnosticFormMode) {
-          console.log('Выход из формы диагностики на главную страницу диагностики');
-          
-          // Проверяем какая именно форма открыта
-          const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-          const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
-          
-          if (diagnosticFormOverlay) {
-            // Если это диагностическая форма - сбрасываем данные
-            clearDiagnosticData();
-            diagnosticFormOverlay.remove();
-          }
-          
-          if (myTestsFormOverlay) {
-            // Если это страница анализов - просто закрываем
-            myTestsFormOverlay.remove();
-          }
-          
-          isDiagnosticFormMode = false;
-          document.body.classList.remove('chat-overlay-visible');
-          showPage('diagnostics');
+        // Если находимся в рекомендуемых анализах - переходим в "Мои анализы"
+        if (isInRecommendedTests) {
+          showMyTestsPage();
           return;
         }
+        
+        // Если уже в "Мои анализы" - переходим на главную диагностики
+        if (isDiagnosticFormMode && !isInRecommendedTests) {
+          const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
+          if (myTestsFormOverlay) {
+            console.log('Закрываем Мои анализы и переходим на главную диагностики');
+            myTestsFormOverlay.remove();
+            isDiagnosticFormMode = false;
+            document.body.classList.remove('chat-overlay-visible');
+            showPage('diagnostics');
+            return;
+          }
+          
+          // Если это диагностическая форма - сбрасываем данные и переходим на главную
+          const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+          if (diagnosticFormOverlay) {
+            console.log('Закрываем диагностическую форму и переходим на главную диагностики');
+            clearDiagnosticData();
+            diagnosticFormOverlay.remove();
+            isDiagnosticFormMode = false;
+            document.body.classList.remove('chat-overlay-visible');
+            showPage('diagnostics');
+            return;
+          }
+        }
+        
+        const hasProgress = checkDiagnosticProgress();
+        const isCompleted = isDiagnosticCompleted();
         
         // ЕСЛИ УЖЕ НА ГЛАВНОЙ СТРАНИЦЕ ДИАГНОСТИКИ - НИЧЕГО НЕ ДЕЛАЕМ
         if (currentPage === 'diagnostics' && !isDiagnosticFormMode) {
@@ -362,7 +393,7 @@ document.addEventListener('click', (e) => {
   
   // Кнопка создания программы
   if (e.target.closest('.create-program-btn')) {
-    tg.showAlert('Создание персональной программы\n\nФункция в разработке');
+    showPage('health');
     return;
   }
   
@@ -513,6 +544,24 @@ document.addEventListener('click', (e) => {
     return;
   }
   
+  // Кнопка "Посмотреть рекомендованные анализы"
+  if (e.target.closest('#viewRecommendationsBtn') && !e.target.closest('#helpIcon')) {
+    showPage('recommendedTests');
+    return;
+  }
+  
+  // Кнопка "Пройти диагностику здоровья" в рекомендуемых анализах
+  if (e.target.closest('#startDiagnosticBtn')) {
+    showDiagnosticForm();
+    return;
+  }
+  
+  // Кнопка "Получить дополнительные рекомендации" в рекомендуемых анализах
+  if (e.target.closest('#getRecommendationsBtn')) {
+    showPage('health');
+    return;
+  }
+  
   // Обработка ввода в поле кастомного ответа
   if (e.target.closest('.quiz-custom-input')) {
     const customInput = e.target.closest('.quiz-custom-input');
@@ -538,7 +587,7 @@ document.addEventListener('click', (e) => {
   
   // Кнопки плюсов в рекомендациях на странице Здоровье
   if (e.target.closest('.rec-add-btn')) {
-    tg.showAlert('Эта функция пока в разработке');
+    showHealthModal();
     return;
   }
   
@@ -1205,6 +1254,8 @@ function showDiagnosticForm() {
   });
   
   document.getElementById('additionalNextBtn').addEventListener('click', () => {
+    console.log('🔥 КНОПКА НАЖАТА! Начинаем обработку...');
+    
     // Сохраняем дополнительные ответы
     const additionalAnswers = {
       discomfort: document.getElementById('additionalAnswer1').value.trim(),
@@ -1213,24 +1264,29 @@ function showDiagnosticForm() {
       timestamp: new Date().toISOString()
     };
     
+    console.log('💾 Сохраняем ответы:', additionalAnswers);
     localStorage.setItem('additionalAnswers', JSON.stringify(additionalAnswers));
     
     // Завершаем диагностику
     const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
     isDiagnosticFormMode = false;
     
-    tg.showAlert('Спасибо! Ваши ответы сохранены.\nВ ближайшее время мы подготовим для вас персональные рекомендации.');
-    
+    console.log('🗑️ Удаляем форму...');
     diagnosticFormOverlay.remove();
     document.body.classList.remove('chat-overlay-visible');
     
-    showPage('diagnostics');
+    console.log('🏥 ПЕРЕХОДИМ НА СТРАНИЦУ ЗДОРОВЬЯ!');
+    showPage('health'); // Перенаправляем на страницу здоровья ПЕРЕД алертом
     
-    console.log('Диагностика завершена');
+    console.log('✅ Показываем уведомление...');
+    tg.showAlert('Спасибо! Ваши ответы сохранены.\nВ ближайшее время мы подготовим для вас персональные рекомендации.');
+    
+    console.log('📊 Диагностика завершена');
     console.log('Личные данные:', JSON.parse(localStorage.getItem('diagnosticPersonalData')));
     console.log('Ответы на вопросы:', JSON.parse(localStorage.getItem('surveyAnswers')));
     console.log('Дополнительные ответы:', JSON.parse(localStorage.getItem('additionalAnswers')));
   });
+  
 }
 
 // ========================================
@@ -1239,6 +1295,7 @@ function showDiagnosticForm() {
 
 function showMyTestsPage() {
   isDiagnosticFormMode = true; // Устанавливаем флаг что мы в специальном режиме
+  isInRecommendedTests = false; // Сбрасываем флаг рекомендуемых анализов
   
   const myTestsForm = document.createElement('div');
   myTestsForm.className = 'diagnostic-form-overlay';
@@ -1705,6 +1762,7 @@ function showImageModal(imageURL, fileName) {
 
 function closeMyTestsPage() {
   isDiagnosticFormMode = false;
+  isInRecommendedTests = false; // Сбрасываем флаг
   const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
   if (myTestsFormOverlay) {
     myTestsFormOverlay.remove();
@@ -2606,6 +2664,63 @@ function saveDiaryEntry() {
   closeDiaryModal();
   
   console.log(`Запись сохранена для дня ${currentSelectedDay}: ${selectedTime} - ${entryText}`);
+}
+
+// Функция показа модального окна для страницы здоровья
+function showHealthModal() {
+  // Создаем модальное окно
+  const modal = document.createElement('div');
+  modal.className = 'health-modal-overlay';
+  modal.id = 'healthModal';
+  
+  modal.innerHTML = `
+    <div class="health-modal-content">
+      <button class="health-modal-close" id="closeHealthModal">×</button>
+      <div class="health-modal-body">
+        <h2 class="health-modal-title">Пройдите диагностику</h2>
+        <p class="health-modal-text">Для того, чтобы узнать свои рекомендации, для начала необходимо пройти диагностику</p>
+        <button class="health-modal-btn" id="goToDiagnosticsBtn">Пройти диагностику</button>
+      </div>
+    </div>
+  `;
+  
+  // Добавляем модальное окно в body
+  document.body.appendChild(modal);
+  
+  // Показываем модальное окно
+  setTimeout(() => {
+    modal.classList.add('active');
+  }, 10);
+  
+  // Обработчик закрытия по кнопке
+  document.getElementById('closeHealthModal').addEventListener('click', () => {
+    closeHealthModal();
+  });
+  
+  // Обработчик кнопки "Пройти диагностику"
+  document.getElementById('goToDiagnosticsBtn').addEventListener('click', () => {
+    closeHealthModal();
+    // Переходим на страницу диагностики
+    showPage('diagnostics');
+  });
+  
+  // Обработчик закрытия по клику на фон
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeHealthModal();
+    }
+  });
+}
+
+// Функция закрытия модального окна здоровья
+function closeHealthModal() {
+  const modal = document.getElementById('healthModal');
+  if (modal) {
+    modal.classList.remove('active');
+    setTimeout(() => {
+      modal.remove();
+    }, 300); // Ждем завершения анимации
+  }
 }
 
 // Функция переключения режима редактирования
