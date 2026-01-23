@@ -95,6 +95,12 @@ function showPage(pageName) {
     healthPage.classList.remove('active');
   }
   
+  // Скрываем страницу дневник
+  const diaryPage = document.getElementById('diaryPage');
+  if (diaryPage) {
+    diaryPage.classList.remove('active');
+  }
+  
   // Убираем классы скролла
   document.body.classList.remove('chat-overlay-visible');
   
@@ -119,6 +125,12 @@ function showPage(pageName) {
       const healthPage = document.getElementById('healthPage');
       healthPage.classList.add('active');
       currentPage = 'health';
+      isChatMode = false;
+      break;
+    case 'diary':
+      const diaryPage = document.getElementById('diaryPage');
+      diaryPage.classList.add('active');
+      currentPage = 'diary';
       isChatMode = false;
       break;
     case 'chat':
@@ -155,6 +167,9 @@ function updateAllNavigations() {
           break;
         case 2: // Здоровье
           shouldBeActive = (currentPage === 'health');
+          break;
+        case 3: // Дневник
+          shouldBeActive = (currentPage === 'diary');
           break;
         case 4: // База знаний
           shouldBeActive = (currentPage === 'knowledge');
@@ -207,6 +222,7 @@ updateAvatar(document.getElementById('sidebarAvatar'), user, userName);
 updateAvatar(document.getElementById('knowledgeAvatar'), user, userName);
 updateAvatar(document.getElementById('diagnosticsAvatar'), user, userName);
 updateAvatar(document.getElementById('healthAvatar'), user, userName);
+updateAvatar(document.getElementById('diaryAvatar'), user, userName);
 
 // ========================================
 // ОБРАБОТЧИК ВСЕХ СОБЫТИЙ
@@ -299,7 +315,7 @@ document.addEventListener('click', (e) => {
         showPage('health');
         break;
       case 3: // Дневник
-        tg.showAlert('Дневник\n\nСтраница в разработке');
+        showPage('diary');
         break;
       case 4: // База знаний
         showPage('knowledge');
@@ -521,6 +537,43 @@ document.addEventListener('click', (e) => {
   // Кнопки плюсов в рекомендациях на странице Здоровье
   if (e.target.closest('.rec-add-btn')) {
     tg.showAlert('Эта функция пока в разработке');
+    return;
+  }
+  
+  // Дневник - кнопка добавления записи
+  if (e.target.closest('.add-entry-btn')) {
+    openDiaryModal();
+    return;
+  }
+  
+  // Дневник - клик по записи для редактирования
+  if (e.target.closest('.diary-entry')) {
+    const entry = e.target.closest('.diary-entry');
+    const entryId = entry.getAttribute('data-entry-id');
+    const entryText = entry.querySelector('.entry-text').textContent;
+    openDiaryModal(entryId, entryText);
+    return;
+  }
+  
+  // Дневник - закрытие модального окна
+  if (e.target.closest('.diary-modal-close') || (e.target.id === 'diaryModal' && !e.target.closest('.diary-modal-content'))) {
+    closeDiaryModal();
+    return;
+  }
+  
+  // Дневник - сохранение записи
+  if (e.target.closest('.diary-modal-btn')) {
+    saveDiaryEntry();
+    return;
+  }
+  
+  // Дневник - переключение дней
+  if (e.target.closest('.diary-day')) {
+    const clickedDay = e.target.closest('.diary-day');
+    const allDays = document.querySelectorAll('.diary-day');
+    
+    allDays.forEach(day => day.classList.remove('active'));
+    clickedDay.classList.add('active');
     return;
   }
   if (e.target.closest('#viewRecommendationsBtn') && !e.target.closest('#helpIcon')) {
@@ -2192,3 +2245,82 @@ document.addEventListener('dblclick', (e) => {
 });
 
 console.log('Система навигации загружена - исправлены все проблемы с навигацией и сохранением');
+
+// ========================================
+// ФУНКЦИИ ДНЕВНИКА
+// ========================================
+
+let currentEditingEntryId = null;
+
+function openDiaryModal(entryId = null, entryText = '') {
+  const modal = document.getElementById('diaryModal');
+  const modalTitle = document.getElementById('diaryModalTitle');
+  const modalInput = document.getElementById('diaryModalInput');
+  const modalBtn = document.getElementById('diaryModalBtn');
+  
+  if (entryId) {
+    // Режим редактирования
+    currentEditingEntryId = entryId;
+    modalTitle.textContent = 'Редактировать запись';
+    modalInput.value = entryText;
+    modalBtn.textContent = 'Сохранить';
+  } else {
+    // Режим создания новой записи
+    currentEditingEntryId = null;
+    modalTitle.textContent = 'Новая запись';
+    modalInput.value = '';
+    modalBtn.textContent = 'Закрепить';
+  }
+  
+  modal.classList.add('active');
+  
+  // Фокус на поле ввода с небольшой задержкой
+  setTimeout(() => {
+    modalInput.focus();
+  }, 100);
+}
+
+function closeDiaryModal() {
+  const modal = document.getElementById('diaryModal');
+  modal.classList.remove('active');
+  currentEditingEntryId = null;
+}
+
+function saveDiaryEntry() {
+  const modalInput = document.getElementById('diaryModalInput');
+  const entryText = modalInput.value.trim();
+  
+  if (!entryText) {
+    tg.showAlert('Пожалуйста, введите текст записи');
+    return;
+  }
+  
+  if (currentEditingEntryId) {
+    // Редактирование существующей записи
+    const entry = document.querySelector(`[data-entry-id="${currentEditingEntryId}"]`);
+    if (entry) {
+      const entryTextElement = entry.querySelector('.entry-text');
+      entryTextElement.textContent = entryText;
+    }
+  } else {
+    // Создание новой записи
+    const entriesContainer = document.querySelector('.diary-entries');
+    const newEntryId = Date.now().toString(); // Простой ID на основе времени
+    const currentTime = new Date().toLocaleTimeString('ru-RU', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+    
+    const newEntry = document.createElement('div');
+    newEntry.className = 'diary-entry';
+    newEntry.setAttribute('data-entry-id', newEntryId);
+    newEntry.innerHTML = `
+      <span class="entry-time">${currentTime}</span>
+      <span class="entry-text">${entryText}</span>
+    `;
+    
+    entriesContainer.appendChild(newEntry);
+  }
+  
+  closeDiaryModal();
+}

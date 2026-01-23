@@ -3309,3 +3309,329 @@ body.chat-overlay-visible .search-container {
     margin-bottom: clamp(14px, 2.8vh, 18px);
   }
 }
+
+/* ========================================
+   СТРАНИЦА "ДНЕВНИК"
+   ======================================== */
+
+.diary-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
+  z-index: 500;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.diary-page.active {
+  display: flex;
+}
+
+.diary-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 clamp(16px, 4vw, 20px);
+  padding-bottom: clamp(100px, 20vh, 120px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.diary-title {
+  font-size: clamp(24px, 6vw, 32px);
+  font-weight: 600;
+  color: #FFFFFF;
+  margin: clamp(20px, 5vh, 32px) 0 clamp(8px, 2vh, 12px) 0;
+  text-align: left;
+  line-height: 1.2;
+  font-family: 'Inter', sans-serif;
+}
+
+.diary-subtitle {
+  font-size: clamp(13px, 3.2vw, 15px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: clamp(24px, 6vh, 32px);
+  text-align: left;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Календарь дней недели */
+.diary-calendar {
+  display: flex;
+  gap: clamp(8px, 2vw, 12px);
+  margin-bottom: clamp(24px, 6vh, 32px);
+  overflow-x: auto;
+  padding: 0 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.diary-day {
+  flex-shrink: 0;
+  width: clamp(48px, 12vw, 56px);
+  height: clamp(64px, 16vw, 72px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: clamp(16px, 4vw, 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.diary-day.active {
+  background: #2A3F5F;
+  border-color: #2A3F5F;
+}
+
+.diary-day:hover:not(.active) {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.day-name {
+  font-size: clamp(10px, 2.5vw, 12px);
+  font-weight: 500;
+  color: #FFFFFF;
+  margin-bottom: 2px;
+  font-family: 'Inter', sans-serif;
+}
+
+.day-number {
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 600;
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Карточка записей */
+.diary-entries-card {
+  background: #FEF7EC;
+  border-radius: clamp(16px, 4vw, 20px);
+  padding: clamp(16px, 4vw, 20px);
+  margin-bottom: clamp(16px, 3vh, 20px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.entries-title {
+  font-size: clamp(16px, 4vw, 18px);
+  font-weight: 600;
+  color: #6B7280;
+  margin: 0 0 clamp(16px, 4vh, 20px) 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.diary-entries {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 3vh, 16px);
+}
+
+.diary-entry {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 4vw, 20px);
+  padding: clamp(8px, 2vw, 12px) 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.diary-entry:hover {
+  background: rgba(107, 114, 128, 0.05);
+  padding-left: clamp(8px, 2vw, 12px);
+  padding-right: clamp(8px, 2vw, 12px);
+}
+
+.entry-time {
+  font-size: clamp(13px, 3.2vw, 15px);
+  font-weight: 500;
+  color: #6B7280;
+  min-width: clamp(40px, 10vw, 48px);
+  font-family: 'Inter', sans-serif;
+}
+
+.entry-text {
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 500;
+  color: #2A3F5F;
+  flex: 1;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Кнопка добавления записи */
+.add-entry-btn {
+  position: absolute;
+  bottom: clamp(16px, 4vw, 20px);
+  right: clamp(16px, 4vw, 20px);
+  width: clamp(40px, 10vw, 48px);
+  height: clamp(40px, 10vw, 48px);
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #2A3F5F;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.add-entry-btn:hover {
+  background: rgba(42, 63, 95, 0.1);
+  transform: scale(1.1);
+}
+
+.add-entry-btn:active {
+  background: rgba(42, 63, 95, 0.2);
+  transform: scale(0.95);
+}
+
+/* Модальное окно для записей */
+.diary-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px, 5vw, 40px);
+  box-sizing: border-box;
+}
+
+.diary-modal-overlay.active {
+  display: flex;
+}
+
+.diary-modal-content {
+  background: #FEF7EC;
+  border-radius: clamp(16px, 4vw, 20px);
+  padding: 0;
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.diary-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(16px, 4vw, 20px) clamp(16px, 4vw, 20px) 0;
+}
+
+.diary-modal-title {
+  font-size: clamp(16px, 4vw, 18px);
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.diary-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #6B7280;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 300;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diary-modal-body {
+  padding: clamp(16px, 4vw, 20px);
+}
+
+.diary-modal-input {
+  width: 100%;
+  padding: clamp(12px, 3vw, 16px);
+  border: 1px solid #D1D5DB;
+  border-radius: clamp(8px, 2vw, 12px);
+  font-size: clamp(14px, 3.5vw, 16px);
+  color: #374151;
+  background: #FFFFFF;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+.diary-modal-input:focus {
+  outline: none;
+  border-color: #2A3F5F;
+  box-shadow: 0 0 0 3px rgba(42, 63, 95, 0.1);
+}
+
+.diary-modal-input::placeholder {
+  color: #9CA3AF;
+  font-size: clamp(13px, 3.2vw, 15px);
+}
+
+.diary-modal-footer {
+  padding: 0 clamp(16px, 4vw, 20px) clamp(16px, 4vw, 20px);
+}
+
+.diary-modal-btn {
+  width: 100%;
+  padding: clamp(12px, 3vw, 16px);
+  border-radius: clamp(12px, 3vw, 16px);
+  border: none;
+  background: #2A3F5F;
+  color: #FFFFFF;
+  font-size: clamp(14px, 3.5vw, 16px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.diary-modal-btn:hover {
+  background: #1E2D42;
+  transform: translateY(-1px);
+}
+
+.diary-modal-btn:active {
+  background: #1A2332;
+  transform: translateY(0);
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+  .diary-content {
+    padding-bottom: clamp(110px, 22vh, 130px);
+  }
+  
+  .diary-calendar {
+    gap: clamp(6px, 1.5vw, 10px);
+  }
+  
+  .diary-day {
+    width: clamp(44px, 11vw, 52px);
+    height: clamp(60px, 15vw, 68px);
+  }
+  
+  .diary-entries {
+    gap: clamp(10px, 2.5vh, 14px);
+  }
+  
+  .diary-entry {
+    gap: clamp(12px, 3vw, 16px);
+  }
+}

@@ -1250,6 +1250,156 @@
         </nav>
     </div>
 
+    <!-- Страница Дневник -->
+    <div class="diary-page" id="diaryPage">
+        <header class="header">
+            <button class="menu-btn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="avatar" id="diaryAvatar">AM</div>
+        </header>
+
+        <div class="diary-content">
+            <h1 class="diary-title">Дневник</h1>
+            <p class="diary-subtitle">Отслеживайте самочувствие</p>
+
+            <!-- Календарь дней недели -->
+            <div class="diary-calendar">
+                <div class="diary-day active">
+                    <span class="day-name">ВТ</span>
+                    <span class="day-number">25</span>
+                </div>
+                <div class="diary-day">
+                    <span class="day-name">СР</span>
+                    <span class="day-number">26</span>
+                </div>
+                <div class="diary-day">
+                    <span class="day-name">ЧТ</span>
+                    <span class="day-number">27</span>
+                </div>
+                <div class="diary-day">
+                    <span class="day-name">ПТ</span>
+                    <span class="day-number">28</span>
+                </div>
+                <div class="diary-day">
+                    <span class="day-name">СБ</span>
+                    <span class="day-number">28</span>
+                </div>
+                <div class="diary-day">
+                    <span class="day-name">ВС</span>
+                    <span class="day-number">29</span>
+                </div>
+            </div>
+
+            <!-- Записи на сегодня -->
+            <div class="diary-entries-card">
+                <h3 class="entries-title">Записи на сегодня</h3>
+                
+                <div class="diary-entries">
+                    <div class="diary-entry" data-entry-id="1">
+                        <span class="entry-time">08:00</span>
+                        <span class="entry-text">Магний 400 mg</span>
+                    </div>
+                    <div class="diary-entry" data-entry-id="2">
+                        <span class="entry-time">09:00</span>
+                        <span class="entry-text">Ашваганда 500mg</span>
+                    </div>
+                    <div class="diary-entry" data-entry-id="3">
+                        <span class="entry-time">12:00</span>
+                        <span class="entry-text">Омега-3</span>
+                    </div>
+                    <div class="diary-entry" data-entry-id="4">
+                        <span class="entry-time">12:30</span>
+                        <span class="entry-text">Магний 400 mg</span>
+                    </div>
+                    <div class="diary-entry" data-entry-id="5">
+                        <span class="entry-time">13:00</span>
+                        <span class="entry-text">Цинк</span>
+                    </div>
+                    <div class="diary-entry" data-entry-id="6">
+                        <span class="entry-time">15:00</span>
+                        <span class="entry-text">Витамин Б</span>
+                    </div>
+                    <div class="diary-entry" data-entry-id="7">
+                        <span class="entry-time">16:00</span>
+                        <span class="entry-text">Витамин С</span>
+                    </div>
+                    <div class="diary-entry" data-entry-id="8">
+                        <span class="entry-time">17:00</span>
+                        <span class="entry-text">Омега-3</span>
+                    </div>
+                    <div class="diary-entry" data-entry-id="9">
+                        <span class="entry-time">18:00</span>
+                        <span class="entry-text">Прием в больнице</span>
+                    </div>
+                </div>
+
+                <!-- Кнопка добавления новой записи -->
+                <button class="add-entry-btn" id="addEntryBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 5V19M5 12H19" stroke="#2A3F5F" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Навигация -->
+        <nav class="bottom-nav">
+            <button class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Главная</span>
+            </button>
+            <button class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Диагностика</span>
+            </button>
+            <button class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M4.5 16.5C3 14 3 11 3 9C3 5.5 5.5 3 9 3C10 3 11 3.5 12 4C13 3.5 14 3 15 3C18.5 3 21 5.5 21 9C21 11 21 14 19.5 16.5L12 22L4.5 16.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Здоровье</span>
+            </button>
+            <button class="nav-item active">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>Дневник</span>
+            </button>
+            <button class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>База знаний</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Модальное окно для записей -->
+    <div class="diary-modal-overlay" id="diaryModal">
+        <div class="diary-modal-content">
+            <div class="diary-modal-header">
+                <h3 class="diary-modal-title" id="diaryModalTitle">Новая запись</h3>
+                <button class="diary-modal-close" id="diaryModalClose">×</button>
+            </div>
+            
+            <div class="diary-modal-body">
+                <input type="text" class="diary-modal-input" id="diaryModalInput" placeholder="Введите новое назначение">
+            </div>
+            
+            <div class="diary-modal-footer">
+                <button class="diary-modal-btn" id="diaryModalBtn">Закрепить</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
