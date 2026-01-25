@@ -2934,39 +2934,3 @@ function deleteEntry(entryId) {
     console.log(`🗑️ Удалена запись: ${deletedEntry.time} - ${deletedEntry.text}`);
   }
 }
-// ПРИНУДИТЕЛЬНОЕ ПРИМЕНЕНИЕ СТИЛЕЙ ДЛЯ БЛОКА БЫСТРЫХ ЗАПРОСОВ
-function forceQuickRequestsStyles() {
-  const quickRequestsBlock = document.getElementById('quickRequestsBlock');
-  if (quickRequestsBlock) {
-    // Принудительно устанавливаем стили через JavaScript
-    quickRequestsBlock.style.marginTop = '38px';
-    quickRequestsBlock.style.marginBottom = '120px';
-    quickRequestsBlock.style.marginLeft = '16px';
-    quickRequestsBlock.style.marginRight = '16px';
-    quickRequestsBlock.style.height = '400px';
-    quickRequestsBlock.style.width = 'calc(100% - 32px)';
-    quickRequestsBlock.style.position = 'static';
-    quickRequestsBlock.style.display = 'flex';
-    quickRequestsBlock.style.flexDirection = 'column';
-    quickRequestsBlock.style.background = '#2A3F5F';
-    quickRequestsBlock.style.borderRadius = '20px';
-    quickRequestsBlock.style.padding = '20px';
-    quickRequestsBlock.style.boxSizing = 'border-box';
-    quickRequestsBlock.style.overflow = 'hidden';
-    quickRequestsBlock.style.flexShrink = '0';
-    
-    console.log('Принудительно применены стили для блока быстрых запросов');
-  }
-}
-
-// Применяем стили при загрузке страницы
-document.addEventListener('DOMContentLoaded', forceQuickRequestsStyles);
-
-// Применяем стили при показе главной страницы
-const originalShowPage = showPage;
-showPage = function(pageName) {
-  originalShowPage(pageName);
-  if (pageName === 'main') {
-    setTimeout(forceQuickRequestsStyles, 100);
-  }
-};

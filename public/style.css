@@ -325,15 +325,7 @@ body #quickRequestsBlock,
   flex-shrink: 0 !important;
 }
 
-/* ДОПОЛНИТЕЛЬНАЯ СПЕЦИФИЧНОСТЬ ДЛЯ ПЕРЕОПРЕДЕЛЕНИЯ ЛЮБЫХ КОНФЛИКТОВ */
-body .app .quick-requests,
-body .app #quickRequestsBlock,
-html body .app section.quick-requests,
-html body .app section#quickRequestsBlock {
-  margin: 38px 16px 120px 16px !important;
-  height: 400px !important;
-  position: static !important;
-}
+
 
 /* ЗАГОЛОВОК */
 .quick-requests .section-title,
@@ -4226,40 +4218,3 @@ html body .app section#quickRequestsBlock {
   }
 }
 
-/* ========================================
-   КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ БЛОКА БЫСТРЫХ ЗАПРОСОВ
-   МАКСИМАЛЬНАЯ СПЕЦИФИЧНОСТЬ
-   ======================================== */
-
-/* ПРИНУДИТЕЛЬНОЕ ПЕРЕОПРЕДЕЛЕНИЕ ВСЕХ СТИЛЕЙ */
-html body .app section.quick-requests,
-html body .app section#quickRequestsBlock,
-html body .app .quick-requests,
-html body .app #quickRequestsBlock,
-body .app section.quick-requests,
-body .app section#quickRequestsBlock {
-  margin-top: 38px !important;
-  margin-bottom: 120px !important;
-  margin-left: 16px !important;
-  margin-right: 16px !important;
-  height: 400px !important;
-  width: calc(100% - 32px) !important;
-  position: static !important;
-  display: flex !important;
-  flex-direction: column !important;
-  background: #2A3F5F !important;
-  border-radius: 20px !important;
-  padding: 20px !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-  flex-shrink: 0 !important;
-}
-
-/* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА ОТ ПЕРЕОПРЕДЕЛЕНИЯ */
-.quick-requests {
-  margin: 38px 16px 120px 16px !important;
-}
-
-#quickRequestsBlock {
-  margin: 38px 16px 120px 16px !important;
-}
