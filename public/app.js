@@ -1,49 +1,75 @@
 // Инициализация Telegram Web App
-const tg = window.Telegram.WebApp;
+const tg = window.Telegram?.WebApp || {
+  // Заглушки для локального тестирования
+  ready: () => console.log('TG: ready (заглушка)'),
+  expand: () => console.log('TG: expand (заглушка)'),
+  enableClosingConfirmation: () => console.log('TG: enableClosingConfirmation (заглушка)'),
+  disableVerticalSwipes: () => console.log('TG: disableVerticalSwipes (заглушка)'),
+  setHeaderColor: (color) => console.log('TG: setHeaderColor', color, '(заглушка)'),
+  setBackgroundColor: (color) => console.log('TG: setBackgroundColor', color, '(заглушка)'),
+  BackButton: { hide: () => console.log('TG: BackButton.hide (заглушка)') },
+  MainButton: { hide: () => console.log('TG: MainButton.hide (заглушка)') },
+  SettingsButton: { hide: () => console.log('TG: SettingsButton.hide (заглушка)') },
+  onEvent: (event, callback) => console.log('TG: onEvent', event, '(заглушка)'),
+  initDataUnsafe: { user: { first_name: 'Тест', last_name: 'Пользователь' } }
+};
+
 tg.ready();
 
-// АГРЕССИВНЫЙ полноэкранный режим
-tg.expand();
-
-// Дополнительные методы для полного скрытия заголовка
-if (tg.requestFullscreen) {
-  tg.requestFullscreen();
-}
-
-// Устанавливаем цвет заголовка в цвет фона приложения для маскировки
-tg.setHeaderColor('#3C805B');
-tg.setBackgroundColor('#3C805B');
-
-// Скрываем все элементы интерфейса Telegram
-tg.BackButton.hide();
-if (tg.MainButton) {
-  tg.MainButton.hide();
-}
-if (tg.SettingsButton) {
-  tg.SettingsButton.hide();
-}
-
-tg.enableClosingConfirmation();
-tg.disableVerticalSwipes();
-
-// Дополнительные попытки разворачивания
-setTimeout(() => {
+// АГРЕССИВНЫЙ полноэкранный режим - только если Telegram доступен
+if (window.Telegram?.WebApp) {
   tg.expand();
+
+  // Дополнительные методы для полного скрытия заголовка
   if (tg.requestFullscreen) {
-    tg.requestFullscreen();
+    try {
+      tg.requestFullscreen();
+    } catch (e) {
+      console.log('requestFullscreen не поддерживается:', e.message);
+    }
   }
-}, 100);
 
-setTimeout(() => {
-  tg.expand();
-}, 300);
+  // Устанавливаем цвет заголовка в цвет фона приложения для маскировки
+  tg.setHeaderColor('#3C805B');
+  tg.setBackgroundColor('#3C805B');
 
-// Обработчик для поддержания полноэкранного режима
-tg.onEvent('viewportChanged', () => {
+  // Скрываем все элементы интерфейса Telegram
+  tg.BackButton.hide();
+  if (tg.MainButton) {
+    tg.MainButton.hide();
+  }
+  if (tg.SettingsButton) {
+    tg.SettingsButton.hide();
+  }
+
+  tg.enableClosingConfirmation();
+  tg.disableVerticalSwipes();
+
+  // Дополнительные попытки разворачивания
   setTimeout(() => {
     tg.expand();
-  }, 50);
-});
+    if (tg.requestFullscreen) {
+      try {
+        tg.requestFullscreen();
+      } catch (e) {
+        console.log('requestFullscreen не поддерживается в setTimeout:', e.message);
+      }
+    }
+  }, 100);
+
+  setTimeout(() => {
+    tg.expand();
+  }, 300);
+
+  // Обработчик для поддержания полноэкранного режима
+  tg.onEvent('viewportChanged', () => {
+    setTimeout(() => {
+      tg.expand();
+    }, 50);
+  });
+} else {
+  console.log('Локальное тестирование - Telegram WebApp недоступен');
+}
 
 // ========================================
 // ФУНКЦИИ СБРОСА ДАННЫХ ДИАГНОСТИКИ
@@ -77,7 +103,7 @@ window.addEventListener('blur', clearDiagnosticData);
 // Получение данных пользователя
 const user = tg.initDataUnsafe?.user;
 const userName = user?.first_name || 'Александр';
-const userFullName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Иван Иванов';
+const userFullName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Александр Тестов';
 
 // Элементы страниц
 const welcomeScreen = document.getElementById('welcomeScreen');
