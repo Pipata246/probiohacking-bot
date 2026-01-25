@@ -294,30 +294,22 @@ body.chat-overlay-visible .search-container {
 }
 
 /* ========================================
-   БЫСТРЫЕ ЗАПРОСЫ - ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ
+   БЫСТРЫЕ ЗАПРОСЫ - ПОЛНАЯ ПЕРЕЗАПИСЬ
    ======================================== */
 
-/* ОСНОВНОЙ БЛОК - БЕЗ ОТСТУПА СНИЗУ */
-.quick-requests,
-#quickRequestsBlock,
-section.quick-requests,
-section#quickRequestsBlock,
-body .quick-requests,
-body #quickRequestsBlock,
-.app .quick-requests,
-.app #quickRequestsBlock {
-  /* СТАТИЧНОЕ позиционирование */
+/* ОСНОВНОЙ БЛОК - СТАТИЧНОЕ ПОЗИЦИОНИРОВАНИЕ С ПРАВИЛЬНЫМИ ОТСТУПАМИ */
+.quick-requests {
   position: static !important;
   display: flex !important;
   flex-direction: column !important;
   
-  /* ФИКСИРОВАННЫЕ размеры БЕЗ АДАПТИВНОСТИ */
-  width: calc(100% - 32px) !important; /* Учитываем отступы по бокам */
-  height: 400px !important; /* Фиксированная высота */
-  margin: 38px 16px 0 16px !important; /* 1см сверху, НЕТ ОТСТУПА СНИЗУ, отступы по бокам */
+  /* ФИКСИРОВАННЫЕ размеры */
+  width: calc(100% - 32px) !important;
+  height: 400px !important;
+  margin: 38px 16px 19px 16px !important; /* 1см сверху, 5мм снизу от панели навигации */
   padding: 20px !important;
   
-  /* ФИКСИРОВАННЫЙ дизайн */
+  /* ДИЗАЙН */
   background: #2A3F5F !important;
   border-radius: 20px !important;
   overflow: hidden !important;
@@ -325,11 +317,8 @@ body #quickRequestsBlock,
   flex-shrink: 0 !important;
 }
 
-
-
 /* ЗАГОЛОВОК */
-.quick-requests .section-title,
-#quickRequestsBlock .section-title {
+.quick-requests .section-title {
   font-size: 18px !important;
   font-weight: 600 !important;
   color: #B0BCC9 !important;
@@ -339,8 +328,7 @@ body #quickRequestsBlock,
 }
 
 /* КОНТЕЙНЕР КАРТОЧЕК */
-.quick-requests .quick-cards,
-#quickRequestsBlock .quick-cards {
+.quick-requests .quick-cards {
   flex: 1 !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
@@ -351,25 +339,21 @@ body #quickRequestsBlock,
 }
 
 /* СКРОЛЛБАР */
-.quick-requests .quick-cards::-webkit-scrollbar,
-#quickRequestsBlock .quick-cards::-webkit-scrollbar {
+.quick-requests .quick-cards::-webkit-scrollbar {
   width: 4px !important;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-track,
-#quickRequestsBlock .quick-cards::-webkit-scrollbar-track {
+.quick-requests .quick-cards::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1) !important;
   border-radius: 2px !important;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-thumb,
-#quickRequestsBlock .quick-cards::-webkit-scrollbar-thumb {
+.quick-requests .quick-cards::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3) !important;
   border-radius: 2px !important;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-thumb:hover,
-#quickRequestsBlock .quick-cards::-webkit-scrollbar-thumb:hover {
+.quick-requests .quick-cards::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5) !important;
 }
 
