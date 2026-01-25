@@ -302,9 +302,9 @@ body.chat-overlay-visible .search-container {
   display: flex !important;
   flex-direction: column !important;
   flex-shrink: 0 !important;
-  /* СТАТИЧНОЕ позиционирование - ВСЕГДА 5мм от навигации */
+  /* СТАТИЧНОЕ позиционирование - заканчивается в 5мм ДО навигации */
   position: fixed !important;
-  bottom: calc(60px + 12px + 5mm) !important; /* 60px навигация + 12px отступ + 5мм */
+  bottom: calc(12px + 60px + 5mm) !important; /* 12px отступ навигации + 60px высота навигации + 5мм зазор */
   left: 0 !important;
   right: 0 !important;
   margin: 0 !important;
