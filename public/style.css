@@ -91,6 +91,13 @@ body.chat-overlay-visible {
   box-sizing: border-box;
   /* ДОБАВЛЯЕМ relative для absolute позиционирования синего блока */
   position: relative !important;
+  /* Свойства для анимации появления */
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.app.show {
+  opacity: 1;
 }
 
 /* Хедер - унифицированный для всех страниц */
@@ -1335,15 +1342,7 @@ body #quickRequestsBlock,
   }
 }
 
-/* Основное приложение скрыто при загрузке */
-.app {
-  opacity: 0;
-  transition: opacity 0.8s ease;
-}
 
-.app.show {
-  opacity: 1;
-}
 
 /* Страница рекомендуемых анализов */
 .recommended-tests-page {
