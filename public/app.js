@@ -1,6 +1,10 @@
 // Инициализация Telegram Web App
 const tg = window.Telegram.WebApp;
 tg.ready();
+
+// ПРОСТОЙ полноэкранный режим - только expand без агрессивных изменений
+tg.expand();
+
 tg.enableClosingConfirmation();
 tg.disableVerticalSwipes();
 tg.setHeaderColor('#4A8B6C');
