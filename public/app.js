@@ -151,29 +151,7 @@ function showPage(pageName) {
     isDiagnosticFormMode = false;
   }
   
-  // Скрываем все страницы
-  mainApp.style.display = 'none';
-  knowledgeBase.classList.remove('active');
-  diagnosticsPage.classList.remove('active');
-  chatOverlay.classList.remove('active');
-  recommendedTestsPage.classList.remove('active');
-  
-  // Скрываем страницу здоровье
-  const healthPage = document.getElementById('healthPage');
-  if (healthPage) {
-    healthPage.classList.remove('active');
-  }
-  
-  // Скрываем страницу дневник
-  const diaryPage = document.getElementById('diaryPage');
-  if (diaryPage) {
-    diaryPage.classList.remove('active');
-  }
-  
-  // Убираем классы скролла
-  document.body.classList.remove('chat-overlay-visible');
-  
-  // Показываем нужную страницу
+  // СНАЧАЛА показываем нужную страницу, ПОТОМ скрываем остальные
   switch(pageName) {
     case 'main':
       mainApp.style.display = 'block';
@@ -230,6 +208,44 @@ function showPage(pageName) {
       isChatMode = false;
       isInRecommendedTests = true;
       break;
+  }
+  
+  // ТЕПЕРЬ скрываем все остальные страницы
+  if (pageName !== 'main') {
+    mainApp.style.display = 'none';
+  }
+  if (pageName !== 'knowledge') {
+    knowledgeBase.classList.remove('active');
+  }
+  if (pageName !== 'diagnostics') {
+    diagnosticsPage.classList.remove('active');
+  }
+  if (pageName !== 'chat') {
+    chatOverlay.classList.remove('active');
+  }
+  if (pageName !== 'recommendedTests') {
+    recommendedTestsPage.classList.remove('active');
+  }
+  
+  // Скрываем страницу здоровье если не она выбрана
+  if (pageName !== 'health') {
+    const healthPage = document.getElementById('healthPage');
+    if (healthPage) {
+      healthPage.classList.remove('active');
+    }
+  }
+  
+  // Скрываем страницу дневник если не она выбрана
+  if (pageName !== 'diary') {
+    const diaryPage = document.getElementById('diaryPage');
+    if (diaryPage) {
+      diaryPage.classList.remove('active');
+    }
+  }
+  
+  // Убираем классы скролла если не чат
+  if (pageName !== 'chat') {
+    document.body.classList.remove('chat-overlay-visible');
   }
   
   // Обновляем все навигации
