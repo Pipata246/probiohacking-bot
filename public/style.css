@@ -294,10 +294,10 @@ body.chat-overlay-visible .search-container {
 }
 
 /* ========================================
-   БЫСТРЫЕ ЗАПРОСЫ - ПОЛНАЯ ПЕРЕЗАПИСЬ
+   БЫСТРЫЕ ЗАПРОСЫ - СТАТИЧНЫЙ БЛОК
    ======================================== */
 
-/* ОСНОВНОЙ БЛОК - СТАТИЧНЫЙ, ФИКСИРОВАННЫЙ */
+/* ОСНОВНОЙ БЛОК - СТАТИЧНЫЙ, ФИКСИРОВАННЫЙ НА ВСЕХ УСТРОЙСТВАХ */
 .quick-requests,
 #quickRequestsBlock,
 section.quick-requests,
@@ -306,30 +306,23 @@ body .quick-requests,
 body #quickRequestsBlock,
 .app .quick-requests,
 .app #quickRequestsBlock {
-  /* ПРИНУДИТЕЛЬНОЕ позиционирование */
+  /* СТАТИЧНОЕ позиционирование */
   position: static !important;
-  display: block !important;
+  display: flex !important;
+  flex-direction: column !important;
   
-  /* ФИКСИРОВАННЫЕ размеры - БЕЗ АДАПТИВНОСТИ */
-  width: 100% !important;
+  /* ФИКСИРОВАННЫЕ размеры БЕЗ АДАПТИВНОСТИ */
+  width: calc(100% - 32px) !important; /* Учитываем отступы по бокам */
   height: 400px !important; /* Фиксированная высота */
-  margin: 0 !important; /* УБИРАЕМ ВСЕ отступы сверху */
-  margin-bottom: 20px !important; /* Только отступ снизу для навигации */
-  padding: 20px !important; /* Фиксированный отступ */
+  margin: 38px 16px 19px 16px !important; /* 1см сверху, 5мм снизу, отступы по бокам */
+  padding: 20px !important;
   
   /* ФИКСИРОВАННЫЙ дизайн */
   background: #2A3F5F !important;
   border-radius: 20px !important;
   overflow: hidden !important;
-  
-  /* Flexbox для содержимого */
-  display: flex !important;
-  flex-direction: column !important;
-  flex-shrink: 0 !important;
-  
-  /* Убираем все остальные свойства */
   box-sizing: border-box !important;
-  z-index: auto !important;
+  flex-shrink: 0 !important;
 }
 
 /* ЗАГОЛОВОК */
