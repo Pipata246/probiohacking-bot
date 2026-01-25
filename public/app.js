@@ -2922,12 +2922,12 @@ function fixQuickRequestsStyles() {
   const block = document.getElementById('quickRequestsBlock');
   if (block) {
     block.style.setProperty('margin-top', '38px', 'important');
-    block.style.setProperty('margin-bottom', '100px', 'important');
+    block.style.setProperty('margin-bottom', '150px', 'important');
     block.style.setProperty('margin-left', '16px', 'important');
     block.style.setProperty('margin-right', '16px', 'important');
     block.style.setProperty('height', '400px', 'important');
     block.style.setProperty('width', 'calc(100% - 32px)', 'important');
-    console.log('🔧 ПРИНУДИТЕЛЬНО ИСПРАВЛЕНЫ СТИЛИ БЛОКА БЫСТРЫХ ЗАПРОСОВ');
+    console.log('🔧 ПРИНУДИТЕЛЬНО ИСПРАВЛЕНЫ СТИЛИ БЛОКА БЫСТРЫХ ЗАПРОСОВ (150px снизу)');
   }
 }
 

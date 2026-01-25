@@ -321,7 +321,7 @@ body #quickRequestsBlock,
   /* ФИКСИРОВАННЫЕ размеры БЕЗ АДАПТИВНОСТИ */
   width: calc(100% - 32px) !important; /* Учитываем отступы по бокам */
   height: 400px !important; /* Фиксированная высота */
-  margin: 38px 16px 100px 16px !important; /* 1см сверху, отступ от навигации без конфликта, отступы по бокам */
+  margin: 38px 16px 150px 16px !important; /* 1см сверху, БОЛЬШИЙ отступ от навигации, отступы по бокам */
   padding: 20px !important;
   
   /* ФИКСИРОВАННЫЙ дизайн */
@@ -4230,7 +4230,7 @@ body div.app section.quick-requests,
 body div.app section#quickRequestsBlock,
 div.app section.quick-requests,
 div.app section#quickRequestsBlock {
-  margin: 38px 16px 100px 16px !important;
+  margin: 38px 16px 150px 16px !important;
   height: 400px !important;
   width: calc(100% - 32px) !important;
   position: static !important;
@@ -4248,7 +4248,7 @@ div.app section#quickRequestsBlock {
 section.quick-requests,
 section#quickRequestsBlock {
   margin-top: 38px !important;
-  margin-bottom: 100px !important;
+  margin-bottom: 150px !important;
   margin-left: 16px !important;
   margin-right: 16px !important;
 }
