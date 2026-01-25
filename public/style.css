@@ -89,6 +89,8 @@ body.chat-overlay-visible {
   padding-top: 20px; /* Дополнительный отступ для элементов приложения */
   padding-bottom: clamp(90px, 18vh, 110px); /* ОПТИМИЗИРОВАННЫЙ отступ для навигации */
   box-sizing: border-box;
+  /* ДОБАВЛЯЕМ relative для absolute позиционирования синего блока */
+  position: relative !important;
 }
 
 /* Хедер - унифицированный для всех страниц */
@@ -293,28 +295,30 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Быстрые запросы - РАСТЯНУТЫЙ блок от верха до низа с отступом 5мм от навигации */
+/* Быстрые запросы - ЗАПОЛНЯЕТ ВСЕ место от кнопки "Создание программу" до навигации */
 .quick-requests,
 #quickRequestsBlock,
 section.quick-requests,
 section#quickRequestsBlock {
-  /* РАСТЯГИВАЕМ от текущей позиции до навигации с отступом 5мм */
-  position: static !important; /* Возвращаем в нормальный поток */
-  margin: 0 0 91px 0 !important; /* Отступ снизу = 91px (5мм от навигации) */
+  /* АБСОЛЮТНОЕ позиционирование для точного контроля */
+  position: absolute !important;
+  top: auto !important; /* Автоматически под предыдущим элементом */
+  bottom: 91px !important; /* 5мм от навигации = 91px */
+  left: 0 !important;
+  right: 0 !important;
   width: 100% !important;
-  /* РАСТЯГИВАЕМ по высоте - занимаем все доступное место */
-  flex: 1 !important;
-  min-height: 280px !important;
   
   /* Внешний вид */
   padding: clamp(14px, 3.5vw, 18px) !important;
   background: #2A3F5F !important;
   border-radius: clamp(18px, 4.5vw, 24px) !important;
   overflow: hidden !important;
+  margin: 0 !important;
   
   /* Flexbox */
   display: flex !important;
   flex-direction: column !important;
+  z-index: 10 !important;
 }
 
 /* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА - переопределяем любые другие стили */
@@ -322,10 +326,13 @@ body .quick-requests,
 body #quickRequestsBlock,
 .app .quick-requests,
 .app #quickRequestsBlock {
-  position: static !important;
-  margin: 0 0 91px 0 !important;
-  flex: 1 !important;
-  min-height: 280px !important;
+  position: absolute !important;
+  top: auto !important;
+  bottom: 91px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  margin: 0 !important;
 }
 
 /* Заголовок секции - фиксированный */
