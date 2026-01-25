@@ -294,23 +294,13 @@ function updateAllNavigations() {
 if (welcomeScreen) {
   console.log('Приветственный экран найден, добавляем обработчик клика');
   
-  welcomeScreen.addEventListener('click', () => {
-    console.log('Клик по приветственному экрану!');
-    
-    // СНАЧАЛА показываем главную страницу БЕЗ ЗАДЕРЖКИ
-    mainApp.classList.add('show');
-    showPage('main');
-    
-    // ПОТОМ скрываем приветственный экран
-    welcomeScreen.classList.add('fade-out');
-    setTimeout(() => {
-      welcomeScreen.style.display = 'none';
-    }, 800);
-  });
+  let isTransitioning = false; // Флаг для предотвращения повторных переходов
   
-  // Дополнительный обработчик для мобильных устройств
-  welcomeScreen.addEventListener('touchstart', () => {
-    console.log('Touch по приветственному экрану!');
+  function handleWelcomeTransition() {
+    if (isTransitioning) return; // Предотвращаем повторные вызовы
+    
+    isTransitioning = true;
+    console.log('Переход с приветственного экрана!');
     
     // СНАЧАЛА показываем главную страницу БЕЗ ЗАДЕРЖКИ
     mainApp.classList.add('show');
@@ -321,23 +311,18 @@ if (welcomeScreen) {
     setTimeout(() => {
       welcomeScreen.style.display = 'none';
     }, 800);
-  });
+  }
+  
+  // Единый обработчик для всех типов событий
+  welcomeScreen.addEventListener('click', handleWelcomeTransition);
+  welcomeScreen.addEventListener('touchstart', handleWelcomeTransition);
   
   // ДЛЯ ЛОКАЛЬНОГО ТЕСТИРОВАНИЯ - автоматический переход через 3 секунды
   if (typeof window.Telegram === 'undefined') {
     console.log('Telegram WebApp не найден - локальное тестирование');
     setTimeout(() => {
       console.log('Автоматический переход к приложению для локального тестирования');
-      
-      // СНАЧАЛА показываем главную страницу БЕЗ ЗАДЕРЖКИ
-      mainApp.classList.add('show');
-      showPage('main');
-      
-      // ПОТОМ скрываем приветственный экран
-      welcomeScreen.classList.add('fade-out');
-      setTimeout(() => {
-        welcomeScreen.style.display = 'none';
-      }, 800);
+      handleWelcomeTransition();
     }, 3000);
   }
 } else {
