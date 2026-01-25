@@ -1323,6 +1323,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  /* Отступ сверху для элементов Telegram */
+  padding-top: env(safe-area-inset-top, 64px) !important;
 }
 
 .recommended-tests-page.active {
@@ -1510,6 +1512,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  /* Отступ сверху для элементов Telegram */
+  padding-top: env(safe-area-inset-top, 64px) !important;
 }
 
 .knowledge-base.active {
@@ -1528,7 +1532,8 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden; /* Убираем скролл у контейнера */
-  /* Убираем отступы - полный экран */
+  /* Отступ сверху для элементов Telegram */
+  padding-top: env(safe-area-inset-top, 64px) !important;
 }
 
 .chat-overlay.active {
@@ -1871,6 +1876,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  /* Отступ сверху для элементов Telegram */
+  padding-top: env(safe-area-inset-top, 64px) !important;
 }
 
 .diagnostics-page.active {
@@ -3278,6 +3285,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Отступ сверху для элементов Telegram */
+  padding-top: env(safe-area-inset-top, 64px) !important;
 }
 
 .health-page.active {
@@ -3551,6 +3560,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Отступ сверху для элементов Telegram */
+  padding-top: env(safe-area-inset-top, 64px) !important;
 }
 
 .diary-page.active {
