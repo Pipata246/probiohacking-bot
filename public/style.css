@@ -295,30 +295,31 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Быстрые запросы - ЗАПОЛНЯЕТ ВСЕ место от кнопки "Создание программу" до навигации */
+/* Быстрые запросы - РАСТЯГИВАЕТСЯ до навигации с отступом 5мм */
 .quick-requests,
 #quickRequestsBlock,
 section.quick-requests,
 section#quickRequestsBlock {
-  /* АБСОЛЮТНОЕ позиционирование для точного контроля */
-  position: absolute !important;
-  top: auto !important; /* Автоматически под предыдущим элементом */
-  bottom: 91px !important; /* 5мм от навигации = 91px */
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
+  /* ВОЗВРАЩАЕМ в нормальный поток документа */
+  position: static !important;
+  
+  /* РАСТЯГИВАЕМ до конца с отступом от навигации */
+  flex: 1 !important; /* Занимает все доступное место */
+  margin-bottom: 91px !important; /* 5мм от навигации */
   
   /* Внешний вид */
   padding: clamp(14px, 3.5vw, 18px) !important;
   background: #2A3F5F !important;
   border-radius: clamp(18px, 4.5vw, 24px) !important;
   overflow: hidden !important;
-  margin: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-top: 0 !important;
+  width: 100% !important;
   
   /* Flexbox */
   display: flex !important;
   flex-direction: column !important;
-  z-index: 10 !important;
 }
 
 /* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА - переопределяем любые другие стили */
@@ -326,13 +327,9 @@ body .quick-requests,
 body #quickRequestsBlock,
 .app .quick-requests,
 .app #quickRequestsBlock {
-  position: absolute !important;
-  top: auto !important;
-  bottom: 91px !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  margin: 0 !important;
+  position: static !important;
+  flex: 1 !important;
+  margin-bottom: 91px !important;
 }
 
 /* Заголовок секции - фиксированный */
