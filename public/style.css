@@ -4217,3 +4217,38 @@ body #quickRequestsBlock,
   }
 }
 
+/* ========================================
+   КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ - МАКСИМАЛЬНАЯ СПЕЦИФИЧНОСТЬ
+   ======================================== */
+
+/* ПРИНУДИТЕЛЬНОЕ ПЕРЕОПРЕДЕЛЕНИЕ ВСЕХ СТИЛЕЙ БЛОКА БЫСТРЫХ ЗАПРОСОВ */
+html body div.app section.quick-requests,
+html body div.app section#quickRequestsBlock,
+html body .app section.quick-requests,
+html body .app section#quickRequestsBlock,
+body div.app section.quick-requests,
+body div.app section#quickRequestsBlock,
+div.app section.quick-requests,
+div.app section#quickRequestsBlock {
+  margin: 38px 16px 100px 16px !important;
+  height: 400px !important;
+  width: calc(100% - 32px) !important;
+  position: static !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #2A3F5F !important;
+  border-radius: 20px !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+}
+
+/* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА */
+section.quick-requests,
+section#quickRequestsBlock {
+  margin-top: 38px !important;
+  margin-bottom: 100px !important;
+  margin-left: 16px !important;
+  margin-right: 16px !important;
+}
