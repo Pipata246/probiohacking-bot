@@ -295,81 +295,88 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Быстрые запросы - СТАТИЧНЫЙ блок с фиксированной высотой */
+/* ========================================
+   БЫСТРЫЕ ЗАПРОСЫ - ПОЛНАЯ ПЕРЕЗАПИСЬ
+   ======================================== */
+
+/* ОСНОВНОЙ БЛОК - СТАТИЧНЫЙ, ФИКСИРОВАННЫЙ */
 .quick-requests,
 #quickRequestsBlock,
 section.quick-requests,
-section#quickRequestsBlock {
-  /* СТАТИЧНОЕ позиционирование */
-  position: static !important;
-  
-  /* ФИКСИРОВАННАЯ высота - рассчитана так чтобы заканчиваться в 5мм от навигации */
-  height: 350px !important; /* Фиксированная высота на всех устройствах */
-  margin: 0 !important;
-  margin-bottom: 19px !important; /* 5мм = 19px отступ от навигации */
-  
-  /* Внешний вид */
-  padding: 18px !important; /* Фиксированный padding */
-  background: #2A3F5F !important;
-  border-radius: 24px !important; /* Фиксированный радиус */
-  overflow: hidden !important;
-  width: 100% !important;
-  
-  /* Flexbox */
-  display: flex !important;
-  flex-direction: column !important;
-  flex-shrink: 0 !important; /* НЕ сжимается */
-}
-
-/* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА - переопределяем любые другие стили */
+section#quickRequestsBlock,
 body .quick-requests,
 body #quickRequestsBlock,
 .app .quick-requests,
 .app #quickRequestsBlock {
+  /* ПРИНУДИТЕЛЬНОЕ позиционирование */
   position: static !important;
-  height: 350px !important;
-  margin-bottom: 19px !important;
+  display: block !important;
+  
+  /* ФИКСИРОВАННЫЕ размеры - БЕЗ АДАПТИВНОСТИ */
+  width: 100% !important;
+  height: 400px !important; /* Фиксированная высота */
+  margin: 0 0 20px 0 !important; /* 20px = примерно 5мм от навигации */
+  padding: 20px !important; /* Фиксированный отступ */
+  
+  /* ФИКСИРОВАННЫЙ дизайн */
+  background: #2A3F5F !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  
+  /* Flexbox для содержимого */
+  display: flex !important;
+  flex-direction: column !important;
+  flex-shrink: 0 !important;
+  
+  /* Убираем все остальные свойства */
+  box-sizing: border-box !important;
+  z-index: auto !important;
+}
+
+/* ЗАГОЛОВОК */
+.quick-requests .section-title,
+#quickRequestsBlock .section-title {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #B0BCC9 !important;
+  margin: 0 0 15px 0 !important;
+  padding: 0 !important;
   flex-shrink: 0 !important;
 }
 
-/* Заголовок секции - фиксированный */
-.quick-requests .section-title {
-  flex-shrink: 0;
-  margin-bottom: clamp(10px, 2.5vw, 14px);
-  font-size: clamp(16px, 4vw, 20px);
-  font-weight: 600;
-  color: #B0BCC9;
-  line-height: 1.2;
-}
-
-/* Контейнер карточек - скроллируемый */
-.quick-requests .quick-cards {
+/* КОНТЕЙНЕР КАРТОЧЕК */
+.quick-requests .quick-cards,
+#quickRequestsBlock .quick-cards {
   flex: 1 !important;
   overflow-y: auto !important;
-  overflow-x: hidden;
+  overflow-x: hidden !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: clamp(6px, 1.5vw, 10px);
-  padding-right: 6px; /* Отступ для скроллбара */
+  gap: 10px !important;
+  padding-right: 5px !important;
 }
 
-/* Скрываем webkit scrollbar но оставляем функциональность */
-.quick-requests .quick-cards::-webkit-scrollbar {
-  width: 4px;
+/* СКРОЛЛБАР */
+.quick-requests .quick-cards::-webkit-scrollbar,
+#quickRequestsBlock .quick-cards::-webkit-scrollbar {
+  width: 4px !important;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+.quick-requests .quick-cards::-webkit-scrollbar-track,
+#quickRequestsBlock .quick-cards::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 2px !important;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
+.quick-requests .quick-cards::-webkit-scrollbar-thumb,
+#quickRequestsBlock .quick-cards::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-radius: 2px !important;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+.quick-requests .quick-cards::-webkit-scrollbar-thumb:hover,
+#quickRequestsBlock .quick-cards::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Для спортсменов - внутри скроллируемого окна */
