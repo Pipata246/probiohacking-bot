@@ -4204,7 +4204,7 @@ section#quickRequestsBlock {
   user-select: none;
   /* АНИМАЦИЯ */
   opacity: 1;
-  transition: opacity 0.8s ease;
+  transition: opacity 1.5s ease-out;
 }
 
 .splash-screen.fade-out {
@@ -4242,14 +4242,14 @@ section#quickRequestsBlock {
   font-size: 14px;
   color: #FEF7EC;
   opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInUp 1.2s ease 2s forwards;
+  transform: translateY(30px);
+  animation: fadeInUp 2s ease-out 2.5s forwards;
 }
 
 @keyframes fadeInUp {
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   100% {
     opacity: 0.8;
@@ -4271,7 +4271,7 @@ section#quickRequestsBlock {
   position: relative !important;
   /* АНИМАЦИЯ ПОЯВЛЕНИЯ */
   opacity: 0;
-  transition: opacity 0.8s ease;
+  transition: opacity 1.2s ease-in;
 }
 
 .app.active {
