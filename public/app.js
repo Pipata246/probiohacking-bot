@@ -4,7 +4,6 @@ const tg = window.Telegram?.WebApp || {
   ready: () => console.log('TG: ready (заглушка)'),
   expand: () => console.log('TG: expand (заглушка)'),
   enableClosingConfirmation: () => console.log('TG: enableClosingConfirmation (заглушка)'),
-  disableVerticalSwipes: () => console.log('TG: disableVerticalSwipes (заглушка)'),
   setHeaderColor: (color) => console.log('TG: setHeaderColor', color, '(заглушка)'),
   setBackgroundColor: (color) => console.log('TG: setBackgroundColor', color, '(заглушка)'),
   BackButton: { hide: () => console.log('TG: BackButton.hide (заглушка)') },
@@ -20,15 +19,6 @@ tg.ready();
 if (window.Telegram?.WebApp) {
   tg.expand();
 
-  // Дополнительные методы для полного скрытия заголовка
-  if (tg.requestFullscreen) {
-    try {
-      tg.requestFullscreen();
-    } catch (e) {
-      console.log('requestFullscreen не поддерживается:', e.message);
-    }
-  }
-
   // Устанавливаем цвет заголовка в цвет фона приложения для маскировки
   tg.setHeaderColor('#3C805B');
   tg.setBackgroundColor('#3C805B');
@@ -43,18 +33,11 @@ if (window.Telegram?.WebApp) {
   }
 
   tg.enableClosingConfirmation();
-  tg.disableVerticalSwipes();
+  // УБИРАЕМ disableVerticalSwipes() - не поддерживается в версии 6.0
 
   // Дополнительные попытки разворачивания
   setTimeout(() => {
     tg.expand();
-    if (tg.requestFullscreen) {
-      try {
-        tg.requestFullscreen();
-      } catch (e) {
-        console.log('requestFullscreen не поддерживается в setTimeout:', e.message);
-      }
-    }
   }, 100);
 
   setTimeout(() => {
