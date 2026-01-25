@@ -93,7 +93,6 @@ const userName = user?.first_name || 'Александр';
 const userFullName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Александр Тестов';
 
 // Элементы страниц
-const welcomeScreen = document.getElementById('welcomeScreen');
 const mainApp = document.getElementById('mainApp');
 const knowledgeBase = document.getElementById('knowledgeBase');
 const diagnosticsPage = document.getElementById('diagnosticsPage');
@@ -102,7 +101,6 @@ const recommendedTestsPage = document.getElementById('recommendedTestsPage');
 
 // Отладочная информация для локального тестирования
 console.log('=== ОТЛАДКА ЭЛЕМЕНТОВ ===');
-console.log('welcomeScreen:', welcomeScreen);
 console.log('mainApp:', mainApp);
 console.log('Telegram WebApp доступен:', typeof window.Telegram !== 'undefined');
 console.log('========================');
@@ -277,58 +275,7 @@ function updateAllNavigations() {
   });
 }
 
-// Показать приложение после клика на приветственный экран
-if (welcomeScreen) {
-  console.log('Приветственный экран найден, добавляем обработчик клика');
-  
-  // ПРИНУДИТЕЛЬНО СКРЫВАЕМ ГЛАВНОЕ ПРИЛОЖЕНИЕ
-  if (mainApp) {
-    mainApp.style.display = 'none';
-    mainApp.style.visibility = 'hidden';
-    mainApp.style.pointerEvents = 'none';
-    mainApp.style.zIndex = '-1';
-  }
-  
-  let isTransitioning = false; // Флаг для предотвращения повторных переходов
-  
-  function handleWelcomeTransition() {
-    if (isTransitioning) return; // Предотвращаем повторные вызовы
-    
-    isTransitioning = true;
-    console.log('Переход с приветственного экрана!');
-    
-    // СНАЧАЛА показываем главную страницу БЕЗ ЗАДЕРЖКИ
-    if (mainApp) {
-      mainApp.style.display = 'flex';
-      mainApp.style.visibility = 'visible';
-      mainApp.style.pointerEvents = 'all';
-      mainApp.style.zIndex = 'auto';
-      mainApp.classList.add('show');
-    }
-    showPage('main');
-    
-    // ПОТОМ скрываем приветственный экран
-    welcomeScreen.classList.add('fade-out');
-    setTimeout(() => {
-      welcomeScreen.style.display = 'none';
-    }, 800);
-  }
-  
-  // Единый обработчик для всех типов событий
-  welcomeScreen.addEventListener('click', handleWelcomeTransition);
-  welcomeScreen.addEventListener('touchstart', handleWelcomeTransition);
-  
-  // ДЛЯ ЛОКАЛЬНОГО ТЕСТИРОВАНИЯ - автоматический переход через 3 секунды
-  if (typeof window.Telegram === 'undefined') {
-    console.log('Telegram WebApp не найден - локальное тестирование');
-    setTimeout(() => {
-      console.log('Автоматический переход к приложению для локального тестирования');
-      handleWelcomeTransition();
-    }, 3000);
-  }
-} else {
-  console.error('Приветственный экран НЕ НАЙДЕН!');
-}
+
 
 // Обновление имени пользователя и аватарок
 document.querySelector('.welcome-name').textContent = userName;
@@ -2955,3 +2902,43 @@ document.addEventListener('DOMContentLoaded', fixQuickRequestsStyles);
 // Применяем исправления через небольшую задержку
 setTimeout(fixQuickRequestsStyles, 500);
 setTimeout(fixQuickRequestsStyles, 1000);
+// ========================================
+// НОВЫЙ ПРИВЕТСТВЕННЫЙ ЭКРАН - ПОЛНОСТЬЮ ОТДЕЛЬНЫЙ
+// ========================================
+
+const splashScreen = document.getElementById('splashScreen');
+
+if (splashScreen) {
+  console.log('✅ Новый приветственный экран найден');
+  
+  // Обработчик клика
+  splashScreen.addEventListener('click', function() {
+    console.log('🎯 Клик по приветственному экрану');
+    
+    // ПОЛНОСТЬЮ УДАЛЯЕМ приветственный экран
+    splashScreen.classList.add('hidden');
+    
+    // ПОКАЗЫВАЕМ главное приложение
+    if (mainApp) {
+      mainApp.classList.add('active');
+      console.log('✅ Главное приложение показано');
+    }
+  });
+  
+  // Для локального тестирования - автоматический переход
+  if (typeof window.Telegram === 'undefined') {
+    setTimeout(() => {
+      console.log('🔄 Автоматический переход для локального тестирования');
+      splashScreen.classList.add('hidden');
+      if (mainApp) {
+        mainApp.classList.add('active');
+      }
+    }, 3000);
+  }
+} else {
+  console.error('❌ Приветственный экран не найден');
+  // Если нет приветственного экрана - сразу показываем приложение
+  if (mainApp) {
+    mainApp.classList.add('active');
+  }
+}
