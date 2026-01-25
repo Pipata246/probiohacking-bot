@@ -1,14 +1,8 @@
 // Инициализация Telegram Web App
 const tg = window.Telegram.WebApp;
-tg.expand();
+tg.ready();
 tg.enableClosingConfirmation();
 tg.disableVerticalSwipes();
-tg.ready();
-
-if (tg.isExpanded === false) {
-  tg.expand();
-}
-
 tg.setHeaderColor('#4A8B6C');
 tg.BackButton.hide();
 
@@ -210,19 +204,11 @@ function updateAllNavigations() {
 
 // Показать приложение после клика на приветственный экран
 welcomeScreen.addEventListener('click', () => {
-  tg.expand();
-  
   welcomeScreen.classList.add('fade-out');
   setTimeout(() => {
     welcomeScreen.style.display = 'none';
     mainApp.classList.add('show');
     showPage('main');
-    
-    setTimeout(() => {
-      if (!tg.isExpanded) {
-        tg.expand();
-      }
-    }, 100);
   }, 800);
 });
 
