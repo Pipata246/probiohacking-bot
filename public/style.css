@@ -294,10 +294,13 @@ body.chat-overlay-visible .search-container {
 }
 
 /* Быстрые запросы - СТАТИЧНЫЙ блок всегда в 5мм от навигации */
-.quick-requests {
+.quick-requests,
+#quickRequestsBlock,
+section.quick-requests,
+section#quickRequestsBlock {
   /* ПРИНУДИТЕЛЬНОЕ позиционирование */
   position: fixed !important;
-  bottom: calc(12px + 60px + 19px) !important; /* 12px отступ навигации + 60px высота навигации + 19px (5мм) зазор */
+  bottom: 91px !important; /* 12px + 60px + 19px = 91px */
   left: 0 !important;
   right: 0 !important;
   width: 100vw !important;
@@ -315,6 +318,21 @@ body.chat-overlay-visible .search-container {
   display: flex !important;
   flex-direction: column !important;
   flex-shrink: 0 !important;
+}
+
+/* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА - переопределяем любые другие стили */
+body .quick-requests,
+body #quickRequestsBlock,
+.app .quick-requests,
+.app #quickRequestsBlock {
+  position: fixed !important;
+  bottom: 91px !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  height: 280px !important;
+  margin: 0 !important;
+  z-index: 50 !important;
 }
 
 /* Заголовок секции - фиксированный */
