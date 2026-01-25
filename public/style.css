@@ -1288,18 +1288,20 @@ body #quickRequestsBlock,
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 99999;
   opacity: 1;
   transition: opacity 0.8s ease;
   cursor: pointer;
-  /* ПОЛНАЯ ИЗОЛЯЦИЯ - блокируем все клики под экраном */
+  /* АГРЕССИВНАЯ БЛОКИРОВКА ВСЕХ КЛИКОВ */
   pointer-events: all;
+  /* ПРИНУДИТЕЛЬНОЕ ПЕРЕКРЫТИЕ ВСЕГО */
+  overflow: hidden;
 }
 
 .welcome-screen.fade-out {

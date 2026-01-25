@@ -277,6 +277,14 @@ function updateAllNavigations() {
 if (welcomeScreen) {
   console.log('Приветственный экран найден, добавляем обработчик клика');
   
+  // ПРИНУДИТЕЛЬНО СКРЫВАЕМ ГЛАВНОЕ ПРИЛОЖЕНИЕ
+  if (mainApp) {
+    mainApp.style.display = 'none';
+    mainApp.style.visibility = 'hidden';
+    mainApp.style.pointerEvents = 'none';
+    mainApp.style.zIndex = '-1';
+  }
+  
   let isTransitioning = false; // Флаг для предотвращения повторных переходов
   
   function handleWelcomeTransition() {
@@ -286,7 +294,13 @@ if (welcomeScreen) {
     console.log('Переход с приветственного экрана!');
     
     // СНАЧАЛА показываем главную страницу БЕЗ ЗАДЕРЖКИ
-    mainApp.classList.add('show');
+    if (mainApp) {
+      mainApp.style.display = 'flex';
+      mainApp.style.visibility = 'visible';
+      mainApp.style.pointerEvents = 'all';
+      mainApp.style.zIndex = 'auto';
+      mainApp.classList.add('show');
+    }
     showPage('main');
     
     // ПОТОМ скрываем приветственный экран
