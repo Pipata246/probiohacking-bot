@@ -296,22 +296,30 @@ if (welcomeScreen) {
   
   welcomeScreen.addEventListener('click', () => {
     console.log('Клик по приветственному экрану!');
+    
+    // СНАЧАЛА показываем главную страницу БЕЗ ЗАДЕРЖКИ
+    mainApp.classList.add('show');
+    showPage('main');
+    
+    // ПОТОМ скрываем приветственный экран
     welcomeScreen.classList.add('fade-out');
     setTimeout(() => {
       welcomeScreen.style.display = 'none';
-      mainApp.classList.add('show');
-      showPage('main');
     }, 800);
   });
   
   // Дополнительный обработчик для мобильных устройств
   welcomeScreen.addEventListener('touchstart', () => {
     console.log('Touch по приветственному экрану!');
+    
+    // СНАЧАЛА показываем главную страницу БЕЗ ЗАДЕРЖКИ
+    mainApp.classList.add('show');
+    showPage('main');
+    
+    // ПОТОМ скрываем приветственный экран
     welcomeScreen.classList.add('fade-out');
     setTimeout(() => {
       welcomeScreen.style.display = 'none';
-      mainApp.classList.add('show');
-      showPage('main');
     }, 800);
   });
   
@@ -320,11 +328,15 @@ if (welcomeScreen) {
     console.log('Telegram WebApp не найден - локальное тестирование');
     setTimeout(() => {
       console.log('Автоматический переход к приложению для локального тестирования');
+      
+      // СНАЧАЛА показываем главную страницу БЕЗ ЗАДЕРЖКИ
+      mainApp.classList.add('show');
+      showPage('main');
+      
+      // ПОТОМ скрываем приветственный экран
       welcomeScreen.classList.add('fade-out');
       setTimeout(() => {
         welcomeScreen.style.display = 'none';
-        mainApp.classList.add('show');
-        showPage('main');
       }, 800);
     }, 3000);
   }
