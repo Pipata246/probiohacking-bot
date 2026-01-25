@@ -293,24 +293,28 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Быстрые запросы - блок на всю ширину с круглыми углами сверху и снизу */
+/* Быстрые запросы - СТАТИЧНЫЙ блок всегда в 5мм от навигации */
 .quick-requests {
-  padding: clamp(14px, 3.5vw, 18px);
-  background: #2A3F5F;
-  border-radius: clamp(18px, 4.5vw, 24px);
-  overflow: hidden;
+  /* ПРИНУДИТЕЛЬНОЕ позиционирование */
+  position: fixed !important;
+  bottom: calc(12px + 60px + 19px) !important; /* 12px отступ навигации + 60px высота навигации + 19px (5мм) зазор */
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  height: 280px !important;
+  margin: 0 !important;
+  z-index: 50 !important;
+  
+  /* Внешний вид */
+  padding: clamp(14px, 3.5vw, 18px) !important;
+  background: #2A3F5F !important;
+  border-radius: clamp(18px, 4.5vw, 24px) !important;
+  overflow: hidden !important;
+  
+  /* Flexbox */
   display: flex !important;
   flex-direction: column !important;
   flex-shrink: 0 !important;
-  /* СТАТИЧНОЕ позиционирование - заканчивается в 5мм ДО навигации */
-  position: fixed !important;
-  bottom: calc(12px + 60px + 5mm) !important; /* 12px отступ навигации + 60px высота навигации + 5мм зазор */
-  left: 0 !important;
-  right: 0 !important;
-  margin: 0 !important;
-  /* ФИКСИРОВАННАЯ высота для всех устройств */
-  height: 280px !important;
-  z-index: 50 !important;
 }
 
 /* Заголовок секции - фиксированный */
