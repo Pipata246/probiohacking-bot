@@ -27,6 +27,51 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* Убираем отступы сверху от заголовка Telegram */
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Агрессивное скрытие заголовка Telegram */
+.tgme_page_header,
+.tgme_page_action,
+.tg-viewport-header,
+.tg_head_main_wrap,
+.tgme_head_wrap,
+.tg-head,
+.tg-head-main-wrap,
+.tgme_head,
+.tgme_head_main_wrap,
+.tgme_page,
+.tgme_page_wrap,
+.tg_page_head,
+.tg-page-head,
+.telegram-header,
+.tg-header,
+.tgme_page_action_close,
+.tg-close-btn,
+.telegram-close,
+[class*="tg-head"],
+[class*="tgme_head"],
+[class*="tgme_page"],
+header[class*="tg"],
+div[class*="tg-head"],
+div[class*="tgme"] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  z-index: -1 !important;
+  overflow: hidden !important;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
 }
 
 /* Предотвращаем скролл body только когда чат активно отображается */

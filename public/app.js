@@ -2,13 +2,48 @@
 const tg = window.Telegram.WebApp;
 tg.ready();
 
-// ПРОСТОЙ полноэкранный режим - только expand без агрессивных изменений
+// АГРЕССИВНЫЙ полноэкранный режим
 tg.expand();
+
+// Дополнительные методы для полного скрытия заголовка
+if (tg.requestFullscreen) {
+  tg.requestFullscreen();
+}
+
+// Устанавливаем цвет заголовка в цвет фона приложения для маскировки
+tg.setHeaderColor('#3C805B');
+tg.setBackgroundColor('#3C805B');
+
+// Скрываем все элементы интерфейса Telegram
+tg.BackButton.hide();
+if (tg.MainButton) {
+  tg.MainButton.hide();
+}
+if (tg.SettingsButton) {
+  tg.SettingsButton.hide();
+}
 
 tg.enableClosingConfirmation();
 tg.disableVerticalSwipes();
-tg.setHeaderColor('#4A8B6C');
-tg.BackButton.hide();
+
+// Дополнительные попытки разворачивания
+setTimeout(() => {
+  tg.expand();
+  if (tg.requestFullscreen) {
+    tg.requestFullscreen();
+  }
+}, 100);
+
+setTimeout(() => {
+  tg.expand();
+}, 300);
+
+// Обработчик для поддержания полноэкранного режима
+tg.onEvent('viewportChanged', () => {
+  setTimeout(() => {
+    tg.expand();
+  }, 50);
+});
 
 // ========================================
 // ФУНКЦИИ СБРОСА ДАННЫХ ДИАГНОСТИКИ
