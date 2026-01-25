@@ -314,7 +314,7 @@ body #quickRequestsBlock,
   /* ФИКСИРОВАННЫЕ размеры БЕЗ АДАПТИВНОСТИ */
   width: calc(100% - 32px) !important; /* Учитываем отступы по бокам */
   height: 400px !important; /* Фиксированная высота */
-  margin: 38px 16px 100px 16px !important; /* 1см сверху, отступ до навигации, отступы по бокам */
+  margin: 38px 16px 120px 16px !important; /* 1см сверху, отступ от навигации, отступы по бокам */
   padding: 20px !important;
   
   /* ФИКСИРОВАННЫЙ дизайн */
@@ -323,6 +323,16 @@ body #quickRequestsBlock,
   overflow: hidden !important;
   box-sizing: border-box !important;
   flex-shrink: 0 !important;
+}
+
+/* ДОПОЛНИТЕЛЬНАЯ СПЕЦИФИЧНОСТЬ ДЛЯ ПЕРЕОПРЕДЕЛЕНИЯ ЛЮБЫХ КОНФЛИКТОВ */
+body .app .quick-requests,
+body .app #quickRequestsBlock,
+html body .app section.quick-requests,
+html body .app section#quickRequestsBlock {
+  margin: 38px 16px 120px 16px !important;
+  height: 400px !important;
+  position: static !important;
 }
 
 /* ЗАГОЛОВОК */
