@@ -242,14 +242,12 @@ body.chat-overlay-visible .search-container {
 
 /* Карточка рекомендаций - статичная и адаптивная */
 .recommendations-card {
-  margin: 0 clamp(16px, 4vw, 24px) clamp(8px, 1.5vh, 12px);
+  margin: 0 clamp(16px, 4vw, 24px) 0; /* УБИРАЕМ отступ снизу */
   background: #FEF7EC;
   border-radius: clamp(16px, 4vw, 20px);
   padding: clamp(14px, 3.5vw, 18px);
   color: #333;
   flex-shrink: 0; /* Не сжимается */
-  /* Добавляем отступ снизу чтобы не перекрывался фиксированным синим блоком */
-  margin-bottom: calc(280px + 20px) !important; /* Высота синего блока + отступ */
 }
 
 .card-title {
@@ -315,7 +313,8 @@ body #quickRequestsBlock,
   /* ФИКСИРОВАННЫЕ размеры - БЕЗ АДАПТИВНОСТИ */
   width: 100% !important;
   height: 400px !important; /* Фиксированная высота */
-  margin: 0 0 20px 0 !important; /* 20px = примерно 5мм от навигации */
+  margin: 0 !important; /* УБИРАЕМ ВСЕ отступы сверху */
+  margin-bottom: 20px !important; /* Только отступ снизу для навигации */
   padding: 20px !important; /* Фиксированный отступ */
   
   /* ФИКСИРОВАННЫЙ дизайн */
