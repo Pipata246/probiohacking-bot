@@ -87,6 +87,13 @@ const diagnosticsPage = document.getElementById('diagnosticsPage');
 const chatOverlay = document.getElementById('chatOverlay');
 const recommendedTestsPage = document.getElementById('recommendedTestsPage');
 
+// Отладочная информация для локального тестирования
+console.log('=== ОТЛАДКА ЭЛЕМЕНТОВ ===');
+console.log('welcomeScreen:', welcomeScreen);
+console.log('mainApp:', mainApp);
+console.log('Telegram WebApp доступен:', typeof window.Telegram !== 'undefined');
+console.log('========================');
+
 // ========================================
 // СИСТЕМА НАВИГАЦИИ И СОСТОЯНИЙ
 // ========================================
@@ -242,14 +249,46 @@ function updateAllNavigations() {
 }
 
 // Показать приложение после клика на приветственный экран
-welcomeScreen.addEventListener('click', () => {
-  welcomeScreen.classList.add('fade-out');
-  setTimeout(() => {
-    welcomeScreen.style.display = 'none';
-    mainApp.classList.add('show');
-    showPage('main');
-  }, 800);
-});
+if (welcomeScreen) {
+  console.log('Приветственный экран найден, добавляем обработчик клика');
+  
+  welcomeScreen.addEventListener('click', () => {
+    console.log('Клик по приветственному экрану!');
+    welcomeScreen.classList.add('fade-out');
+    setTimeout(() => {
+      welcomeScreen.style.display = 'none';
+      mainApp.classList.add('show');
+      showPage('main');
+    }, 800);
+  });
+  
+  // Дополнительный обработчик для мобильных устройств
+  welcomeScreen.addEventListener('touchstart', () => {
+    console.log('Touch по приветственному экрану!');
+    welcomeScreen.classList.add('fade-out');
+    setTimeout(() => {
+      welcomeScreen.style.display = 'none';
+      mainApp.classList.add('show');
+      showPage('main');
+    }, 800);
+  });
+  
+  // ДЛЯ ЛОКАЛЬНОГО ТЕСТИРОВАНИЯ - автоматический переход через 3 секунды
+  if (typeof window.Telegram === 'undefined') {
+    console.log('Telegram WebApp не найден - локальное тестирование');
+    setTimeout(() => {
+      console.log('Автоматический переход к приложению для локального тестирования');
+      welcomeScreen.classList.add('fade-out');
+      setTimeout(() => {
+        welcomeScreen.style.display = 'none';
+        mainApp.classList.add('show');
+        showPage('main');
+      }, 800);
+    }, 3000);
+  }
+} else {
+  console.error('Приветственный экран НЕ НАЙДЕН!');
+}
 
 // Обновление имени пользователя и аватарок
 document.querySelector('.welcome-name').textContent = userName;
