@@ -246,6 +246,8 @@ body.chat-overlay-visible .search-container {
   padding: clamp(14px, 3.5vw, 18px);
   color: #333;
   flex-shrink: 0; /* Не сжимается */
+  /* Добавляем отступ снизу чтобы не перекрывался фиксированным синим блоком */
+  margin-bottom: calc(280px + 20px) !important; /* Высота синего блока + отступ */
 }
 
 .card-title {
@@ -295,14 +297,20 @@ body.chat-overlay-visible .search-container {
 .quick-requests {
   padding: clamp(14px, 3.5vw, 18px);
   background: #2A3F5F;
-  margin: 0 0 clamp(12px, 2.5vh, 16px) 0; /* УМЕНЬШЕННЫЙ отступ снизу для лучшего масштабирования */
   border-radius: clamp(18px, 4.5vw, 24px);
   overflow: hidden;
   display: flex !important;
   flex-direction: column !important;
-  /* ОПТИМИЗИРОВАННАЯ адаптивная высота для лучшего отображения */
-  height: clamp(220px, 38vh, 300px) !important;
   flex-shrink: 0 !important;
+  /* СТАТИЧНОЕ позиционирование - ВСЕГДА 5мм от навигации */
+  position: fixed !important;
+  bottom: calc(60px + 12px + 5mm) !important; /* 60px навигация + 12px отступ + 5мм */
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 !important;
+  /* ФИКСИРОВАННАЯ высота для всех устройств */
+  height: 280px !important;
+  z-index: 50 !important;
 }
 
 /* Заголовок секции - фиксированный */
