@@ -1,14 +1,10 @@
 // Инициализация Telegram Web App
 const tg = window.Telegram?.WebApp || {
-  // Заглушки для локального тестирования
+  // Заглушки для локального тестирования - ТОЛЬКО ПОДДЕРЖИВАЕМЫЕ МЕТОДЫ
   ready: () => console.log('TG: ready (заглушка)'),
   expand: () => console.log('TG: expand (заглушка)'),
-  enableClosingConfirmation: () => console.log('TG: enableClosingConfirmation (заглушка)'),
-  setHeaderColor: (color) => console.log('TG: setHeaderColor', color, '(заглушка)'),
-  setBackgroundColor: (color) => console.log('TG: setBackgroundColor', color, '(заглушка)'),
   BackButton: { hide: () => console.log('TG: BackButton.hide (заглушка)') },
   MainButton: { hide: () => console.log('TG: MainButton.hide (заглушка)') },
-  SettingsButton: { hide: () => console.log('TG: SettingsButton.hide (заглушка)') },
   onEvent: (event, callback) => console.log('TG: onEvent', event, '(заглушка)'),
   initDataUnsafe: { user: { first_name: 'Тест', last_name: 'Пользователь' } }
 };
@@ -19,21 +15,25 @@ tg.ready();
 if (window.Telegram?.WebApp) {
   tg.expand();
 
-  // Устанавливаем цвет заголовка в цвет фона приложения для маскировки
-  tg.setHeaderColor('#3C805B');
-  tg.setBackgroundColor('#3C805B');
-
-  // Скрываем все элементы интерфейса Telegram
-  tg.BackButton.hide();
+  // УБИРАЕМ ВСЕ НЕПОДДЕРЖИВАЕМЫЕ МЕТОДЫ В ВЕРСИИ 6.0
+  // НЕ ИСПОЛЬЗУЕМ: setHeaderColor, setBackgroundColor, SettingsButton, enableClosingConfirmation
+  
+  // Скрываем только поддерживаемые элементы
+  if (tg.BackButton) {
+    try {
+      tg.BackButton.hide();
+    } catch (e) {
+      console.log('BackButton.hide не поддерживается:', e.message);
+    }
+  }
+  
   if (tg.MainButton) {
-    tg.MainButton.hide();
+    try {
+      tg.MainButton.hide();
+    } catch (e) {
+      console.log('MainButton.hide не поддерживается:', e.message);
+    }
   }
-  if (tg.SettingsButton) {
-    tg.SettingsButton.hide();
-  }
-
-  tg.enableClosingConfirmation();
-  // УБИРАЕМ disableVerticalSwipes() - не поддерживается в версии 6.0
 
   // Дополнительные попытки разворачивания
   setTimeout(() => {
@@ -45,11 +45,15 @@ if (window.Telegram?.WebApp) {
   }, 300);
 
   // Обработчик для поддержания полноэкранного режима
-  tg.onEvent('viewportChanged', () => {
-    setTimeout(() => {
-      tg.expand();
-    }, 50);
-  });
+  try {
+    tg.onEvent('viewportChanged', () => {
+      setTimeout(() => {
+        tg.expand();
+      }, 50);
+    });
+  } catch (e) {
+    console.log('onEvent не поддерживается:', e.message);
+  }
 } else {
   console.log('Локальное тестирование - Telegram WebApp недоступен');
 }
