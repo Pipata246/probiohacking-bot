@@ -295,31 +295,30 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Быстрые запросы - РАСТЯГИВАЕТСЯ до навигации с отступом 5мм */
+/* Быстрые запросы - СТАТИЧНЫЙ блок с фиксированной высотой */
 .quick-requests,
 #quickRequestsBlock,
 section.quick-requests,
 section#quickRequestsBlock {
-  /* ВОЗВРАЩАЕМ в нормальный поток документа */
+  /* СТАТИЧНОЕ позиционирование */
   position: static !important;
   
-  /* РАСТЯГИВАЕМ до конца с отступом от навигации */
-  flex: 1 !important; /* Занимает все доступное место */
-  margin-bottom: 91px !important; /* 5мм от навигации */
+  /* ФИКСИРОВАННАЯ высота - рассчитана так чтобы заканчиваться в 5мм от навигации */
+  height: 350px !important; /* Фиксированная высота на всех устройствах */
+  margin: 0 !important;
+  margin-bottom: 19px !important; /* 5мм = 19px отступ от навигации */
   
   /* Внешний вид */
-  padding: clamp(14px, 3.5vw, 18px) !important;
+  padding: 18px !important; /* Фиксированный padding */
   background: #2A3F5F !important;
-  border-radius: clamp(18px, 4.5vw, 24px) !important;
+  border-radius: 24px !important; /* Фиксированный радиус */
   overflow: hidden !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  margin-top: 0 !important;
   width: 100% !important;
   
   /* Flexbox */
   display: flex !important;
   flex-direction: column !important;
+  flex-shrink: 0 !important; /* НЕ сжимается */
 }
 
 /* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА - переопределяем любые другие стили */
@@ -328,8 +327,9 @@ body #quickRequestsBlock,
 .app .quick-requests,
 .app #quickRequestsBlock {
   position: static !important;
-  flex: 1 !important;
-  margin-bottom: 91px !important;
+  height: 350px !important;
+  margin-bottom: 19px !important;
+  flex-shrink: 0 !important;
 }
 
 /* Заголовок секции - фиксированный */
