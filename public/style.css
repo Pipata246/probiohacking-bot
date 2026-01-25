@@ -94,10 +94,15 @@ body.chat-overlay-visible {
   /* Свойства для анимации появления */
   opacity: 0;
   transition: opacity 0.8s ease;
+  /* ПОЛНОСТЬЮ СКРЫВАЕМ ПОКА НЕ ДОБАВЛЕН КЛАСС show */
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .app.show {
   opacity: 1;
+  visibility: visible;
+  pointer-events: all;
 }
 
 /* Хедер - унифицированный для всех страниц */
@@ -1293,7 +1298,8 @@ body #quickRequestsBlock,
   opacity: 1;
   transition: opacity 0.8s ease;
   cursor: pointer;
-  /* Убираем отступы - полный экран */
+  /* ПОЛНАЯ ИЗОЛЯЦИЯ - блокируем все клики под экраном */
+  pointer-events: all;
 }
 
 .welcome-screen.fade-out {
