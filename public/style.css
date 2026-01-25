@@ -294,10 +294,10 @@ body.chat-overlay-visible .search-container {
 }
 
 /* ========================================
-   БЫСТРЫЕ ЗАПРОСЫ - СТАТИЧНЫЙ БЛОК
+   БЫСТРЫЕ ЗАПРОСЫ - ОКОНЧАТЕЛЬНАЯ ВЕРСИЯ
    ======================================== */
 
-/* ОСНОВНОЙ БЛОК - СТАТИЧНЫЙ, ФИКСИРОВАННЫЙ НА ВСЕХ УСТРОЙСТВАХ */
+/* ОСНОВНОЙ БЛОК - БЕЗ ОТСТУПА СНИЗУ */
 .quick-requests,
 #quickRequestsBlock,
 section.quick-requests,
@@ -314,7 +314,7 @@ body #quickRequestsBlock,
   /* ФИКСИРОВАННЫЕ размеры БЕЗ АДАПТИВНОСТИ */
   width: calc(100% - 32px) !important; /* Учитываем отступы по бокам */
   height: 400px !important; /* Фиксированная высота */
-  margin: 38px 16px 150px 16px !important; /* 1см сверху, БОЛЬШИЙ отступ от навигации, отступы по бокам */
+  margin: 38px 16px 0 16px !important; /* 1см сверху, НЕТ ОТСТУПА СНИЗУ, отступы по бокам */
   padding: 20px !important;
   
   /* ФИКСИРОВАННЫЙ дизайн */
@@ -4148,41 +4148,7 @@ body #quickRequestsBlock,
   }
 }
 
-/* ========================================
-   КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ - МАКСИМАЛЬНАЯ СПЕЦИФИЧНОСТЬ
-   ======================================== */
 
-/* ПРИНУДИТЕЛЬНОЕ ПЕРЕОПРЕДЕЛЕНИЕ ВСЕХ СТИЛЕЙ БЛОКА БЫСТРЫХ ЗАПРОСОВ */
-html body div.app section.quick-requests,
-html body div.app section#quickRequestsBlock,
-html body .app section.quick-requests,
-html body .app section#quickRequestsBlock,
-body div.app section.quick-requests,
-body div.app section#quickRequestsBlock,
-div.app section.quick-requests,
-div.app section#quickRequestsBlock {
-  margin: 38px 16px 150px 16px !important;
-  height: 400px !important;
-  width: calc(100% - 32px) !important;
-  position: static !important;
-  display: flex !important;
-  flex-direction: column !important;
-  background: #2A3F5F !important;
-  border-radius: 20px !important;
-  padding: 20px !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-  flex-shrink: 0 !important;
-}
-
-/* ДОПОЛНИТЕЛЬНАЯ ЗАЩИТА */
-section.quick-requests,
-section#quickRequestsBlock {
-  margin-top: 38px !important;
-  margin-bottom: 150px !important;
-  margin-left: 16px !important;
-  margin-right: 16px !important;
-}
 /* ========================================
    НОВЫЙ ПРИВЕТСТВЕННЫЙ ЭКРАН - ПОЛНОСТЬЮ ОТДЕЛЬНЫЙ
    ======================================== */
