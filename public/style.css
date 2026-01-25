@@ -388,6 +388,8 @@ body.chat-overlay-visible .search-container {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* ТОЧНО ТАКИЕ ЖЕ отступы как везде */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 
@@ -431,7 +433,8 @@ body.chat-overlay-visible .search-container {
   padding: 0;
   box-sizing: border-box;
   overflow: hidden;
-  /* УБИРАЕМ padding-bottom - он создавал огромный отступ */
+  /* ТОЧНО ТАКИЕ ЖЕ отступы как везде */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 #surveyStep.hidden {
@@ -452,6 +455,8 @@ body.chat-overlay-visible .search-container {
   box-sizing: border-box;
   overflow-y: auto;
   padding-bottom: 120px; /* Отступ для нижней навигации */
+  /* ТОЧНО ТАКИЕ ЖЕ отступы как везде */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px + clamp(16px, 4vw, 24px)) !important;
 }
 
 #personalDataStep.hidden {
@@ -1088,6 +1093,8 @@ body.chat-overlay-visible .search-container {
   display: flex;
   flex-direction: column;
   will-change: transform; /* Оптимизация для GPU */
+  /* ТОЧНО ТАКИЕ ЖЕ отступы как везде */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 .sidebar.active {
