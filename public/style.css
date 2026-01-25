@@ -4202,6 +4202,14 @@ section#quickRequestsBlock {
   /* ПОЛНАЯ ИЗОЛЯЦИЯ */
   pointer-events: all;
   user-select: none;
+  /* АНИМАЦИЯ */
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+
+.splash-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .splash-screen.hidden {
@@ -4233,7 +4241,20 @@ section#quickRequestsBlock {
 .splash-continue {
   font-size: 14px;
   color: #FEF7EC;
-  opacity: 0.8;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 1.2s ease 2s forwards;
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 0.8;
+    transform: translateY(0);
+  }
 }
 
 /* ГЛАВНОЕ ПРИЛОЖЕНИЕ ИЗНАЧАЛЬНО СКРЫТО */
@@ -4248,8 +4269,12 @@ section#quickRequestsBlock {
   padding-bottom: 0;
   box-sizing: border-box;
   position: relative !important;
+  /* АНИМАЦИЯ ПОЯВЛЕНИЯ */
+  opacity: 0;
+  transition: opacity 0.8s ease;
 }
 
 .app.active {
   display: flex !important;
+  opacity: 1;
 }
