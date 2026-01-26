@@ -27,61 +27,11 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  /* УБИРАЕМ отступ сверху - приложение должно начинаться сразу под заголовком Telegram */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram в полноэкранном режиме */
+  padding-top: env(safe-area-inset-top, 44px);
 }
 
-/* Агрессивное скрытие заголовка Telegram */
-.tgme_page_header,
-.tgme_page_action,
-.tg-viewport-header,
-.tg_head_main_wrap,
-.tgme_head_wrap,
-.tg-head,
-.tg-head-main-wrap,
-.tgme_head,
-.tgme_head_main_wrap,
-.tgme_page,
-.tgme_page_wrap,
-.tg_page_head,
-.tg-page-head,
-.telegram-header,
-.tg-header,
-.tgme_page_action_close,
-.tg-close-btn,
-.telegram-close,
-[class*="tg-head"],
-[class*="tgme_head"],
-[class*="tgme_page"],
-header[class*="tg"],
-div[class*="tg-head"],
-div[class*="tgme"],
-/* НОВЫЕ селекторы для более агрессивного скрытия */
-.tg-app-header,
-.tg-mini-app-header,
-.telegram-mini-app-header,
-.webapp-header,
-.mini-app-header,
-[class*="header"][class*="telegram"],
-[class*="header"][class*="tg"],
-[data-testid*="header"],
-[data-testid*="toolbar"] {
-  display: none !important;
-  visibility: hidden !important;
-  height: 0 !important;
-  opacity: 0 !important;
-  position: absolute !important;
-  top: -9999px !important;
-  left: -9999px !important;
-  z-index: -1 !important;
-  overflow: hidden !important;
-  max-height: 0 !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-}
+/* НЕ скрываем заголовок Telegram в полноэкранном режиме - он нужен для кнопки Close */
 
 /* Предотвращаем скролл body только когда чат активно отображается */
 body.chat-overlay-visible {
@@ -96,7 +46,8 @@ body.chat-overlay-visible {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding-top: 0; /* УБИРАЕМ отступ сверху для полноэкранного режима */
+  /* ОТСТУП СВЕРХУ для кнопки Close и элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
   padding-bottom: 80px; /* УМЕНЬШАЕМ отступ снизу чтобы блок был ближе к навигации */
   box-sizing: border-box;
   position: relative !important;
@@ -509,7 +460,7 @@ body.chat-overlay-visible .search-container {
   line-height: 1.3;
 }
 
-/* Форма диагностики - точно как на скриншоте */
+/* Диагностическая форма - точно как на скриншоте */
 .diagnostic-form-overlay {
   position: fixed;
   top: 0;
@@ -521,8 +472,8 @@ body.chat-overlay-visible .search-container {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как везде */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 
@@ -566,8 +517,8 @@ body.chat-overlay-visible .search-container {
   padding: 0;
   box-sizing: border-box;
   overflow: hidden;
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как везде */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 #surveyStep.hidden {
@@ -588,8 +539,8 @@ body.chat-overlay-visible .search-container {
   box-sizing: border-box;
   overflow-y: auto;
   padding-bottom: 120px; /* Отступ для нижней навигации */
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как везде */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 #personalDataStep.hidden {
@@ -1176,8 +1127,8 @@ body.chat-overlay-visible .search-container {
   display: flex;
   flex-direction: column;
   will-change: transform; /* Оптимизация для GPU */
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как везде */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 .sidebar.active {
@@ -1343,8 +1294,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как на главной */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 .recommended-tests-page.active {
@@ -1577,8 +1528,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как на главной */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 .knowledge-base.active {
@@ -1597,8 +1548,8 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden; /* Убираем скролл у контейнера */
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как на главной */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 .chat-overlay.active {
@@ -1941,8 +1892,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как на главной */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 .diagnostics-page.active {
@@ -3350,8 +3301,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как на главной */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 .health-page.active {
@@ -3660,8 +3611,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  /* ТОЧНО ТАКИЕ ЖЕ отступы как на главной */
-  padding-top: 0 !important;
+  /* ОТСТУП СВЕРХУ для элементов управления Telegram */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px);
 }
 
 .diary-page.active {

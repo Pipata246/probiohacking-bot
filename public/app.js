@@ -11,13 +11,10 @@ const tg = window.Telegram?.WebApp || {
 
 tg.ready();
 
-// АГРЕССИВНЫЙ полноэкранный режим - только если Telegram доступен
+// ПРАВИЛЬНЫЙ полноэкранный режим - только если Telegram доступен
 if (window.Telegram?.WebApp) {
   tg.expand();
 
-  // УБИРАЕМ ВСЕ НЕПОДДЕРЖИВАЕМЫЕ МЕТОДЫ В ВЕРСИИ 6.0
-  // НЕ ИСПОЛЬЗУЕМ: setHeaderColor, setBackgroundColor, SettingsButton, enableClosingConfirmation
-  
   // Скрываем только поддерживаемые элементы
   if (tg.BackButton) {
     try {
@@ -35,7 +32,7 @@ if (window.Telegram?.WebApp) {
     }
   }
 
-  // БОЛЕЕ АГРЕССИВНЫЕ попытки разворачивания
+  // Попытки разворачивания для стабильности
   setTimeout(() => {
     tg.expand();
   }, 100);
