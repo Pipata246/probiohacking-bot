@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content, height=device-height">
     <title>PROBIOHACKING</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -61,156 +61,156 @@
             <button class="create-program-btn">Создание программу</button>
         </section>
 
-        <!-- БЛОК БЫСТРЫХ ЗАПРОСОВ С ПРАВИЛЬНЫМИ ОТСТУПАМИ -->
-        <div class="quick-queries-section">
-            <h2 class="quick-queries-title">Быстрые запросы</h2>
-            <div class="quick-queries-grid">
-                <button class="quick-query-card">
-                    <div class="quick-query-icon">
+        <!-- НОВЫЙ БЛОК ЗАПРОСОВ БЕЗ КОНФЛИКТОВ -->
+        <section class="queries-widget">
+            <h2 class="queries-widget-title">Быстрые запросы</h2>
+            <div class="queries-widget-list">
+                <div class="query-card" data-query="0">
+                    <div class="query-card-icon">
                         <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                             <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <div class="quick-query-content">
-                        <h3 class="quick-query-title">Энергия и тонус</h3>
-                        <p class="quick-query-description">Как повысить жизненную энергию и избавиться от хронической усталости?</p>
+                    <div class="query-card-text">
+                        <h3 class="query-card-name">Энергия и тонус</h3>
+                        <p class="query-card-desc">Как повысить жизненную энергию и избавиться от хронической усталости?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-query-card">
-                    <div class="quick-query-icon">
+                <div class="query-card" data-query="1">
+                    <div class="query-card-icon">
                         <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                             <rect x="12" y="8" width="8" height="16" rx="2" stroke="#000" stroke-width="2"/>
                             <rect x="14" y="14" width="4" height="6" fill="#000"/>
                         </svg>
                     </div>
-                    <div class="quick-query-content">
-                        <h3 class="quick-query-title">Память и ясность ума</h3>
-                        <p class="quick-query-description">Как улучшить память, концентрацию и когнитивные функции?</p>
+                    <div class="query-card-text">
+                        <h3 class="query-card-name">Память и ясность ума</h3>
+                        <p class="query-card-desc">Как улучшить память, концентрацию и когнитивные функции?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-query-card">
-                    <div class="quick-query-icon">
+                <div class="query-card" data-query="2">
+                    <div class="query-card-icon">
                         <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                             <circle cx="16" cy="12" r="4" stroke="#000" stroke-width="2"/>
                             <path d="M10 24C10 20 12 18 16 18C20 18 22 20 22 24" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                             <path d="M22 10L26 6M10 10L6 6" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <div class="quick-query-content">
-                        <h3 class="quick-query-title">Стресс и баланс</h3>
-                        <p class="quick-query-description">Как повысить стрессоустойчивость и эмоциональную стабильность?</p>
+                    <div class="query-card-text">
+                        <h3 class="query-card-name">Стресс и баланс</h3>
+                        <p class="query-card-desc">Как повысить стрессоустойчивость и эмоциональную стабильность?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-query-card">
-                    <div class="quick-query-icon">
+                <div class="query-card" data-query="3">
+                    <div class="query-card-icon">
                         <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                             <path d="M16 4L20 12L28 12L22 18L24 26L16 22L8 26L10 18L4 12L12 12L16 4Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <div class="quick-query-content">
-                        <h3 class="quick-query-title">Иммунитет и защита</h3>
-                        <p class="quick-query-description">Как укрепить естественный иммунитет и снизить частоту заболеваний?</p>
+                    <div class="query-card-text">
+                        <h3 class="query-card-name">Иммунитет и защита</h3>
+                        <p class="query-card-desc">Как укрепить естественный иммунитет и снизить частоту заболеваний?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-query-card">
-                    <div class="quick-query-icon">
+                <div class="query-card" data-query="4">
+                    <div class="query-card-icon">
                         <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                             <circle cx="16" cy="16" r="8" stroke="#000" stroke-width="2"/>
                             <path d="M12 12L20 20M20 12L12 20" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                     </div>
-                    <div class="quick-query-content">
-                        <h3 class="quick-query-title">Суставы и подвижность</h3>
-                        <p class="quick-query-description">Как поддержать здоровье суставов, гибкость и легкость движений?</p>
+                    <div class="query-card-text">
+                        <h3 class="query-card-name">Суставы и подвижность</h3>
+                        <p class="query-card-desc">Как поддержать здоровье суставов, гибкость и легкость движений?</p>
                     </div>
-                </button>
+                </div>
 
-                <button class="quick-query-card">
-                    <div class="quick-query-icon">
+                <div class="query-card" data-query="5">
+                    <div class="query-card-icon">
                         <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                             <path d="M8 16L16 8L24 16M16 8V24" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
-                    <div class="quick-query-content">
-                        <h3 class="quick-query-title">Пищеварение и метаболизм</h3>
-                        <p class="quick-query-description">Как наладить работу ЖКТ, избавиться от дискомфорта?</p>
+                    <div class="query-card-text">
+                        <h3 class="query-card-name">Пищеварение и метаболизм</h3>
+                        <p class="query-card-desc">Как наладить работу ЖКТ, избавиться от дискомфорта?</p>
                     </div>
-                </button>
+                </div>
 
-                <!-- Для спортсменов -->
-                <div class="sports-section">
-                    <h3 class="sports-section-title">Для спортсменов</h3>
+                <!-- Спортивные запросы -->
+                <div class="sports-queries-section">
+                    <h3 class="sports-queries-title">Для спортсменов</h3>
                     
-                    <button class="quick-query-card">
-                        <div class="quick-query-icon">
+                    <div class="query-card" data-query="6">
+                        <div class="query-card-icon">
                             <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                                 <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <div class="quick-query-content">
-                            <h3 class="quick-query-title">Восстановление мышц и энергия</h3>
-                            <p class="quick-query-description">Как ускорить восстановление мышц и сократить усталость после нагрузок?</p>
+                        <div class="query-card-text">
+                            <h3 class="query-card-name">Восстановление мышц и энергия</h3>
+                            <p class="query-card-desc">Как ускорить восстановление мышц и сократить усталость после нагрузок?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-query-card">
-                        <div class="quick-query-icon">
+                    <div class="query-card" data-query="7">
+                        <div class="query-card-icon">
                             <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                                 <rect x="12" y="8" width="8" height="16" rx="2" stroke="#000" stroke-width="2"/>
                                 <rect x="14" y="14" width="4" height="6" fill="#000"/>
                             </svg>
                         </div>
-                        <div class="quick-query-content">
-                            <h3 class="quick-query-title">Сила и мышечная масса</h3>
-                            <p class="quick-query-description">Как повысить силовые показатели и укрепить соединительные ткани?</p>
+                        <div class="query-card-text">
+                            <h3 class="query-card-name">Сила и мышечная масса</h3>
+                            <p class="query-card-desc">Как повысить силовые показатели и укрепить соединительные ткани?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-query-card">
-                        <div class="quick-query-icon">
+                    <div class="query-card" data-query="8">
+                        <div class="query-card-icon">
                             <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                                 <path d="M8 16C8 16 12 12 16 12C20 12 24 16 24 16M16 12V24" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                             </svg>
                         </div>
-                        <div class="quick-query-content">
-                            <h3 class="quick-query-title">Выносливость и оксигенация</h3>
-                            <p class="quick-query-description">Как улучшить использование кислорода и отсрочить утомления?</p>
+                        <div class="query-card-text">
+                            <h3 class="query-card-name">Выносливость и оксигенация</h3>
+                            <p class="query-card-desc">Как улучшить использование кислорода и отсрочить утомления?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-query-card">
-                        <div class="quick-query-icon">
+                    <div class="query-card" data-query="9">
+                        <div class="query-card-icon">
                             <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                                 <circle cx="16" cy="16" r="6" stroke="#000" stroke-width="2"/>
                                 <path d="M16 10V6M16 26V22M22 16H26M6 16H10" stroke="#000" stroke-width="2" stroke-linecap="round"/>
                             </svg>
                         </div>
-                        <div class="quick-query-content">
-                            <h3 class="quick-query-title">Фокус и реакция</h3>
-                            <p class="quick-query-description">Как усилить скорость реакции и стрессоустойчивость на соревнованиях?</p>
+                        <div class="query-card-text">
+                            <h3 class="query-card-name">Фокус и реакция</h3>
+                            <p class="query-card-desc">Как усилить скорость реакции и стрессоустойчивость на соревнованиях?</p>
                         </div>
-                    </button>
+                    </div>
 
-                    <button class="quick-query-card">
-                        <div class="quick-query-icon">
+                    <div class="query-card" data-query="10">
+                        <div class="query-card-icon">
                             <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
                                 <circle cx="16" cy="16" r="4" stroke="#000" stroke-width="2"/>
                                 <path d="M16 8L20 12L16 16L12 12L16 8Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                                 <path d="M16 16L20 20L16 24L12 20L16 16Z" stroke="#000" stroke-width="2" stroke-linejoin="round"/>
                             </svg>
                         </div>
-                        <div class="quick-query-content">
-                            <h3 class="quick-query-title">Суставы и связки</h3>
-                            <p class="quick-query-description">Как укрепить суставы, связки и предотвратить травмы при высоких нагрузках?</p>
+                        <div class="query-card-text">
+                            <h3 class="query-card-name">Суставы и связки</h3>
+                            <p class="query-card-desc">Как укрепить суставы, связки и предотвратить травмы при высоких нагрузках?</p>
                         </div>
-                    </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Нижняя навигация -->
         <nav class="bottom-nav">
@@ -1718,6 +1718,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>
