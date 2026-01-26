@@ -313,13 +313,13 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Новый синий блок быстрых запросов - ПОЛНОСТЬЮ СТАТИЧНЫЙ */
+/* Новый синий блок быстрых запросов - МАКСИМАЛЬНО КОМПАКТНЫЙ */
 .quick-requests-block {
   /* ФИКСИРОВАННЫЕ отступы - одинаково на всех устройствах */
   margin: 8px 0 10px; /* 8px сверху, 0 по бокам (касается краев), 10px снизу */
   
-  /* ФИКСИРОВАННАЯ высота - одинаково на всех устройствах */
-  height: 300px; /* Фиксированная высота */
+  /* ОЧЕНЬ МАЛЕНЬКАЯ высота - помещается на любом экране */
+  height: 200px; /* УМЕНЬШАЕМ с 300px до 200px */
   max-height: none; /* Убираем адаптивную максимальную высоту */
   
   /* Синий фон и скругление */
@@ -335,8 +335,8 @@ body.chat-overlay-visible .search-container {
   /* Убираем любые переходы */
   transition: none;
   
-  /* Фиксированные внутренние отступы */
-  padding: 20px;
+  /* УМЕНЬШЕННЫЕ внутренние отступы */
+  padding: 12px; /* УМЕНЬШАЕМ с 20px до 12px */
   
   /* Флекс для вертикального расположения */
   display: flex;
@@ -345,12 +345,12 @@ body.chat-overlay-visible .search-container {
 
 /* УБИРАЕМ мобильную версию - везде одинаково */
 
-/* Заголовок быстрых запросов - фиксированный */
+/* Заголовок быстрых запросов - компактный */
 .quick-requests-title {
   color: #FFFFFF;
-  font-size: 18px; /* Фиксированный размер */
+  font-size: 16px; /* УМЕНЬШАЕМ с 18px до 16px */
   font-weight: 600;
-  margin: 0 0 16px 0; /* Фиксированные отступы */
+  margin: 0 0 10px 0; /* УМЕНЬШАЕМ отступ с 16px до 10px */
   text-align: left;
 }
 
@@ -365,14 +365,14 @@ body.chat-overlay-visible .search-container {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Контейнер со скроллом - фиксированный */
+/* Контейнер со скроллом - компактный */
 .quick-requests-scroll {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 8px; /* ФИКСИРОВАННЫЙ зазор между карточками - одинаково везде */
+  gap: 4px; /* УМЕНЬШАЕМ зазор с 8px до 4px */
   
   /* Стилизация скроллбара */
   scrollbar-width: thin;
@@ -398,22 +398,22 @@ body.chat-overlay-visible .search-container {
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* Карточки быстрых запросов - ПОЛНОСТЬЮ ФИКСИРОВАННЫЕ */
+/* Карточки быстрых запросов - МАКСИМАЛЬНО КОМПАКТНЫЕ */
 .quick-request-card {
   background: #FFFFFF; /* Белый фон */
-  border-radius: 12px;
-  padding: 12px 14px; /* Фиксированные отступы - одинаково везде */
+  border-radius: 10px; /* УМЕНЬШАЕМ с 12px до 10px */
+  padding: 8px 10px; /* УМЕНЬШАЕМ отступы с 12px 14px до 8px 10px */
   display: flex;
   align-items: center;
-  gap: 10px; /* Фиксированный зазор */
+  gap: 8px; /* УМЕНЬШАЕМ зазор с 10px до 8px */
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  height: 65px; /* ФИКСИРОВАННАЯ высота - одинаково на всех устройствах */
-  min-height: 65px;
-  max-height: 65px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* УМЕНЬШАЕМ тень */
+  height: 45px; /* УМЕНЬШАЕМ высоту с 65px до 45px */
+  min-height: 45px;
+  max-height: 45px;
 }
 
 /* УБИРАЕМ мобильную версию карточек - везде одинаково */
@@ -429,12 +429,12 @@ body.chat-overlay-visible .search-container {
   background: #F1F3F4;
 }
 
-/* Иконка в карточке - очень компактная */
+/* Иконка в карточке - МАКСИМАЛЬНО компактная */
 .quick-request-icon {
-  width: 32px; /* Еще меньше */
-  height: 32px; /* Еще меньше */
+  width: 24px; /* УМЕНЬШАЕМ с 32px до 24px */
+  height: 24px; /* УМЕНЬШАЕМ с 32px до 24px */
   background: #F3F4F6;
-  border-radius: 6px; /* Меньше скругление */
+  border-radius: 4px; /* УМЕНЬШАЕМ скругление с 6px до 4px */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -442,8 +442,8 @@ body.chat-overlay-visible .search-container {
 }
 
 .quick-request-icon svg {
-  width: 16px; /* Очень маленькая иконка */
-  height: 16px; /* Очень маленькая иконка */
+  width: 12px; /* УМЕНЬШАЕМ с 16px до 12px */
+  height: 12px; /* УМЕНЬШАЕМ с 16px до 12px */
 }
 
 /* Контент карточки */
@@ -455,24 +455,24 @@ body.chat-overlay-visible .search-container {
   overflow: hidden; /* Обрезаем лишний текст */
 }
 
-/* Заголовок карточки - очень компактный */
+/* Заголовок карточки - МАКСИМАЛЬНО компактный */
 .quick-request-title {
   color: #1F2937;
-  font-size: 13px; /* Еще меньше */
+  font-size: 11px; /* УМЕНЬШАЕМ с 13px до 11px */
   font-weight: 600;
-  line-height: 1.1; /* Плотнее */
+  line-height: 1.0; /* УМЕНЬШАЕМ с 1.1 до 1.0 */
   margin: 0;
   white-space: nowrap; /* Не переносим */
   overflow: hidden;
   text-overflow: ellipsis; /* Троеточие если не помещается */
 }
 
-/* Подзаголовок карточки - очень компактный */
+/* Подзаголовок карточки - МАКСИМАЛЬНО компактный */
 .quick-request-subtitle {
   color: #6B7280;
-  font-size: 11px; /* Очень маленький */
+  font-size: 9px; /* УМЕНЬШАЕМ с 11px до 9px */
   font-weight: 400;
-  line-height: 1.2; /* Плотнее */
+  line-height: 1.1; /* УМЕНЬШАЕМ с 1.2 до 1.1 */
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2; /* Максимум 2 строки */
