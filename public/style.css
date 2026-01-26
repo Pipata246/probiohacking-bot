@@ -103,8 +103,8 @@ body.chat-overlay-visible {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  /* ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
-  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
+  /* УМЕНЬШЕННЫЙ отступ сверху для главной страницы */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 10px) !important;
   padding-bottom: 80px; /* УМЕНЬШАЕМ отступ снизу чтобы блок был ближе к навигации */
   box-sizing: border-box;
   position: relative !important;
@@ -319,8 +319,8 @@ body.chat-overlay-visible .search-container {
 
 /* Новый синий блок быстрых запросов - СТАТИЧНЫЙ */
 .quick-requests-block {
-  /* ТОЧНЫЕ отступы - касается краев по бокам */
-  margin: 16px 0 10px; /* 16px сверху, 0 по бокам (касается краев), 10px снизу */
+  /* УМЕНЬШЕННЫЕ отступы - поднимаем блок выше */
+  margin: 8px 0 10px; /* 8px сверху (было 16px), 0 по бокам (касается краев), 10px снизу */
   
   /* БЕЗОПАСНАЯ высота для мобильных - НИКОГДА не налезает на навигацию */
   height: 280px; /* Уменьшенная высота для мобильных */
