@@ -30,8 +30,8 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* УБИРАЕМ отступ сверху у body - каждая страница сама управляет своими отступами */
+  padding-top: 0 !important;
   margin-top: 0 !important;
   /* ПРИНУДИТЕЛЬНОЕ позиционирование для полноэкранного режима */
   position: relative;
@@ -103,8 +103,8 @@ body.chat-overlay-visible {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ОТСТУП СВЕРХУ как на других страницах - calc(env(safe-area-inset-top, 44px) + 20px) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
   padding-bottom: 80px; /* УМЕНЬШАЕМ отступ снизу чтобы блок был ближе к навигации */
   box-sizing: border-box;
   position: relative !important;
@@ -529,8 +529,8 @@ body.chat-overlay-visible .search-container {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 
@@ -1184,8 +1184,8 @@ body.chat-overlay-visible .search-container {
   display: flex;
   flex-direction: column;
   will-change: transform; /* Оптимизация для GPU */
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 .sidebar.active {
@@ -1351,8 +1351,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 .recommended-tests-page.active {
@@ -1585,8 +1585,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 .knowledge-base.active {
@@ -1605,8 +1605,8 @@ body.chat-overlay-visible .search-container {
   display: none;
   flex-direction: column;
   overflow: hidden; /* Убираем скролл у контейнера */
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 .chat-overlay.active {
@@ -1949,8 +1949,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 .diagnostics-page.active {
@@ -3251,8 +3251,8 @@ body.chat-overlay-visible .search-container {
 /* ИСПРАВЛЕНИЕ АВАТАРА - СТАТИЧНАЯ ПОЗИЦИЯ */
 .static-avatar {
   position: fixed !important;
-  /* ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  top: 60px !important;
+  /* ПРЕЖНИЙ УВЕЛИЧЕННЫЙ ОТСТУП СВЕРХУ чтобы аватарка полностью влазила в отступ */
+  top: calc(env(safe-area-inset-top, 44px) + 50px) !important;
   right: 20px !important;
   width: 40px !important;
   height: 40px !important;
@@ -3359,8 +3359,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 .health-page.active {
@@ -3669,8 +3669,8 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  /* МИНИМАЛЬНЫЙ ФИКСИРОВАННЫЙ отступ сверху - одинаково на всех устройствах */
-  padding-top: 50px !important;
+  /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
+  padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
 }
 
 .diary-page.active {
