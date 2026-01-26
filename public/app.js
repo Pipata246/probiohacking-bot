@@ -505,6 +505,34 @@ document.addEventListener('click', (e) => {
     return;
   }
   
+  // Раскрытие разделов в рекомендуемых анализах
+  if (e.target.closest('.recommended-expand-btn') || e.target.closest('.recommended-section-header')) {
+    const clickedElement = e.target.closest('.recommended-expand-btn') || e.target.closest('.recommended-section-header');
+    const recommendedSection = clickedElement.closest('.recommended-section');
+    const expandBtn = recommendedSection.querySelector('.recommended-expand-btn');
+    
+    // Переключаем состояние раскрытия через CSS класс
+    if (recommendedSection.classList.contains('expanded')) {
+      // Закрываем - показываем плюс (+)
+      recommendedSection.classList.remove('expanded');
+      expandBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5V19" stroke="#31674A" stroke-width="3" stroke-linecap="round"/>
+          <path d="M5 12H19" stroke="#31674A" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      `;
+    } else {
+      // Открываем - показываем минус (-)
+      recommendedSection.classList.add('expanded');
+      expandBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12H19" stroke="#31674A" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      `;
+    }
+    return;
+  }
+  
   // Обработка кликов по опциям квиза - НОВАЯ ЛОГИКА ОТМЕНЫ ВЫБОРА
   if (e.target.closest('.quiz-option')) {
     const quizOption = e.target.closest('.quiz-option');
@@ -604,6 +632,16 @@ document.addEventListener('click', (e) => {
   // Кнопки плюсов в рекомендациях на странице Здоровье
   if (e.target.closest('.rec-add-btn')) {
     showHealthModal();
+    return;
+  }
+  
+  // Клик по карточке быстрого запроса
+  if (e.target.closest('.quick-request-card')) {
+    const card = e.target.closest('.quick-request-card');
+    const query = card.getAttribute('data-query');
+    if (query) {
+      openChatWithMessage(query);
+    }
     return;
   }
   
