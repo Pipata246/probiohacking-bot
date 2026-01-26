@@ -293,93 +293,139 @@ body.chat-overlay-visible .search-container {
 }
 
 /* ========================================
-   БЫСТРЫЕ ЗАПРОСЫ - ФИНАЛЬНАЯ ВЕРСИЯ С ПРАВИЛЬНЫМИ ОТСТУПАМИ
+   НОВЫЙ БЛОК БЫСТРЫХ ЗАПРОСОВ С ПРАВИЛЬНЫМИ ОТСТУПАМИ
    ======================================== */
 
 /* ОСНОВНОЙ БЛОК */
-.quick-requests {
+.fast-queries-block {
   /* СТАТИЧНОЕ позиционирование */
-  position: static !important;
-  display: flex !important;
-  flex-direction: column !important;
+  position: static;
+  display: flex;
+  flex-direction: column;
   
   /* ФИКСИРОВАННЫЕ размеры */
-  width: calc(100% - 32px) !important;
-  height: 400px !important;
+  width: calc(100% - 32px);
+  height: 400px;
   
-  /* ПРАВИЛЬНЫЕ ОТСТУПЫ: 1см сверху, 5мм снизу от панели навигации */
-  margin: 38px 16px 19px 16px !important;
-  padding: 20px !important;
+  /* ПРАВИЛЬНЫЕ ОТСТУПЫ: 38px сверху (1см), 19px снизу (5мм от панели) */
+  margin: 38px 16px 19px 16px;
+  padding: 20px;
   
   /* ДИЗАЙН */
-  background: #2A3F5F !important;
-  border-radius: 20px !important;
-  overflow: hidden !important;
-  box-sizing: border-box !important;
-  flex-shrink: 0 !important;
+  background: #2A3F5F;
+  border-radius: 20px;
+  overflow: hidden;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 /* ЗАГОЛОВОК */
-.quick-requests .section-title {
-  font-size: 18px !important;
-  font-weight: 600 !important;
-  color: #B0BCC9 !important;
-  margin: 0 0 15px 0 !important;
-  padding: 0 !important;
-  flex-shrink: 0 !important;
+.fast-queries-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #B0BCC9;
+  margin: 0 0 15px 0;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 /* КОНТЕЙНЕР КАРТОЧЕК */
-.quick-requests .quick-cards {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 10px !important;
-  padding-right: 5px !important;
+.fast-queries-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 5px;
 }
 
 /* СКРОЛЛБАР */
-.quick-requests .quick-cards::-webkit-scrollbar {
-  width: 4px !important;
+.fast-queries-container::-webkit-scrollbar {
+  width: 4px;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-radius: 2px !important;
+.fast-queries-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3) !important;
-  border-radius: 2px !important;
+.fast-queries-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
 }
 
-.quick-requests .quick-cards::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5) !important;
+.fast-queries-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
-/* Для спортсменов - внутри скроллируемого окна */
-.sports-requests {
-  margin-top: clamp(24px, 6vw, 32px);
-  padding-top: clamp(20px, 5vw, 24px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+/* КАРТОЧКА ЗАПРОСА */
+.fast-query-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s;
+  min-height: 60px;
+  flex-shrink: 0;
 }
 
-.sports-requests .section-title {
-  font-size: clamp(18px, 4.5vw, 22px);
+.fast-query-item:active {
+  transform: scale(0.98);
+}
+
+/* ИКОНКА */
+.fast-query-icon {
+  width: 32px;
+  height: 32px;
+  background: #E5E7EB;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ТЕКСТ */
+.fast-query-text {
+  flex: 1;
+}
+
+.fast-query-name {
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: clamp(12px, 3vw, 16px);
-  color: #B0BCC9;
+  color: #2A3F5F;
+  margin: 0 0 4px 0;
   line-height: 1.2;
 }
 
-/* Контейнер карточек спортсменов с отступами */
-.sports-cards {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(8px, 2vw, 12px);
+.fast-query-desc {
+  font-size: 11px;
+  color: #8B8B8B;
+  margin: 0;
+  line-height: 1.3;
 }
+
+/* СЕКЦИЯ ДЛЯ СПОРТСМЕНОВ */
+.sports-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sports-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #B0BCC9;
+  margin: 0 0 12px 0;
+}
+
+
 
 /* Заголовки в базе знаний */
 .knowledge-section .section-title {
@@ -981,59 +1027,9 @@ body.chat-overlay-visible .search-container {
   font-size: clamp(10px, 2.5vw, 12px);
 }
 
-.quick-card {
-  display: flex !important;
-  align-items: flex-start;
-  gap: clamp(10px, 2.5vw, 14px);
-  padding: clamp(10px, 2.5vw, 14px);
-  background: white;
-  border-radius: clamp(12px, 3vw, 16px);
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: transform 0.2s;
-  min-height: clamp(50px, 10vh, 65px); /* Еще более компактные карточки */
-  flex-shrink: 0 !important;
-}
 
-.quick-card:active {
-  transform: scale(0.98);
-}
 
-.quick-icon-bg {
-  width: 32px;
-  height: 32px;
-  background: #E5E7EB;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
 
-.quick-icon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-}
-
-.quick-content {
-  flex: 1;
-}
-
-.quick-title {
-  font-size: clamp(13px, 3vw, 15px);
-  font-weight: 600;
-  color: #2A3F5F;
-  margin-bottom: clamp(2px, 0.5vw, 4px);
-  line-height: 1.2;
-}
-
-.quick-subtitle {
-  font-size: clamp(10px, 2.5vw, 12px);
-  color: #8B8B8B;
-  line-height: 1.3;
-}
 
 /* Нижняя навигация - ЗЕЛЕНЫЙ ПРОЗРАЧНЫЙ ФОН для всех страниц кроме главной */
 .bottom-nav {

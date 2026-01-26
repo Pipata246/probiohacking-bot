@@ -462,15 +462,14 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Быстрые запросы
-  if (e.target.closest('.quick-card')) {
-    const card = e.target.closest('.quick-card');
-    const quickCards = document.querySelectorAll('.quick-requests .quick-card');
-    const sportsCards = document.querySelectorAll('.sports-requests .quick-card');
-    const allCards = [...quickCards, ...sportsCards];
-    const index = allCards.indexOf(card);
+  // Быстрые запросы - НОВЫЕ КЛАССЫ
+  if (e.target.closest('.fast-query-item')) {
+    const card = e.target.closest('.fast-query-item');
+    const allCards = document.querySelectorAll('.fast-query-item');
+    const index = Array.from(allCards).indexOf(card);
     
-    if (index < quickCards.length) {
+    // Основные запросы (первые 6)
+    if (index < 6) {
       const questions = [
         'Как повысить жизненную энергию и избавиться от хронической усталости?',
         'Как улучшить память, концентрацию и когнитивные функции?',
@@ -481,18 +480,18 @@ document.addEventListener('click', (e) => {
       ];
       openChatWithMessage(questions[index]);
     } else {
-      const sportsIndex = index - quickCards.length;
+      // Спортивные запросы (начиная с 7-го)
+      const sportsIndex = index - 6;
       const sportsQuestions = [
         'Как ускорить восстановление мышц и сократить усталость после нагрузок?',
         'Как повысить силовые показатели и укрепить соединительные ткани?',
         'Как улучшить использование кислорода и отсрочить утомления?',
         'Как усилить скорость реакции и стрессоустойчивость на соревнованиях?',
-        'Как укрепить суставы, связки и предотвратить травмы при высоких нагрузках?',
-        'Как поддержать иммунитет в периоды интенсивных тренировок и снизить риск инфекций?',
-        'Как помочь организму выводить метаболиты и снизить интоксикацию после нагрузок?',
-        'Как улучшить глубокий сон и ускорить восстановление ЦНС после нагрузок?'
+        'Как укрепить суставы, связки и предотвратить травмы при высоких нагрузках?'
       ];
-      openChatWithMessage(sportsQuestions[sportsIndex]);
+      if (sportsIndex < sportsQuestions.length) {
+        openChatWithMessage(sportsQuestions[sportsIndex]);
+      }
     }
     return;
   }
