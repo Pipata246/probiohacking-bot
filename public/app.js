@@ -11,11 +11,37 @@ const tg = window.Telegram?.WebApp || {
 
 tg.ready();
 
-// ПРАВИЛЬНЫЙ полноэкранный режим - только если Telegram доступен
+// ПРАВИЛЬНЫЙ полноэкранный режим для Telegram Mini App
 if (window.Telegram?.WebApp) {
+  // НЕМЕДЛЕННОЕ разворачивание в полноэкранный режим
   tg.expand();
+  
+  // ПРИНУДИТЕЛЬНОЕ включение полноэкранного режима
+  try {
+    // Используем новые методы Telegram WebApp 6.0+
+    if (tg.requestFullscreen) {
+      tg.requestFullscreen();
+    }
+    
+    // Скрываем элементы интерфейса Telegram
+    if (tg.setHeaderColor) {
+      tg.setHeaderColor('#3C805B'); // Устанавливаем цвет заголовка
+    }
+    
+    if (tg.setBackgroundColor) {
+      tg.setBackgroundColor('#3C805B'); // Устанавливаем цвет фона
+    }
+    
+    // Включаем полноэкранный режим
+    if (tg.enableFullscreen) {
+      tg.enableFullscreen();
+    }
+    
+  } catch (e) {
+    console.log('Новые методы полноэкранного режима не поддерживаются:', e.message);
+  }
 
-  // Скрываем только поддерживаемые элементы
+  // Скрываем кнопки Telegram
   if (tg.BackButton) {
     try {
       tg.BackButton.hide();
@@ -32,54 +58,89 @@ if (window.Telegram?.WebApp) {
     }
   }
 
-  // Попытки разворачивания для стабильности
-  setTimeout(() => {
-    tg.expand();
-  }, 100);
+  // АГРЕССИВНЫЕ попытки разворачивания
+  const expandAttempts = [50, 100, 200, 300, 500, 1000, 2000, 3000];
+  expandAttempts.forEach(delay => {
+    setTimeout(() => {
+      tg.expand();
+      // Дополнительные попытки полноэкранного режима
+      try {
+        if (tg.requestFullscreen) tg.requestFullscreen();
+        if (tg.enableFullscreen) tg.enableFullscreen();
+      } catch (e) {
+        // Игнорируем ошибки
+      }
+    }, delay);
+  });
 
-  setTimeout(() => {
-    tg.expand();
-  }, 300);
-
-  setTimeout(() => {
-    tg.expand();
-  }, 500);
-
-  setTimeout(() => {
-    tg.expand();
-  }, 1000);
-
-  // Обработчик для поддержания полноэкранного режима
+  // Обработчики событий для поддержания полноэкранного режима
   try {
     tg.onEvent('viewportChanged', () => {
       setTimeout(() => {
         tg.expand();
-      }, 50);
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      }, 10);
     });
   } catch (e) {
     console.log('onEvent не поддерживается:', e.message);
   }
 
-  // Дополнительный обработчик при изменении размера окна
+  // Обработчики окна браузера
   window.addEventListener('resize', () => {
     setTimeout(() => {
       tg.expand();
-    }, 100);
+      try {
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      } catch (e) {}
+    }, 50);
   });
 
-  // Принудительное разворачивание при загрузке страницы
   window.addEventListener('load', () => {
     setTimeout(() => {
       tg.expand();
-    }, 200);
+      try {
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      } catch (e) {}
+    }, 100);
   });
 
-  // Принудительное разворачивание при готовности DOM
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       tg.expand();
-    }, 300);
+      try {
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      } catch (e) {}
+    }, 150);
   });
+
+  // Дополнительные обработчики
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      setTimeout(() => {
+        tg.expand();
+        try {
+          if (tg.requestFullscreen) tg.requestFullscreen();
+        } catch (e) {}
+      }, 100);
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    setTimeout(() => {
+      tg.expand();
+      try {
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      } catch (e) {}
+    }, 100);
+  });
+
+  // Периодическое поддержание полноэкранного режима
+  setInterval(() => {
+    tg.expand();
+    try {
+      if (tg.requestFullscreen) tg.requestFullscreen();
+    } catch (e) {}
+  }, 5000);
 
 } else {
   console.log('Локальное тестирование - Telegram WebApp недоступен');
@@ -114,10 +175,29 @@ document.addEventListener('visibilitychange', () => {
 // Сброс данных при потере фокуса окна
 window.addEventListener('blur', clearDiagnosticData);
 
-// Получение данных пользователя
+// Получение данных пользователя из Telegram
 const user = tg.initDataUnsafe?.user;
-const userName = user?.first_name || 'Александр';
-const userFullName = user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Александр Тестов';
+let userName = 'Пользователь';
+let userFullName = 'Пользователь';
+
+// Улучшенное получение данных пользователя
+if (user) {
+  userName = user.first_name || 'Пользователь';
+  userFullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Пользователь';
+  
+  console.log('Данные пользователя Telegram:', {
+    first_name: user.first_name,
+    last_name: user.last_name,
+    username: user.username,
+    photo_url: user.photo_url,
+    id: user.id
+  });
+} else {
+  console.log('Данные пользователя недоступны - используем заглушки');
+  // Для локального тестирования
+  userName = 'Александр';
+  userFullName = 'Александр Тестов';
+}
 
 // Элементы страниц
 const mainApp = document.getElementById('mainApp');
@@ -309,14 +389,22 @@ document.querySelector('.welcome-name').textContent = userName;
 document.getElementById('sidebarUsername').textContent = userFullName;
 
 function updateAvatar(element, user, userName) {
-  if (element && user?.photo_url) {
+  if (!element) return;
+  
+  // Проверяем есть ли фото пользователя в Telegram
+  if (user?.photo_url) {
+    // Устанавливаем фото из Telegram
     element.style.backgroundImage = `url(${user.photo_url})`;
     element.style.backgroundSize = 'cover';
     element.style.backgroundPosition = 'center';
     element.textContent = '';
-  } else if (element) {
-    const initials = userName.charAt(0).toUpperCase();
+    console.log('Установлено фото пользователя:', user.photo_url);
+  } else {
+    // Если фото нет, показываем инициалы
+    const initials = userName ? userName.charAt(0).toUpperCase() : 'U';
     element.textContent = initials;
+    element.style.backgroundImage = '';
+    console.log('Установлены инициалы:', initials);
   }
 }
 
@@ -327,6 +415,28 @@ updateAvatar(document.getElementById('diagnosticsAvatar'), user, userName);
 updateAvatar(document.getElementById('healthAvatar'), user, userName);
 updateAvatar(document.getElementById('diaryAvatar'), user, userName);
 updateAvatar(document.getElementById('recommendedTestsAvatar'), user, userName);
+
+// Принудительное обновление всех аватарок
+function forceUpdateAllAvatars() {
+  console.log('Принудительное обновление всех аватарок...');
+  
+  const avatarElements = [
+    'avatar', 'sidebarAvatar', 'knowledgeAvatar', 'diagnosticsAvatar', 
+    'healthAvatar', 'diaryAvatar', 'recommendedTestsAvatar'
+  ];
+  
+  avatarElements.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      updateAvatar(element, user, userName);
+    }
+  });
+}
+
+// Обновляем аватарки через небольшие интервалы для надежности
+setTimeout(forceUpdateAllAvatars, 500);
+setTimeout(forceUpdateAllAvatars, 1000);
+setTimeout(forceUpdateAllAvatars, 2000);
 
 // ========================================
 // ОБРАБОТЧИК ВСЕХ СОБЫТИЙ
