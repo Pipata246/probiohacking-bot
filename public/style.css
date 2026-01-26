@@ -88,6 +88,13 @@ body.chat-overlay-visible {
   justify-content: flex-start;
   padding-top: 20px;
   padding-bottom: 80px; /* УМЕНЬШАЕМ отступ снизу чтобы блок был ближе к навигации */
+
+/* Мобильная версия - увеличиваем отступ снизу для безопасности */
+@media (max-width: 768px) {
+  .app {
+    padding-bottom: 120px !important; /* БОЛЬШОЙ отступ снизу на мобильных */
+  }
+}
   box-sizing: border-box;
   position: relative !important;
 }
@@ -297,8 +304,9 @@ body.chat-overlay-visible .search-container {
   /* ТОЧНЫЕ отступы - касается краев по бокам */
   margin: 16px 0 0; /* 16px сверху, 0 по бокам (касается краев), 0 снизу */
   
-  /* УВЕЛИЧЕННАЯ высота чтобы блок был ближе к панели */
-  height: 320px; /* Увеличил высоту чтобы занять больше места */
+  /* БЕЗОПАСНАЯ высота для мобильных - НИКОГДА не налезает на навигацию */
+  height: 280px; /* Уменьшенная высота для мобильных */
+  max-height: calc(100vh - 200px); /* Максимальная высота с большим запасом */
   
   /* Синий фон и скругление */
   background: #2A3F5F;
@@ -319,6 +327,15 @@ body.chat-overlay-visible .search-container {
   /* Флекс для вертикального расположения */
   display: flex;
   flex-direction: column;
+}
+
+/* Мобильная версия - еще более безопасные отступы */
+@media (max-width: 768px) {
+  .quick-requests-block {
+    height: 260px; /* Еще меньше для мобильных */
+    max-height: calc(100vh - 250px); /* Огромный запас для навигации */
+    margin-bottom: 20px; /* Добавляем отступ снизу на мобильных */
+  }
 }
 
 /* Заголовок быстрых запросов */
@@ -355,6 +372,13 @@ body.chat-overlay-visible .search-container {
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
+/* Увеличиваем расстояние между карточками на мобильных */
+@media (max-width: 768px) {
+  .quick-requests-scroll {
+    gap: 10px; /* Больше места между карточками на мобильных */
+  }
+}
+
 .quick-requests-scroll::-webkit-scrollbar {
   width: 4px;
 }
@@ -387,6 +411,15 @@ body.chat-overlay-visible .search-container {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   min-height: 60px; /* Фиксированная минимальная высота */
   max-height: 60px; /* Фиксированная максимальная высота */
+}
+
+/* Мобильная версия - немного больше отступы для удобства */
+@media (max-width: 768px) {
+  .quick-request-card {
+    padding: 12px 14px; /* Чуть больше отступы на мобильных */
+    min-height: 65px; /* Чуть выше карточки */
+    max-height: 65px;
+  }
 }
 
 .quick-request-card:hover {
