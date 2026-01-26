@@ -86,10 +86,9 @@ body.chat-overlay-visible {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding-top: 20px; /* Дополнительный отступ для элементов приложения */
-  padding-bottom: 0; /* УБИРАЕМ отступ снизу - он конфликтует с margin блока быстрых запросов */
+  padding-top: 20px;
+  padding-bottom: 100px; /* ВОЗВРАЩАЕМ отступ снизу для навигации */
   box-sizing: border-box;
-  /* ДОБАВЛЯЕМ relative для absolute позиционирования синего блока */
   position: relative !important;
 }
 
@@ -242,7 +241,7 @@ body.chat-overlay-visible .search-container {
 
 /* Карточка рекомендаций - статичная и адаптивная */
 .recommendations-card {
-  margin: 0 clamp(16px, 4vw, 24px) 0; /* УБИРАЕМ отступ снизу */
+  margin: 0 clamp(16px, 4vw, 24px) clamp(16px, 3vh, 20px); /* ДОБАВЛЯЕМ отступ снизу */
   background: #FEF7EC;
   border-radius: clamp(16px, 4vw, 20px);
   padding: clamp(14px, 3.5vw, 18px);
@@ -294,11 +293,12 @@ body.chat-overlay-visible .search-container {
 }
 
 /* ========================================
-   БЫСТРЫЕ ЗАПРОСЫ - ПОЛНАЯ ПЕРЕЗАПИСЬ
+   БЫСТРЫЕ ЗАПРОСЫ - ФИНАЛЬНАЯ ВЕРСИЯ С ПРАВИЛЬНЫМИ ОТСТУПАМИ
    ======================================== */
 
-/* ОСНОВНОЙ БЛОК - СТАТИЧНОЕ ПОЗИЦИОНИРОВАНИЕ С ПРАВИЛЬНЫМИ ОТСТУПАМИ */
+/* ОСНОВНОЙ БЛОК */
 .quick-requests {
+  /* СТАТИЧНОЕ позиционирование */
   position: static !important;
   display: flex !important;
   flex-direction: column !important;
@@ -306,7 +306,9 @@ body.chat-overlay-visible .search-container {
   /* ФИКСИРОВАННЫЕ размеры */
   width: calc(100% - 32px) !important;
   height: 400px !important;
-  margin: 38px 16px 19px 16px !important; /* 1см сверху, 5мм снизу от панели навигации */
+  
+  /* ПРАВИЛЬНЫЕ ОТСТУПЫ: 1см сверху, 5мм снизу от панели навигации */
+  margin: 38px 16px 19px 16px !important;
   padding: 20px !important;
   
   /* ДИЗАЙН */
