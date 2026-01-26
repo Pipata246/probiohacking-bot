@@ -97,7 +97,7 @@ body.chat-overlay-visible {
 }
 
 .app {
-  max-width: 100vw;
+  max-width: 100%;
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
@@ -105,25 +105,20 @@ body.chat-overlay-visible {
   justify-content: flex-start;
   /* ОТСТУП СВЕРХУ как на других страницах - calc(env(safe-area-inset-top, 44px) + 20px) */
   padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
-  padding-bottom: 100px !important;
+  /* ФИКСИРОВАННЫЙ отступ снизу - БЕЗОПАСНОЕ расстояние от навигации */
+  padding-bottom: 120px !important;
   box-sizing: border-box;
   position: relative !important;
 }
 
-/* Мобильная версия - фиксированный отступ снизу */
-@media (max-width: 768px) {
-  .app {
-    padding-bottom: 100px !important; /* ФИКСИРОВАННЫЙ отступ снизу на мобильных */
-  }
-}
+/* УБИРАЕМ мобильную версию - везде одинаково */
 
-/* Хедер - унифицированный для всех страниц */
+/* Хедер - ФИКСИРОВАННЫЕ значения */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: clamp(12px, 2vh, 20px) clamp(16px, 4vw, 24px) clamp(8px, 1.5vh, 16px);
+  padding: 16px 20px 12px; /* ФИКСИРОВАННЫЕ отступы */
   flex-shrink: 0;
   position: static !important; /* Убираем любое позиционирование - остается в потоке документа */
 }
@@ -203,29 +198,29 @@ body.chat-overlay-visible {
   max-height: 40px;
 }
 
-/* Приветствие - адаптивное */
+/* Приветствие - ФИКСИРОВАННЫЕ значения */
 .welcome {
-  padding: 0 clamp(16px, 4vw, 24px) clamp(12px, 2vh, 20px);
+  padding: 0 20px 16px; /* ФИКСИРОВАННЫЕ отступы */
   flex-shrink: 0;
 }
 
 .welcome-title {
-  font-size: clamp(20px, 5vw, 28px);
+  font-size: 24px; /* ФИКСИРОВАННЫЙ размер */
   font-weight: 600;
-  margin-bottom: clamp(4px, 0.8vh, 8px);
+  margin-bottom: 6px; /* ФИКСИРОВАННЫЙ отступ */
   color: #FEF7EC;
   line-height: 1.2;
 }
 
 .welcome-name {
-  font-size: clamp(14px, 3.5vw, 18px);
+  font-size: 16px; /* ФИКСИРОВАННЫЙ размер */
   color: #FEF7EC;
   opacity: 0.8;
 }
 
-/* Поиск - статичный и адаптивный */
+/* Поиск - ФИКСИРОВАННЫЕ значения */
 .search-container {
-  margin: 0 clamp(16px, 4vw, 24px) clamp(12px, 2vh, 16px);
+  margin: 0 20px 14px; /* ФИКСИРОВАННЫЕ отступы */
   position: relative;
   transition: opacity 0.3s ease;
   flex-shrink: 0; /* Не сжимается */
@@ -239,11 +234,11 @@ body.chat-overlay-visible .search-container {
 
 .search-input {
   width: 100%;
-  padding: clamp(12px, 2.5vw, 16px) clamp(36px, 8vw, 44px) clamp(12px, 2.5vw, 16px) clamp(16px, 4vw, 20px);
-  border-radius: clamp(20px, 5vw, 24px);
+  padding: 14px 40px 14px 18px; /* ФИКСИРОВАННЫЕ отступы */
+  border-radius: 22px; /* ФИКСИРОВАННЫЙ радиус */
   border: none;
   background: #FEF7EC;
-  font-size: clamp(13px, 3vw, 15px);
+  font-size: 14px; /* ФИКСИРОВАННЫЙ размер */
   color: #2A3F5F;
 }
 
@@ -265,20 +260,20 @@ body.chat-overlay-visible .search-container {
   justify-content: center;
 }
 
-/* Карточка рекомендаций - статичная и адаптивная */
+/* Карточка рекомендаций - ФИКСИРОВАННЫЕ значения */
 .recommendations-card {
-  margin: 0 clamp(16px, 4vw, 24px) clamp(16px, 3vh, 20px); /* ДОБАВЛЯЕМ отступ снизу */
+  margin: 0 20px 18px; /* ФИКСИРОВАННЫЕ отступы */
   background: #FEF7EC;
-  border-radius: clamp(16px, 4vw, 20px);
-  padding: clamp(14px, 3.5vw, 18px);
+  border-radius: 18px; /* ФИКСИРОВАННЫЙ радиус */
+  padding: 16px; /* ФИКСИРОВАННЫЕ отступы */
   color: #333;
   flex-shrink: 0; /* Не сжимается */
 }
 
 .card-title {
-  font-size: clamp(15px, 3.5vw, 18px);
+  font-size: 17px; /* ФИКСИРОВАННЫЙ размер */
   font-weight: 600;
-  margin-bottom: clamp(10px, 2.5vw, 14px);
+  margin-bottom: 12px; /* ФИКСИРОВАННЫЙ отступ */
   color: #2A3F5F;
   line-height: 1.3;
 }
@@ -1360,8 +1355,8 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(16px, 4vw, 24px);
   overflow-y: auto;
   overflow-x: hidden;
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
-  padding-bottom: 100px !important;
+  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
+  padding-bottom: 120px !important;
 }
 
 /* Рекомендуемые анализы - СВОРАЧИВАЕМЫЕ РАЗДЕЛЫ */
@@ -1604,8 +1599,8 @@ body.chat-overlay-visible .search-container {
   padding: 20px 24px;
   overflow-y: auto;
   overflow-x: hidden;
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
-  padding-bottom: 100px !important;
+  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
+  padding-bottom: 120px !important;
   margin-top: 0;
   /* Убираем webkit scrollbar для чистого вида */
   -webkit-overflow-scrolling: touch;
@@ -1796,8 +1791,8 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(16px, 4vw, 24px);
   overflow-y: auto;
   overflow-x: hidden;
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
-  padding-bottom: 100px !important;
+  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
+  padding-bottom: 120px !important;
 }
 
 .knowledge-section {
@@ -1948,8 +1943,8 @@ body.chat-overlay-visible .search-container {
   padding: 0 clamp(16px, 4vw, 24px) clamp(16px, 3vh, 24px);
   overflow-y: auto;
   overflow-x: hidden;
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
-  padding-bottom: 100px !important;
+  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
+  padding-bottom: 120px !important;
 }
 
 /* Карточка персональной диагностики */
@@ -2606,13 +2601,13 @@ body.chat-overlay-visible .search-container {
     min-height: -webkit-fill-available;
   }
   
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
+  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
   .knowledge-sections {
-    padding-bottom: 100px !important;
+    padding-bottom: 120px !important;
   }
   
   .diagnostics-content {
-    padding-bottom: 100px !important;
+    padding-bottom: 120px !important;
   }
 }
 
@@ -2805,8 +2800,8 @@ body.chat-overlay-visible .search-container {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0 clamp(16px, 4vw, 20px);
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
-  padding-bottom: 100px !important;
+  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
+  padding-bottom: 120px !important;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
@@ -3360,8 +3355,8 @@ body.chat-overlay-visible .search-container {
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0 clamp(16px, 4vw, 20px);
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
-  padding-bottom: 100px !important;
+  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
+  padding-bottom: 120px !important;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -3624,7 +3619,7 @@ body.chat-overlay-visible .search-container {
 /* Адаптивность для мобильных */
 @media (max-width: 480px) {
   .health-content {
-    padding-bottom: 100px !important;
+    padding-bottom: 120px !important;
   }
   
   .recommendation-item {
@@ -3670,8 +3665,8 @@ body.chat-overlay-visible .search-container {
   flex: 1;
   overflow: hidden;
   padding: 0 clamp(16px, 4vw, 20px);
-  /* ФИКСИРОВАННЫЙ отступ снизу - одинаково на всех устройствах */
-  padding-bottom: 100px !important;
+  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
+  padding-bottom: 120px !important;
   display: flex;
   flex-direction: column;
   height: calc(100vh - 60px - 100px);
@@ -4211,7 +4206,7 @@ body.chat-overlay-visible .search-container {
 @media (max-width: 480px) {
   .diary-content {
     height: calc(100vh - 50px - 90px);
-    padding-bottom: 100px !important; /* ФИКСИРОВАННЫЙ отступ снизу */
+    padding-bottom: 120px !important; /* БЕЗОПАСНЫЙ отступ снизу */
   }
   
   .diary-title {
