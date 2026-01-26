@@ -293,19 +293,14 @@ body.chat-overlay-visible .search-container {
 }
 
 /* ========================================
-   НОВЫЙ БЛОК БЫСТРЫХ ЗАПРОСОВ С ПРАВИЛЬНЫМИ ОТСТУПАМИ
+   БЛОК БЫСТРЫХ ЗАПРОСОВ - СТАТИЧНОЕ ПОЗИЦИОНИРОВАНИЕ
    ======================================== */
 
 /* ОСНОВНОЙ БЛОК */
-.fast-queries-block {
+.quick-queries-section {
   /* СТАТИЧНОЕ позиционирование */
   position: static;
-  display: flex;
-  flex-direction: column;
-  
-  /* ФИКСИРОВАННЫЕ размеры */
-  width: calc(100% - 32px);
-  height: 400px;
+  display: block;
   
   /* ПРАВИЛЬНЫЕ ОТСТУПЫ: 38px сверху (1см), 19px снизу (5мм от панели) */
   margin: 38px 16px 19px 16px;
@@ -314,13 +309,16 @@ body.chat-overlay-visible .search-container {
   /* ДИЗАЙН */
   background: #2A3F5F;
   border-radius: 20px;
-  overflow: hidden;
   box-sizing: border-box;
   flex-shrink: 0;
+  
+  /* ФИКСИРОВАННАЯ ВЫСОТА */
+  height: 400px;
+  overflow: hidden;
 }
 
 /* ЗАГОЛОВОК */
-.fast-queries-title {
+.quick-queries-title {
   font-size: 18px;
   font-weight: 600;
   color: #B0BCC9;
@@ -330,8 +328,8 @@ body.chat-overlay-visible .search-container {
 }
 
 /* КОНТЕЙНЕР КАРТОЧЕК */
-.fast-queries-container {
-  flex: 1;
+.quick-queries-grid {
+  height: calc(100% - 35px); /* Высота минус заголовок */
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -341,26 +339,26 @@ body.chat-overlay-visible .search-container {
 }
 
 /* СКРОЛЛБАР */
-.fast-queries-container::-webkit-scrollbar {
+.quick-queries-grid::-webkit-scrollbar {
   width: 4px;
 }
 
-.fast-queries-container::-webkit-scrollbar-track {
+.quick-queries-grid::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 2px;
 }
 
-.fast-queries-container::-webkit-scrollbar-thumb {
+.quick-queries-grid::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 2px;
 }
 
-.fast-queries-container::-webkit-scrollbar-thumb:hover {
+.quick-queries-grid::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
 
 /* КАРТОЧКА ЗАПРОСА */
-.fast-query-item {
+.quick-query-card {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -375,12 +373,12 @@ body.chat-overlay-visible .search-container {
   flex-shrink: 0;
 }
 
-.fast-query-item:active {
+.quick-query-card:active {
   transform: scale(0.98);
 }
 
 /* ИКОНКА */
-.fast-query-icon {
+.quick-query-icon {
   width: 32px;
   height: 32px;
   background: #E5E7EB;
@@ -391,12 +389,12 @@ body.chat-overlay-visible .search-container {
   flex-shrink: 0;
 }
 
-/* ТЕКСТ */
-.fast-query-text {
+/* КОНТЕНТ */
+.quick-query-content {
   flex: 1;
 }
 
-.fast-query-name {
+.quick-query-title {
   font-size: 14px;
   font-weight: 600;
   color: #2A3F5F;
@@ -404,7 +402,7 @@ body.chat-overlay-visible .search-container {
   line-height: 1.2;
 }
 
-.fast-query-desc {
+.quick-query-description {
   font-size: 11px;
   color: #8B8B8B;
   margin: 0;
@@ -418,7 +416,7 @@ body.chat-overlay-visible .search-container {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sports-title {
+.sports-section-title {
   font-size: 16px;
   font-weight: 600;
   color: #B0BCC9;

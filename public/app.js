@@ -463,9 +463,9 @@ document.addEventListener('click', (e) => {
   }
   
   // Быстрые запросы - НОВЫЕ КЛАССЫ
-  if (e.target.closest('.fast-query-item')) {
-    const card = e.target.closest('.fast-query-item');
-    const allCards = document.querySelectorAll('.fast-query-item');
+  if (e.target.closest('.quick-query-card')) {
+    const card = e.target.closest('.quick-query-card');
+    const allCards = document.querySelectorAll('.quick-query-card');
     const index = Array.from(allCards).indexOf(card);
     
     // Основные запросы (первые 6)
