@@ -55,7 +55,17 @@ body {
 [class*="tgme_page"],
 header[class*="tg"],
 div[class*="tg-head"],
-div[class*="tgme"] {
+div[class*="tgme"],
+/* НОВЫЕ селекторы для более агрессивного скрытия */
+.tg-app-header,
+.tg-mini-app-header,
+.telegram-mini-app-header,
+.webapp-header,
+.mini-app-header,
+[class*="header"][class*="telegram"],
+[class*="header"][class*="tg"],
+[data-testid*="header"],
+[data-testid*="toolbar"] {
   display: none !important;
   visibility: hidden !important;
   height: 0 !important;

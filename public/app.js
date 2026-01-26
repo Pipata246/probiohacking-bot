@@ -35,7 +35,7 @@ if (window.Telegram?.WebApp) {
     }
   }
 
-  // Дополнительные попытки разворачивания
+  // БОЛЕЕ АГРЕССИВНЫЕ попытки разворачивания
   setTimeout(() => {
     tg.expand();
   }, 100);
@@ -43,6 +43,14 @@ if (window.Telegram?.WebApp) {
   setTimeout(() => {
     tg.expand();
   }, 300);
+
+  setTimeout(() => {
+    tg.expand();
+  }, 500);
+
+  setTimeout(() => {
+    tg.expand();
+  }, 1000);
 
   // Обработчик для поддержания полноэкранного режима
   try {
@@ -54,6 +62,28 @@ if (window.Telegram?.WebApp) {
   } catch (e) {
     console.log('onEvent не поддерживается:', e.message);
   }
+
+  // Дополнительный обработчик при изменении размера окна
+  window.addEventListener('resize', () => {
+    setTimeout(() => {
+      tg.expand();
+    }, 100);
+  });
+
+  // Принудительное разворачивание при загрузке страницы
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      tg.expand();
+    }, 200);
+  });
+
+  // Принудительное разворачивание при готовности DOM
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      tg.expand();
+    }, 300);
+  });
+
 } else {
   console.log('Локальное тестирование - Telegram WebApp недоступен');
 }
