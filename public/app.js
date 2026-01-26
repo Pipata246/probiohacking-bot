@@ -13,6 +13,7 @@ tg.ready();
 
 // АГРЕССИВНЫЙ полноэкранный режим - только если Telegram доступен
 if (window.Telegram?.WebApp) {
+  // НЕМЕДЛЕННОЕ разворачивание
   tg.expand();
 
   // УБИРАЕМ ВСЕ НЕПОДДЕРЖИВАЕМЫЕ МЕТОДЫ В ВЕРСИИ 6.0
@@ -38,7 +39,15 @@ if (window.Telegram?.WebApp) {
   // БОЛЕЕ АГРЕССИВНЫЕ попытки разворачивания
   setTimeout(() => {
     tg.expand();
+  }, 50);
+
+  setTimeout(() => {
+    tg.expand();
   }, 100);
+
+  setTimeout(() => {
+    tg.expand();
+  }, 200);
 
   setTimeout(() => {
     tg.expand();
@@ -52,12 +61,16 @@ if (window.Telegram?.WebApp) {
     tg.expand();
   }, 1000);
 
+  setTimeout(() => {
+    tg.expand();
+  }, 2000);
+
   // Обработчик для поддержания полноэкранного режима
   try {
     tg.onEvent('viewportChanged', () => {
       setTimeout(() => {
         tg.expand();
-      }, 50);
+      }, 10);
     });
   } catch (e) {
     console.log('onEvent не поддерживается:', e.message);
@@ -67,22 +80,43 @@ if (window.Telegram?.WebApp) {
   window.addEventListener('resize', () => {
     setTimeout(() => {
       tg.expand();
-    }, 100);
+    }, 50);
   });
 
   // Принудительное разворачивание при загрузке страницы
   window.addEventListener('load', () => {
     setTimeout(() => {
       tg.expand();
-    }, 200);
+    }, 100);
   });
 
   // Принудительное разворачивание при готовности DOM
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       tg.expand();
-    }, 300);
+    }, 150);
   });
+
+  // Дополнительные обработчики для поддержания полноэкранного режима
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      setTimeout(() => {
+        tg.expand();
+      }, 100);
+    }
+  });
+
+  // Обработчик фокуса окна
+  window.addEventListener('focus', () => {
+    setTimeout(() => {
+      tg.expand();
+    }, 100);
+  });
+
+  // Периодическое принудительное разворачивание
+  setInterval(() => {
+    tg.expand();
+  }, 5000);
 
 } else {
   console.log('Локальное тестирование - Telegram WebApp недоступен');
