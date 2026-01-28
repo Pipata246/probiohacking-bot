@@ -1,6 +1,9 @@
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
+// Import Supabase client
+const { requestService } = require('../supabase/client.js');
+
 async function doRequest(url, options) {
   if (typeof fetch === 'function') {
     return fetch(url, options);
@@ -85,11 +88,17 @@ module.exports = async (req, res) => {
       });
     }
 
-    const { message } = req.body || {};
+    const { message, telegramUser } = req.body || {};
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ success: false, error: 'Invalid message' });
     }
+
+    // Extract user info from Telegram WebApp data
+    const telegramId = telegramUser?.id || null;
+    const firstName = telegramUser?.first_name || null;
+    const lastName = telegramUser?.last_name || null;
+    const username = telegramUser?.username || null;
 
     const payload = {
       model: 'deepseek-chat',
@@ -121,6 +130,25 @@ module.exports = async (req, res) => {
 
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content || '';
+
+    // Save request and response to Supabase (async, don't wait)
+    if (telegramId) {
+      requestService.saveRequest(
+        telegramId,
+        message,
+        content,
+        'chat',
+        {
+          firstName,
+          lastName,
+          username,
+          userAgent: req.headers['user-agent'],
+          timestamp: new Date().toISOString()
+        }
+      ).catch(error => {
+        console.error('Failed to save request to Supabase:', error);
+      });
+    }
 
     return res.status(200).json({
       success: true,

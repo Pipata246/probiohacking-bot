@@ -1213,11 +1213,22 @@ async function sendMessageToAI(message) {
   try {
     addBotTypingIndicator();
 
+    // Get Telegram user data
+    const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
+
     aiAbortController = new AbortController();
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ 
+        message,
+        telegramUser: telegramUser ? {
+          id: telegramUser.id,
+          first_name: telegramUser.first_name,
+          last_name: telegramUser.last_name,
+          username: telegramUser.username
+        } : null
+      }),
       signal: aiAbortController.signal
     });
 
