@@ -587,6 +587,11 @@ document.addEventListener('click', (e) => {
   
   // Отправка сообщения в чате
   if (e.target.closest('.chat-send-btn')) {
+    const sendBtn = e.target.closest('.chat-send-btn');
+    if (sendBtn?.dataset?.mode === 'stop') {
+      stopAIResponse();
+      return;
+    }
     const chatInput = document.querySelector('.chat-input');
     const message = chatInput.value.trim();
     if (message) {
@@ -906,6 +911,11 @@ function closeSidebar() {
 // ФУНКЦИИ ЧАТА
 // ========================================
 
+let aiAbortController = null;
+let isAiBusy = false;
+let activeTypewriter = null;
+const pendingAiMessages = [];
+
 function addUserMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
   const messageDiv = document.createElement('div');
@@ -1004,6 +1014,38 @@ function removeTypingIndicator() {
   if (typingIndicator) typingIndicator.remove();
 }
 
+function finalizeTypingBubble({ appendActions } = { appendActions: true }) {
+  const typingIndicator = document.getElementById('typingIndicator');
+  if (!typingIndicator) return;
+
+  typingIndicator.classList.remove('typing-indicator');
+  typingIndicator.removeAttribute('id');
+
+  const dots = typingIndicator.querySelector('.typing-dots');
+  if (dots) dots.remove();
+
+  const typingText = typingIndicator.querySelector('#typingText');
+  if (typingText) {
+    typingText.style.display = 'block';
+    typingText.removeAttribute('id');
+  }
+
+  const actions = typingIndicator.querySelector('#typingActions');
+  if (actions) actions.remove();
+
+  const bubble = typingIndicator.querySelector('.message-bubble');
+  if (appendActions && bubble) {
+    appendAiActions(bubble);
+  }
+}
+
+function stopActiveTypewriter() {
+  if (activeTypewriter && typeof activeTypewriter.stop === 'function') {
+    activeTypewriter.stop();
+  }
+  activeTypewriter = null;
+}
+
 function typeMessage(text, callback) {
   const typingIndicator = document.getElementById('typingIndicator');
   const typingDots = typingIndicator?.querySelector('.typing-dots');
@@ -1015,60 +1057,108 @@ function typeMessage(text, callback) {
   typingText.textContent = '';
 
   let index = 0;
-  const baseSpeed = 22;
+  const baseSpeed = 8;
+  let stopped = false;
+
+  function finalizeTyping() {
+    finalizeTypingBubble({ appendActions: true });
+    if (callback) callback();
+  }
 
   function typeChar() {
+    if (stopped) {
+      finalizeTyping();
+      return;
+    }
     if (index < text.length) {
       const char = text.charAt(index);
       typingText.textContent += char;
       index++;
 
       let delay = baseSpeed;
-      if (char === '.' || char === '!' || char === '?') delay = 180;
-      else if (char === ',' || char === ';' || char === ':') delay = 90;
-      else if (char === '\n') delay = 140;
-      else if (char === ' ') delay = 10;
+      if (char === '.' || char === '!' || char === '?') delay = 40;
+      else if (char === ',' || char === ';' || char === ':') delay = 25;
+      else if (char === '\n') delay = 35;
+      else if (char === ' ') delay = 5;
 
-      delay += Math.random() * 20 - 10;
+      delay += Math.random() * 10 - 5;
       chatMessagesScrollToBottom();
-      setTimeout(typeChar, Math.max(10, delay));
+      setTimeout(typeChar, Math.max(5, delay));
       return;
     }
 
-    typingIndicator.classList.remove('typing-indicator');
-    typingIndicator.removeAttribute('id');
-    typingText.removeAttribute('id');
-    const actions = document.getElementById('typingActions');
-    if (actions) actions.removeAttribute('id');
-    if (callback) callback();
+    finalizeTyping();
   }
+
+  activeTypewriter = {
+    stop() {
+      if (stopped) return;
+      stopped = true;
+    }
+  };
 
   typeChar();
 }
 
-function chatMessagesScrollToBottom() {
-  const chatMessages = document.getElementById('chatMessages');
-  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+function setChatSendButtonMode(mode) {
+  const btn = document.querySelector('.chat-send-btn');
+  if (!btn) return;
+  btn.dataset.mode = mode;
+
+  if (mode === 'stop') {
+    btn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect x="5" y="5" width="10" height="10" rx="2" fill="#666"/>
+      </svg>
+    `;
+    return;
+  }
+
+  btn.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M7 10L13 10M13 10L10 7M13 10L10 13" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
 }
 
-function appendAiActions(container) {
-  const actions = document.createElement('div');
-  actions.className = 'ai-actions';
-  actions.innerHTML = `
-    <button class="message-button" onclick="showMyTestsPage()">Мои анализы</button>
-    <button class="message-button" onclick="handleDiagnosticButton()">Диагностика</button>
-  `;
-  container.appendChild(actions);
+function stopAIResponse() {
+  if (aiAbortController) {
+    try {
+      aiAbortController.abort();
+    } catch (_) {
+      // ignore
+    }
+  }
+  aiAbortController = null;
+
+  // Stop typewriter but keep whatever is already written.
+  stopActiveTypewriter();
+  finalizeTypingBubble({ appendActions: true });
+
+  isAiBusy = false;
+  setChatSendButtonMode('send');
+  processAiQueue();
+}
+
+function processAiQueue() {
+  if (isAiBusy) return;
+  const next = pendingAiMessages.shift();
+  if (!next) return;
+  isAiBusy = true;
+  setChatSendButtonMode('stop');
+  sendMessageToAI(next);
 }
 
 async function sendMessageToAI(message) {
   try {
     addBotTypingIndicator();
 
+    aiAbortController = new AbortController();
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({ message }),
+      signal: aiAbortController.signal
     });
 
     const data = await response.json();
@@ -1076,17 +1166,36 @@ async function sendMessageToAI(message) {
     if (!data?.success || !data?.response) {
       removeTypingIndicator();
       addBotMessage('Извините, произошла ошибка при обработке запроса. Попробуйте позже.');
+      isAiBusy = false;
+      setChatSendButtonMode('send');
+      aiAbortController = null;
+      processAiQueue();
       return;
     }
 
+    aiAbortController = null;
     typeMessage(data.response, () => {
-      const lastBotBubble = document.querySelector('#chatMessages .bot-message:last-child .message-bubble');
-      if (lastBotBubble) appendAiActions(lastBotBubble);
       chatMessagesScrollToBottom();
+      isAiBusy = false;
+      setChatSendButtonMode('send');
+      processAiQueue();
     });
   } catch (error) {
+    if (error && (error.name === 'AbortError' || error.message === 'The user aborted a request.')) {
+      // user stopped / new message arrived
+      isAiBusy = false;
+      setChatSendButtonMode('send');
+      aiAbortController = null;
+      finalizeTypingBubble({ appendActions: true });
+      processAiQueue();
+      return;
+    }
     removeTypingIndicator();
     addBotMessage('Извините, не удалось подключиться к AI консультанту. Проверьте подключение к интернету.');
+    isAiBusy = false;
+    setChatSendButtonMode('send');
+    aiAbortController = null;
+    processAiQueue();
   }
 }
 
@@ -1094,7 +1203,14 @@ function sendChatMessage(message) {
   const trimmed = (message || '').trim();
   if (!trimmed) return;
   addUserMessage(trimmed);
-  sendMessageToAI(trimmed);
+  if (isAiBusy) {
+    stopActiveTypewriter();
+    pendingAiMessages.push(trimmed);
+    stopAIResponse();
+    return;
+  }
+  pendingAiMessages.push(trimmed);
+  processAiQueue();
 }
 
 function openChatWithMessage(message) {

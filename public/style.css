@@ -1600,7 +1600,7 @@ body.chat-overlay-visible .search-container {
   overflow-y: auto;
   overflow-x: hidden;
   /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
-  padding-bottom: 120px !important;
+  padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px)) !important;
   margin-top: 0;
   /* Убираем webkit scrollbar для чистого вида */
   -webkit-overflow-scrolling: touch;
