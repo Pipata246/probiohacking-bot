@@ -378,34 +378,6 @@ body.chat-overlay-visible .search-container {
   padding-bottom: 120px !important;
 }
 
-/* Raise navigation buttons higher */
-.survey-navigation {
-  position: fixed;
-  bottom: 140px; /* Much higher - above the bottom nav panel */
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  z-index: 50;
-  pointer-events: none;
-  gap: 160px;
-}
-
-/* Also raise quiz navigation */
-.quiz-navigation {
-  position: fixed;
-  bottom: 140px; /* Much higher - above the bottom nav panel */
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 140px;
-  z-index: 50;
-}
-
 /* Заголовок секции для спортсменов */
 .sports-section-title {
   color: #FFFFFF;
@@ -703,7 +675,7 @@ body.chat-overlay-visible .search-container {
 /* Навигация вопросов - ИСПРАВЛЕННАЯ позиция для мобильных */
 .survey-navigation {
   position: fixed;
-  bottom: clamp(80px, 12vh, 100px); /* УМЕНЬШАЕМ отступ снизу */
+  bottom: 140px; /* MUCH HIGHER - above the bottom nav panel */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -2619,7 +2591,7 @@ body.chat-overlay-visible .search-container {
 /* Навигация квиза - фиксированная позиция с учетом клавиатуры */
 .quiz-navigation {
   position: fixed;
-  bottom: 140px;
+  bottom: 140px; /* MUCH HIGHER - above the bottom nav panel */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -2627,8 +2599,6 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   gap: 140px;
   z-index: 50;
-  /* Адаптация к изменению viewport при появлении клавиатуры */
-  bottom: max(140px, env(keyboard-inset-height, 0px) + 20px);
 }
 
 .quiz-nav-btn {
@@ -2693,7 +2663,7 @@ body.chat-overlay-visible .search-container {
   
   .quiz-navigation {
     gap: 120px;
-    bottom: max(120px, env(keyboard-inset-height, 0px) + 20px);
+    bottom: 140px; /* MUCH HIGHER - above the bottom nav panel */
   }
   
   .quiz-nav-btn {
