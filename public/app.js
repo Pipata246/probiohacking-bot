@@ -931,7 +931,7 @@ function addUserMessage(text) {
   messageDiv.innerHTML = `
     ${userAvatarHtml}
     <div class="message-bubble">
-      <p class="message-text">${text}</p>
+      <div class="message-text">${text}</div>
     </div>
   `;
   chatMessages.appendChild(messageDiv);
@@ -942,19 +942,38 @@ function addBotMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
   const messageDiv = document.createElement('div');
   messageDiv.className = 'bot-message';
-  messageDiv.innerHTML = `
-    <div class="bot-avatar">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
-        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-        <circle cx="10" cy="11" r="0.5" fill="white"/>
-        <circle cx="14" cy="11" r="0.5" fill="white"/>
-      </svg>
-    </div>
-    <div class="message-bubble">
-      <p class="message-text">${text}</p>
-    </div>
-  `;
+
+  // Check if the text contains HTML tags
+  if (text.includes('<')) {
+    messageDiv.innerHTML = `
+      <div class="bot-avatar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+          <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="11" r="0.5" fill="white"/>
+          <circle cx="14" cy="11" r="0.5" fill="white"/>
+        </svg>
+      </div>
+      <div class="message-bubble">
+        <div class="message-text">${text}</div>
+      </div>
+    `;
+  } else {
+    messageDiv.innerHTML = `
+      <div class="bot-avatar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+          <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="11" r="0.5" fill="white"/>
+          <circle cx="14" cy="11" r="0.5" fill="white"/>
+        </svg>
+      </div>
+      <div class="message-bubble">
+        <div class="message-text">${text}</div>
+      </div>
+    `;
+  }
+
   chatMessages.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -1001,7 +1020,7 @@ function addBotTypingIndicator() {
         <span></span>
         <span></span>
       </div>
-      <p class="message-text" id="typingText" style="display:none;"></p>
+      <div class="message-text" id="typingText" style="display:none;"></div>
       <div class="ai-actions" id="typingActions" style="display:none;"></div>
     </div>
   `;
