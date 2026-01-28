@@ -590,11 +590,8 @@ document.addEventListener('click', (e) => {
     const chatInput = document.querySelector('.chat-input');
     const message = chatInput.value.trim();
     if (message) {
-      addUserMessage(message);
       chatInput.value = '';
-      setTimeout(() => {
-        addBotMessage('Извините, ИИ-помощник находится в разработке. Скоро мы сможем предоставить вам персональные рекомендации!');
-      }, 1000);
+      sendChatMessage(message);
     }
     return;
   }
@@ -974,17 +971,136 @@ function addBotMessageWithButton(text, buttonText, buttonAction) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+function addBotTypingIndicator() {
+  const chatMessages = document.getElementById('chatMessages');
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'bot-message typing-indicator';
+  messageDiv.id = 'typingIndicator';
+  messageDiv.innerHTML = `
+    <div class="bot-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="10" cy="11" r="0.5" fill="white"/>
+        <circle cx="14" cy="11" r="0.5" fill="white"/>
+      </svg>
+    </div>
+    <div class="message-bubble">
+      <div class="typing-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <p class="message-text" id="typingText" style="display:none;"></p>
+      <div class="ai-actions" id="typingActions" style="display:none;"></div>
+    </div>
+  `;
+  chatMessages.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const typingIndicator = document.getElementById('typingIndicator');
+  if (typingIndicator) typingIndicator.remove();
+}
+
+function typeMessage(text, callback) {
+  const typingIndicator = document.getElementById('typingIndicator');
+  const typingDots = typingIndicator?.querySelector('.typing-dots');
+  const typingText = document.getElementById('typingText');
+  if (!typingIndicator || !typingText) return;
+
+  if (typingDots) typingDots.style.display = 'none';
+  typingText.style.display = 'block';
+  typingText.textContent = '';
+
+  let index = 0;
+  const baseSpeed = 22;
+
+  function typeChar() {
+    if (index < text.length) {
+      const char = text.charAt(index);
+      typingText.textContent += char;
+      index++;
+
+      let delay = baseSpeed;
+      if (char === '.' || char === '!' || char === '?') delay = 180;
+      else if (char === ',' || char === ';' || char === ':') delay = 90;
+      else if (char === '\n') delay = 140;
+      else if (char === ' ') delay = 10;
+
+      delay += Math.random() * 20 - 10;
+      chatMessagesScrollToBottom();
+      setTimeout(typeChar, Math.max(10, delay));
+      return;
+    }
+
+    typingIndicator.classList.remove('typing-indicator');
+    typingIndicator.removeAttribute('id');
+    typingText.removeAttribute('id');
+    const actions = document.getElementById('typingActions');
+    if (actions) actions.removeAttribute('id');
+    if (callback) callback();
+  }
+
+  typeChar();
+}
+
+function chatMessagesScrollToBottom() {
+  const chatMessages = document.getElementById('chatMessages');
+  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function appendAiActions(container) {
+  const actions = document.createElement('div');
+  actions.className = 'ai-actions';
+  actions.innerHTML = `
+    <button class="message-button" onclick="showMyTestsPage()">Мои анализы</button>
+    <button class="message-button" onclick="handleDiagnosticButton()">Диагностика</button>
+  `;
+  container.appendChild(actions);
+}
+
+async function sendMessageToAI(message) {
+  try {
+    addBotTypingIndicator();
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
+    });
+
+    const data = await response.json();
+
+    if (!data?.success || !data?.response) {
+      removeTypingIndicator();
+      addBotMessage('Извините, произошла ошибка при обработке запроса. Попробуйте позже.');
+      return;
+    }
+
+    typeMessage(data.response, () => {
+      const lastBotBubble = document.querySelector('#chatMessages .bot-message:last-child .message-bubble');
+      if (lastBotBubble) appendAiActions(lastBotBubble);
+      chatMessagesScrollToBottom();
+    });
+  } catch (error) {
+    removeTypingIndicator();
+    addBotMessage('Извините, не удалось подключиться к AI консультанту. Проверьте подключение к интернету.');
+  }
+}
+
+function sendChatMessage(message) {
+  const trimmed = (message || '').trim();
+  if (!trimmed) return;
+  addUserMessage(trimmed);
+  sendMessageToAI(trimmed);
+}
+
 function openChatWithMessage(message) {
   showPage('chat');
   document.getElementById('chatMessages').innerHTML = '';
-  addUserMessage(message);
-  setTimeout(() => {
-    addBotMessageWithButton(
-      'Для данного запроса мне требуются твои данные, однако ты не прошел диагностику и я не могу тебе помочь. Пройди диагностику и загрузи свои анализы для лучшего ответа!',
-      'Пройти диагностику',
-      'handleDiagnosticButton()'
-    );
-  }, 1000);
+  sendChatMessage(message);
 }
 
 function handleDiagnosticButton() {
@@ -2395,11 +2511,8 @@ document.addEventListener('keypress', (e) => {
     const chatInput = e.target;
     const message = chatInput.value.trim();
     if (message) {
-      addUserMessage(message);
       chatInput.value = '';
-      setTimeout(() => {
-        addBotMessage('Извините, ИИ-помощник находится в разработке. Скоро мы сможем предоставить вам персональные рекомендации!');
-      }, 1000);
+      sendChatMessage(message);
     }
   }
 });
