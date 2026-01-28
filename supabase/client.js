@@ -5,8 +5,14 @@ const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
+console.log('Supabase config check:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseAnonKey,
+  urlPrefix: supabaseUrl ? supabaseUrl.substring(0, 30) : 'none'
+});
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase configuration. Please check SUPABASE_URL and SUPABASE_ANON_KEY environment variables.');
+  console.error('Missing Supabase configuration');
 }
 
 // Создание Supabase клиента
@@ -21,6 +27,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 const userService = {
   // Получить или создать пользователя
   async getOrCreateUser(telegramId, firstName = null, lastName = null, username = null, languageCode = 'ru') {
+    console.log('getOrCreateUser called with:', { telegramId, firstName, lastName, username, languageCode });
+    
     try {
       // Сначала пытаемся найти существующего пользователя
       let { data: existingUser, error: findError } = await supabase
@@ -29,6 +37,8 @@ const userService = {
         .eq('telegram_id', telegramId)
         .single();
 
+      console.log('Find user result:', { existingUser, findError });
+
       if (findError && findError.code !== 'PGRST116') { // PGRST116 = not found
         console.error('Error finding user:', findError);
         return null;
@@ -36,6 +46,7 @@ const userService = {
 
       // Если пользователь найден, обновляем его данные
       if (existingUser) {
+        console.log('User exists, updating...');
         const { data: updatedUser, error: updateError } = await supabase
           .from('users')
           .update({
@@ -48,6 +59,8 @@ const userService = {
           .select()
           .single();
 
+        console.log('Update result:', { updatedUser, updateError });
+
         if (updateError) {
           console.error('Error updating user:', updateError);
           return null;
@@ -57,6 +70,7 @@ const userService = {
       }
 
       // Если пользователь не найден, создаем нового
+      console.log('Creating new user...');
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
@@ -68,6 +82,8 @@ const userService = {
         })
         .select()
         .single();
+
+      console.log('Create result:', { newUser, createError });
 
       if (createError) {
         console.error('Error creating user:', createError);
