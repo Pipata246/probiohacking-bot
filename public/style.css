@@ -378,16 +378,32 @@ body.chat-overlay-visible .search-container {
   padding-bottom: 120px !important;
 }
 
-/* Fix survey and personal data steps bottom padding */
-#surveyStep,
-#personalDataStep,
-#additionalQuestionsStep {
-  padding-bottom: 120px !important;
+/* Raise navigation buttons higher */
+.survey-navigation {
+  position: fixed;
+  bottom: 20px; /* Much higher from bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  z-index: 50;
+  pointer-events: none;
+  gap: 160px;
 }
 
-.survey-question,
-.form-fields {
-  padding-bottom: 120px !important;
+/* Also raise quiz navigation */
+.quiz-navigation {
+  position: fixed;
+  bottom: 20px; /* Much higher from bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 140px;
+  z-index: 50;
 }
 
 /* Заголовок секции для спортсменов */
