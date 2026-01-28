@@ -98,8 +98,15 @@ module.exports = async (req, res) => {
     // Initialize user first
     let userInfo = null;
     if (telegramUser && telegramUser.id) {
-      userInfo = await initUser(req);
-      console.log('User info:', userInfo ? `${userInfo.telegramId} (${userInfo.firstName})` : 'Not created');
+      try {
+        userInfo = await initUser(req);
+        console.log('User info:', userInfo ? `${userInfo.telegramId} (${userInfo.firstName})` : 'Not created');
+      } catch (error) {
+        console.error('Error initializing user:', error);
+        // Продолжаем без пользователя, но логируем ошибку
+      }
+    } else {
+      console.log('No telegram user data provided');
     }
 
     const payload = {
@@ -161,9 +168,12 @@ module.exports = async (req, res) => {
       response: (content || '').trim()
     });
   } catch (error) {
+    console.error('Chat API Error:', error);
+    console.error('Error stack:', error.stack);
     return res.status(500).json({
       success: false,
-      error: error?.message || 'Unknown error'
+      error: error?.message || 'Unknown error',
+      debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };

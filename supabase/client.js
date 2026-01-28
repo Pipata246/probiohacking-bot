@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Создание Supabase клиента
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false
@@ -18,7 +18,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Функции для работы с пользователями
-export const userService = {
+const userService = {
   // Получить или создать пользователя
   async getOrCreateUser(telegramId, firstName = null, lastName = null, username = null, languageCode = 'ru') {
     try {
@@ -65,7 +65,7 @@ export const userService = {
 };
 
 // Функции для работы с запросами
-export const requestService = {
+const requestService = {
   // Сохранить запрос пользователя
   async saveRequest(telegramId, messageText, responseText = null, requestType = 'chat', metadata = {}) {
     try {
@@ -146,5 +146,9 @@ export const requestService = {
   }
 };
 
-// Экспорт по умолчанию
-export default supabase;
+// Экспорт для CommonJS
+module.exports = {
+  supabase,
+  userService,
+  requestService
+};
