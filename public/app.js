@@ -1014,6 +1014,12 @@ function removeTypingIndicator() {
   if (typingIndicator) typingIndicator.remove();
 }
 
+function chatMessagesScrollToBottom() {
+  const chatMessages = document.getElementById('chatMessages');
+  if (!chatMessages) return;
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 function finalizeTypingBubble({ appendActions } = { appendActions: true }) {
   const typingIndicator = document.getElementById('typingIndicator');
   if (!typingIndicator) return;
