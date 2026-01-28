@@ -19,7 +19,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
-    autoRefreshToken: false
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  },
+  db: {
+    schema: 'public'
   }
 });
 
