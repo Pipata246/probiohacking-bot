@@ -1011,13 +1011,24 @@ function addBotTypingIndicator() {
 
 function removeTypingIndicator() {
   const typingIndicator = document.getElementById('typingIndicator');
-  if (typingIndicator) typingIndicator.remove();
+  if (typingIndicator) safeRemove(typingIndicator);
 }
 
 function chatMessagesScrollToBottom() {
   const chatMessages = document.getElementById('chatMessages');
   if (!chatMessages) return;
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function safeRemove(el) {
+  if (!el) return;
+  if (el.parentNode) {
+    el.parentNode.removeChild(el);
+    return;
+  }
+  if (typeof el.remove === 'function') {
+    el.remove();
+  }
 }
 
 function finalizeTypingBubble({ appendActions } = { appendActions: true }) {
@@ -1028,7 +1039,7 @@ function finalizeTypingBubble({ appendActions } = { appendActions: true }) {
   typingIndicator.removeAttribute('id');
 
   const dots = typingIndicator.querySelector('.typing-dots');
-  if (dots) dots.remove();
+  if (dots) safeRemove(dots);
 
   const typingText = typingIndicator.querySelector('#typingText');
   if (typingText) {
@@ -1037,7 +1048,7 @@ function finalizeTypingBubble({ appendActions } = { appendActions: true }) {
   }
 
   const actions = typingIndicator.querySelector('#typingActions');
-  if (actions) actions.remove();
+  if (actions) safeRemove(actions);
 
   const bubble = typingIndicator.querySelector('.message-bubble');
   if (appendActions && bubble) {
