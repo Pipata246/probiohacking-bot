@@ -22,20 +22,59 @@ const userService = {
   // Получить или создать пользователя
   async getOrCreateUser(telegramId, firstName = null, lastName = null, username = null, languageCode = 'ru') {
     try {
-      const { data, error } = await supabase.rpc('get_or_create_user', {
-        p_telegram_id: telegramId,
-        p_first_name: firstName,
-        p_last_name: lastName,
-        p_username: username,
-        p_language_code: languageCode
-      });
+      // Сначала пытаемся найти существующего пользователя
+      let { data: existingUser, error: findError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('telegram_id', telegramId)
+        .single();
 
-      if (error) {
-        console.error('Error in getOrCreateUser:', error);
+      if (findError && findError.code !== 'PGRST116') { // PGRST116 = not found
+        console.error('Error finding user:', findError);
         return null;
       }
 
-      return data;
+      // Если пользователь найден, обновляем его данные
+      if (existingUser) {
+        const { data: updatedUser, error: updateError } = await supabase
+          .from('users')
+          .update({
+            first_name: firstName || existingUser.first_name,
+            last_name: lastName || existingUser.last_name,
+            username: username || existingUser.username,
+            updated_at: new Date().toISOString()
+          })
+          .eq('telegram_id', telegramId)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('Error updating user:', updateError);
+          return null;
+        }
+
+        return updatedUser.id;
+      }
+
+      // Если пользователь не найден, создаем нового
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          telegram_id: telegramId,
+          first_name: firstName,
+          last_name: lastName,
+          username: username,
+          language_code: languageCode
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Error creating user:', createError);
+        return null;
+      }
+
+      return newUser.id;
     } catch (error) {
       console.error('Exception in getOrCreateUser:', error);
       return null;
@@ -69,20 +108,37 @@ const requestService = {
   // Сохранить запрос пользователя
   async saveRequest(telegramId, messageText, responseText = null, requestType = 'chat', metadata = {}) {
     try {
-      const { data, error } = await supabase.rpc('save_user_request', {
-        p_telegram_id: telegramId,
-        p_message_text: messageText,
-        p_response_text: responseText,
-        p_request_type: requestType,
-        p_metadata: metadata
-      });
+      // Сначала получаем пользователя
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('telegram_id', telegramId)
+        .single();
+
+      if (userError || !user) {
+        console.error('User not found for request:', userError);
+        return null;
+      }
+
+      // Сохраняем запрос
+      const { data, error } = await supabase
+        .from('user_requests')
+        .insert({
+          user_id: user.id,
+          message_text: messageText,
+          response_text: responseText,
+          request_type: requestType,
+          metadata: metadata
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('Error in saveRequest:', error);
         return null;
       }
 
-      return data;
+      return data.id;
     } catch (error) {
       console.error('Exception in saveRequest:', error);
       return null;
