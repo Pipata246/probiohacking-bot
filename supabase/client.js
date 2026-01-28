@@ -54,75 +54,28 @@ function createSupabaseClientWithAuth(telegramWebAppData) {
 
 // Функции для работы с пользователями
 const userService = {
-  // Получить или создать пользователя
-  async getOrCreateUser(telegramId, firstName = null, lastName = null, username = null, languageCode = 'ru', telegramWebAppData = null) {
+  // Получить или создать пользователя через RPC функцию
+  async getOrCreateUser(telegramId, firstName = null, lastName = null, username = null, languageCode = 'ru') {
     console.log('getOrCreateUser called with:', { telegramId, firstName, lastName, username, languageCode });
     
-    // Используем аутентифицированный клиент если есть данные WebApp
-    const client = telegramWebAppData ? createSupabaseClientWithAuth(telegramWebAppData) : supabase;
-    
     try {
-      // Сначала пытаемся найти существующего пользователя
-      let { data: existingUser, error: findError } = await client
-        .from('users')
-        .select('*')
-        .eq('telegram_id', telegramId)
-        .single();
+      // Используем безопасную RPC функцию
+      const { data, error } = await supabase.rpc('create_user_if_not_exists', {
+        telegram_id_param: telegramId,
+        first_name_param: firstName,
+        last_name_param: lastName,
+        username_param: username,
+        language_code_param: languageCode
+      });
 
-      console.log('Find user result:', { existingUser, findError });
+      console.log('RPC create_user_if_not_exists result:', { data, error });
 
-      if (findError && findError.code !== 'PGRST116') { // PGRST116 = not found
-        console.error('Error finding user:', findError);
+      if (error) {
+        console.error('Error in RPC create_user_if_not_exists:', error);
         return null;
       }
 
-      // Если пользователь найден, обновляем его данные
-      if (existingUser) {
-        console.log('User exists, updating...');
-        const { data: updatedUser, error: updateError } = await client
-          .from('users')
-          .update({
-            first_name: firstName || existingUser.first_name,
-            last_name: lastName || existingUser.last_name,
-            username: username || existingUser.username,
-            updated_at: new Date().toISOString()
-          })
-          .eq('telegram_id', telegramId)
-          .select()
-          .single();
-
-        console.log('Update result:', { updatedUser, updateError });
-
-        if (updateError) {
-          console.error('Error updating user:', updateError);
-          return null;
-        }
-
-        return updatedUser.id;
-      }
-
-      // Если пользователь не найден, создаем нового
-      console.log('Creating new user...');
-      const { data: newUser, error: createError } = await client
-        .from('users')
-        .insert({
-          telegram_id: telegramId,
-          first_name: firstName,
-          last_name: lastName,
-          username: username,
-          language_code: languageCode
-        })
-        .select()
-        .single();
-
-      console.log('Create result:', { newUser, createError });
-
-      if (createError) {
-        console.error('Error creating user:', createError);
-        return null;
-      }
-
-      return newUser.id;
+      return data;
     } catch (error) {
       console.error('Exception in getOrCreateUser:', error);
       return null;
