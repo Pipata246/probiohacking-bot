@@ -354,6 +354,30 @@ body.chat-overlay-visible .search-container {
   text-align: left;
 }
 
+/* Make diagnostic reminder text bold in AI messages */
+.bot-message .message-text::after {
+  content: "Чтобы ответ был точнее: открой «Диагностика» и загрузи анализы в «Мои анализы».";
+  display: block;
+  font-weight: 600;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Additional bottom padding for "Мои анализы" and "Диагностика" pages */
+#myTestsStep,
+.my-tests-content,
+.diagnostics-page,
+.diagnostics-content {
+  padding-bottom: 120px !important;
+}
+
+/* Ensure all page content areas have proper bottom padding */
+.recommended-tests-sections,
+.knowledge-sections {
+  padding-bottom: 120px !important;
+}
+
 /* Заголовок секции для спортсменов */
 .sports-section-title {
   color: #FFFFFF;
