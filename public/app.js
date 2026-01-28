@@ -11,6 +11,36 @@ const tg = window.Telegram?.WebApp || {
 
 tg.ready();
 
+// Инициализация пользователя в Supabase
+async function initializeUser() {
+  const telegramUser = tg.initDataUnsafe?.user;
+  
+  if (telegramUser && telegramUser.id) {
+    try {
+      const response = await fetch('/api/init-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegramUser })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          console.log('User initialized:', data.user);
+          // Сохраняем ID пользователя для дальнейшего использования
+          window.currentUserId = data.user.id;
+          window.currentTelegramId = data.user.telegramId;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to initialize user:', error);
+    }
+  }
+}
+
+// Вызываем инициализацию сразу после готовности Telegram Web App
+initializeUser();
+
 // ПРАВИЛЬНЫЙ полноэкранный режим для Telegram Mini App
 if (window.Telegram?.WebApp) {
   // НЕМЕДЛЕННОЕ разворачивание в полноэкранный режим

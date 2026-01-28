@@ -1,8 +1,9 @@
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
-// Import Supabase client
-const { requestService } = require('../supabase/client.js');
+// Import Supabase client and middleware
+const { requestService, initUserFromWebApp } = require('../supabase/client.js');
+const { initUserFromWebApp: initUser } = require('../supabase/userMiddleware.js');
 
 async function doRequest(url, options) {
   if (typeof fetch === 'function') {
@@ -94,11 +95,12 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid message' });
     }
 
-    // Extract user info from Telegram WebApp data
-    const telegramId = telegramUser?.id || null;
-    const firstName = telegramUser?.first_name || null;
-    const lastName = telegramUser?.last_name || null;
-    const username = telegramUser?.username || null;
+    // Initialize user first
+    let userInfo = null;
+    if (telegramUser && telegramUser.id) {
+      userInfo = await initUser(req);
+      console.log('User info:', userInfo ? `${userInfo.telegramId} (${userInfo.firstName})` : 'Not created');
+    }
 
     const payload = {
       model: 'deepseek-chat',
@@ -132,22 +134,26 @@ module.exports = async (req, res) => {
     const content = data?.choices?.[0]?.message?.content || '';
 
     // Save request and response to Supabase (async, don't wait)
-    if (telegramId) {
+    if (userInfo && userInfo.telegramId) {
       requestService.saveRequest(
-        telegramId,
+        userInfo.telegramId,
         message,
         content,
         'chat',
         {
-          firstName,
-          lastName,
-          username,
+          userId: userInfo.id,
+          firstName: userInfo.firstName,
+          lastName: userInfo.lastName,
+          username: userInfo.username,
+          languageCode: userInfo.languageCode,
           userAgent: req.headers['user-agent'],
           timestamp: new Date().toISOString()
         }
       ).catch(error => {
         console.error('Failed to save request to Supabase:', error);
       });
+    } else {
+      console.log('No user info available, skipping request save');
     }
 
     return res.status(200).json({
