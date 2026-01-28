@@ -15,7 +15,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase configuration');
 }
 
-// Создание Supabase клиента
+// Создание Supabase клиента с кастомным auth
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
@@ -24,18 +24,46 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   db: {
     schema: 'public'
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'probiohacking-bot'
+    }
   }
 });
+
+// Функция для создания клиента с Telegram WebApp данными
+function createSupabaseClientWithAuth(telegramWebAppData) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    },
+    db: {
+      schema: 'public'
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'probiohacking-bot',
+        'X-Telegram-WebApp-Data': telegramWebAppData
+      }
+    }
+  });
+}
 
 // Функции для работы с пользователями
 const userService = {
   // Получить или создать пользователя
-  async getOrCreateUser(telegramId, firstName = null, lastName = null, username = null, languageCode = 'ru') {
+  async getOrCreateUser(telegramId, firstName = null, lastName = null, username = null, languageCode = 'ru', telegramWebAppData = null) {
     console.log('getOrCreateUser called with:', { telegramId, firstName, lastName, username, languageCode });
+    
+    // Используем аутентифицированный клиент если есть данные WebApp
+    const client = telegramWebAppData ? createSupabaseClientWithAuth(telegramWebAppData) : supabase;
     
     try {
       // Сначала пытаемся найти существующего пользователя
-      let { data: existingUser, error: findError } = await supabase
+      let { data: existingUser, error: findError } = await client
         .from('users')
         .select('*')
         .eq('telegram_id', telegramId)
@@ -51,7 +79,7 @@ const userService = {
       // Если пользователь найден, обновляем его данные
       if (existingUser) {
         console.log('User exists, updating...');
-        const { data: updatedUser, error: updateError } = await supabase
+        const { data: updatedUser, error: updateError } = await client
           .from('users')
           .update({
             first_name: firstName || existingUser.first_name,
@@ -75,7 +103,7 @@ const userService = {
 
       // Если пользователь не найден, создаем нового
       console.log('Creating new user...');
-      const { data: newUser, error: createError } = await supabase
+      const { data: newUser, error: createError } = await client
         .from('users')
         .insert({
           telegram_id: telegramId,

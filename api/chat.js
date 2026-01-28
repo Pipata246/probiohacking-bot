@@ -99,8 +99,14 @@ module.exports = async (req, res) => {
     let userInfo = null;
     if (telegramUser && telegramUser.id) {
       try {
+        // Получаем initData из Telegram WebApp
+        const telegramWebAppData = req.headers['x-telegram-webapp-data'] || 
+                                  req.body?.telegramWebAppData || 
+                                  window?.Telegram?.WebApp?.initData;
+        
         userInfo = await initUser(req);
         console.log('User info:', userInfo ? `${userInfo.telegramId} (${userInfo.firstName})` : 'Not created');
+        console.log('Has WebApp data:', !!telegramWebAppData);
       } catch (error) {
         console.error('Error initializing user:', error);
         // Продолжаем без пользователя, но логируем ошибку

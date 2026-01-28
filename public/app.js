@@ -1243,13 +1243,17 @@ async function sendMessageToAI(message) {
   try {
     addBotTypingIndicator();
 
-    // Get Telegram user data
+    // Get Telegram user data and initData
     const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
 
     aiAbortController = new AbortController();
     const response = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
       body: JSON.stringify({ 
         message,
         telegramUser: telegramUser ? {
@@ -1257,7 +1261,8 @@ async function sendMessageToAI(message) {
           first_name: telegramUser.first_name,
           last_name: telegramUser.last_name,
           username: telegramUser.username
-        } : null
+        } : null,
+        telegramWebAppData
       }),
       signal: aiAbortController.signal
     });
