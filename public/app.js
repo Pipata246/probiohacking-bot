@@ -1161,11 +1161,45 @@ async function sendMessageToAI(message) {
       signal: aiAbortController.signal
     });
 
-    const data = await response.json();
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    let data = null;
+    let rawText = '';
+
+    try {
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        rawText = await response.text();
+        try {
+          data = JSON.parse(rawText);
+        } catch (_) {
+          data = null;
+        }
+      }
+    } catch (_) {
+      try {
+        rawText = await response.text();
+      } catch (_) {
+        rawText = '';
+      }
+    }
+
+    if (!response.ok) {
+      finalizeTypingBubble({ appendActions: false });
+      const serverMsg = (data && (data.error || data.message)) ? String(data.error || data.message) : '';
+      const hint = serverMsg ? `Ошибка сервера: ${serverMsg}` : `Ошибка сервера: ${response.status}`;
+      addBotMessage(hint);
+      isAiBusy = false;
+      setChatSendButtonMode('send');
+      aiAbortController = null;
+      processAiQueue();
+      return;
+    }
 
     if (!data?.success || !data?.response) {
-      removeTypingIndicator();
-      addBotMessage('Извините, произошла ошибка при обработке запроса. Попробуйте позже.');
+      finalizeTypingBubble({ appendActions: false });
+      const serverMsg = data?.error ? `Ошибка сервера: ${String(data.error)}` : 'Извините, произошла ошибка при обработке запроса. Попробуйте позже.';
+      addBotMessage(serverMsg);
       isAiBusy = false;
       setChatSendButtonMode('send');
       aiAbortController = null;
@@ -1190,8 +1224,10 @@ async function sendMessageToAI(message) {
       processAiQueue();
       return;
     }
-    removeTypingIndicator();
-    addBotMessage('Извините, не удалось подключиться к AI консультанту. Проверьте подключение к интернету.');
+    finalizeTypingBubble({ appendActions: false });
+    const msg = error?.message ? String(error.message) : '';
+    const shown = msg ? `Не удалось выполнить запрос: ${msg}` : 'Не удалось выполнить запрос к серверу.';
+    addBotMessage(shown);
     isAiBusy = false;
     setChatSendButtonMode('send');
     aiAbortController = null;

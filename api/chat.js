@@ -1,6 +1,54 @@
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
+async function doRequest(url, options) {
+  if (typeof fetch === 'function') {
+    return fetch(url, options);
+  }
+
+  const https = require('https');
+
+  return new Promise((resolve, reject) => {
+    try {
+      const u = new URL(url);
+      const req = https.request(
+        {
+          hostname: u.hostname,
+          path: u.pathname + u.search,
+          method: options.method || 'GET',
+          headers: options.headers || {}
+        },
+        (res) => {
+          let data = '';
+          res.on('data', (chunk) => {
+            data += chunk;
+          });
+          res.on('end', () => {
+            resolve({
+              ok: res.statusCode >= 200 && res.statusCode < 300,
+              status: res.statusCode,
+              headers: {
+                get: (k) => {
+                  const key = String(k || '').toLowerCase();
+                  return res.headers[key];
+                }
+              },
+              json: async () => JSON.parse(data),
+              text: async () => data
+            });
+          });
+        }
+      );
+
+      req.on('error', reject);
+      if (options.body) req.write(options.body);
+      req.end();
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
 const SYSTEM_PROMPT = `Ты — PROBIOHACKING AI: персональный ассистент по здоровью и биохакингу.
 
 Правила:
@@ -53,7 +101,7 @@ module.exports = async (req, res) => {
       max_tokens: 420
     };
 
-    const response = await fetch(DEEPSEEK_API_URL, {
+    const response = await doRequest(DEEPSEEK_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
