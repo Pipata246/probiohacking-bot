@@ -378,6 +378,18 @@ body.chat-overlay-visible .search-container {
   padding-bottom: 120px !important;
 }
 
+/* Fix survey and personal data steps bottom padding */
+#surveyStep,
+#personalDataStep,
+#additionalQuestionsStep {
+  padding-bottom: 120px !important;
+}
+
+.survey-question,
+.form-fields {
+  padding-bottom: 120px !important;
+}
+
 /* Заголовок секции для спортсменов */
 .sports-section-title {
   color: #FFFFFF;
