@@ -381,7 +381,7 @@ body.chat-overlay-visible .search-container {
 /* Raise navigation buttons higher */
 .survey-navigation {
   position: fixed;
-  bottom: 20px; /* Much higher from bottom */
+  bottom: 140px; /* Much higher - above the bottom nav panel */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -396,7 +396,7 @@ body.chat-overlay-visible .search-container {
 /* Also raise quiz navigation */
 .quiz-navigation {
   position: fixed;
-  bottom: 20px; /* Much higher from bottom */
+  bottom: 140px; /* Much higher - above the bottom nav panel */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
