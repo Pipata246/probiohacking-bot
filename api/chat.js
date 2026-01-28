@@ -2,8 +2,8 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 // Import Supabase client and middleware
-const { requestService, initUserFromWebApp } = require('../supabase/client.js');
-const { initUserFromWebApp: initUser } = require('../supabase/userMiddleware.js');
+const { requestService } = require('../supabase/client.js');
+const { initUserFromWebApp } = require('../supabase/userMiddleware.js');
 
 async function doRequest(url, options) {
   if (typeof fetch === 'function') {
@@ -104,7 +104,7 @@ module.exports = async (req, res) => {
                                   req.body?.telegramWebAppData || 
                                   window?.Telegram?.WebApp?.initData;
         
-        userInfo = await initUser(req);
+        userInfo = await initUserFromWebApp(req);
         console.log('User info:', userInfo ? `${userInfo.telegramId} (${userInfo.firstName})` : 'Not created');
         console.log('Has WebApp data:', !!telegramWebAppData);
       } catch (error) {
