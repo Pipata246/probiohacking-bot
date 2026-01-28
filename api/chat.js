@@ -122,11 +122,9 @@ module.exports = async (req, res) => {
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content || '';
 
-    const footer = `\n\nЧтобы ответ был точнее: открой <strong>«Диагностика»</strong> и загрузи анализы в <strong>«Мои анализы»</strong>.`;
-
     return res.status(200).json({
       success: true,
-      response: (content || '').trim() + footer
+      response: (content || '').trim()
     });
   } catch (error) {
     return res.status(500).json({
