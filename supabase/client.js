@@ -297,25 +297,30 @@ const requestService = {
     
     try {
       // Получаем пользователя
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('telegram_id', telegramId)
-        .single();
+      let userId = metadata?.userId || null;
+      if (!userId) {
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('telegram_id', telegramId)
+          .single();
 
-      if (userError || !user) {
-        console.error('User not found for request:', userError);
-        return null;
+        if (userError || !user) {
+          console.error('User not found for request:', userError);
+          return null;
+        }
+
+        userId = user.id;
       }
 
       // Если chat_id не указан, получаем активный чат
       let finalChatId = chatId;
       if (!finalChatId) {
-        finalChatId = await chatService.getActiveChat(user.id);
+        finalChatId = await chatService.getActiveChat(userId);
         
         // Если активного чата нет, создаем новый
         if (!finalChatId) {
-          finalChatId = await chatService.createChat(user.id, 'Новый чат', true, false);
+          finalChatId = await chatService.createChat(userId, 'Новый чат', true, false);
         }
       }
 
@@ -328,7 +333,7 @@ const requestService = {
       const { data, error } = await supabase
         .from('user_requests')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           chat_id: finalChatId,
           message_text: messageText,
           response_text: responseText,
@@ -343,23 +348,56 @@ const requestService = {
         return null;
       }
 
-      // Обновляем счетчик сообщений в чате
-      const { error: updateError } = await supabase
-        .from('chats')
-        .update({ 
-          message_count: supabase.rpc('increment', { x: 1 }),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', finalChatId);
-
-      if (updateError) {
-        console.error('Error updating chat stats:', updateError);
-      }
-
       return data.id;
     } catch (error) {
       console.error('Exception in saveRequestToChat:', error);
       return null;
+    }
+  },
+
+  async createChatRequest(userId, chatId, messageText, requestType = 'chat', metadata = {}) {
+    try {
+      const { data, error } = await supabase
+        .from('user_requests')
+        .insert({
+          user_id: userId,
+          chat_id: chatId,
+          message_text: messageText,
+          response_text: null,
+          request_type: requestType,
+          metadata
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Error in createChatRequest:', error);
+        return null;
+      }
+
+      return data?.id || null;
+    } catch (error) {
+      console.error('Exception in createChatRequest:', error);
+      return null;
+    }
+  },
+
+  async setChatResponse(requestId, responseText) {
+    try {
+      const { error } = await supabase
+        .from('user_requests')
+        .update({ response_text: responseText })
+        .eq('id', requestId);
+
+      if (error) {
+        console.error('Error in setChatResponse:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Exception in setChatResponse:', error);
+      return false;
     }
   }
 };

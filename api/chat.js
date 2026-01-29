@@ -116,7 +116,7 @@ const SYSTEM_PROMPT = `Ты — PROBIOHACKING AI: персональный ас�
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Telegram-WebApp-Data');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -163,6 +163,7 @@ module.exports = async (req, res) => {
     // Получаем или создаем активный чат
     let currentChatId = null;
     let shouldCreateNewChat = false;
+    let requestId = null;
     
     if (userInfo && userInfo.id) {
       try {
@@ -186,6 +187,25 @@ module.exports = async (req, res) => {
         }
         
         console.log('Current chat ID:', currentChatId);
+
+        // Сохраняем сообщение пользователя сразу (не ждём ответа ИИ)
+        requestId = await requestService.createChatRequest(
+          userInfo.id,
+          currentChatId,
+          message,
+          'chat',
+          {
+            userId: userInfo.id,
+            chatId: currentChatId,
+            firstName: userInfo.firstName,
+            lastName: userInfo.lastName,
+            username: userInfo.username,
+            languageCode: userInfo.languageCode,
+            userAgent: req.headers['user-agent'],
+            timestamp: new Date().toISOString(),
+            contextOverflow: shouldCreateNewChat
+          }
+        );
       } catch (error) {
         console.error('Error managing chat:', error);
       }
@@ -222,8 +242,13 @@ module.exports = async (req, res) => {
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content || '';
 
-    // Save request and response to Supabase with chat context (async, don't wait)
-    if (userInfo && userInfo.telegramId && currentChatId) {
+    // Сохраняем ответ ИИ в уже созданную запись (быстро и без повторного insert)
+    if (requestId) {
+      requestService.setChatResponse(requestId, content).catch(error => {
+        console.error('Failed to update chat response:', error);
+      });
+    } else if (userInfo && userInfo.telegramId && currentChatId) {
+      // fallback: старое поведение
       requestService.saveRequestToChat(
         userInfo.telegramId,
         message,
@@ -244,8 +269,6 @@ module.exports = async (req, res) => {
       ).catch(error => {
         console.error('Failed to save request to chat:', error);
       });
-    } else {
-      console.log('No user info or chat ID available, skipping request save');
     }
 
     // Return response with chat info
