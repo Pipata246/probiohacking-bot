@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content, height=device-height">
     <title>PROBIOHACKING</title>
     <link rel="stylesheet" href="style.css?v=3">
-    <link rel="stylesheet" href="chat-history.css?v=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -678,34 +677,6 @@
             </button>
         </nav>
     </div>
-
-    <!-- Боковое меню с историей чатов -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-avatar" id="sidebarAvatar">AM</div>
-            <div class="sidebar-user-info">
-                <div class="sidebar-name" id="sidebarName">Александр</div>
-                <div class="sidebar-status">В сети</div>
-            </div>
-            <button class="sidebar-close" id="sidebarClose">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="sidebar-content">
-            <!-- История чатов -->
-            <div class="chat-history-container">
-                <h3>История чатов</h3>
-                <div class="chat-history" id="chatHistory">
-                    <!-- Чаты будут загружаться динамически -->
-                    <div class="no-chats">Начните новый чат</div>
-                </div>
-            </div>
-        </div>
-    </aside>
 
     <div class="chat-overlay" id="chatOverlay">
         <!-- Хедер чата без кнопки меню -->
