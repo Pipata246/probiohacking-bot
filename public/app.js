@@ -467,12 +467,28 @@ function forceUpdateAllAvatars() {
 setTimeout(forceUpdateAllAvatars, 500);
 setTimeout(forceUpdateAllAvatars, 1000);
 setTimeout(forceUpdateAllAvatars, 2000);
-
-// ========================================
 // ОБРАБОТЧИК ВСЕХ СОБЫТИЙ
 // ========================================
 
 document.addEventListener('click', (e) => {
+  // Кнопка меню - открытие сайдбара
+  if (e.target.closest('.menu-btn')) {
+    openSidebar();
+    return;
+  }
+  
+  // Закрытие сайдбара
+  if (e.target.closest('#sidebarClose') || e.target.closest('#sidebarOverlay')) {
+    closeSidebar();
+    return;
+  }
+  
+  // Кнопка нового чата
+  if (e.target.closest('#newChatBtn')) {
+    createNewChat();
+    return;
+  }
+  
   // НАВИГАЦИЯ - ИСПРАВЛЕННАЯ ЛОГИКА
   if (e.target.closest('.nav-item')) {
     const navItem = e.target.closest('.nav-item');
