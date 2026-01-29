@@ -11,6 +11,187 @@ const tg = window.Telegram?.WebApp || {
 
 tg.ready();
 
+// =========================================
+// ФУНКЦИИ УПРАВЛЕНИЯ ЧАТАМИ
+// =========================================
+
+// Загрузка истории чатов
+async function loadChatHistory() {
+  try {
+    const response = await fetch('/api/chats?action=list');
+    const data = await response.json();
+    
+    if (data.success) {
+      const chatHistoryList = document.getElementById('chatHistoryList');
+      if (!chatHistoryList) return;
+      
+      chatHistoryList.innerHTML = '';
+      
+      if (data.chats && data.chats.length > 0) {
+        data.chats.forEach(chat => {
+          const chatItem = document.createElement('div');
+          chatItem.className = `history-item ${chat.is_active ? 'active' : ''}`;
+          chatItem.setAttribute('data-chat-id', chat.id);
+          
+          const title = chat.auto_created ? 
+            `${chat.title} 🔄` : 
+            chat.title;
+          
+          const messageCount = chat.message_count > 0 ? 
+            ` (${chat.message_count})` : '';
+          
+          chatItem.textContent = `${title}${messageCount}`;
+          chatItem.addEventListener('click', () => switchToChat(chat.id));
+          
+          chatHistoryList.appendChild(chatItem);
+        });
+      } else {
+        chatHistoryList.innerHTML = '<div class="no-chats">Начните новый чат</div>';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading chat history:', error);
+    const chatHistoryList = document.getElementById('chatHistoryList');
+    if (chatHistoryList) {
+      chatHistoryList.innerHTML = '<div class="no-chats">Начните новый чат</div>';
+    }
+  }
+}
+
+// Переключение на другой чат
+async function switchToChat(chatId) {
+  try {
+    // Показываем индикатор загрузки
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = '<div class="loading">Загрузка чата...</div>';
+    }
+    
+    // Переключаем чат на сервере
+    const response = await fetch('/api/chats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'switch', chatId })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      currentChatId = chatId;
+      
+      // Загружаем сообщения чата
+      await loadChatMessages(chatId);
+      
+      // Обновляем UI истории
+      await loadChatHistory();
+      
+      // Показываем страницу чата
+      showPage('chat');
+      
+      // Закрываем сайдбар
+      closeSidebar();
+    }
+  } catch (error) {
+    console.error('Error switching chat:', error);
+  }
+}
+
+// Загрузка сообщений чата
+async function loadChatMessages(chatId) {
+  try {
+    const response = await fetch(`/api/chats?action=messages&chatId=${chatId}`);
+    const data = await response.json();
+    
+    if (data.success) {
+      const chatMessages = document.getElementById('chatMessages');
+      if (chatMessages) {
+        chatMessages.innerHTML = '';
+        
+        // Восстанавливаем сообщения в хронологическом порядке
+        data.messages.forEach(msg => {
+          if (msg.message_text) {
+            addUserMessage(msg.message_text);
+          }
+          if (msg.response_text) {
+            addBotMessage(msg.response_text);
+          }
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error loading chat messages:', error);
+  }
+}
+
+// Создание нового чата
+async function createNewChat() {
+  try {
+    const response = await fetch('/api/chats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create', title: 'Новый чат' })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      currentChatId = data.chatId;
+      
+      // Очищаем сообщения
+      const chatMessages = document.getElementById('chatMessages');
+      if (chatMessages) {
+        chatMessages.innerHTML = '';
+      }
+      
+      // Обновляем историю
+      await loadChatHistory();
+      
+      // Показываем страницу чата
+      showPage('chat');
+      
+      // Закрываем сайдбар
+      closeSidebar();
+    }
+  } catch (error) {
+    console.error('Error creating new chat:', error);
+  }
+}
+
+// ========================================
+// ФУНКЦИИ БОКОВОГО МЕНЮ
+// ========================================
+
+function openSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  if (sidebar && sidebarOverlay) {
+    requestAnimationFrame(() => {
+      sidebar.classList.add('active');
+      sidebarOverlay.classList.add('active');
+    });
+  }
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  if (sidebar && sidebarOverlay) {
+    sidebar.classList.remove('active');
+    sidebarOverlay.classList.remove('active');
+  }
+}
+
+// ========================================
+// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+// ========================================
+
+// Глобальные переменные для чатов
+let currentChatId = null;
+let chatHistory = [];
+let isChatHistoryLoaded = false;
+
+// =========================================
+
 // Инициализация пользователя в Supabase
 async function initializeUser() {
   const telegramUser = tg.initDataUnsafe?.user;
@@ -963,7 +1144,7 @@ let activeTypewriter = null;
 let currentChatId = null;
 let chatHistory = [];
 let isChatHistoryLoaded = false;
-const pendingAiMessages = [];
+let pendingAiMessages = [];
 
 function addUserMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
@@ -1405,18 +1586,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.ready();
     window.Telegram.WebApp.expand();
-    
+
     // Устанавливаем тему
     if (window.Telegram.WebApp.colorScheme) {
       document.body.setAttribute('data-theme', window.Telegram.WebApp.colorScheme);
     }
-    
+
     // Получаем данные пользователя
     const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
     if (telegramUser) {
       user = telegramUser;
       userName = `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim();
-      
+
       // Обновляем аватар в сайдбаре
       const sidebarAvatar = document.getElementById('sidebarAvatar');
       if (sidebarAvatar) {
@@ -1428,19 +1609,25 @@ document.addEventListener('DOMContentLoaded', async () => {
           sidebarAvatar.textContent = initials;
         }
       }
-      
+
       // Обновляем имя в сайдбаре
       const sidebarName = document.getElementById('sidebarName');
       if (sidebarName) {
         sidebarName.textContent = userName;
       }
     }
+
+    // Загружаем историю чатов
+    await loadChatHistory();
+
+    // Показываем главную страницу
+    showPage('main');
   }
-  
-  // Загружаем историю чатов
+
+  // Загружаем историю чатов (для локального тестирования без Telegram)
   await loadChatHistory();
-  
-  // Показываем главную страницу
+
+  // Показываем главную страницу (для локального тестирования без Telegram)
   showPage('main');
 });
 

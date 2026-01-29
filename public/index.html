@@ -307,23 +307,13 @@
         </div>
 
         <div class="sidebar-content">
-            <!-- Вчера -->
+            <!-- История чатов из БД -->
             <div class="history-section">
-                <h3 class="history-period">Вчера</h3>
-                <div class="history-item">Комплексная диагностика поможе...</div>
-            </div>
-
-            <!-- Прошлая неделя -->
-            <div class="history-section">
-                <h3 class="history-period">Прошлая неделя</h3>
-                <div class="history-item">Комплексная диагностика поможе...</div>
-            </div>
-
-            <!-- 30 дней -->
-            <div class="history-section">
-                <h3 class="history-period">30 дней</h3>
-                <div class="history-item">Персональные рекомендации...</div>
-                <div class="history-item">Анализ состояния здоровья...</div>
+                <h3 class="history-period">История чатов</h3>
+                <div id="chatHistoryList">
+                    <!-- Чаты будут загружаться из БД -->
+                    <div class="no-chats">Начните новый чат</div>
+                </div>
             </div>
         </div>
 
