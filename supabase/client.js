@@ -1,4 +1,5 @@
-// Supabase клиент для probiohacking-bot
+// Упрощенный Supabase клиент для probiohacking-bot
+// Без RPC функций для надежности
 const { createClient } = require('@supabase/supabase-js');
 
 // Конфигурация Supabase
@@ -15,7 +16,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase configuration');
 }
 
-// Создание Supabase клиента с кастомным auth
+// Создание Supabase клиента
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: false,
@@ -32,29 +33,9 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Функция для создания клиента с Telegram WebApp данными
-function createSupabaseClientWithAuth(telegramWebAppData) {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    },
-    db: {
-      schema: 'public'
-    },
-    global: {
-      headers: {
-        'X-Client-Info': 'probiohacking-bot',
-        'X-Telegram-WebApp-Data': telegramWebAppData
-      }
-    }
-  });
-}
-
 // Функции для работы с пользователями
 const userService = {
-  // Получить или создать пользователя - ПРОСТОЙ ВАРИАНТ
+  // Получить или создать пользователя
   async getOrCreateUser(telegramId, firstName = null, lastName = null, username = null, languageCode = 'ru') {
     console.log('getOrCreateUser called with:', { telegramId, firstName, lastName, username, languageCode });
     
@@ -148,153 +129,37 @@ const userService = {
   }
 };
 
-// Функции для работы с запросами
-const requestService = {
-  // Сохранить запрос пользователя - ПРОСТОЙ ВАРИАНТ
-  async saveRequest(telegramId, messageText, responseText = null, requestType = 'chat', metadata = {}) {
-    console.log('saveRequest called with:', { telegramId, messageText, requestType });
-    
-    try {
-      // Сначала получаем пользователя
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('telegram_id', telegramId)
-        .single();
-
-      if (userError || !user) {
-        console.error('User not found for request:', userError);
-        return null;
-      }
-
-      // Сохраняем запрос
-      const { data, error } = await supabase
-        .from('user_requests')
-        .insert({
-          user_id: user.id,
-          message_text: messageText,
-          response_text: responseText,
-          request_type: requestType,
-          metadata: metadata
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error in saveRequest:', error);
-        return null;
-      }
-
-      return data.id;
-    } catch (error) {
-      console.error('Exception in saveRequest:', error);
-      return null;
-    }
-  },
-
-  // Сохранить запрос с привязкой к чату
-  async saveRequestToChat(telegramId, messageText, responseText = null, requestType = 'chat', metadata = {}, chatId = null) {
-    console.log('saveRequestToChat called with:', { telegramId, messageText, chatId });
-    
-    try {
-      const { data, error } = await supabase.rpc('save_request_to_chat', {
-        p_telegram_id: telegramId,
-        p_message_text: messageText,
-        p_response_text: responseText,
-        p_request_type: requestType,
-        p_metadata: metadata,
-        p_chat_id: chatId
-      });
-
-      if (error) {
-        console.error('Error in saveRequestToChat:', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Exception in saveRequestToChat:', error);
-      return null;
-    }
-  },
-
-  // Получить запросы пользователя
-  async getUserRequests(telegramId, limit = 50) {
-    try {
-      const { data, error } = await supabase
-        .from('user_requests')
-        .select(`
-          *,
-          users!inner(telegram_id, first_name, last_name, username)
-        `)
-        .eq('users.telegram_id', telegramId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.error('Error getting user requests:', error);
-        return [];
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Exception in getUserRequests:', error);
-      return [];
-    }
-  },
-
-  // Получить статистику запросов
-  async getRequestStats(telegramId) {
-    try {
-      const { data, error } = await supabase
-        .from('user_requests')
-        .select('request_type, created_at')
-        .eq('users.telegram_id', telegramId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error getting request stats:', error);
-        return null;
-      }
-
-      // Группировка по типам запросов
-      const stats = data.reduce((acc, request) => {
-        acc[request.request_type] = (acc[request.request_type] || 0) + 1;
-        return acc;
-      }, {});
-
-      return {
-        totalRequests: data.length,
-        requestTypes: stats,
-        lastRequest: data[0]?.created_at || null
-      };
-    } catch (error) {
-      console.error('Exception in getRequestStats:', error);
-      return null;
-    }
-  }
-};
-
-// Функции для работы с чатами
+// Функции для работы с чатами (без RPC)
 const chatService = {
   // Создать новый чат
   async createChat(userId, title = 'Новый чат', isActive = true, autoCreated = false) {
     console.log('createChat called with:', { userId, title, isActive, autoCreated });
     
     try {
-      const { data, error } = await supabase.rpc('create_chat', {
-        p_user_id: userId,
-        p_title: title,
-        p_is_active: isActive,
-        p_auto_created: autoCreated
-      });
+      // Деактивируем предыдущие активные чаты пользователя
+      await supabase
+        .from('chats')
+        .update({ is_active: false })
+        .eq('user_id', userId);
+
+      // Создаем новый чат
+      const { data, error } = await supabase
+        .from('chats')
+        .insert({
+          user_id: userId,
+          title: title,
+          is_active: isActive,
+          auto_created: autoCreated
+        })
+        .select()
+        .single();
 
       if (error) {
         console.error('Error in createChat:', error);
         return null;
       }
 
-      return data;
+      return data.id;
     } catch (error) {
       console.error('Exception in createChat:', error);
       return null;
@@ -306,16 +171,21 @@ const chatService = {
     console.log('getActiveChat called with:', { userId });
     
     try {
-      const { data, error } = await supabase.rpc('get_active_chat', {
-        p_user_id: userId
-      });
+      const { data, error } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error in getActiveChat:', error);
         return null;
       }
 
-      return data;
+      return data?.id || null;
     } catch (error) {
       console.error('Exception in getActiveChat:', error);
       return null;
@@ -327,9 +197,19 @@ const chatService = {
     console.log('getUserChats called with:', { userId });
     
     try {
-      const { data, error } = await supabase.rpc('get_user_chats', {
-        p_user_id: userId
-      });
+      const { data, error } = await supabase
+        .from('chats')
+        .select(`
+          id,
+          title,
+          created_at,
+          updated_at,
+          message_count,
+          is_active,
+          auto_created
+        `)
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false });
 
       if (error) {
         console.error('Error in getUserChats:', error);
@@ -348,10 +228,19 @@ const chatService = {
     console.log('getChatMessages called with:', { chatId, limit });
     
     try {
-      const { data, error } = await supabase.rpc('get_chat_messages', {
-        p_chat_id: chatId,
-        p_limit: limit
-      });
+      const { data, error } = await supabase
+        .from('user_requests')
+        .select(`
+          id,
+          message_text,
+          response_text,
+          request_type,
+          metadata,
+          created_at
+        `)
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: true })
+        .limit(limit);
 
       if (error) {
         console.error('Error in getChatMessages:', error);
@@ -379,7 +268,10 @@ const chatService = {
       // Активируем выбранный чат
       const { data, error } = await supabase
         .from('chats')
-        .update({ is_active: true, updated_at: new Date().toISOString() })
+        .update({ 
+          is_active: true, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', chatId)
         .select()
         .single();
@@ -392,6 +284,81 @@ const chatService = {
       return data;
     } catch (error) {
       console.error('Exception in switchToChat:', error);
+      return null;
+    }
+  }
+};
+
+// Функции для работы с запросами
+const requestService = {
+  // Сохранить запрос с привязкой к чату (упрощенная версия)
+  async saveRequestToChat(telegramId, messageText, responseText = null, requestType = 'chat', metadata = {}, chatId = null) {
+    console.log('saveRequestToChat called with:', { telegramId, messageText, chatId });
+    
+    try {
+      // Получаем пользователя
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('telegram_id', telegramId)
+        .single();
+
+      if (userError || !user) {
+        console.error('User not found for request:', userError);
+        return null;
+      }
+
+      // Если chat_id не указан, получаем активный чат
+      let finalChatId = chatId;
+      if (!finalChatId) {
+        finalChatId = await chatService.getActiveChat(user.id);
+        
+        // Если активного чата нет, создаем новый
+        if (!finalChatId) {
+          finalChatId = await chatService.createChat(user.id, 'Новый чат', true, false);
+        }
+      }
+
+      if (!finalChatId) {
+        console.error('No chat ID available');
+        return null;
+      }
+
+      // Сохраняем запрос
+      const { data, error } = await supabase
+        .from('user_requests')
+        .insert({
+          user_id: user.id,
+          chat_id: finalChatId,
+          message_text: messageText,
+          response_text: responseText,
+          request_type: requestType,
+          metadata: metadata
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error in saveRequestToChat:', error);
+        return null;
+      }
+
+      // Обновляем счетчик сообщений в чате
+      const { error: updateError } = await supabase
+        .from('chats')
+        .update({ 
+          message_count: supabase.rpc('increment', { x: 1 }),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', finalChatId);
+
+      if (updateError) {
+        console.error('Error updating chat stats:', updateError);
+      }
+
+      return data.id;
+    } catch (error) {
+      console.error('Exception in saveRequestToChat:', error);
       return null;
     }
   }
