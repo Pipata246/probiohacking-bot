@@ -18,7 +18,12 @@ tg.ready();
 // Загрузка истории чатов
 async function loadChatHistory() {
   try {
-    const response = await fetch('/api/chats?action=list');
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/chats?action=list', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
     const data = await response.json();
     
     if (data.success) {
@@ -41,7 +46,6 @@ async function loadChatHistory() {
             ` (${chat.message_count})` : '';
           
           chatItem.textContent = `${title}${messageCount}`;
-          chatItem.addEventListener('click', () => switchToChat(chat.id));
           
           chatHistoryList.appendChild(chatItem);
         });
@@ -68,9 +72,13 @@ async function switchToChat(chatId) {
     }
     
     // Переключаем чат на сервере
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
       body: JSON.stringify({ action: 'switch', chatId })
     });
     
@@ -99,7 +107,12 @@ async function switchToChat(chatId) {
 // Загрузка сообщений чата
 async function loadChatMessages(chatId) {
   try {
-    const response = await fetch(`/api/chats?action=messages&chatId=${chatId}`);
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch(`/api/chats?action=messages&chatId=${chatId}`, {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
     const data = await response.json();
     
     if (data.success) {
@@ -126,9 +139,13 @@ async function loadChatMessages(chatId) {
 // Создание нового чата
 async function createNewChat() {
   try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
       body: JSON.stringify({ action: 'create', title: 'Новый чат' })
     });
     
@@ -818,14 +835,18 @@ document.addEventListener('click', (e) => {
   
   // Новый чат
   if (e.target.closest('.new-chat-btn') || e.target.closest('#newChatBtn')) {
-    closeSidebar();
-    showPage('chat');
-    document.getElementById('chatMessages').innerHTML = '';
+    createNewChat();
     return;
   }
   
   // История запросов
   if (e.target.closest('.history-item')) {
+    const item = e.target.closest('.history-item');
+    const chatId = item?.getAttribute('data-chat-id');
+    if (chatId) {
+      switchToChat(chatId);
+      return;
+    }
     closeSidebar();
     showPage('chat');
     return;
