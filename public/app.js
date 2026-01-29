@@ -181,16 +181,6 @@ function closeSidebar() {
   }
 }
 
-// =========================================
-// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-// =========================================
-
-// Глобальные переменные для чатов
-let currentChatId = null;
-
-// =========================================
-
-// Инициализация пользователя в Supabase
 async function initializeUser() {
   const telegramUser = tg.initDataUnsafe?.user;
   
