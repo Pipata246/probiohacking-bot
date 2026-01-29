@@ -368,6 +368,29 @@ const requestService = {
         return null;
       }
 
+      try {
+        const titleCandidate = String(messageText || '').trim();
+        if (titleCandidate) {
+          const { data: chatRow } = await supabase
+            .from('chats')
+            .select('id, title, message_count')
+            .eq('id', finalChatId)
+            .eq('user_id', userId)
+            .single();
+
+          const isDefaultTitle = chatRow?.title === 'Новый чат' || chatRow?.title === 'Чат';
+          if (chatRow && isDefaultTitle && (chatRow.message_count || 0) === 0) {
+            await supabase
+              .from('chats')
+              .update({ title: titleCandidate.slice(0, 60) })
+              .eq('id', finalChatId)
+              .eq('user_id', userId);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to auto-rename chat title:', e);
+      }
+
       // Сохраняем запрос
       const { data, error } = await supabase
         .from('user_requests')
@@ -398,7 +421,7 @@ const requestService = {
     try {
       const { data: chat, error: chatError } = await supabase
         .from('chats')
-        .select('id')
+        .select('id, title, message_count')
         .eq('id', chatId)
         .eq('user_id', userId)
         .single();
@@ -408,6 +431,20 @@ const requestService = {
           console.error('Error in createChatRequest (chat ownership):', chatError);
         }
         return null;
+      }
+
+      try {
+        const titleCandidate = String(messageText || '').trim();
+        const isDefaultTitle = chat?.title === 'Новый чат' || chat?.title === 'Чат';
+        if (titleCandidate && isDefaultTitle && (chat?.message_count || 0) === 0) {
+          await supabase
+            .from('chats')
+            .update({ title: titleCandidate.slice(0, 60) })
+            .eq('id', chatId)
+            .eq('user_id', userId);
+        }
+      } catch (e) {
+        console.error('Failed to auto-rename chat title:', e);
       }
 
       const { data, error } = await supabase

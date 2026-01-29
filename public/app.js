@@ -1178,6 +1178,15 @@ let chatHistory = [];
 let isChatHistoryLoaded = false;
 let pendingAiMessages = [];
 
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function addUserMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
   const messageDiv = document.createElement('div');
@@ -1187,13 +1196,14 @@ function addUserMessage(text) {
   if (user?.photo_url) {
     userAvatarHtml = `<div class="user-avatar" style="background-image: url(${user.photo_url}); background-size: cover; background-position: center;"></div>`;
   } else {
-    userAvatarHtml = `<div class="user-avatar">${userName.charAt(0).toUpperCase()}</div>`;
+    const safeName = (typeof userName === 'string' && userName.trim()) ? userName.trim() : 'U';
+    userAvatarHtml = `<div class="user-avatar">${escapeHtml(safeName.charAt(0).toUpperCase())}</div>`;
   }
   
   messageDiv.innerHTML = `
     ${userAvatarHtml}
     <div class="message-bubble">
-      <div class="message-text">${text}</div>
+      <div class="message-text">${escapeHtml(text)}</div>
     </div>
   `;
   chatMessages.appendChild(messageDiv);
@@ -1205,36 +1215,19 @@ function addBotMessage(text) {
   const messageDiv = document.createElement('div');
   messageDiv.className = 'bot-message';
 
-  // Check if the text contains HTML tags
-  if (text.includes('<')) {
-    messageDiv.innerHTML = `
-      <div class="bot-avatar">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
-          <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="10" cy="11" r="0.5" fill="white"/>
-          <circle cx="14" cy="11" r="0.5" fill="white"/>
-        </svg>
-      </div>
-      <div class="message-bubble">
-        <div class="message-text">${text}</div>
-      </div>
-    `;
-  } else {
-    messageDiv.innerHTML = `
-      <div class="bot-avatar">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
-          <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="10" cy="11" r="0.5" fill="white"/>
-          <circle cx="14" cy="11" r="0.5" fill="white"/>
-        </svg>
-      </div>
-      <div class="message-bubble">
-        <div class="message-text">${text}</div>
-      </div>
-    `;
-  }
+  messageDiv.innerHTML = `
+    <div class="bot-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="10" cy="11" r="0.5" fill="white"/>
+        <circle cx="14" cy="11" r="0.5" fill="white"/>
+      </svg>
+    </div>
+    <div class="message-bubble">
+      <div class="message-text">${escapeHtml(text)}</div>
+    </div>
+  `;
 
   chatMessages.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1654,12 +1647,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Показываем главную страницу
     showPage('main');
+    return;
   }
 
-  // Загружаем историю чатов (для локального тестирования без Telegram)
+  // Локальный режим без Telegram
   await loadChatHistory();
-
-  // Показываем главную страницу (для локального тестирования без Telegram)
   showPage('main');
 });
 
