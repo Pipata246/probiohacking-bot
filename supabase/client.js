@@ -140,7 +140,8 @@ const chatService = {
       await supabase
         .from('chats')
         .update({ is_active: false })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('is_active', true);
 
       // Создаем новый чат
       const { data, error } = await supabase
@@ -302,7 +303,8 @@ const chatService = {
       await supabase
         .from('chats')
         .update({ is_active: false })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('is_active', true);
 
       // Активируем выбранный чат
       const { data, error } = await supabase

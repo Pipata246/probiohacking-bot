@@ -228,31 +228,35 @@ module.exports = async (req, res) => {
 
     // Сохраняем ответ ИИ в уже созданную запись (быстро и без повторного insert)
     if (requestId) {
-      requestService.setChatResponse(requestId, content).catch(error => {
+      try {
+        await requestService.setChatResponse(requestId, content);
+      } catch (error) {
         console.error('Failed to update chat response:', error);
-      });
+      }
     } else if (userInfo && userInfo.telegramId && currentChatId) {
       // fallback: старое поведение
-      requestService.saveRequestToChat(
-        userInfo.telegramId,
-        message,
-        content,
-        'chat',
-        {
-          userId: userInfo.id,
-          chatId: currentChatId,
-          firstName: userInfo.firstName,
-          lastName: userInfo.lastName,
-          username: userInfo.username,
-          languageCode: userInfo.languageCode,
-          userAgent: req.headers['user-agent'],
-          timestamp: new Date().toISOString(),
-          contextOverflow: shouldCreateNewChat
-        },
-        currentChatId
-      ).catch(error => {
+      try {
+        await requestService.saveRequestToChat(
+          userInfo.telegramId,
+          message,
+          content,
+          'chat',
+          {
+            userId: userInfo.id,
+            chatId: currentChatId,
+            firstName: userInfo.firstName,
+            lastName: userInfo.lastName,
+            username: userInfo.username,
+            languageCode: userInfo.languageCode,
+            userAgent: req.headers['user-agent'],
+            timestamp: new Date().toISOString(),
+            contextOverflow: shouldCreateNewChat
+          },
+          currentChatId
+        );
+      } catch (error) {
         console.error('Failed to save request to chat:', error);
-      });
+      }
     }
 
     // Return response with chat info

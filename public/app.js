@@ -41,11 +41,8 @@ async function loadChatHistory() {
           const title = chat.auto_created ? 
             `${chat.title} 🔄` : 
             chat.title;
-          
-          const messageCount = chat.message_count > 0 ? 
-            ` (${chat.message_count})` : '';
-          
-          chatItem.textContent = `${title}${messageCount}`;
+
+          chatItem.textContent = `${title}`;
           
           chatHistoryList.appendChild(chatItem);
         });
@@ -87,11 +84,11 @@ async function switchToChat(chatId) {
     if (data.success) {
       currentChatId = chatId;
       
-      // Загружаем сообщения чата
-      await loadChatMessages(chatId);
-      
-      // Обновляем UI истории
-      await loadChatHistory();
+      // Загружаем сообщения и историю параллельно
+      await Promise.all([
+        loadChatMessages(chatId),
+        loadChatHistory()
+      ]);
       
       // Показываем страницу чата
       showPage('chat');
@@ -160,8 +157,8 @@ async function createNewChat() {
         chatMessages.innerHTML = '';
       }
       
-      // Обновляем историю
-      await loadChatHistory();
+      // Обновляем историю без блокировки UI
+      loadChatHistory();
       
       // Показываем страницу чата
       showPage('chat');
