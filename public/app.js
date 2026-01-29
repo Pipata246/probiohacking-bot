@@ -944,6 +944,9 @@ function closeSidebar() {
 let aiAbortController = null;
 let isAiBusy = false;
 let activeTypewriter = null;
+let currentChatId = null;
+let chatHistory = [];
+let isChatHistoryLoaded = false;
 const pendingAiMessages = [];
 
 function addUserMessage(text) {
@@ -1319,6 +1322,45 @@ async function sendMessageToAI(message) {
       isAiBusy = false;
       setChatSendButtonMode('send');
       processAiQueue();
+      
+      // Обрабатываем переполнение контекста
+      if (data.newChatCreated || data.contextOverflow) {
+        // Показываем специальное сообщение о создании нового чата
+        const overflowMessage = `
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                      color: white; 
+                      padding: 12px; 
+                      border-radius: 12px; 
+                      margin: 16px 0;
+                      text-align: center;
+                      border: 2px solid rgba(255,255,255,0.2);
+                      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div>
+                <div style="font-weight: 600; font-size: 14px;">🔄 Создан новый чат</div>
+                <div style="font-size: 12px; opacity: 0.9; margin-top: 2px;">
+                  Контекст переполнен, продолжаем в свежем чате
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        addBotMessage(overflowMessage);
+        
+        // Обновляем текущий ID чата
+        if (data.chatId) {
+          currentChatId = data.chatId;
+        }
+        
+        // Перезагружаем историю чатов
+        loadChatHistory();
+      }
     });
   } catch (error) {
     if (error && (error.name === 'AbortError' || error.message === 'The user aborted a request.')) {
@@ -1340,6 +1382,51 @@ async function sendMessageToAI(message) {
     processAiQueue();
   }
 }
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', async () => {
+  // Инициализация Telegram WebApp
+  if (window.Telegram && window.Telegram.WebApp) {
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+    
+    // Устанавливаем тему
+    if (window.Telegram.WebApp.colorScheme) {
+      document.body.setAttribute('data-theme', window.Telegram.WebApp.colorScheme);
+    }
+    
+    // Получаем данные пользователя
+    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
+    if (telegramUser) {
+      user = telegramUser;
+      userName = `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim();
+      
+      // Обновляем аватар в сайдбаре
+      const sidebarAvatar = document.getElementById('sidebarAvatar');
+      if (sidebarAvatar) {
+        if (telegramUser.photo_url) {
+          sidebarAvatar.style.backgroundImage = `url(${telegramUser.photo_url})`;
+          sidebarAvatar.textContent = '';
+        } else {
+          const initials = `${telegramUser.first_name.charAt(0)}${telegramUser.last_name ? telegramUser.last_name.charAt(0) : ''}`.toUpperCase();
+          sidebarAvatar.textContent = initials;
+        }
+      }
+      
+      // Обновляем имя в сайдбаре
+      const sidebarName = document.getElementById('sidebarName');
+      if (sidebarName) {
+        sidebarName.textContent = userName;
+      }
+    }
+  }
+  
+  // Загружаем историю чатов
+  await loadChatHistory();
+  
+  // Показываем главную страницу
+  showPage('main');
+});
 
 function sendChatMessage(message) {
   const trimmed = (message || '').trim();

@@ -192,6 +192,32 @@ const requestService = {
     }
   },
 
+  // Сохранить запрос с привязкой к чату
+  async saveRequestToChat(telegramId, messageText, responseText = null, requestType = 'chat', metadata = {}, chatId = null) {
+    console.log('saveRequestToChat called with:', { telegramId, messageText, chatId });
+    
+    try {
+      const { data, error } = await supabase.rpc('save_request_to_chat', {
+        p_telegram_id: telegramId,
+        p_message_text: messageText,
+        p_response_text: responseText,
+        p_request_type: requestType,
+        p_metadata: metadata,
+        p_chat_id: chatId
+      });
+
+      if (error) {
+        console.error('Error in saveRequestToChat:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Exception in saveRequestToChat:', error);
+      return null;
+    }
+  },
+
   // Получить запросы пользователя
   async getUserRequests(telegramId, limit = 50) {
     try {
@@ -249,9 +275,132 @@ const requestService = {
   }
 };
 
+// Функции для работы с чатами
+const chatService = {
+  // Создать новый чат
+  async createChat(userId, title = 'Новый чат', isActive = true, autoCreated = false) {
+    console.log('createChat called with:', { userId, title, isActive, autoCreated });
+    
+    try {
+      const { data, error } = await supabase.rpc('create_chat', {
+        p_user_id: userId,
+        p_title: title,
+        p_is_active: isActive,
+        p_auto_created: autoCreated
+      });
+
+      if (error) {
+        console.error('Error in createChat:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Exception in createChat:', error);
+      return null;
+    }
+  },
+
+  // Получить активный чат пользователя
+  async getActiveChat(userId) {
+    console.log('getActiveChat called with:', { userId });
+    
+    try {
+      const { data, error } = await supabase.rpc('get_active_chat', {
+        p_user_id: userId
+      });
+
+      if (error) {
+        console.error('Error in getActiveChat:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Exception in getActiveChat:', error);
+      return null;
+    }
+  },
+
+  // Получить список чатов пользователя
+  async getUserChats(userId) {
+    console.log('getUserChats called with:', { userId });
+    
+    try {
+      const { data, error } = await supabase.rpc('get_user_chats', {
+        p_user_id: userId
+      });
+
+      if (error) {
+        console.error('Error in getUserChats:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Exception in getUserChats:', error);
+      return [];
+    }
+  },
+
+  // Получить сообщения чата
+  async getChatMessages(chatId, limit = 50) {
+    console.log('getChatMessages called with:', { chatId, limit });
+    
+    try {
+      const { data, error } = await supabase.rpc('get_chat_messages', {
+        p_chat_id: chatId,
+        p_limit: limit
+      });
+
+      if (error) {
+        console.error('Error in getChatMessages:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Exception in getChatMessages:', error);
+      return [];
+    }
+  },
+
+  // Переключиться на другой чат
+  async switchToChat(userId, chatId) {
+    console.log('switchToChat called with:', { userId, chatId });
+    
+    try {
+      // Деактивируем все чаты пользователя
+      await supabase
+        .from('chats')
+        .update({ is_active: false })
+        .eq('user_id', userId);
+
+      // Активируем выбранный чат
+      const { data, error } = await supabase
+        .from('chats')
+        .update({ is_active: true, updated_at: new Date().toISOString() })
+        .eq('id', chatId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error in switchToChat:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Exception in switchToChat:', error);
+      return null;
+    }
+  }
+};
+
 // Экспорт для CommonJS
 module.exports = {
   supabase,
   userService,
-  requestService
+  requestService,
+  chatService
 };

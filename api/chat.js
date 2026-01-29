@@ -2,8 +2,53 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 // Import Supabase client and middleware
-const { requestService } = require('../supabase/client.js');
+const { requestService, chatService } = require('../supabase/client.js');
 const { initUserFromWebApp } = require('../supabase/userMiddleware.js');
+
+// Константы для управления контекстом
+const MAX_CONTEXT_MESSAGES = 20; // Максимальное количество сообщений в контексте
+const MAX_CONTEXT_TOKENS = 8000; // Примерная оценка токенов
+
+// Функция для проверки переполнения контекста
+async function checkContextOverflow(chatId) {
+  try {
+    const messages = await chatService.getChatMessages(chatId, MAX_CONTEXT_MESSAGES + 5);
+    
+    if (messages.length >= MAX_CONTEXT_MESSAGES) {
+      return true; // Нужно создать новый чат
+    }
+    
+    // Простая оценка токенов (примерно 4 токена на слово)
+    const totalWords = messages.reduce((total, msg) => {
+      return total + (msg.message_text?.split(' ').length || 0) + 
+                   (msg.response_text?.split(' ').length || 0);
+    }, 0);
+    
+    const estimatedTokens = totalWords * 4;
+    
+    return estimatedTokens >= MAX_CONTEXT_TOKENS;
+  } catch (error) {
+    console.error('Error checking context overflow:', error);
+    return false;
+  }
+}
+
+// Функция для создания нового чата при переполнении
+async function createNewChatOnOverflow(userId) {
+  try {
+    const newChatId = await chatService.createChat(
+      userId, 
+      'Новый чат (контекст переполнен)', 
+      true, 
+      true // autoCreated = true
+    );
+    
+    return newChatId;
+  } catch (error) {
+    console.error('Error creating new chat on overflow:', error);
+    return null;
+  }
+}
 
 async function doRequest(url, options) {
   if (typeof fetch === 'function') {
@@ -115,6 +160,37 @@ module.exports = async (req, res) => {
       console.log('No telegram user data provided');
     }
 
+    // Получаем или создаем активный чат
+    let currentChatId = null;
+    let shouldCreateNewChat = false;
+    
+    if (userInfo && userInfo.id) {
+      try {
+        currentChatId = await chatService.getActiveChat(userInfo.id);
+        
+        // Если активного чата нет, создаем новый
+        if (!currentChatId) {
+          currentChatId = await chatService.createChat(userInfo.id, 'Новый чат', true, false);
+          console.log('Created new chat:', currentChatId);
+        } else {
+          // Проверяем переполнение контекста
+          const isOverflow = await checkContextOverflow(currentChatId);
+          if (isOverflow) {
+            console.log('Context overflow detected, creating new chat');
+            const newChatId = await createNewChatOnOverflow(userInfo.id);
+            if (newChatId) {
+              currentChatId = newChatId;
+              shouldCreateNewChat = true;
+            }
+          }
+        }
+        
+        console.log('Current chat ID:', currentChatId);
+      } catch (error) {
+        console.error('Error managing chat:', error);
+      }
+    }
+
     const payload = {
       model: 'deepseek-chat',
       messages: [
@@ -146,33 +222,46 @@ module.exports = async (req, res) => {
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content || '';
 
-    // Save request and response to Supabase (async, don't wait)
-    if (userInfo && userInfo.telegramId) {
-      requestService.saveRequest(
+    // Save request and response to Supabase with chat context (async, don't wait)
+    if (userInfo && userInfo.telegramId && currentChatId) {
+      requestService.saveRequestToChat(
         userInfo.telegramId,
         message,
         content,
         'chat',
         {
           userId: userInfo.id,
+          chatId: currentChatId,
           firstName: userInfo.firstName,
           lastName: userInfo.lastName,
           username: userInfo.username,
           languageCode: userInfo.languageCode,
           userAgent: req.headers['user-agent'],
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+          contextOverflow: shouldCreateNewChat
+        },
+        currentChatId
       ).catch(error => {
-        console.error('Failed to save request to Supabase:', error);
+        console.error('Failed to save request to chat:', error);
       });
     } else {
-      console.log('No user info available, skipping request save');
+      console.log('No user info or chat ID available, skipping request save');
     }
 
-    return res.status(200).json({
+    // Return response with chat info
+    const responsePayload = {
       success: true,
-      response: (content || '').trim()
-    });
+      response: content,
+      chatId: currentChatId,
+      newChatCreated: shouldCreateNewChat,
+      contextOverflow: shouldCreateNewChat
+    };
+
+    if (shouldCreateNewChat) {
+      responsePayload.message = "Создан новый чат из-за переполнения контекста. Продолжим диалог в свежем чате!";
+    }
+
+    return res.status(200).json(responsePayload);
   } catch (error) {
     console.error('Chat API Error:', error);
     console.error('Error stack:', error.stack);
