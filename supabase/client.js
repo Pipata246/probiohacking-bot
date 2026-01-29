@@ -166,6 +166,17 @@ const chatService = {
     }
   },
 
+  async ensureActiveChat(userId) {
+    try {
+      const existing = await this.getActiveChat(userId);
+      if (existing) return existing;
+      return await this.createChat(userId, 'Чат', true, false);
+    } catch (error) {
+      console.error('Exception in ensureActiveChat:', error);
+      return null;
+    }
+  },
+
   // Получить активный чат пользователя
   async getActiveChat(userId) {
     console.log('getActiveChat called with:', { userId });
@@ -224,10 +235,24 @@ const chatService = {
   },
 
   // Получить сообщения чата
-  async getChatMessages(chatId, limit = 50) {
-    console.log('getChatMessages called with:', { chatId, limit });
+  async getChatMessages(userId, chatId, limit = 50) {
+    console.log('getChatMessages called with:', { userId, chatId, limit });
     
     try {
+      const { data: chat, error: chatError } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('id', chatId)
+        .eq('user_id', userId)
+        .single();
+
+      if (chatError || !chat) {
+        if (chatError && chatError.code !== 'PGRST116') {
+          console.error('Error in getChatMessages (chat ownership):', chatError);
+        }
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('user_requests')
         .select(`
@@ -259,6 +284,20 @@ const chatService = {
     console.log('switchToChat called with:', { userId, chatId });
     
     try {
+      const { data: chat, error: chatError } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('id', chatId)
+        .eq('user_id', userId)
+        .single();
+
+      if (chatError || !chat) {
+        if (chatError && chatError.code !== 'PGRST116') {
+          console.error('Error in switchToChat (chat ownership):', chatError);
+        }
+        return null;
+      }
+
       // Деактивируем все чаты пользователя
       await supabase
         .from('chats')
@@ -357,6 +396,20 @@ const requestService = {
 
   async createChatRequest(userId, chatId, messageText, requestType = 'chat', metadata = {}) {
     try {
+      const { data: chat, error: chatError } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('id', chatId)
+        .eq('user_id', userId)
+        .single();
+
+      if (chatError || !chat) {
+        if (chatError && chatError.code !== 'PGRST116') {
+          console.error('Error in createChatRequest (chat ownership):', chatError);
+        }
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('user_requests')
         .insert({

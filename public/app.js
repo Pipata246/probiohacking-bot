@@ -174,6 +174,29 @@ async function createNewChat() {
   }
 }
 
+async function ensureActiveChatLoaded() {
+  try {
+    if (currentChatId) {
+      return currentChatId;
+    }
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/chats?action=active', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+    const data = await response.json();
+    if (data?.success && data.activeChatId) {
+      currentChatId = data.activeChatId;
+      await loadChatMessages(currentChatId);
+      return currentChatId;
+    }
+  } catch (error) {
+    console.error('Error ensuring active chat:', error);
+  }
+  return null;
+}
+
 // ========================================
 // ФУНКЦИИ БОКОВОГО МЕНЮ
 // ========================================
@@ -1530,7 +1553,7 @@ async function sendMessageToAI(message) {
       processAiQueue();
       
       // Обрабатываем переполнение контекста
-      if (data.newChatCreated || data.contextOverflow) {
+      if (false && (data.newChatCreated || data.contextOverflow)) {
         // Показываем специальное сообщение о создании нового чата
         const overflowMessage = `
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
@@ -1654,9 +1677,9 @@ function sendChatMessage(message) {
   processAiQueue();
 }
 
-function openChatWithMessage(message) {
+async function openChatWithMessage(message) {
   showPage('chat');
-  document.getElementById('chatMessages').innerHTML = '';
+  await ensureActiveChatLoaded();
   sendChatMessage(message);
 }
 

@@ -10,9 +10,9 @@ const MAX_CONTEXT_MESSAGES = 20; // Максимальное количеств�
 const MAX_CONTEXT_TOKENS = 8000; // Примерная оценка токенов
 
 // Функция для проверки переполнения контекста
-async function checkContextOverflow(chatId) {
+async function checkContextOverflow(userId, chatId) {
   try {
-    const messages = await chatService.getChatMessages(chatId, MAX_CONTEXT_MESSAGES + 5);
+    const messages = await chatService.getChatMessages(userId, chatId, MAX_CONTEXT_MESSAGES + 5);
     
     if (messages.length >= MAX_CONTEXT_MESSAGES) {
       return true; // Нужно создать новый чат
@@ -167,24 +167,8 @@ module.exports = async (req, res) => {
     
     if (userInfo && userInfo.id) {
       try {
-        currentChatId = await chatService.getActiveChat(userInfo.id);
-        
-        // Если активного чата нет, создаем новый
-        if (!currentChatId) {
-          currentChatId = await chatService.createChat(userInfo.id, 'Новый чат', true, false);
-          console.log('Created new chat:', currentChatId);
-        } else {
-          // Проверяем переполнение контекста
-          const isOverflow = await checkContextOverflow(currentChatId);
-          if (isOverflow) {
-            console.log('Context overflow detected, creating new chat');
-            const newChatId = await createNewChatOnOverflow(userInfo.id);
-            if (newChatId) {
-              currentChatId = newChatId;
-              shouldCreateNewChat = true;
-            }
-          }
-        }
+        // По требованиям: всегда работаем в активном чате пользователя
+        currentChatId = await chatService.ensureActiveChat(userInfo.id);
         
         console.log('Current chat ID:', currentChatId);
 
@@ -203,7 +187,7 @@ module.exports = async (req, res) => {
             languageCode: userInfo.languageCode,
             userAgent: req.headers['user-agent'],
             timestamp: new Date().toISOString(),
-            contextOverflow: shouldCreateNewChat
+            contextOverflow: false
           }
         );
       } catch (error) {
@@ -276,13 +260,9 @@ module.exports = async (req, res) => {
       success: true,
       response: content,
       chatId: currentChatId,
-      newChatCreated: shouldCreateNewChat,
-      contextOverflow: shouldCreateNewChat
+      newChatCreated: false,
+      contextOverflow: false
     };
-
-    if (shouldCreateNewChat) {
-      responsePayload.message = "Создан новый чат из-за переполнения контекста. Продолжим диалог в свежем чате!";
-    }
 
     return res.status(200).json(responsePayload);
   } catch (error) {

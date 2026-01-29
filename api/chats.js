@@ -28,6 +28,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       // Получение списка чатов
       if (action === 'list') {
+        await chatService.ensureActiveChat(userInfo.id);
         const chats = await chatService.getUserChats(userInfo.id);
         return res.status(200).json({
           success: true,
@@ -37,7 +38,7 @@ module.exports = async (req, res) => {
 
       // Получение активного чата
       if (action === 'active') {
-        const activeChatId = await chatService.getActiveChat(userInfo.id);
+        const activeChatId = await chatService.ensureActiveChat(userInfo.id);
         return res.status(200).json({
           success: true,
           activeChatId
@@ -51,7 +52,7 @@ module.exports = async (req, res) => {
           return res.status(400).json({ success: false, error: 'Chat ID required' });
         }
 
-        const messages = await chatService.getChatMessages(chatId);
+        const messages = await chatService.getChatMessages(userInfo.id, chatId);
         return res.status(200).json({
           success: true,
           messages

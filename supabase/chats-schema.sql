@@ -23,6 +23,61 @@ CREATE INDEX IF NOT EXISTS idx_chats_user_active ON chats(user_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_user_requests_chat_id ON user_requests(chat_id);
 CREATE INDEX IF NOT EXISTS idx_chats_updated_at ON chats(updated_at DESC);
 
+-- Нормализуем данные: оставляем активным только самый свежий чат на пользователя
+WITH latest_active AS (
+  SELECT DISTINCT ON (user_id) id, user_id
+  FROM chats
+  WHERE is_active = true
+  ORDER BY user_id, updated_at DESC
+)
+UPDATE chats c
+SET is_active = false
+WHERE c.is_active = true
+  AND NOT EXISTS (
+    SELECT 1
+    FROM latest_active la
+    WHERE la.id = c.id
+  );
+
+-- Гарантия: у пользователя может быть только 1 активный чат
+CREATE UNIQUE INDEX IF NOT EXISTS idx_chats_one_active_per_user
+  ON chats(user_id)
+  WHERE is_active = true;
+
+-- Автообновление updated_at
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_chats_set_updated_at ON chats;
+CREATE TRIGGER trg_chats_set_updated_at
+  BEFORE UPDATE ON chats
+  FOR EACH ROW
+  EXECUTE FUNCTION set_updated_at();
+
+-- Обновляем message_count при вставке нового запроса
+CREATE OR REPLACE FUNCTION chat_increment_message_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE chats
+  SET message_count = message_count + 1,
+      updated_at = NOW()
+  WHERE id = NEW.chat_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_chat_increment_message_count ON user_requests;
+CREATE TRIGGER trg_chat_increment_message_count
+  AFTER INSERT ON user_requests
+  FOR EACH ROW
+  WHEN (NEW.chat_id IS NOT NULL)
+  EXECUTE FUNCTION chat_increment_message_count();
+
 -- 4. Функция для создания нового чата
 CREATE OR REPLACE FUNCTION create_chat(
     p_user_id UUID,

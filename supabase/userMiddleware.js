@@ -64,11 +64,29 @@ function userInitMiddleware() {
 
 // Функция для инициализации пользователя из Telegram WebApp
 async function initUserFromWebApp(req) {
-  const telegramUser = req.body?.telegramUser;
-  if (telegramUser) {
-    return await getOrCreateUser(telegramUser);
+  const telegramUserFromBody = req.body?.telegramUser;
+  if (telegramUserFromBody && telegramUserFromBody.id) {
+    return await getOrCreateUser(telegramUserFromBody);
   }
-  return null;
+
+  const initData = req.headers?.['x-telegram-webapp-data'];
+  if (!initData || typeof initData !== 'string') {
+    return null;
+  }
+
+  try {
+    // initData is a querystring. We only need the user field.
+    const params = new URLSearchParams(initData);
+    const userRaw = params.get('user');
+    if (!userRaw) return null;
+
+    const telegramUser = JSON.parse(userRaw);
+    if (!telegramUser || !telegramUser.id) return null;
+    return await getOrCreateUser(telegramUser);
+  } catch (error) {
+    console.error('Error parsing Telegram WebApp initData:', error);
+    return null;
+  }
 }
 
 // Функция для инициализации пользователя из Telegram Bot
