@@ -1,5 +1,5 @@
--- Схема для системы чатов
--- Добавляем таблицы для управления чатами
+-- Исправленная схема для системы чатов
+-- Без синтаксических ошибок
 
 -- 1. Таблица чатов
 CREATE TABLE IF NOT EXISTS chats (
@@ -106,7 +106,6 @@ BEGIN
     
     -- Если пользователь не найден, создаем его
     IF user_id IS NULL THEN
-        -- Используем существующую функцию или создаем пользователя
         INSERT INTO users (telegram_id, first_name, last_name, username, language_code)
         VALUES (p_telegram_id, 'User', NULL, NULL, 'ru')
         RETURNING id INTO user_id;
@@ -144,13 +143,13 @@ BEGIN
     RETURNING id INTO new_request_id;
     
     -- Обновляем статистику чата
-    UPDATE chat_stats(chat_id);
+    PERFORM update_chat_stats(chat_id);
     
     RETURN new_request_id;
 EXCEPTION
     WHEN OTHERS THEN
-        RAISE NOTICE 'Error in save_request_to_chat: %', SQLERRM;
-        RETURN NULL;
+    RAISE NOTICE 'Error in save_request_to_chat: %', SQLERRM;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -181,7 +180,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 9. Функция для получения сообщений чата
+-- 9. Функция для получения сообщений чата (исправленная)
 CREATE OR REPLACE FUNCTION get_chat_messages(p_chat_id UUID, p_limit INTEGER DEFAULT 50)
 RETURNS TABLE (
     id UUID,
