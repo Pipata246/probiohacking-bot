@@ -1,5 +1,4 @@
 const { createClient } = require('@supabase/supabase-js');
-const { initUserFromWebApp } = require('../supabase/client.js');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -12,7 +11,7 @@ const supabase = createClient(
 );
 
 module.exports = async function handler(req, res) {
-  // Устанавливаем CORS заголовки
+  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Telegram-WebApp-Data');
@@ -23,152 +22,135 @@ module.exports = async function handler(req, res) {
 
   try {
     const { action } = req.query;
-    console.log('🔍 API Quiz: Request received:', { method: req.method, action, query: req.query });
+    console.log('🔥 QUIZ API:', { method: req.method, action });
 
-    // Инициализация пользователя
-    const user = await initUserFromWebApp(req);
-    console.log('🔍 API Quiz: User initialized:', user);
-    
-    if (!user) {
-      console.error('❌ API Quiz: User not found');
-      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    // Получаем пользователя из Telegram данных
+    const telegramData = req.headers['x-telegram-webapp-data'];
+    if (!telegramData) {
+      return res.status(401).json({ success: false, error: 'No Telegram data' });
     }
 
-    switch (action) {
-      case 'save':
-        return await saveQuizResults(req, res, user.id);
-      case 'status':
-        return await getQuizStatus(req, res, user.id);
-      case 'context':
-        return await getQuizContext(req, res, user.id);
-      default:
-        return res.status(400).json({ success: false, error: 'Invalid action' });
+    // Парсим Telegram данные
+    const params = {};
+    telegramData.split('&').forEach(param => {
+      const [key, value] = param.split('=');
+      if (key && value) {
+        params[key] = decodeURIComponent(value);
+      }
+    });
+
+    const user = JSON.parse(params.user);
+    console.log('🔥 User:', user);
+
+    // Находим или создаем пользователя
+    let { data: existingUser, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('telegram_id', user.id)
+      .single();
+
+    let userId;
+    if (existingUser) {
+      userId = existingUser.id;
+    } else {
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          telegram_id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          username: user.username
+        })
+        .select()
+        .single();
+      
+      if (createError) throw createError;
+      userId = newUser.id;
     }
+
+    console.log('🔥 User ID:', userId);
+
+    if (action === 'save') {
+      const quizData = req.body;
+      console.log('🔥 Quiz data:', quizData);
+
+      // Сохраняем результаты квиза
+      const { data, error } = await supabase
+        .from('quiz_results')
+        .upsert({
+          user_id: userId,
+          age: quizData.age,
+          gender: quizData.gender,
+          weight: quizData.weight,
+          height: quizData.height,
+          activity_level: quizData.activity_level,
+          goals: quizData.goals || [],
+          health_concerns: quizData.health_concerns || [],
+          dietary_preferences: quizData.dietary_preferences || [],
+          supplements: quizData.supplements || [],
+          medications: quizData.medications || [],
+          sleep_hours: quizData.sleep_hours,
+          stress_level: quizData.stress_level,
+          energy_level: quizData.energy_level,
+          digestion_quality: quizData.digestion_quality,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+        .select();
+
+      if (error) throw error;
+
+      // Обновляем статус прохождения квиза
+      await supabase
+        .from('users')
+        .update({ quiz_completed: true })
+        .eq('id', userId);
+
+      return res.json({ success: true, data });
+    }
+
+    if (action === 'status') {
+      const { data, error } = await supabase
+        .from('users')
+        .select('quiz_completed')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ success: true, quizCompleted: data.quiz_completed });
+    }
+
+    if (action === 'context') {
+      const { data, error } = await supabase
+        .from('quiz_results')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      const context = data ? `
+        Возраст: ${data.age}
+        Пол: ${data.gender}
+        Вес: ${data.weight}кг
+        Рост: ${data.height}см
+        Активность: ${data.activity_level}
+        Цели: ${data.goals.join(', ')}
+        Проблемы: ${data.health_concerns.join(', ')}
+        Диета: ${data.dietary_preferences.join(', ')}
+        Стресс: ${data.stress_level}/10
+        Энергия: ${data.energy_level}/10
+      ` : 'Нет данных квиза';
+
+      return res.json({ success: true, context });
+    }
+
+    return res.status(400).json({ success: false, error: 'Invalid action' });
+
   } catch (error) {
-    console.error('Quiz API error:', error);
-    return res.status(500).json({ success: false, error: 'Internal server error' });
+    console.error('🔥 QUIZ API ERROR:', error);
+    return res.status(500).json({ success: false, error: error.message });
   }
 };
-
-// Сохранение результатов квиза
-async function saveQuizResults(req, res, userId) {
-  try {
-    console.log('🔍 API: Получен запрос на сохранение квиза');
-    console.log('🔍 API: userId:', userId);
-    console.log('🔍 API: req.body:', req.body);
-    
-    const {
-      age,
-      gender,
-      weight,
-      height,
-      activity_level,
-      goals,
-      health_concerns,
-      dietary_preferences,
-      supplements,
-      medications,
-      sleep_hours,
-      stress_level,
-      energy_level,
-      digestion_quality
-    } = req.body;
-
-    console.log('🔍 API: Распакованные данные:', {
-      age, gender, weight, height, activity_level,
-      goals, health_concerns, dietary_preferences,
-      supplements, medications, sleep_hours,
-      stress_level, energy_level, digestion_quality
-    });
-
-    // Валидация обязательных полей
-    if (!age || !gender || !weight || !height || !activity_level) {
-      console.error('❌ API: Отсутствуют обязательные поля:', { age, gender, weight, height, activity_level });
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields: age, gender, weight, height, activity_level'
-      });
-    }
-
-    console.log('✅ API: Валидация пройдена, вызываем Supabase функцию');
-
-    // Вызов функции для сохранения результатов
-    const { data, error } = await supabase.rpc('save_quiz_results', {
-      p_user_id: userId,
-      p_age: parseInt(age),
-      p_gender: gender,
-      p_weight: parseFloat(weight),
-      p_height: parseFloat(height),
-      p_activity_level: activity_level,
-      p_goals: goals || [],
-      p_health_concerns: health_concerns || [],
-      p_dietary_preferences: dietary_preferences || [],
-      p_supplements: supplements || [],
-      p_medications: medications || [],
-      p_sleep_hours: sleep_hours ? parseFloat(sleep_hours) : null,
-      p_stress_level: stress_level ? parseInt(stress_level) : null,
-      p_energy_level: energy_level ? parseInt(energy_level) : null,
-      p_digestion_quality: digestion_quality || null
-    });
-
-    console.log('🔍 API: Ответ Supabase:', { data, error });
-
-    if (error) {
-      console.error('❌ API: Ошибка Supabase:', error);
-      return res.status(500).json({ success: false, error: error.message });
-    }
-
-    console.log('✅ API: Успешно сохранено!');
-    return res.status(200).json({
-      success: true,
-      message: 'Quiz results saved successfully'
-    });
-  } catch (error) {
-    console.error('❌ API: Общая ошибка сохранения:', error);
-    return res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-}
-
-// Получение статуса прохождения квиза
-async function getQuizStatus(req, res, userId) {
-  try {
-    const { data, error } = await supabase.rpc('check_user_quiz_status', {
-      p_user_id: userId
-    });
-
-    if (error) {
-      console.error('Get quiz status error:', error);
-      return res.status(500).json({ success: false, error: error.message });
-    }
-
-    return res.status(200).json({
-      success: true,
-      quiz_completed: data
-    });
-  } catch (error) {
-    console.error('Get quiz status error:', error);
-    return res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-}
-
-// Получение контекста квиза для ИИ
-async function getQuizContext(req, res, userId) {
-  try {
-    const { data, error } = await supabase.rpc('get_user_quiz_context', {
-      p_user_id: userId
-    });
-
-    if (error) {
-      console.error('Get quiz context error:', error);
-      return res.status(500).json({ success: false, error: error.message });
-    }
-
-    return res.status(200).json({
-      success: true,
-      context: data
-    });
-  } catch (error) {
-    console.error('Get quiz context error:', error);
-    return res.status(500).json({ success: false, error: 'Internal server error' });
-  }
-}
