@@ -1922,7 +1922,35 @@ function sendChatMessage(message) {
   // Проверяем не в режиме read-only ли мы
   const chatInput = document.getElementById('chatInput');
   if (chatInput && chatInput.style.display === 'none') {
-    console.log('Cannot send message - read-only mode');
+    console.log('Redirecting to active chat - cannot send in read-only mode');
+    
+    // Показываем уведомление о перенаправлении
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: rgba(76, 175, 80, 0.9); color: white; padding: 16px; border-radius: 8px;
+      z-index: 10000; font-size: 14px; text-align: center;
+    `;
+    notification.innerHTML = '🔄 Перенаправляем в активный чат...';
+    document.body.appendChild(notification);
+    
+    // Загружаем активный чат
+    setTimeout(async () => {
+      await loadActiveChat();
+      notification.remove();
+      
+      // Отправляем сообщение в активный чат
+      addUserMessage(trimmed);
+      if (isAiBusy) {
+        stopActiveTypewriter();
+        pendingAiMessages.push(trimmed);
+        stopAIResponse();
+        return;
+      }
+      pendingAiMessages.push(trimmed);
+      processAiQueue();
+    }, 1000);
+    
     return;
   }
   
