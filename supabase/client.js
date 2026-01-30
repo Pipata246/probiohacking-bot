@@ -494,14 +494,6 @@ const requestService = {
   }
 };
 
-// Экспорт для CommonJS
-module.exports = {
-  supabase,
-  userService,
-  requestService,
-  chatService
-};
-
 // Функция для инициализации пользователя из WebApp данных
 async function initUserFromWebApp(req) {
   try {
@@ -562,5 +554,11 @@ async function initUserFromWebApp(req) {
   }
 }
 
-// Экспорт для ES modules (для API)
-export { initUserFromWebApp };
+// Экспорт для CommonJS
+module.exports = {
+  supabase,
+  userService,
+  requestService,
+  chatService,
+  initUserFromWebApp
+};

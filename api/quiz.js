@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { initUserFromWebApp } from '../supabase/client.js';
+const { createClient } = require('@supabase/supabase-js');
+const { initUserFromWebApp } = require('../supabase/client.js');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -11,7 +11,7 @@ const supabase = createClient(
   }
 );
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Устанавливаем CORS заголовки
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     console.error('Quiz API error:', error);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}
+};
 
 // Сохранение результатов квиза
 async function saveQuizResults(req, res, userId) {
