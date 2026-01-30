@@ -21,8 +21,11 @@ let isChatHistoryLoading = false;
 
 // Загрузка истории чатов
 async function loadChatHistory() {
+  console.log('loadChatHistory called, isChatHistoryLoading:', isChatHistoryLoading, 'cachedChatHistory:', !!cachedChatHistory);
+  
   if (isChatHistoryLoading) return;
   if (cachedChatHistory) {
+    console.log('Using cached chat history');
     renderChatHistory(cachedChatHistory);
     return;
   }
@@ -31,12 +34,16 @@ async function loadChatHistory() {
   
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    console.log('Fetching chat history...');
+    
     const response = await fetch('/api/chats?action=list', {
       headers: {
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
     });
     const data = await response.json();
+    
+    console.log('Chat history response:', data);
     
     if (data.success) {
       cachedChatHistory = data;
@@ -52,7 +59,12 @@ async function loadChatHistory() {
 // Отрисовка истории чатов
 function renderChatHistory(data) {
   const chatHistoryList = document.getElementById('chatHistoryList');
-  if (!chatHistoryList) return;
+  if (!chatHistoryList) {
+    console.log('chatHistoryList element not found');
+    return;
+  }
+  
+  console.log('Rendering chat history:', data);
   
   chatHistoryList.innerHTML = '';
   
@@ -70,8 +82,10 @@ function renderChatHistory(data) {
       
       chatHistoryList.appendChild(chatItem);
     });
+    console.log('Chats rendered successfully');
   } else {
     chatHistoryList.innerHTML = '<div class="no-chats">Начните новый чат</div>';
+    console.log('No chats found');
   }
 }
 
@@ -360,15 +374,6 @@ if (window.Telegram?.WebApp) {
         if (tg.requestFullscreen) tg.requestFullscreen();
       } catch (e) {}
     }, 100);
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      tg.expand();
-      try {
-        if (tg.requestFullscreen) tg.requestFullscreen();
-      } catch (e) {}
-    }, 150);
   });
 
   // Дополнительные обработчики
@@ -1193,8 +1198,6 @@ let aiAbortController = null;
 let isAiBusy = false;
 let activeTypewriter = null;
 let currentChatId = null;
-let chatHistory = [];
-let isChatHistoryLoaded = false;
 let pendingAiMessages = [];
 
 function escapeHtml(text) {
