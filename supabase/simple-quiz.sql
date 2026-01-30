@@ -29,5 +29,5 @@ $$ LANGUAGE plpgsql;
 GRANT ALL ON quiz_answers TO anon;
 GRANT EXECUTE ON FUNCTION complete_quiz_for_user(BIGINT) TO anon;
 
--- Включаем Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE quiz_answers;
+-- Включаем Realtime (только если еще не включен)
+-- ALTER PUBLICATION supabase_realtime ADD TABLE quiz_answers;
