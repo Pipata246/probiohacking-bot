@@ -14,14 +14,132 @@ CREATE TABLE IF NOT EXISTS chats (
     auto_created BOOLEAN DEFAULT false -- Создан автоматически при переполнении
 );
 
--- 2. Обновляем таблицу user_requests для связи с чатами
+-- 2. Обновляем таблицу users - добавляем статус прохождения квиза
+ALTER TABLE users ADD COLUMN IF NOT EXISTS quiz_completed BOOLEAN DEFAULT false;
+
+-- 3. Новая таблица для результатов квиза
+CREATE TABLE IF NOT EXISTS quiz_results (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE, -- Один результат на пользователя
+    age INTEGER,
+    gender TEXT CHECK (gender IN ('male', 'female', 'other')),
+    weight DECIMAL(5,2), -- в кг
+    height DECIMAL(5,2), -- в см
+    activity_level TEXT CHECK (activity_level IN ('low', 'moderate', 'high')),
+    goals TEXT[], -- массив целей: ['weight_loss', 'muscle_gain', 'health', 'energy']
+    health_concerns TEXT[], -- массив проблем: ['digestion', 'sleep', 'stress', 'immunity']
+    dietary_preferences TEXT[], -- массив предпочтений: ['vegetarian', 'vegan', 'gluten_free', 'dairy_free']
+    supplements TEXT[], -- текущие добавки
+    medications TEXT[], -- текущие лекарства
+    sleep_hours DECIMAL(3,1),
+    stress_level INTEGER CHECK (stress_level BETWEEN 1 AND 10),
+    energy_level INTEGER CHECK (energy_level BETWEEN 1 AND 10),
+    digestion_quality TEXT CHECK (digestion_quality IN ('poor', 'fair', 'good', 'excellent')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 4. Обновляем таблицу user_requests для связи с чатами
 ALTER TABLE user_requests ADD COLUMN IF NOT EXISTS chat_id UUID REFERENCES chats(id) ON DELETE CASCADE;
 
--- 3. Индексы для оптимизации
+-- 5. Индексы для оптимизации
 CREATE INDEX IF NOT EXISTS idx_chats_user_id ON chats(user_id);
 CREATE INDEX IF NOT EXISTS idx_chats_user_active ON chats(user_id, is_active);
 CREATE INDEX IF NOT EXISTS idx_user_requests_chat_id ON user_requests(chat_id);
 CREATE INDEX IF NOT EXISTS idx_chats_updated_at ON chats(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_quiz_results_user_id ON quiz_results(user_id);
+CREATE INDEX IF NOT EXISTS idx_users_quiz_completed ON users(quiz_completed);
+
+-- 6. Функция для сохранения/обновления результатов квиза
+CREATE OR REPLACE FUNCTION save_quiz_results(
+    p_user_id UUID,
+    p_age INTEGER,
+    p_gender TEXT,
+    p_weight DECIMAL(5,2),
+    p_height DECIMAL(5,2),
+    p_activity_level TEXT,
+    p_goals TEXT[],
+    p_health_concerns TEXT[],
+    p_dietary_preferences TEXT[],
+    p_supplements TEXT[],
+    p_medications TEXT[],
+    p_sleep_hours DECIMAL(3,1),
+    p_stress_level INTEGER,
+    p_energy_level INTEGER,
+    p_digestion_quality TEXT
+) RETURNS BOOLEAN AS $$
+BEGIN
+    -- Вставляем или обновляем результаты квиза
+    INSERT INTO quiz_results (
+        user_id, age, gender, weight, height, activity_level,
+        goals, health_concerns, dietary_preferences, supplements,
+        medications, sleep_hours, stress_level, energy_level,
+        digestion_quality, updated_at
+    ) VALUES (
+        p_user_id, p_age, p_gender, p_weight, p_height, p_activity_level,
+        p_goals, p_health_concerns, p_dietary_preferences, p_supplements,
+        p_medications, p_sleep_hours, p_stress_level, p_energy_level,
+        p_digestion_quality, NOW()
+    )
+    ON CONFLICT (user_id) DO UPDATE SET
+        age = EXCLUDED.age,
+        gender = EXCLUDED.gender,
+        weight = EXCLUDED.weight,
+        height = EXCLUDED.height,
+        activity_level = EXCLUDED.activity_level,
+        goals = EXCLUDED.goals,
+        health_concerns = EXCLUDED.health_concerns,
+        dietary_preferences = EXCLUDED.dietary_preferences,
+        supplements = EXCLUDED.supplements,
+        medications = EXCLUDED.medications,
+        sleep_hours = EXCLUDED.sleep_hours,
+        stress_level = EXCLUDED.stress_level,
+        energy_level = EXCLUDED.energy_level,
+        digestion_quality = EXCLUDED.digestion_quality,
+        updated_at = NOW();
+    
+    -- Обновляем статус прохождения квиза у пользователя
+    UPDATE users SET quiz_completed = true WHERE id = p_user_id;
+    
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 7. Функция для получения результатов квиза с контекстом для ИИ
+CREATE OR REPLACE FUNCTION get_user_quiz_context(p_user_id UUID)
+RETURNS TEXT AS $$
+DECLARE
+    result_text TEXT;
+BEGIN
+    SELECT 
+        'Пользовательские данные для контекста: ' ||
+        'Возраст: ' || COALESCE(age::TEXT, 'не указан') || ', ' ||
+        'Пол: ' || COALESCE(gender, 'не указан') || ', ' ||
+        'Вес: ' || COALESCE(weight::TEXT, 'не указан') || 'кг, ' ||
+        'Рост: ' || COALESCE(height::TEXT, 'не указан') || 'см, ' ||
+        'Уровень активности: ' || COALESCE(activity_level, 'не указан') || ', ' ||
+        'Цели: ' || COALESCE(array_to_string(goals, ', '), 'не указаны') || ', ' ||
+        'Проблемы со здоровьем: ' || COALESCE(array_to_string(health_concerns, ', '), 'не указаны') || ', ' ||
+        'Пищевые предпочтения: ' || COALESCE(array_to_string(dietary_preferences, ', '), 'не указаны') || ', ' ||
+        'Часы сна: ' || COALESCE(sleep_hours::TEXT, 'не указано') || ', ' ||
+        'Уровень стресса: ' || COALESCE(stress_level::TEXT, 'не указан') || '/10, ' ||
+        'Уровень энергии: ' || COALESCE(energy_level::TEXT, 'не указан') || '/10, ' ||
+        'Качество пищеварения: ' || COALESCE(digestion_quality, 'не указано')
+    INTO result_text
+    FROM quiz_results
+    WHERE user_id = p_user_id;
+    
+    RETURN COALESCE(result_text, 'Нет данных квиза');
+END;
+$$ LANGUAGE plpgsql;
+
+-- 8. Функция для проверки статуса квиза пользователя
+CREATE OR REPLACE FUNCTION check_user_quiz_status(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN COALESCE((SELECT quiz_completed FROM users WHERE id = p_user_id), false);
+END;
+$$ LANGUAGE plpgsql;
 
 -- Нормализуем данные: оставляем активным только самый свежий чат на пользователя
 WITH latest_active AS (
@@ -38,6 +156,12 @@ WHERE c.is_active = true
     FROM latest_active la
     WHERE la.id = c.id
   );
+
+-- Права доступа
+GRANT ALL ON quiz_results TO anon;
+GRANT EXECUTE ON FUNCTION save_quiz_results TO anon;
+GRANT EXECUTE ON FUNCTION get_user_quiz_context TO anon;
+GRANT EXECUTE ON FUNCTION check_user_quiz_status TO anon;
 
 -- Гарантия: у пользователя может быть только 1 активный чат
 CREATE UNIQUE INDEX IF NOT EXISTS idx_chats_one_active_per_user
