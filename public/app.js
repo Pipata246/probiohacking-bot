@@ -18,7 +18,169 @@ tg.ready();
 // Глобальные переменные для чатов (временно)
 let cachedChats = [];
 
-// Загрузка чатов через API (как было раньше)
+// Supabase конфигурация
+const SUPABASE_URL = 'https://bqjxjzqzjpywxwztzsup.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxanhqenF6anB5d3h3enR6c3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1ODk4MTcsImV4cCI6MjA1MzE2NTgxN30.Mg4UKokQRWkzZQK1L5YAw0yfTBw7A6bLo3YjKb_Jn4';
+
+// Supabase клиент и Realtime переменные
+let supabase = null;
+let chatsSubscription = null;
+let currentTelegramId = null;
+
+// Инициализация Supabase (вызывается после загрузки приложения)
+function initializeSupabaseClient() {
+  if (window.supabase && !supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase client initialized');
+    return true;
+  }
+  return false;
+}
+
+// =========================================
+// SUPABASE REALTIME ФУНКЦИИ
+// =========================================
+
+// Инициализация Realtime подписки
+async function initializeChatsRealtime(telegramId) {
+  // Ждем инициализации Supabase клиента
+  let attempts = 0;
+  while (!initializeSupabaseClient() && attempts < 20) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
+  
+  if (!supabase) {
+    console.error('Supabase client not available');
+    return false;
+  }
+  
+  currentTelegramId = telegramId;
+  
+  // Загружаем начальные данные из Supabase
+  await loadChatsFromSupabase();
+  
+  // Отписываемся от предыдущей подписки
+  if (chatsSubscription) {
+    chatsSubscription.unsubscribe();
+  }
+  
+  // Создаем подписку на изменения
+  chatsSubscription = supabase
+    .channel(`chats_${telegramId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*', // INSERT, UPDATE, DELETE
+        schema: 'public',
+        table: 'chats',
+        filter: `telegram_id=eq.${telegramId}`
+      },
+      (payload) => {
+        console.log('Realtime chat update:', payload);
+        handleRealtimeUpdate(payload);
+      }
+    )
+    .subscribe((status) => {
+      console.log('Realtime subscription status:', status);
+    });
+    
+  return true;
+}
+
+// Загрузка чатов из Supabase
+async function loadChatsFromSupabase() {
+  if (!supabase) return;
+  
+  try {
+    const { data: chats, error } = await supabase
+      .from('chats')
+      .select('*')
+      .eq('telegram_id', currentTelegramId)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading chats from Supabase:', error);
+      return;
+    }
+
+    cachedChats = chats || [];
+    renderChatsList(cachedChats);
+    console.log('Chats loaded from Supabase:', cachedChats.length);
+  } catch (error) {
+    console.error('Exception in loadChatsFromSupabase:', error);
+  }
+}
+
+// Обработка Realtime обновлений
+function handleRealtimeUpdate(payload) {
+  const { eventType, new: newRecord, old: oldRecord } = payload;
+  
+  switch (eventType) {
+    case 'INSERT':
+      cachedChats.unshift(newRecord);
+      break;
+      
+    case 'UPDATE':
+      const index = cachedChats.findIndex(chat => chat.id === newRecord.id);
+      if (index !== -1) {
+        cachedChats[index] = newRecord;
+        if (newRecord.is_active) {
+          cachedChats.splice(index, 1);
+          cachedChats.unshift(newRecord);
+        }
+      }
+      break;
+      
+    case 'DELETE':
+      cachedChats = cachedChats.filter(chat => chat.id !== oldRecord.id);
+      break;
+  }
+  
+  // Обновляем UI
+  renderChatsList(cachedChats);
+}
+
+// Создание чата через Supabase
+async function createChatViaSupabase(title = 'Новый чат') {
+  if (!supabase || !currentTelegramId) return null;
+  
+  try {
+    const { data: newChat, error } = await supabase
+      .from('chats')
+      .insert({
+        telegram_id: currentTelegramId,
+        title: title,
+        is_active: false,
+        auto_created: false,
+        message_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating chat:', error);
+      return null;
+    }
+
+    console.log('Chat created via Supabase:', newChat);
+    return newChat;
+  } catch (error) {
+    console.error('Exception in createChatViaSupabase:', error);
+    return null;
+  }
+}
+
+// Очистка Realtime
+function cleanupRealtime() {
+  if (chatsSubscription) {
+    chatsSubscription.unsubscribe();
+    chatsSubscription = null;
+  }
+  currentTelegramId = null;
+}
 async function loadChatsFromAPI() {
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
@@ -143,6 +305,16 @@ async function loadChatMessages(chatId) {
 
 // Создание нового чата
 async function createNewChat() {
+  // Если есть Realtime - используем Supabase
+  if (supabase && currentTelegramId) {
+    const newChat = await createChatViaSupabase('Новый чат');
+    if (newChat) {
+      console.log('Chat created via Supabase Realtime');
+      return; // Realtime автоматически обновит UI
+    }
+  }
+  
+  // Fallback на API
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats', {
@@ -159,10 +331,14 @@ async function createNewChat() {
     }
 
     const data = await response.json();
-    console.log('New chat created:', data);
+    console.log('New chat created via API:', data);
 
     // Перезагружаем чаты после создания
-    loadChatsFromAPI();
+    if (supabase && currentTelegramId) {
+      await loadChatsFromSupabase();
+    } else {
+      await loadChatsFromAPI();
+    }
 
   } catch (error) {
     console.error('Error creating new chat:', error);
@@ -206,8 +382,13 @@ function openSidebar() {
     });
   }
   
-  // Загружаем чаты при открытии сайдбара
-  loadChatsFromAPI();
+  // Если есть Realtime - используем кешированные данные
+  if (cachedChats.length > 0) {
+    renderChatsList(cachedChats);
+  } else {
+    // Иначе загружаем через API
+    loadChatsFromAPI();
+  }
 }
 
 function closeSidebar() {
@@ -1567,7 +1748,7 @@ async function sendMessageToAI(message) {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - initializing app');
   
-  // Показываем главную страницу
+  // Показываем главную страницу СРАЗУ
   showPage('main');
   
   // Проверяем Telegram WebApp
@@ -1578,8 +1759,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.Telegram.WebApp.colorScheme) {
       document.body.setAttribute('data-theme', window.Telegram.WebApp.colorScheme);
     }
+
+    // Получаем данные пользователя
+    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
+    if (telegramUser) {
+      console.log('Telegram user:', telegramUser);
+      
+      // Запускаем Realtime в фоне, не блокируя загрузку
+      setTimeout(() => {
+        initializeChatsRealtime(telegramUser.id).catch(err => {
+          console.error('Realtime initialization failed:', err);
+        });
+      }, 1000); // Запускаем через 1 секунду после загрузки
+    }
   } else {
     console.log('Local mode - no Telegram WebApp');
+    // Для локального режима тоже запускаем Realtime
+    setTimeout(() => {
+      initializeChatsRealtime('test-user').catch(err => {
+        console.error('Realtime initialization failed:', err);
+      });
+    }, 1000);
   }
 });
 
