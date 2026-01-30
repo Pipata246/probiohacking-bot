@@ -20,7 +20,7 @@ let cachedChatHistory = null;
 let isChatHistoryLoading = false;
 let chatHistoryLoadPromise = null;
 
-// Гарантированная загрузка истории чатов
+// Гарантированная загрузка истории чатов с кешированием
 async function ensureChatHistoryLoaded() {
   if (cachedChatHistory) {
     return cachedChatHistory;
@@ -115,25 +115,22 @@ function showChatHistoryLoading() {
   }
 }
 
-// Синхронная загрузка чатов - работает в фоне без блокировки
-function loadChatHistorySync() {
-  const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+// Блокирующая загрузка - ЖДЕМ пока чаты загрузятся
+async function loadChatHistoryBlocking() {
+  console.log('Loading chat history BLOCKING - waiting for completion...');
   
-  fetch('/api/chats?action=list', {
-    headers: {
-      ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      cachedChatHistory = data;
-      renderChatHistory(data);
-    }
-  })
-  .catch(error => {
-    console.error('Error loading chat history:', error);
-  });
+  // Если уже есть в кеше - сразу отрисовываем
+  if (cachedChatHistory) {
+    renderChatHistory(cachedChatHistory);
+    return cachedChatHistory;
+  }
+  
+  // Показываем загрузку
+  showChatHistoryLoading();
+  
+  // Ждем завершения загрузки
+  const data = await ensureChatHistoryLoaded();
+  return data;
 }
 
 // Устаревшая функция для совместимости
@@ -294,6 +291,14 @@ function openSidebar() {
       sidebar.classList.add('active');
       sidebarOverlay.classList.add('active');
     });
+  }
+  
+  // СРАЗУ ПОКАЗЫВАЕМ ЧАТЫ ИЗ КЕША - БЕЗ ЗАГРУЗКИ
+  if (cachedChatHistory) {
+    renderChatHistory(cachedChatHistory);
+  } else {
+    // Если кеша нет - загружаем блокирующе
+    loadChatHistoryBlocking();
   }
 }
 
@@ -1716,8 +1721,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // ЗАГРУЖАЕМ ЧАТЫ СИНХРОННО ПРИ СТАРТЕ - БЕЗ ОЖИДАНИЯ
-    loadChatHistorySync();
+    // БЛОКИРУЮЩАЯ ЗАГРУЗКА ЧАТОВ - ЖДЕМ ПОКА ЗАГРУЗЯТСЯ
+    await loadChatHistoryBlocking();
 
     // Показываем главную страницу
     showPage('main');
@@ -1725,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Локальный режим без Telegram
-  loadChatHistorySync(); // ЗАГРУЖАЕМ ЧАТЫ СИНХРОННО
+  await loadChatHistoryBlocking(); // БЛОКИРУЮЩАЯ ЗАГРУЗКА ЧАТОВ
   showPage('main');
 });
 
