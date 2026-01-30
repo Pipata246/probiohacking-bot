@@ -15,70 +15,71 @@ tg.ready();
 // ФУНКЦИИ УПРАВЛЕНИЯ ЧАТАМИ
 // =========================================
 
-// Глобальная переменная для хранения истории чатов
+// Глобальные переменные
 let cachedChatHistory = null;
 let isChatHistoryLoading = false;
+let chatHistoryLoadPromise = null;
 
-// Загрузка истории чатов
-async function loadChatHistory() {
-  console.log('loadChatHistory called, isChatHistoryLoading:', isChatHistoryLoading, 'cachedChatHistory:', !!cachedChatHistory);
-  
-  if (isChatHistoryLoading) return;
+// Гарантированная загрузка истории чатов
+async function ensureChatHistoryLoaded() {
   if (cachedChatHistory) {
-    console.log('Using cached chat history');
-    renderChatHistory(cachedChatHistory);
-    return;
+    return cachedChatHistory;
   }
   
-  isChatHistoryLoading = true;
-  
-  // Показываем загрузку
-  const chatHistoryList = document.getElementById('chatHistoryList');
-  if (chatHistoryList) {
-    chatHistoryList.innerHTML = '<div class="loading-chats">Загрузка чатов...</div>';
+  if (chatHistoryLoadPromise) {
+    return chatHistoryLoadPromise;
   }
+  
+  chatHistoryLoadPromise = loadChatHistoryFromServer();
+  return chatHistoryLoadPromise;
+}
+
+// Загрузка с сервера
+async function loadChatHistoryFromServer() {
+  console.log('Loading chat history from server...');
   
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    console.log('Fetching chat history...');
-    
     const response = await fetch('/api/chats?action=list', {
       headers: {
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
     });
-    const data = await response.json();
     
-    console.log('Chat history response:', data);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Server response:', data);
     
     if (data.success) {
       cachedChatHistory = data;
       renderChatHistory(data);
+      return data;
+    } else {
+      throw new Error(data.error || 'Failed to load chats');
     }
   } catch (error) {
     console.error('Error loading chat history:', error);
-    // Показываем ошибку
-    if (chatHistoryList) {
-      chatHistoryList.innerHTML = '<div class="no-chats">Ошибка загрузки</div>';
-    }
-  } finally {
-    isChatHistoryLoading = false;
+    // Показываем ошибку но продолжаем работать
+    renderChatHistoryError();
+    return null;
   }
 }
 
-// Отрисовка истории чатов
+// Отрисовка чатов
 function renderChatHistory(data) {
   const chatHistoryList = document.getElementById('chatHistoryList');
   if (!chatHistoryList) {
-    console.log('chatHistoryList element not found');
+    console.error('chatHistoryList not found');
     return;
   }
   
-  console.log('Rendering chat history:', data);
+  console.log('Rendering chats:', data);
   
-  chatHistoryList.innerHTML = '';
-  
-  if (data.chats && data.chats.length > 0) {
+  if (data && data.chats && data.chats.length > 0) {
+    chatHistoryList.innerHTML = '';
     data.chats.forEach(chat => {
       const chatItem = document.createElement('div');
       chatItem.className = `history-item ${chat.is_active ? 'active' : ''}`;
@@ -88,15 +89,41 @@ function renderChatHistory(data) {
         `${chat.title} 🔄` : 
         chat.title;
 
-      chatItem.textContent = `${title}`;
-      
+      chatItem.textContent = title;
       chatHistoryList.appendChild(chatItem);
     });
     console.log('Chats rendered successfully');
   } else {
     chatHistoryList.innerHTML = '<div class="no-chats">Начните новый чат</div>';
-    console.log('No chats found');
+    console.log('No chats to display');
   }
+}
+
+// Отрисовка ошибки
+function renderChatHistoryError() {
+  const chatHistoryList = document.getElementById('chatHistoryList');
+  if (chatHistoryList) {
+    chatHistoryList.innerHTML = '<div class="no-chats">Ошибка загрузки чатов</div>';
+  }
+}
+
+// Показать загрузку
+function showChatHistoryLoading() {
+  const chatHistoryList = document.getElementById('chatHistoryList');
+  if (chatHistoryList) {
+    chatHistoryList.innerHTML = '<div class="loading-chats">Загрузка чатов...</div>';
+  }
+}
+
+// Устаревшая функция для совместимости
+async function loadChatHistory() {
+  if (isChatHistoryLoading) return;
+  isChatHistoryLoading = true;
+  
+  showChatHistoryLoading();
+  await ensureChatHistoryLoaded();
+  
+  isChatHistoryLoading = false;
 }
 
 // Переключение на другой чат
@@ -248,11 +275,8 @@ function openSidebar() {
     });
   }
   
-  // НЕ загружаем здесь - чаты уже должны быть загружены при старте
-  // Если еще не загружены, пытаемся загрузить
-  if (!cachedChatHistory && !isChatHistoryLoading) {
-    loadChatHistory();
-  }
+  // ГАРАНТИРУЕМ ЧТО ЧАТЫ ЗАГРУЖЕНЫ
+  ensureChatHistoryLoaded();
 }
 
 function closeSidebar() {
@@ -1674,10 +1698,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Загружаем историю чатов АВТОМАТИЧЕСКИ при старте (в фоне)
-    setTimeout(() => {
-      loadChatHistory();
-    }, 100); // Даем время на полную отрисовку DOM
+    // ЗАГРУЖАЕМ ЧАТЫ НЕМЕДЛЕННО ПРИ СТАРТЕ
+    ensureChatHistoryLoaded();
 
     // Показываем главную страницу
     showPage('main');
@@ -1685,9 +1707,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Локальный режим без Telegram
-  setTimeout(() => {
-    loadChatHistory(); // Загружаем в фоне
-  }, 100);
+  ensureChatHistoryLoaded(); // ЗАГРУЖАЕМ ЧАТЫ НЕМЕДЛЕННО
   showPage('main');
 });
 
