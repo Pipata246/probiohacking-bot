@@ -1162,16 +1162,10 @@ document.addEventListener('click', (e) => {
   }
   
   // Отправка сообщения в чате
-  if (e.target.closest('.chat-send-btn')) {
-    const sendBtn = e.target.closest('.chat-send-btn');
-    if (sendBtn?.dataset?.mode === 'stop') {
-      stopAIResponse();
-      return;
-    }
+  if (e.target.closest('.chat-send-btn') || e.target.closest('#sendButton')) {
     const chatInput = document.querySelector('.chat-input');
-    const message = chatInput.value.trim();
+    const message = chatInput?.value?.trim();
     if (message) {
-      chatInput.value = '';
       sendChatMessage(message);
     }
     return;
@@ -1922,9 +1916,9 @@ function sendChatMessage(message) {
   // Проверяем не в режиме read-only ли мы
   const chatInput = document.getElementById('chatInput');
   if (chatInput && chatInput.style.display === 'none') {
-    console.log('Redirecting to active chat - cannot send in read-only mode');
+    console.log('Cannot send in read-only mode - redirecting to active chat');
     
-    // Показываем уведомление о перенаправлении
+    // Показываем уведомление
     const notification = document.createElement('div');
     notification.style.cssText = `
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -1934,35 +1928,42 @@ function sendChatMessage(message) {
     notification.innerHTML = '🔄 Перенаправляем в активный чат...';
     document.body.appendChild(notification);
     
-    // Загружаем активный чат
+    // Загружаем активный чат и отправляем сообщение
     setTimeout(async () => {
       await loadActiveChat();
       notification.remove();
       
-      // Отправляем сообщение в активный чат
-      addUserMessage(trimmed);
-      if (isAiBusy) {
-        stopActiveTypewriter();
-        pendingAiMessages.push(trimmed);
-        stopAIResponse();
-        return;
-      }
-      pendingAiMessages.push(trimmed);
-      processAiQueue();
+      // Очищаем поле ввода и отправляем в активный чат
+      if (chatInput) chatInput.value = '';
+      await sendMessageToAPI(trimmed);
     }, 1000);
     
     return;
   }
   
-  addUserMessage(trimmed);
-  if (isAiBusy) {
-    stopActiveTypewriter();
-    pendingAiMessages.push(trimmed);
-    stopAIResponse();
-    return;
+  // Очищаем поле ввода и отправляем
+  if (chatInput) chatInput.value = '';
+  sendMessageToAPI(trimmed);
+}
+
+// Отправка сообщения в API
+async function sendMessageToAPI(message) {
+  try {
+    // Показываем сообщение в интерфейсе
+    addUserMessage(message);
+    
+    // Добавляем в очередь
+    if (isAiBusy) {
+      stopActiveTypewriter();
+      pendingAiMessages.push(message);
+      stopAIResponse();
+      return;
+    }
+    pendingAiMessages.push(message);
+    processAiQueue();
+  } catch (error) {
+    console.error('Error sending message:', error);
   }
-  pendingAiMessages.push(trimmed);
-  processAiQueue();
 }
 
 async function openChatWithMessage(message) {
@@ -3379,7 +3380,6 @@ document.addEventListener('keypress', (e) => {
     const chatInput = e.target;
     const message = chatInput.value.trim();
     if (message) {
-      chatInput.value = '';
       sendChatMessage(message);
     }
   }
