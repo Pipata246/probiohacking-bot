@@ -512,16 +512,25 @@ async function initUserFromWebApp(req) {
       return null;
     }
 
-    // Парсим данные из WebApp
-    const urlParams = new URLSearchParams(telegramWebAppData);
-    const userStr = urlParams.get('user');
+    console.log('🔍 initUserFromWebApp: Raw WebApp data:', telegramWebAppData);
+
+    // Парсим query string вручную для Node.js
+    const params = new Map();
+    telegramWebAppData.split('&').forEach(param => {
+      const [key, value] = param.split('=');
+      if (key && value) {
+        params.set(key, decodeURIComponent(value));
+      }
+    });
+
+    const userStr = params.get('user');
     
     if (!userStr) {
       console.log('❌ initUserFromWebApp: No user data in WebApp');
       return null;
     }
 
-    const user = JSON.parse(decodeURIComponent(userStr));
+    const user = JSON.parse(userStr);
     console.log('🔍 initUserFromWebApp: Parsed user:', user);
 
     // Получаем или создаем пользователя в БД
