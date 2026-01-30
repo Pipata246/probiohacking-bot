@@ -1762,6 +1762,7 @@ async function sendMessageToAI(message) {
       },
       body: JSON.stringify({ 
         message,
+        chatId: currentChatId, // Добавляем ID текущего чата
         telegramUser: telegramUser ? {
           id: telegramUser.id,
           first_name: telegramUser.first_name,
