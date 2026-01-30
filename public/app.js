@@ -181,6 +181,14 @@ function cleanupRealtime() {
   }
   currentTelegramId = null;
 }
+// ========================================
+// ЛОГИКА ЧАТОВ - ПЕРЕПИСАНО С НУЛЯ
+// ========================================
+
+// Глобальные переменные чата
+let currentChatId = null;
+let isReadOnlyMode = false;
+
 // Загрузка активного чата при старте
 async function loadActiveChat() {
   try {
@@ -200,15 +208,13 @@ async function loadActiveChat() {
     
     if (data.success && data.activeChatId) {
       currentChatId = data.activeChatId;
+      isReadOnlyMode = false;
       
       // Показываем поле ввода для активного чата
-      const chatInput = document.getElementById('chatInput');
-      const sendButton = document.getElementById('sendButton');
-      if (chatInput) chatInput.style.display = 'flex';
-      if (sendButton) sendButton.style.display = 'flex';
+      showChatInput(true);
       
       // Загружаем сообщения активного чата
-      await loadChatMessages(data.activeChatId);
+      await loadChatMessages(data.activeChatId, false);
       console.log('✅ Active chat loaded:', data.activeChatId);
     } else {
       // Если нет активного чата, создаем первый
@@ -219,6 +225,208 @@ async function loadActiveChat() {
     console.error('Error loading active chat:', error);
     // При ошибке создаем новый чат
     await createNewChat();
+  }
+}
+
+// Просмотр старого чата (read-only)
+async function viewOldChat(chatId) {
+  try {
+    console.log('Loading old chat for viewing:', chatId);
+    
+    // Закрываем сайдбар
+    closeSidebar();
+    
+    // Показываем страницу чата
+    showPage('chat');
+    
+    // Устанавливаем режим read-only
+    isReadOnlyMode = true;
+    currentChatId = chatId;
+    
+    // Скрываем поле ввода
+    showChatInput(false);
+    
+    // Показываем уведомление что это старый чат
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = `
+        <div style="background: rgba(255,193,7,0.1); border-left: 3px solid #FFC107; padding: 12px; margin: 10px 0; color: #FFC107; font-size: 14px;">
+          📖 Это старый чат (только для чтения)
+        </div>
+        <div class="chat-loading-animation">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Загружаем сообщения...</div>
+        </div>
+      `;
+    }
+    
+    // Загружаем сообщения старого чата в режиме read-only
+    await loadChatMessages(chatId, true);
+    
+  } catch (error) {
+    console.error('Error viewing old chat:', error);
+  }
+}
+
+// Показать/скрыть поле ввода
+function showChatInput(show) {
+  const chatInput = document.getElementById('chatInput');
+  const sendButton = document.getElementById('sendButton');
+  
+  if (chatInput) {
+    chatInput.style.display = show ? 'flex' : 'none';
+  }
+  if (sendButton) {
+    sendButton.style.display = show ? 'flex' : 'none';
+  }
+}
+
+// Отправка сообщения
+function sendChatMessage(message) {
+  const trimmed = (message || '').trim();
+  if (!trimmed) return;
+  
+  console.log('🔍 sendChatMessage called. currentChatId:', currentChatId, 'isReadOnlyMode:', isReadOnlyMode);
+  
+  // Если в режиме read-only, перенаправляем в активный чат
+  if (isReadOnlyMode) {
+    console.log('🔍 Read-only mode, redirecting to active chat');
+    
+    // Показываем уведомление
+    showNotification('🔄 Перенаправляем в активный чат...');
+    
+    // Загружаем активный чат и отправляем сообщение
+    setTimeout(async () => {
+      await loadActiveChat();
+      hideNotification();
+      
+      // Отправляем сообщение в активный чат
+      sendChatMessage(message);
+    }, 1000);
+    
+    return;
+  }
+  
+  // Обычный режим - отправляем в активный чат
+  console.log('🔍 Normal mode, sending to currentChatId:', currentChatId);
+  
+  // Очищаем поле ввода и отправляем
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) chatInput.value = '';
+  
+  sendMessageToAPI(trimmed);
+}
+
+// Отправка сообщения в API
+async function sendMessageToAPI(message) {
+  try {
+    // Показываем сообщение в интерфейсе
+    addUserMessage(message);
+    
+    // Добавляем в очередь
+    if (isAiBusy) {
+      stopActiveTypewriter();
+      pendingAiMessages.push(message);
+      stopAIResponse();
+      return;
+    }
+    pendingAiMessages.push(message);
+    processAiQueue();
+  } catch (error) {
+    console.error('Error sending message:', error);
+  }
+}
+
+// Показать/скрыть уведомление
+function showNotification(text) {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(76, 175, 80, 0.9); color: white; padding: 16px; border-radius: 8px;
+    z-index: 10000; font-size: 14px; text-align: center;
+  `;
+  notification.innerHTML = text;
+  notification.id = 'notification';
+  document.body.appendChild(notification);
+}
+
+function hideNotification() {
+  const notification = document.getElementById('notification');
+  if (notification) {
+    notification.remove();
+  }
+}
+
+// Создание нового чата (становится активным)
+async function createNewChat() {
+  console.log('Creating new active chat...');
+  
+  try {
+    // Закрываем сайдбар и показываем страницу чата
+    closeSidebar();
+    showPage('chat');
+    
+    // Устанавливаем режим активного чата
+    isReadOnlyMode = false;
+    
+    // Показываем поле ввода
+    showChatInput(true);
+    
+    // Показываем анимацию загрузки
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = `
+        <div class="chat-loading-animation">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Создаем новый чат...</div>
+        </div>
+      `;
+    }
+    
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/chats', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
+      body: JSON.stringify({ action: 'create', title: 'Новый чат' })
+    });
+
+    console.log('Create chat response status:', response.status);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('New active chat created:', data);
+
+    const chatId = data.chatId || data.chat?.id || data.id;
+    
+    if (chatId) {
+      currentChatId = chatId;
+      
+      // Загружаем сообщения нового чата
+      await loadChatMessages(chatId, false);
+      
+      // Обновляем список чатов в фоне
+      loadChatsFromAPI();
+      
+      console.log('✅ New chat is now active:', chatId);
+    } else {
+      console.error('No chat ID in response:', data);
+      throw new Error('Invalid response format');
+    }
+
+  } catch (error) {
+    console.error('Error creating new chat:', error);
+    
+    // Показываем ошибку
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = '<div class="error-message">Не удалось создать чат. Попробуйте еще раз.</div>';
+    }
   }
 }
 
@@ -1464,7 +1672,6 @@ document.addEventListener('click', (e) => {
 let aiAbortController = null;
 let isAiBusy = false;
 let activeTypewriter = null;
-let currentChatId = null;
 let pendingAiMessages = [];
 
 function escapeHtml(text) {
@@ -1917,69 +2124,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Local mode - no Telegram WebApp');
   }
 });
-
-function sendChatMessage(message) {
-  const trimmed = (message || '').trim();
-  if (!trimmed) return;
-  
-  console.log('🔍 sendChatMessage called. currentChatId:', currentChatId);
-  
-  // Проверяем не в режиме read-only ли мы
-  const chatInput = document.getElementById('chatInput');
-  if (chatInput && chatInput.style.display === 'none') {
-    console.log('🔍 Read-only mode detected, redirecting to active chat');
-    
-    // Показываем уведомление
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      background: rgba(76, 175, 80, 0.9); color: white; padding: 16px; border-radius: 8px;
-      z-index: 10000; font-size: 14px; text-align: center;
-    `;
-    notification.innerHTML = '🔄 Перенаправляем в активный чат...';
-    document.body.appendChild(notification);
-    
-    // Загружаем активный чат и отправляем сообщение
-    setTimeout(async () => {
-      console.log('🔍 Before loadActiveChat, currentChatId:', currentChatId);
-      await loadActiveChat();
-      console.log('🔍 After loadActiveChat, currentChatId:', currentChatId);
-      notification.remove();
-      
-      // Очищаем поле ввода и отправляем в активный чат
-      if (chatInput) chatInput.value = '';
-      await sendMessageToAPI(trimmed);
-    }, 1000);
-    
-    return;
-  }
-  
-  console.log('🔍 Normal mode, sending to currentChatId:', currentChatId);
-  
-  // Очищаем поле ввода и отправляем
-  if (chatInput) chatInput.value = '';
-  sendMessageToAPI(trimmed);
-}
-
-// Отправка сообщения в API
-async function sendMessageToAPI(message) {
-  try {
-    // Показываем сообщение в интерфейсе
-    addUserMessage(message);
-    
-    // Добавляем в очередь
-    if (isAiBusy) {
-      stopActiveTypewriter();
-      pendingAiMessages.push(message);
-      stopAIResponse();
-      return;
-    }
-    pendingAiMessages.push(message);
-    processAiQueue();
-  } catch (error) {
-    console.error('Error sending message:', error);
-  }
-}
 
 async function openChatWithMessage(message) {
   showPage('chat');
