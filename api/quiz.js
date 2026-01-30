@@ -23,10 +23,14 @@ export default async function handler(req, res) {
 
   try {
     const { action } = req.query;
+    console.log('🔍 API Quiz: Request received:', { method: req.method, action, query: req.query });
 
     // Инициализация пользователя
     const user = await initUserFromWebApp(req);
+    console.log('🔍 API Quiz: User initialized:', user);
+    
     if (!user) {
+      console.error('❌ API Quiz: User not found');
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 

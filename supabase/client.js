@@ -501,3 +501,57 @@ module.exports = {
   requestService,
   chatService
 };
+
+// Функция для инициализации пользователя из WebApp данных
+async function initUserFromWebApp(req) {
+  try {
+    const telegramWebAppData = req.headers['x-telegram-webapp-data'];
+    
+    if (!telegramWebAppData) {
+      console.log('❌ initUserFromWebApp: No Telegram WebApp data');
+      return null;
+    }
+
+    // Парсим данные из WebApp
+    const urlParams = new URLSearchParams(telegramWebAppData);
+    const userStr = urlParams.get('user');
+    
+    if (!userStr) {
+      console.log('❌ initUserFromWebApp: No user data in WebApp');
+      return null;
+    }
+
+    const user = JSON.parse(decodeURIComponent(userStr));
+    console.log('🔍 initUserFromWebApp: Parsed user:', user);
+
+    // Получаем или создаем пользователя в БД
+    const userId = await userService.getOrCreateUser(
+      user.id,
+      user.first_name,
+      user.last_name,
+      user.username,
+      user.language_code
+    );
+
+    if (!userId) {
+      console.log('❌ initUserFromWebApp: Failed to get/create user');
+      return null;
+    }
+
+    // Возвращаем объект пользователя
+    return {
+      id: userId,
+      telegram_id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      username: user.username,
+      language_code: user.language_code
+    };
+  } catch (error) {
+    console.error('❌ initUserFromWebApp: Exception:', error);
+    return null;
+  }
+}
+
+// Экспорт для ES modules (для API)
+export { initUserFromWebApp };
