@@ -19,13 +19,19 @@ tg.ready();
 const SUPABASE_URL = 'https://bqjxjzqzjpywxwztzsup.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxanhqenF6anB5d3h3enR6c3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1ODk4MTcsImV4cCI6MjA1MzE2NTgxN30.Mg4UKokQRWkzZQK1L5YAw0yfTBw7A6bLo3YjKb_Jn4';
 
-// Создаем Supabase клиент
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 // Глобальные переменные для Realtime
+let supabase = null;
 let chatsSubscription = null;
 let currentTelegramId = null;
 let cachedChats = [];
+
+// Инициализация Supabase клиента
+function initializeSupabase() {
+  if (window.supabase && !supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase client initialized');
+  }
+}
 
 // =========================================
 // ФУНКЦИИ УПРАВЛЕНИЯ ЧАТАМИ - REALTIME
@@ -33,6 +39,14 @@ let cachedChats = [];
 
 // Инициализация Supabase Realtime для чатов
 async function initializeChatsRealtime(telegramId) {
+  // Убедимся что Supabase клиент инициализирован
+  initializeSupabase();
+  
+  if (!supabase) {
+    console.error('Supabase client not available');
+    return;
+  }
+  
   currentTelegramId = telegramId;
   
   // Загружаем начальные данные
@@ -66,6 +80,11 @@ async function initializeChatsRealtime(telegramId) {
 
 // Загрузка начальных данных
 async function loadInitialChats(telegramId) {
+  if (!supabase) {
+    console.error('Supabase client not available');
+    return;
+  }
+  
   try {
     const { data: chats, error } = await supabase
       .from('chats')
@@ -145,6 +164,11 @@ function renderChatsList(chats) {
 
 // Создание нового чата через Supabase
 async function createNewChatRealtime(title = 'Новый чат') {
+  if (!supabase) {
+    console.error('Supabase client not available');
+    return null;
+  }
+  
   if (!currentTelegramId) {
     console.error('No current telegram ID');
     return null;
@@ -1675,11 +1699,15 @@ async function sendMessageToAI(message) {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', async () => {
-  // Инициализация Telegram WebApp
-  if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
-
+  console.log('DOM loaded - initializing app');
+  
+  // Инициализируем Supabase при загрузке
+  initializeSupabase();
+  
+  // Проверяем Telegram WebApp
+  if (window.Telegram?.WebApp) {
+    console.log('Telegram WebApp detected');
+    
     // Устанавливаем тему
     if (window.Telegram.WebApp.colorScheme) {
       document.body.setAttribute('data-theme', window.Telegram.WebApp.colorScheme);
@@ -1688,40 +1716,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Получаем данные пользователя
     const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
     if (telegramUser) {
-      user = telegramUser;
-      userName = `${telegramUser.first_name} ${telegramUser.last_name || ''}`.trim();
-
-      // Обновляем аватар в сайдбаре
-      const sidebarAvatar = document.getElementById('sidebarAvatar');
-      if (sidebarAvatar) {
-        if (telegramUser.photo_url) {
-          sidebarAvatar.style.backgroundImage = `url(${telegramUser.photo_url})`;
-          sidebarAvatar.textContent = '';
-        } else {
-          const initials = `${telegramUser.first_name.charAt(0)}${telegramUser.last_name ? telegramUser.last_name.charAt(0) : ''}`.toUpperCase();
-          sidebarAvatar.textContent = initials;
-        }
-      }
-
-      // Обновляем имя в сайдбаре
-      const sidebarName = document.getElementById('sidebarName');
-      if (sidebarName) {
-        sidebarName.textContent = userName;
-      }
+      console.log('Telegram user:', telegramUser);
+      
+      // ИНИЦИАЛИЗАЦИЯ REALTIME ДЛЯ ЧАТОВ
+      initializeChatsRealtime(telegramUser.id);
+    } else {
+      // Если нет пользователя, используем тестовый
+      initializeChatsRealtime('test-user');
     }
-
-        // ИНИЦИАЛИЗАЦИЯ REALTIME ДЛЯ ЧАТОВ
-    if (userData && userData.telegram_id) {
-      initializeChatsRealtime(userData.telegram_id);
-    }
-
-    // Показываем главную страницу
-    showPage('main');
-    return;
+  } else {
+    console.log('Local mode - no Telegram WebApp');
+    // Локальный режим без Telegram
+    initializeChatsRealtime('test-user');
   }
-
-  // Локальный режим без Telegram
-  initializeChatsRealtime('test-user'); // ТЕСТОВЫЙ ПОЛЬЗОВАТЕЛЬ ДЛЯ ЛОКАЛЬНОГО РЕЖИМА
+  
+  // Показываем главную страницу
   showPage('main');
 });
 
