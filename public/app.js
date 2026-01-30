@@ -2559,7 +2559,7 @@ function showDiagnosticForm() {
     showQuestion(currentQuestionIndex);
   });
   
-  document.getElementById('additionalNextBtn').addEventListener('click', () => {
+  document.getElementById('additionalNextBtn').addEventListener('click', async () => {
     console.log('🔥 КНОПКА НАЖАТА! Начинаем обработку...');
     
     // Сохраняем дополнительные ответы
@@ -2573,24 +2573,36 @@ function showDiagnosticForm() {
     console.log('💾 Сохраняем ответы:', additionalAnswers);
     localStorage.setItem('additionalAnswers', JSON.stringify(additionalAnswers));
     
-    // Завершаем диагностику
-    const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-    isDiagnosticFormMode = false;
+    // ЗАВЕРШАЕМ ДИАГНОСТИКУ И СОХРАНЯЕМ В БД
+    console.log('💾 Сохраняем результаты квиза в базу данных...');
+    const success = await completeDiagnosticQuiz();
     
-    console.log('🗑️ Удаляем форму...');
-    diagnosticFormOverlay.remove();
-    document.body.classList.remove('chat-overlay-visible');
-    
-    console.log('🏥 ПЕРЕХОДИМ НА СТРАНИЦУ ЗДОРОВЬЯ!');
-    showPage('health'); // Перенаправляем на страницу здоровья ПЕРЕД алертом
-    
-    console.log('✅ Показываем уведомление...');
-    tg.showAlert('Спасибо! Ваши ответы сохранены.\nВ ближайшее время мы подготовим для вас персональные рекомендации.');
-    
-    console.log('📊 Диагностика завершена');
-    console.log('Личные данные:', JSON.parse(localStorage.getItem('diagnosticPersonalData')));
-    console.log('Ответы на вопросы:', JSON.parse(localStorage.getItem('surveyAnswers')));
-    console.log('Дополнительные ответы:', JSON.parse(localStorage.getItem('additionalAnswers')));
+    if (success) {
+      // Удаляем форму диагностики
+      const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+      isDiagnosticFormMode = false;
+      
+      console.log('🗑️ Удаляем форму...');
+      diagnosticFormOverlay.remove();
+      document.body.classList.remove('chat-overlay-visible');
+      
+      console.log('🏥 ПЕРЕХОДИМ НА СТРАНИЦУ ЗДОРОВЬЯ!');
+      showPage('health'); // Перенаправляем на страницу здоровья
+      
+      console.log('✅ Показываем уведомление...');
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.showAlert('Спасибо! Ваши ответы сохранены.\nТеперь ИИ будет давать персонализированные рекомендации.');
+      }
+      
+      console.log('📊 Диагностика завершена и сохранена в БД');
+      console.log('Личные данные:', JSON.parse(localStorage.getItem('diagnosticPersonalData')));
+    } else {
+      // Если сохранение не удалось, показываем ошибку
+      console.error('❌ Ошибка при сохранении результатов квиза');
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.showAlert('Произошла ошибка при сохранении результатов. Попробуйте еще раз.');
+      }
+    }
   });
   
 }
