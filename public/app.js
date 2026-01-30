@@ -12,75 +12,121 @@ const tg = window.Telegram?.WebApp || {
 tg.ready();
 
 // =========================================
-// ФУНКЦИИ УПРАВЛЕНИЯ ЧАТАМИ
+// SUPABASE КЛИЕНТ И REALTIME
 // =========================================
 
-// Глобальные переменные
-let cachedChatHistory = null;
-let isChatHistoryLoading = false;
-let chatHistoryLoadPromise = null;
+// Supabase конфигурация
+const SUPABASE_URL = 'https://bqjxjzqzjpywxwztzsup.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxanhqenF6anB5d3h3enR6c3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1ODk4MTcsImV4cCI6MjA1MzE2NTgxN30.Mg4UKokQRWkzZQK1L5YAw0yfTBw7A6bLo3YjKb_Jn4';
 
-// Гарантированная загрузка истории чатов с кешированием
-async function ensureChatHistoryLoaded() {
-  if (cachedChatHistory) {
-    return cachedChatHistory;
+// Создаем Supabase клиент
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Глобальные переменные для Realtime
+let chatsSubscription = null;
+let currentTelegramId = null;
+let cachedChats = [];
+
+// =========================================
+// ФУНКЦИИ УПРАВЛЕНИЯ ЧАТАМИ - REALTIME
+// =========================================
+
+// Инициализация Supabase Realtime для чатов
+async function initializeChatsRealtime(telegramId) {
+  currentTelegramId = telegramId;
+  
+  // Загружаем начальные данные
+  await loadInitialChats(telegramId);
+  
+  // Отписываемся от предыдущей подписки если есть
+  if (chatsSubscription) {
+    chatsSubscription.unsubscribe();
   }
   
-  if (chatHistoryLoadPromise) {
-    return chatHistoryLoadPromise;
-  }
-  
-  chatHistoryLoadPromise = loadChatHistoryFromServer();
-  return chatHistoryLoadPromise;
-}
-
-// Загрузка с сервера
-async function loadChatHistoryFromServer() {
-  console.log('Loading chat history from server...');
-  
-  try {
-    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    const response = await fetch('/api/chats?action=list', {
-      headers: {
-        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+  // Создаем подписку на изменения в таблице chats
+  chatsSubscription = supabase
+    .channel(`chats_${telegramId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*', // Все события: INSERT, UPDATE, DELETE
+        schema: 'public',
+        table: 'chats',
+        filter: `telegram_id=eq.${telegramId}`
+      },
+      (payload) => {
+        console.log('Realtime chat update:', payload);
+        handleRealtimeChatUpdate(payload);
       }
+    )
+    .subscribe((status) => {
+      console.log('Realtime subscription status:', status);
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+}
+
+// Загрузка начальных данных
+async function loadInitialChats(telegramId) {
+  try {
+    const { data: chats, error } = await supabase
+      .from('chats')
+      .select('*')
+      .eq('telegram_id', telegramId)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading initial chats:', error);
+      return;
     }
-    
-    const data = await response.json();
-    console.log('Server response:', data);
-    
-    if (data.success) {
-      cachedChatHistory = data;
-      renderChatHistory(data);
-      return data;
-    } else {
-      throw new Error(data.error || 'Failed to load chats');
-    }
+
+    cachedChats = chats || [];
+    renderChatsList(cachedChats);
+    console.log('Initial chats loaded:', cachedChats.length);
   } catch (error) {
-    console.error('Error loading chat history:', error);
-    // Показываем ошибку но продолжаем работать
-    renderChatHistoryError();
-    return null;
+    console.error('Exception in loadInitialChats:', error);
   }
 }
 
-// Отрисовка чатов
-function renderChatHistory(data) {
-  const chatHistoryList = document.getElementById('chatHistoryList');
-  if (!chatHistoryList) {
-    console.error('chatHistoryList not found');
-    return;
+// Обработка Realtime обновлений
+function handleRealtimeChatUpdate(payload) {
+  const { eventType, new: newRecord, old: oldRecord } = payload;
+  
+  switch (eventType) {
+    case 'INSERT':
+      // Добавляем новый чат в начало списка
+      cachedChats.unshift(newRecord);
+      break;
+      
+    case 'UPDATE':
+      // Находим и обновляем чат
+      const index = cachedChats.findIndex(chat => chat.id === newRecord.id);
+      if (index !== -1) {
+        cachedChats[index] = newRecord;
+        // Если это обновление active чата, перемещаем его в начало
+        if (newRecord.is_active) {
+          cachedChats.splice(index, 1);
+          cachedChats.unshift(newRecord);
+        }
+      }
+      break;
+      
+    case 'DELETE':
+      // Удаляем чат из списка
+      cachedChats = cachedChats.filter(chat => chat.id !== oldRecord.id);
+      break;
   }
   
-  console.log('Rendering chats:', data);
+  // Обновляем UI
+  renderChatsList(cachedChats);
+}
+
+// Отрисовка списка чатов
+function renderChatsList(chats) {
+  const chatHistoryList = document.getElementById('chatHistoryList');
+  if (!chatHistoryList) return;
   
-  if (data && data.chats && data.chats.length > 0) {
+  if (chats && chats.length > 0) {
     chatHistoryList.innerHTML = '';
-    data.chats.forEach(chat => {
+    chats.forEach(chat => {
       const chatItem = document.createElement('div');
       chatItem.className = `history-item ${chat.is_active ? 'active' : ''}`;
       chatItem.setAttribute('data-chat-id', chat.id);
@@ -92,56 +138,54 @@ function renderChatHistory(data) {
       chatItem.textContent = title;
       chatHistoryList.appendChild(chatItem);
     });
-    console.log('Chats rendered successfully');
   } else {
     chatHistoryList.innerHTML = '<div class="no-chats">Начните новый чат</div>';
-    console.log('No chats to display');
   }
 }
 
-// Отрисовка ошибки
-function renderChatHistoryError() {
-  const chatHistoryList = document.getElementById('chatHistoryList');
-  if (chatHistoryList) {
-    chatHistoryList.innerHTML = '<div class="no-chats">Ошибка загрузки чатов</div>';
+// Создание нового чата через Supabase
+async function createNewChatRealtime(title = 'Новый чат') {
+  if (!currentTelegramId) {
+    console.error('No current telegram ID');
+    return null;
+  }
+  
+  try {
+    const { data: newChat, error } = await supabase
+      .from('chats')
+      .insert({
+        telegram_id: currentTelegramId,
+        title: title,
+        is_active: false,
+        auto_created: false,
+        message_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating chat:', error);
+      return null;
+    }
+
+    console.log('New chat created:', newChat);
+    return newChat;
+  } catch (error) {
+    console.error('Exception in createNewChatRealtime:', error);
+    return null;
   }
 }
 
-// Показать загрузку
-function showChatHistoryLoading() {
-  const chatHistoryList = document.getElementById('chatHistoryList');
-  if (chatHistoryList) {
-    chatHistoryList.innerHTML = '<div class="loading-chats">Загрузка чатов...</div>';
+// Очистка подписки
+function cleanupChatsRealtime() {
+  if (chatsSubscription) {
+    chatsSubscription.unsubscribe();
+    chatsSubscription = null;
   }
-}
-
-// Блокирующая загрузка - ЖДЕМ пока чаты загрузятся
-async function loadChatHistoryBlocking() {
-  console.log('Loading chat history BLOCKING - waiting for completion...');
-  
-  // Если уже есть в кеше - сразу отрисовываем
-  if (cachedChatHistory) {
-    renderChatHistory(cachedChatHistory);
-    return cachedChatHistory;
-  }
-  
-  // Показываем загрузку
-  showChatHistoryLoading();
-  
-  // Ждем завершения загрузки
-  const data = await ensureChatHistoryLoaded();
-  return data;
-}
-
-// Устаревшая функция для совместимости
-async function loadChatHistory() {
-  if (isChatHistoryLoading) return;
-  isChatHistoryLoading = true;
-  
-  showChatHistoryLoading();
-  await ensureChatHistoryLoaded();
-  
-  isChatHistoryLoading = false;
+  currentTelegramId = null;
+  cachedChats = [];
 }
 
 // Переключение на другой чат
@@ -220,36 +264,15 @@ async function loadChatMessages(chatId) {
 
 // Создание нового чата
 async function createNewChat() {
+  console.log('Creating new chat via Realtime...');
+  
   try {
-    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    const response = await fetch('/api/chats', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
-      },
-      body: JSON.stringify({ action: 'create', title: 'Новый чат' })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      currentChatId = data.chatId;
-      
-      // Очищаем сообщения
-      const chatMessages = document.getElementById('chatMessages');
-      if (chatMessages) {
-        chatMessages.innerHTML = '';
-      }
-      
-      // Обновляем историю без блокировки UI
-      loadChatHistory();
-      
-      // Показываем страницу чата
-      showPage('chat');
-      
-      // Закрываем сайдбар
-      closeSidebar();
+    const newChat = await createNewChatRealtime('Новый чат');
+    if (newChat) {
+      console.log('Chat created successfully via Realtime:', newChat);
+      // Realtime автоматически обновит UI через подписку
+    } else {
+      console.error('Failed to create chat via Realtime');
     }
   } catch (error) {
     console.error('Error creating new chat:', error);
@@ -293,13 +316,8 @@ function openSidebar() {
     });
   }
   
-  // СРАЗУ ПОКАЗЫВАЕМ ЧАТЫ ИЗ КЕША - БЕЗ ЗАГРУЗКИ
-  if (cachedChatHistory) {
-    renderChatHistory(cachedChatHistory);
-  } else {
-    // Если кеша нет - загружаем блокирующе
-    loadChatHistoryBlocking();
-  }
+  // МГНОВЕННОЕ ОТОБРАЖЕНИЕ - чаты уже в кеше из Realtime
+  renderChatsList(cachedChats);
 }
 
 function closeSidebar() {
@@ -1692,8 +1710,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // БЛОКИРУЮЩАЯ ЗАГРУЗКА ЧАТОВ - ЖДЕМ ПОКА ЗАГРУЗЯТСЯ
-    await loadChatHistoryBlocking();
+        // ИНИЦИАЛИЗАЦИЯ REALTIME ДЛЯ ЧАТОВ
+    if (userData && userData.telegram_id) {
+      initializeChatsRealtime(userData.telegram_id);
+    }
 
     // Показываем главную страницу
     showPage('main');
@@ -1701,7 +1721,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Локальный режим без Telegram
-  await loadChatHistoryBlocking(); // БЛОКИРУЮЩАЯ ЗАГРУЗКА ЧАТОВ
+  initializeChatsRealtime('test-user'); // ТЕСТОВЫЙ ПОЛЬЗОВАТЕЛЬ ДЛЯ ЛОКАЛЬНОГО РЕЖИМА
   showPage('main');
 });
 
