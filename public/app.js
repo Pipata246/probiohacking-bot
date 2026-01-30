@@ -397,8 +397,8 @@ async function viewOldChat(chatId) {
       `;
     }
     
-    // Загружаем сообщения старого чата
-    await loadChatMessages(chatId);
+    // Загружаем сообщения старого чата в режиме read-only
+    await loadChatMessages(chatId, true);
     
   } catch (error) {
     console.error('Error viewing old chat:', error);
@@ -464,7 +464,7 @@ async function switchToChat(chatId) {
 }
 
 // Загрузка сообщений чата
-async function loadChatMessages(chatId) {
+async function loadChatMessages(chatId, isReadOnly = false) {
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch(`/api/chats?action=messages&chatId=${chatId}`, {
@@ -477,7 +477,16 @@ async function loadChatMessages(chatId) {
     if (data.success) {
       const chatMessages = document.getElementById('chatMessages');
       if (chatMessages) {
-        chatMessages.innerHTML = '';
+        // Если не read-only, очищаем все сообщения
+        if (!isReadOnly) {
+          chatMessages.innerHTML = '';
+        } else {
+          // Если read-only, убираем только загрузку, оставляя уведомление
+          const loadingElement = chatMessages.querySelector('.chat-loading-animation');
+          if (loadingElement) {
+            loadingElement.remove();
+          }
+        }
         
         // Восстанавливаем сообщения в хронологическом порядке
         data.messages.forEach(msg => {
@@ -1978,6 +1987,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 function sendChatMessage(message) {
   const trimmed = (message || '').trim();
   if (!trimmed) return;
+  
+  // Проверяем не в режиме read-only ли мы
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput && chatInput.style.display === 'none') {
+    console.log('Cannot send message - read-only mode');
+    return;
+  }
+  
   addUserMessage(trimmed);
   if (isAiBusy) {
     stopActiveTypewriter();
