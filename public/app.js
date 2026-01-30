@@ -225,7 +225,7 @@ function renderChatsList(chats) {
       chatHistoryList.appendChild(chatItem);
     });
   } else {
-    chatHistoryList.innerHTML = '<div class="no-chats">Начните новый чат</div>';
+    chatHistoryList.innerHTML = ''; // Убрали надпись "Начните новый чат"
   }
 }
 
@@ -349,6 +349,8 @@ async function createNewChat() {
       body: JSON.stringify({})
     });
 
+    console.log('Create chat response status:', response.status);
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -356,16 +358,20 @@ async function createNewChat() {
     const data = await response.json();
     console.log('New chat created via API:', data);
 
-    if (data.success) {
-      currentChatId = data.chat.id;
+    // Проверяем разные форматы ответа
+    const chatId = data.chat?.id || data.id || data.chatId;
+    
+    if (chatId) {
+      currentChatId = chatId;
       
       // Загружаем сообщения нового чата
-      await loadChatMessages(currentChatId);
+      await loadChatMessages(chatId);
       
       // Обновляем список чатов в фоне
       loadChatsFromAPI();
     } else {
-      throw new Error(data.error || 'Failed to create chat');
+      console.error('No chat ID in response:', data);
+      throw new Error('Invalid response format');
     }
 
   } catch (error) {
@@ -374,7 +380,7 @@ async function createNewChat() {
     // Показываем ошибку
     const chatMessages = document.getElementById('chatMessages');
     if (chatMessages) {
-      chatMessages.innerHTML = '<div class="error-message">Не удалось создать чат</div>';
+      chatMessages.innerHTML = '<div class="error-message">Не удалось создать чат. Попробуйте еще раз.</div>';
     }
   }
 }
