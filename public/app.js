@@ -305,16 +305,6 @@ async function loadChatMessages(chatId) {
 
 // Создание нового чата
 async function createNewChat() {
-  // Если есть Realtime - используем Supabase
-  if (supabase && currentTelegramId) {
-    const newChat = await createChatViaSupabase('Новый чат');
-    if (newChat) {
-      console.log('Chat created via Supabase Realtime');
-      return; // Realtime автоматически обновит UI
-    }
-  }
-  
-  // Fallback на API
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats', {
@@ -334,11 +324,7 @@ async function createNewChat() {
     console.log('New chat created via API:', data);
 
     // Перезагружаем чаты после создания
-    if (supabase && currentTelegramId) {
-      await loadChatsFromSupabase();
-    } else {
-      await loadChatsFromAPI();
-    }
+    await loadChatsFromAPI();
 
   } catch (error) {
     console.error('Error creating new chat:', error);
@@ -382,13 +368,8 @@ function openSidebar() {
     });
   }
   
-  // Если есть Realtime - используем кешированные данные
-  if (cachedChats.length > 0) {
-    renderChatsList(cachedChats);
-  } else {
-    // Иначе загружаем через API
-    loadChatsFromAPI();
-  }
+  // Загружаем чаты при открытии сайдбара
+  loadChatsFromAPI();
 }
 
 function closeSidebar() {
