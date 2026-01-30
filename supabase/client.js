@@ -525,14 +525,70 @@ async function initUserFromWebApp(req) {
     const user = JSON.parse(userStr);
     console.log('🔍 initUserFromWebApp: Parsed user:', user);
 
-    // Получаем или создаем пользователя в БД
-    const userId = await userService.getOrCreateUser(
-      user.id,
-      user.first_name,
-      user.last_name,
-      user.username,
-      user.language_code
-    );
+    // Получаем или создаем пользователя в БД напрямую
+    let userId = null;
+    
+    // Сначала пытаемся найти существующего пользователя
+    let { data: existingUser, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('telegram_id', user.id)
+      .single();
+
+    console.log('Find user result:', { existingUser, findError });
+
+    if (findError && findError.code !== 'PGRST116') { // PGRST116 = not found
+      console.error('Error finding user:', findError);
+      return null;
+    }
+
+    // Если пользователь найден, обновляем его данные
+    if (existingUser) {
+      console.log('User exists, updating...');
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('users')
+        .update({
+          first_name: user.first_name || existingUser.first_name,
+          last_name: user.last_name || existingUser.last_name,
+          username: user.username || existingUser.username,
+          updated_at: new Date().toISOString()
+        })
+        .eq('telegram_id', user.id)
+        .select()
+        .single();
+
+      console.log('Update result:', { updatedUser, updateError });
+
+      if (updateError) {
+        console.error('Error updating user:', updateError);
+        return null;
+      }
+
+      userId = updatedUser.id;
+    } else {
+      // Если пользователь не найден, создаем нового
+      console.log('Creating new user...');
+      const { data: newUser, error: createError } = await supabase
+        .from('users')
+        .insert({
+          telegram_id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          username: user.username,
+          language_code: user.language_code || 'ru'
+        })
+        .select()
+        .single();
+
+      console.log('Create result:', { newUser, createError });
+
+      if (createError) {
+        console.error('Error creating user:', createError);
+        return null;
+      }
+
+      userId = newUser.id;
+    }
 
     if (!userId) {
       console.log('❌ initUserFromWebApp: Failed to get/create user');
