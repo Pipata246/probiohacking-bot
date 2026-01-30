@@ -18,6 +18,17 @@ tg.ready();
 // Загрузка истории чатов
 async function loadChatHistory() {
   try {
+    const chatHistoryList = document.getElementById('chatHistoryList');
+    if (!chatHistoryList) return;
+    
+    // Показываем индикатор загрузки
+    chatHistoryList.innerHTML = `
+      <div class="chat-history-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Ваши чаты загружаются...</div>
+      </div>
+    `;
+    
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats?action=list', {
       headers: {
@@ -27,9 +38,6 @@ async function loadChatHistory() {
     const data = await response.json();
     
     if (data.success) {
-      const chatHistoryList = document.getElementById('chatHistoryList');
-      if (!chatHistoryList) return;
-      
       chatHistoryList.innerHTML = '';
       
       if (data.chats && data.chats.length > 0) {
@@ -54,7 +62,7 @@ async function loadChatHistory() {
     console.error('Error loading chat history:', error);
     const chatHistoryList = document.getElementById('chatHistoryList');
     if (chatHistoryList) {
-      chatHistoryList.innerHTML = '<div class="no-chats">Начните новый чат</div>';
+      chatHistoryList.innerHTML = '<div class="no-chats">Ошибка загрузки чатов</div>';
     }
   }
 }
@@ -1642,8 +1650,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Загружаем историю чатов
-    await loadChatHistory();
+    // Загружаем историю чатов АВТОМАТИЧЕСКИ при старте
+    loadChatHistory();
 
     // Показываем главную страницу
     showPage('main');
@@ -1651,7 +1659,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Локальный режим без Telegram
-  await loadChatHistory();
+  loadChatHistory();
   showPage('main');
 });
 
