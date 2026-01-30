@@ -30,7 +30,12 @@ function initializeSupabase() {
   if (window.supabase && !supabase) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     console.log('Supabase client initialized');
+    return true;
+  } else if (!window.supabase) {
+    console.log('Supabase library not loaded yet, will retry...');
+    return false;
   }
+  return true;
 }
 
 // =========================================
@@ -39,11 +44,15 @@ function initializeSupabase() {
 
 // Инициализация Supabase Realtime для чатов
 async function initializeChatsRealtime(telegramId) {
-  // Убедимся что Supabase клиент инициализирован
-  initializeSupabase();
+  // Ждем загрузки Supabase библиотеки если нужно
+  let attempts = 0;
+  while (!initializeSupabase() && attempts < 10) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
   
   if (!supabase) {
-    console.error('Supabase client not available');
+    console.error('Supabase client not available after retries');
     return;
   }
   
@@ -1701,7 +1710,10 @@ async function sendMessageToAI(message) {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - initializing app');
   
-  // Инициализируем Supabase при загрузке
+  // Показываем главную страницу СРАЗУ, не ждем Realtime
+  showPage('main');
+  
+  // Инициализируем Supabase в фоне
   initializeSupabase();
   
   // Проверяем Telegram WebApp
@@ -1718,20 +1730,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (telegramUser) {
       console.log('Telegram user:', telegramUser);
       
-      // ИНИЦИАЛИЗАЦИЯ REALTIME ДЛЯ ЧАТОВ
-      initializeChatsRealtime(telegramUser.id);
+      // Запускаем Realtime в фоне, не блокируя интерфейс
+      initializeChatsRealtime(telegramUser.id).catch(err => {
+        console.error('Realtime initialization failed:', err);
+      });
     } else {
       // Если нет пользователя, используем тестовый
-      initializeChatsRealtime('test-user');
+      initializeChatsRealtime('test-user').catch(err => {
+        console.error('Realtime initialization failed:', err);
+      });
     }
   } else {
     console.log('Local mode - no Telegram WebApp');
     // Локальный режим без Telegram
-    initializeChatsRealtime('test-user');
+    initializeChatsRealtime('test-user').catch(err => {
+      console.error('Realtime initialization failed:', err);
+    });
   }
-  
-  // Показываем главную страницу
-  showPage('main');
 });
 
 function sendChatMessage(message) {
