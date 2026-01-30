@@ -881,11 +881,7 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Боковое меню - ОПТИМИЗИРОВАННАЯ ОБРАБОТКА
-  if (e.target.closest('.menu-btn')) {
-    openSidebar();
-    return;
-  }
+  // Боковое меню - УДАЛЕНО ДУБЛИРОВАНИЕ
   
   if (e.target.closest('#sidebarClose') || e.target.closest('#sidebarOverlay')) {
     closeSidebar();
@@ -1223,32 +1219,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ========================================
-// ФУНКЦИИ БОКОВОГО МЕНЮ
-// ========================================
-
-function openSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const sidebarOverlay = document.getElementById('sidebarOverlay');
-  if (sidebar && sidebarOverlay) {
-    // Используем requestAnimationFrame для плавности
-    requestAnimationFrame(() => {
-      sidebar.classList.add('active');
-      sidebarOverlay.classList.add('active');
-    });
-  }
-}
-
-function closeSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const sidebarOverlay = document.getElementById('sidebarOverlay');
-  if (sidebar && sidebarOverlay) {
-    sidebar.classList.remove('active');
-    sidebarOverlay.classList.remove('active');
-  }
-}
-
-// ========================================
-// ФУНКЦИИ ЧАТА
+// ФУНКЦИИ ЧАТА - ДУБЛИКАТ УДАЛЕН
 // ========================================
 
 let aiAbortController = null;
