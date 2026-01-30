@@ -4,6 +4,18 @@ const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 // Import Supabase client and middleware
 const { requestService, chatService } = require('../supabase/client.js');
 const { initUserFromWebApp } = require('../supabase/userMiddleware.js');
+const { createClient } = require('@supabase/supabase-js');
+
+// Supabase client для проверки квиза
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY,
+  {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+);
 
 // Константы для управления контекстом
 const MAX_CONTEXT_MESSAGES = 20; // Максимальное количество сообщений в контексте
@@ -195,10 +207,53 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Проверяем статус прохождения квиза и получаем контекст
+    let quizContext = '';
+    let quizCompleted = false;
+    
+    if (userInfo && userInfo.id) {
+      try {
+        // Проверяем статус квиза
+        const { data: quizStatus, error: statusError } = await supabase.rpc('check_user_quiz_status', {
+          p_user_id: userInfo.id
+        });
+        
+        if (!statusError) {
+          quizCompleted = quizStatus;
+          
+          // Если квиз пройден, получаем контекст
+          if (quizCompleted) {
+            const { data: contextData, error: contextError } = await supabase.rpc('get_user_quiz_context', {
+              p_user_id: userInfo.id
+            });
+            
+            if (!contextError && contextData && contextData !== 'Нет данных квиза') {
+              quizContext = contextData;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking quiz status:', error);
+      }
+    }
+
+    // Формируем системный промпт с учетом статуса квиза
+    let systemPrompt = SYSTEM_PROMPT;
+    
+    if (!quizCompleted) {
+      // Добавляем рекомендацию пройти квиз
+      systemPrompt += `\n\nВАЖНО: Пользователь еще не прошел персональную диагностику. 
+В каждом ответе мягко рекомендуй пройти квиз для получения персонализированных рекомендаций. 
+Предлагай кнопку "Пройти диагностику" для получения точных советов по здоровью.`;
+    } else if (quizContext) {
+      // Добавляем контекст из квиза
+      systemPrompt += `\n\n${quizContext}`;
+    }
+
     const payload = {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         { role: 'user', content: message }
       ],
       temperature: 0.7,
@@ -259,13 +314,15 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Return response with chat info
+    // Return response with chat info and quiz status
     const responsePayload = {
       success: true,
       response: content,
       chatId: currentChatId,
       newChatCreated: false,
-      contextOverflow: false
+      contextOverflow: false,
+      quizCompleted: quizCompleted,
+      quizRecommendation: !quizCompleted ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null
     };
 
     return res.status(200).json(responsePayload);

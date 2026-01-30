@@ -187,6 +187,56 @@ function cleanupRealtime() {
 
 // Глобальные переменные чата
 let currentChatId = null;
+let quizCompleted = false;
+
+// Проверка статуса квиза
+async function checkQuizStatus() {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/quiz?action=status', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      quizCompleted = data.quiz_completed || false;
+      console.log('Quiz status:', quizCompleted);
+      return quizCompleted;
+    }
+  } catch (error) {
+    console.error('Error checking quiz status:', error);
+  }
+  return false;
+}
+
+// Сохранение результатов квиза
+async function saveQuizResults(quizData) {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/quiz?action=save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
+      body: JSON.stringify(quizData)
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        quizCompleted = true;
+        console.log('Quiz results saved successfully');
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error('Error saving quiz results:', error);
+  }
+  return false;
+}
 
 // Загрузка активного чата при старте
 async function loadActiveChat() {
@@ -1888,6 +1938,43 @@ async function sendMessageToAI(message) {
       setChatSendButtonMode('send');
       processAiQueue();
       
+      // Обрабатываем статус квиза из ответа
+      if (data.quizCompleted !== undefined) {
+        quizCompleted = data.quizCompleted;
+        console.log('Updated quiz status from API:', quizCompleted);
+      }
+      
+      // Показываем рекомендацию пройти квиз если нужно
+      if (data.quizRecommendation && !quizCompleted) {
+        setTimeout(() => {
+          const quizButton = document.createElement('div');
+          quizButton.innerHTML = `
+            <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
+                        color: white; 
+                        padding: 12px; 
+                        border-radius: 12px; 
+                        margin: 16px 0;
+                        text-align: center;
+                        cursor: pointer;
+                        border: none;
+                        font-size: 14px;
+                        font-weight: 600;">
+              🎯 Пройти персональную диагностику
+            </div>
+          `;
+          
+          quizButton.addEventListener('click', () => {
+            showPage('diagnostics');
+          });
+          
+          const chatMessages = document.getElementById('chatMessages');
+          if (chatMessages) {
+            chatMessages.appendChild(quizButton);
+            chatMessagesScrollToBottom();
+          }
+        }, 1000);
+      }
+      
       // Обрабатываем переполнение контекста
       if (false && (data.newChatCreated || data.contextOverflow)) {
         // Показываем специальное сообщение о создании нового чата
@@ -1951,6 +2038,9 @@ async function sendMessageToAI(message) {
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - initializing app');
+  
+  // Проверяем статус квиза
+  await checkQuizStatus();
   
   // Загружаем активный чат
   await loadActiveChat();
