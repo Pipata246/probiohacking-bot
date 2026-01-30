@@ -182,12 +182,11 @@ function cleanupRealtime() {
   currentTelegramId = null;
 }
 // ========================================
-// ЛОГИКА ЧАТОВ - ПЕРЕПИСАНО С НУЛЯ
+// ПРОСТАЯ ЛОГИКА ЧАТОВ - БЕЗ ПРОСМОТРА СТАРЫХ
 // ========================================
 
 // Глобальные переменные чата
 let currentChatId = null;
-let isReadOnlyMode = false;
 
 // Загрузка активного чата при старте
 async function loadActiveChat() {
@@ -208,10 +207,6 @@ async function loadActiveChat() {
     
     if (data.success && data.activeChatId) {
       currentChatId = data.activeChatId;
-      isReadOnlyMode = false;
-      
-      // Показываем поле ввода для активного чата
-      showChatInput(true);
       
       // Загружаем сообщения активного чата
       await loadChatMessages(data.activeChatId, false);
@@ -228,133 +223,29 @@ async function loadActiveChat() {
   }
 }
 
-// Просмотр старого чата (read-only)
-async function viewOldChat(chatId) {
-  try {
-    console.log('Loading old chat for viewing:', chatId);
-    
-    // Закрываем сайдбар
-    closeSidebar();
-    
-    // Показываем страницу чата
-    showPage('chat');
-    
-    // Устанавливаем режим read-only
-    isReadOnlyMode = true;
-    currentChatId = chatId;
-    
-    // Скрываем поле ввода
-    showChatInput(false);
-    
-    // Показываем уведомление что это старый чат
-    const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-      chatMessages.innerHTML = `
-        <div style="background: rgba(255,193,7,0.1); border-left: 3px solid #FFC107; padding: 12px; margin: 10px 0; color: #FFC107; font-size: 14px;">
-          📖 Это старый чат (только для чтения)
-        </div>
-        <div class="chat-loading-animation">
-          <div class="loading-spinner"></div>
-          <div class="loading-text">Загружаем сообщения...</div>
-        </div>
-      `;
-    }
-    
-    // Загружаем сообщения старого чата в режиме read-only
-    await loadChatMessages(chatId, true);
-    
-  } catch (error) {
-    console.error('Error viewing old chat:', error);
-  }
-}
-
-// Показать/скрыть поле ввода
-function showChatInput(show) {
-  const chatInput = document.getElementById('chatInput');
-  const sendButton = document.getElementById('sendButton');
-  
-  if (chatInput) {
-    chatInput.style.display = show ? 'flex' : 'none';
-  }
-  if (sendButton) {
-    sendButton.style.display = show ? 'flex' : 'none';
-  }
-}
-
 // Отправка сообщения
 function sendChatMessage(message) {
   const trimmed = (message || '').trim();
   if (!trimmed) return;
   
-  console.log('🔍 sendChatMessage called. currentChatId:', currentChatId, 'isReadOnlyMode:', isReadOnlyMode);
-  
-  // Если в режиме read-only, перенаправляем в активный чат
-  if (isReadOnlyMode) {
-    console.log('🔍 Read-only mode, redirecting to active chat');
-    
-    // Показываем уведомление
-    showNotification('🔄 Перенаправляем в активный чат...');
-    
-    // Загружаем активный чат и отправляем сообщение
-    setTimeout(async () => {
-      await loadActiveChat();
-      hideNotification();
-      
-      // Отправляем сообщение в активный чат
-      sendChatMessage(message);
-    }, 1000);
-    
-    return;
-  }
-  
-  // Обычный режим - отправляем в активный чат
-  console.log('🔍 Normal mode, sending to currentChatId:', currentChatId);
+  console.log('🔍 sendChatMessage called. currentChatId:', currentChatId);
   
   // Очищаем поле ввода и отправляем
   const chatInput = document.getElementById('chatInput');
   if (chatInput) chatInput.value = '';
   
-  sendMessageToAPI(trimmed);
-}
-
-// Отправка сообщения в API
-async function sendMessageToAPI(message) {
-  try {
-    // Показываем сообщение в интерфейсе
-    addUserMessage(message);
-    
-    // Добавляем в очередь
-    if (isAiBusy) {
-      stopActiveTypewriter();
-      pendingAiMessages.push(message);
-      stopAIResponse();
-      return;
-    }
-    pendingAiMessages.push(message);
-    processAiQueue();
-  } catch (error) {
-    console.error('Error sending message:', error);
+  // Показываем сообщение в интерфейсе
+  addUserMessage(trimmed);
+  
+  // Добавляем в очередь
+  if (isAiBusy) {
+    stopActiveTypewriter();
+    pendingAiMessages.push(trimmed);
+    stopAIResponse();
+    return;
   }
-}
-
-// Показать/скрыть уведомление
-function showNotification(text) {
-  const notification = document.createElement('div');
-  notification.style.cssText = `
-    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    background: rgba(76, 175, 80, 0.9); color: white; padding: 16px; border-radius: 8px;
-    z-index: 10000; font-size: 14px; text-align: center;
-  `;
-  notification.innerHTML = text;
-  notification.id = 'notification';
-  document.body.appendChild(notification);
-}
-
-function hideNotification() {
-  const notification = document.getElementById('notification');
-  if (notification) {
-    notification.remove();
-  }
+  pendingAiMessages.push(trimmed);
+  processAiQueue();
 }
 
 // Создание нового чата (становится активным)
@@ -365,12 +256,6 @@ async function createNewChat() {
     // Закрываем сайдбар и показываем страницу чата
     closeSidebar();
     showPage('chat');
-    
-    // Устанавливаем режим активного чата
-    isReadOnlyMode = false;
-    
-    // Показываем поле ввода
-    showChatInput(true);
     
     // Показываем анимацию загрузки
     const chatMessages = document.getElementById('chatMessages');
@@ -454,7 +339,7 @@ async function loadChatsFromAPI() {
   }
 }
 
-// Отрисовка списка чатов с группировкой по датам
+// Отрисовка списка чатов (простая - только для информации)
 function renderChatsList(chats) {
   const chatHistoryList = document.getElementById('chatHistoryList');
   if (!chatHistoryList) return;
@@ -473,55 +358,28 @@ function renderChatsList(chats) {
       activeChatItem.textContent = title;
       activeChatItem.style.cssText = 'border-left: 3px solid #4CAF50; background: rgba(76, 175, 80, 0.1);';
       
+      // Активный чат можно кликнуть для перехода на главную
       activeChatItem.addEventListener('click', () => {
-        console.log('Viewing active chat:', activeChat.id);
+        console.log('Active chat clicked - going to main');
         closeSidebar();
-        showPage('chat');
+        showPage('main');
       });
       
       chatHistoryList.appendChild(activeChatItem);
     }
     
-    // Группируем остальные чаты по периодам
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const lastWeek = new Date(now);
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    const lastMonth = new Date(now);
-    lastMonth.setDate(lastMonth.getDate() - 30);
-    
-    const yesterdayChats = [];
-    const lastWeekChats = [];
-    const lastMonthChats = [];
-    
-    // Фильтруем неактивные чаты
+    // Показываем остальные чаты только для информации
     const inactiveChats = chats.filter(chat => !chat.is_active);
     
-    inactiveChats.forEach(chat => {
-      const chatDate = new Date(chat.updated_at || chat.created_at);
-      
-      if (chatDate >= yesterday) {
-        yesterdayChats.push(chat);
-      } else if (chatDate >= lastWeek) {
-        lastWeekChats.push(chat);
-      } else if (chatDate >= lastMonth) {
-        lastMonthChats.push(chat);
-      }
-    });
-    
-    // Добавляем группы старых чатов
-    function addGroup(title, chats) {
-      if (chats.length === 0) return;
-      
-      // Заголовок группы
+    if (inactiveChats.length > 0) {
+      // Заголовок для старых чатов
       const header = document.createElement('div');
-      header.textContent = title;
+      header.textContent = 'Предыдущие чаты:';
       header.style.cssText = 'padding: 8px 16px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500;';
       chatHistoryList.appendChild(header);
       
-      // Чаты в группе
-      chats.forEach(chat => {
+      // Старые чаты (только для информации)
+      inactiveChats.forEach(chat => {
         const chatItem = document.createElement('div');
         chatItem.className = 'history-item';
         chatItem.setAttribute('data-chat-id', chat.id);
@@ -529,8 +387,9 @@ function renderChatsList(chats) {
         const title = chat.auto_created ? `${chat.title} 🔄` : chat.title;
         chatItem.textContent = title;
         chatItem.style.opacity = '0.7';
+        chatItem.style.cursor = 'default';
         
-        // Добавляем дату создания/обновления
+        // Добавляем дату
         const chatDate = new Date(chat.updated_at || chat.created_at);
         const dateStr = formatDate(chatDate);
         
@@ -538,19 +397,10 @@ function renderChatsList(chats) {
         dateElement.style.cssText = 'font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px;';
         dateElement.textContent = dateStr;
         
-        chatItem.addEventListener('click', () => {
-          console.log('Viewing old chat:', chat.id);
-          viewOldChat(chat.id);
-        });
-        
         chatHistoryList.appendChild(chatItem);
         chatHistoryList.appendChild(dateElement);
       });
     }
-    
-    addGroup('Вчера:', yesterdayChats);
-    addGroup('Прошлая неделя:', lastWeekChats);
-    addGroup('30 дней:', lastMonthChats);
     
   } else {
     chatHistoryList.innerHTML = '';
@@ -1066,14 +916,10 @@ function showPage(pageName) {
       currentPage = 'main'; // Чат это часть главной
       isInRecommendedTests = false;
       
-      // Проверяем не в режиме read-only ли мы
+      // Всегда показываем поле ввода в чате
       const chatInput = document.getElementById('chatInput');
       const sendButton = document.getElementById('sendButton');
-      if (chatInput && chatInput.style.display === 'none') {
-        // Если поле ввода скрыто (read-only режим), не показываем его
-        console.log('Chat page shown in read-only mode');
-      } else if (chatInput && sendButton) {
-        // Иначе показываем поле ввода для активного чата
+      if (chatInput && sendButton) {
         chatInput.style.display = 'flex';
         sendButton.style.display = 'flex';
       }
