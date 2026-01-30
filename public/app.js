@@ -358,11 +358,11 @@ function renderChatsList(chats) {
       activeChatItem.textContent = title;
       activeChatItem.style.cssText = 'border-left: 3px solid #4CAF50; background: rgba(76, 175, 80, 0.1);';
       
-      // Активный чат можно кликнуть для перехода на главную
+      // Активный чат можно кликнуть для перехода в чат
       activeChatItem.addEventListener('click', () => {
-        console.log('Active chat clicked - going to main');
+        console.log('Active chat clicked - opening chat');
         closeSidebar();
-        showPage('main');
+        showPage('chat');
       });
       
       chatHistoryList.appendChild(activeChatItem);
