@@ -229,18 +229,29 @@ function renderChatsList(chats) {
   }
 }
 
-// Переключение на другой чат
+// Переключение на другой чат с анимацией
 async function switchToChat(chatId) {
   try {
     console.log('Switching to chat:', chatId);
     
-    // Показываем индикатор загрузки
+    // СРАЗУ закрываем сайдбар с анимацией
+    closeSidebar();
+    
+    // Показываем страницу чата СРАЗУ с анимацией загрузки
+    showPage('chat');
+    
+    // Показываем красивую анимацию загрузки
     const chatMessages = document.getElementById('chatMessages');
     if (chatMessages) {
-      chatMessages.innerHTML = '<div class="loading">Загрузка чата...</div>';
+      chatMessages.innerHTML = `
+        <div class="chat-loading-animation">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Загружаем чат...</div>
+        </div>
+      `;
     }
     
-    // Переключаем чат на сервере
+    // Загружаем данные в фоне
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats', {
       method: 'POST',
@@ -259,17 +270,20 @@ async function switchToChat(chatId) {
       
       // Загружаем сообщения чата
       await loadChatMessages(chatId);
-      
-      // Показываем страницу чата
-      showPage('chat');
-      
-      // Закрываем сайдбар
-      closeSidebar();
     } else {
       console.error('Switch chat failed:', data);
+      // Показываем ошибку
+      if (chatMessages) {
+        chatMessages.innerHTML = '<div class="error-message">Не удалось загрузить чат</div>';
+      }
     }
   } catch (error) {
     console.error('Error switching chat:', error);
+    // Показываем ошибку
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = '<div class="error-message">Ошибка загрузки чата</div>';
+    }
   }
 }
 
@@ -305,9 +319,26 @@ async function loadChatMessages(chatId) {
   }
 }
 
-// Создание нового чата
+// Создание нового чата с анимацией
 async function createNewChat() {
+  console.log('Creating new chat...');
+  
   try {
+    // СРАЗУ закрываем сайдбар и показываем страницу чата
+    closeSidebar();
+    showPage('chat');
+    
+    // Показываем анимацию загрузки
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = `
+        <div class="chat-loading-animation">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Создаем новый чат...</div>
+        </div>
+      `;
+    }
+    
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats', {
       method: 'POST',
@@ -325,11 +356,26 @@ async function createNewChat() {
     const data = await response.json();
     console.log('New chat created via API:', data);
 
-    // Перезагружаем чаты после создания
-    await loadChatsFromAPI();
+    if (data.success) {
+      currentChatId = data.chat.id;
+      
+      // Загружаем сообщения нового чата
+      await loadChatMessages(currentChatId);
+      
+      // Обновляем список чатов в фоне
+      loadChatsFromAPI();
+    } else {
+      throw new Error(data.error || 'Failed to create chat');
+    }
 
   } catch (error) {
     console.error('Error creating new chat:', error);
+    
+    // Показываем ошибку
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = '<div class="error-message">Не удалось создать чат</div>';
+    }
   }
 }
 
