@@ -238,8 +238,8 @@ async function saveQuizResults(quizData) {
   return false;
 }
 
-// Сохранение одного ответа квиза
-async function saveQuizAnswer(telegramId, questionId, answer) {
+// Сохранение одного ответа квиза с полным вопросом
+async function saveQuizAnswer(telegramId, questionId, questionText, answerText, answerValue) {
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/save-answer', {
@@ -251,21 +251,48 @@ async function saveQuizAnswer(telegramId, questionId, answer) {
       body: JSON.stringify({
         telegramId: telegramId,
         questionId: questionId,
-        answer: answer
+        questionText: questionText,
+        answerText: answerText,
+        answerValue: answerValue
       })
     });
     
     if (response.ok) {
       const data = await response.json();
       console.log('Answer saved:', data);
-      if (data.quizCompleted) {
-        quizCompleted = true;
-        console.log('Quiz completed!');
-      }
       return true;
     }
   } catch (error) {
     console.error('Error saving answer:', error);
+  }
+  return false;
+}
+
+// Завершение квиза
+async function completeQuiz(telegramId) {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/complete-quiz', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
+      body: JSON.stringify({
+        telegramId: telegramId
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Quiz completed:', data);
+      if (data.success) {
+        quizCompleted = true;
+        return true;
+      }
+    }
+  } catch (error) {
+    console.error('Error completing quiz:', error);
   }
   return false;
 }
@@ -294,36 +321,64 @@ async function completeDiagnosticQuiz() {
     
     const telegramId = telegramUser.id;
     
-    // Сохраняем персональные данные
-    await saveQuizAnswer(telegramId, 'age', diagnosticPersonalData.age || '');
-    await saveQuizAnswer(telegramId, 'gender', diagnosticPersonalData.gender || '');
-    await saveQuizAnswer(telegramId, 'weight', diagnosticPersonalData.weight || '');
-    await saveQuizAnswer(telegramId, 'height', diagnosticPersonalData.height || '');
-    await saveQuizAnswer(telegramId, 'activity', diagnosticPersonalData.activity || '');
-    await saveQuizAnswer(telegramId, 'sleep', diagnosticPersonalData.sleep || '');
-    await saveQuizAnswer(telegramId, 'stress', diagnosticPersonalData.stress || '');
-    await saveQuizAnswer(telegramId, 'energy', diagnosticPersonalData.energy || '');
-    await saveQuizAnswer(telegramId, 'digestion', diagnosticPersonalData.digestion || '');
+    // Сохраняем персональные данные с полными вопросами
+    await saveQuizAnswer(telegramId, 'age', 'Ваш возраст:', diagnosticPersonalData.age || '', diagnosticPersonalData.age || '');
+    await saveQuizAnswer(telegramId, 'gender', 'Ваш пол:', diagnosticPersonalData.gender || '', diagnosticPersonalData.gender || '');
+    await saveQuizAnswer(telegramId, 'weight', 'Ваш вес (кг):', diagnosticPersonalData.weight || '', diagnosticPersonalData.weight || '');
+    await saveQuizAnswer(telegramId, 'height', 'Ваш рост (см):', diagnosticPersonalData.height || '', diagnosticPersonalData.height || '');
+    await saveQuizAnswer(telegramId, 'activity', 'Уровень физической активности:', diagnosticPersonalData.activity || '', diagnosticPersonalData.activity || '');
+    await saveQuizAnswer(telegramId, 'sleep', 'Продолжительность сна (часов):', diagnosticPersonalData.sleep || '', diagnosticPersonalData.sleep || '');
+    await saveQuizAnswer(telegramId, 'stress', 'Уровень стресса (1-10):', diagnosticPersonalData.stress || '', diagnosticPersonalData.stress || '');
+    await saveQuizAnswer(telegramId, 'energy', 'Уровень энергии (1-10):', diagnosticPersonalData.energy || '', diagnosticPersonalData.energy || '');
+    await saveQuizAnswer(telegramId, 'digestion', 'Качество пищеварения:', diagnosticPersonalData.digestion || '', diagnosticPersonalData.digestion || '');
     
-    // Сохраняем ответы квиза
-    for (const [questionId, answer] of Object.entries(surveyAnswers)) {
-      await saveQuizAnswer(telegramId, questionId, answer);
+    // Сохраняем ответы квиза с полными вопросами
+    const surveyQuestions = window.surveyQuestions || [];
+    for (const [questionId, answerValue] of Object.entries(surveyAnswers)) {
+      const question = surveyQuestions.find(q => q.id === questionId);
+      if (question) {
+        let answerText = answerValue;
+        
+        // Если ответ - это массив, объединяем в текст
+        if (Array.isArray(answerValue)) {
+          answerText = answerValue.join(', ');
+        }
+        
+        // Ищем текст ответа в опциях
+        if (question.options) {
+          const option = question.options.find(opt => opt.value === answerValue);
+          if (option) {
+            answerText = option.label;
+          }
+        }
+        
+        await saveQuizAnswer(telegramId, questionId, question.question, answerText, answerValue);
+      }
     }
     
     // Сохраняем дополнительные ответы
-    await saveQuizAnswer(telegramId, 'discomfort', additionalAnswers.discomfort || '');
-    await saveQuizAnswer(telegramId, 'diagnosis', additionalAnswers.diagnosis || '');
-    await saveQuizAnswer(telegramId, 'treatment', additionalAnswers.treatment || '');
+    await saveQuizAnswer(telegramId, 'discomfort', 'Что вас беспокоит?', additionalAnswers.discomfort || '', additionalAnswers.discomfort || '');
+    await saveQuizAnswer(telegramId, 'diagnosis', 'Есть ли диагнозы?', additionalAnswers.diagnosis || '', additionalAnswers.diagnosis || '');
+    await saveQuizAnswer(telegramId, 'treatment', 'Принимаете ли лечение/добавки?', additionalAnswers.treatment || '', additionalAnswers.treatment || '');
     
-    // Показываем уведомление об успехе
-    showNotificationMessage('✅ Диагностика успешно завершена! Теперь ИИ будет давать персонализированные рекомендации.');
+    // Завершаем квиз (ставим статус completed = true)
+    const completed = await completeQuiz(telegramId);
     
-    // Возвращаем на главную страницу
-    setTimeout(() => {
-      showPage('main');
-    }, 2000);
+    if (completed) {
+      // Показываем уведомление об успехе
+      showNotificationMessage('✅ Диагностика успешно завершена! Теперь ИИ будет давать персонализированные рекомендации.');
+      
+      // Возвращаем на главную страницу
+      setTimeout(() => {
+        showPage('main');
+      }, 2000);
+      
+      return true;
+    } else {
+      showNotificationMessage('❌ Ошибка при завершении квиза. Попробуйте еще раз.');
+    }
     
-    return true;
+    return false;
   } catch (error) {
     console.error('Error completing diagnostic quiz:', error);
     showNotificationMessage('❌ Произошла ошибка. Попробуйте еще раз.');

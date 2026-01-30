@@ -19,39 +19,31 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { telegramId, questionId, questionText, answerText, answerValue } = req.body;
+    const { telegramId } = req.body;
     
-    if (!telegramId || !questionId || !answerText) {
+    if (!telegramId) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Missing required fields: telegramId, questionId, answerText' 
+        error: 'Missing required field: telegramId' 
       });
     }
 
-    console.log('💾 Saving answer:', { telegramId, questionId, answerText });
+    console.log('🏁 Completing quiz for telegramId:', telegramId);
 
-    // Сохраняем ответ с полным вопросом
+    // Вызываем функцию для завершения квиза
     const { data, error } = await supabase
-      .from('quiz_answers')
-      .insert({
-        telegram_id: telegramId,
-        question_id: questionId,
-        question_text: questionText || '',
-        answer_text: answerText,
-        answer_value: answerValue || answerText
-      })
-      .select();
+      .rpc('complete_quiz_for_user', { p_telegram_id: telegramId });
 
     if (error) {
-      console.error('❌ Save error:', error);
+      console.error('❌ Complete quiz error:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
 
-    console.log('✅ Answer saved:', data);
+    console.log('✅ Quiz completed:', data);
 
     return res.json({ 
       success: true, 
-      data
+      completed: data
     });
 
   } catch (error) {
