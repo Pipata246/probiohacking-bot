@@ -243,7 +243,7 @@ async function completeDiagnosticQuiz() {
   try {
     console.log('🔍 Начинаем сбор данных из формы диагностики...');
     
-    // Собираем данные из localStorage (там сохраняются ответы квиза)
+    // Собираем данные из localStorage с правильными ключами
     const diagnosticPersonalData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
     const surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
     const additionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
