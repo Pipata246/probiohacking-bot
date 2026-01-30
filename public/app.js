@@ -115,6 +115,27 @@ function showChatHistoryLoading() {
   }
 }
 
+// Синхронная загрузка чатов - работает в фоне без блокировки
+function loadChatHistorySync() {
+  const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+  
+  fetch('/api/chats?action=list', {
+    headers: {
+      ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      cachedChatHistory = data;
+      renderChatHistory(data);
+    }
+  })
+  .catch(error => {
+    console.error('Error loading chat history:', error);
+  });
+}
+
 // Устаревшая функция для совместимости
 async function loadChatHistory() {
   if (isChatHistoryLoading) return;
@@ -1695,8 +1716,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // ЗАГРУЖАЕМ ЧАТЫ НЕМЕДЛЕННО ПРИ СТАРТЕ
-    ensureChatHistoryLoaded();
+    // ЗАГРУЖАЕМ ЧАТЫ СИНХРОННО ПРИ СТАРТЕ - БЕЗ ОЖИДАНИЯ
+    loadChatHistorySync();
 
     // Показываем главную страницу
     showPage('main');
@@ -1704,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Локальный режим без Telegram
-  ensureChatHistoryLoaded(); // ЗАГРУЖАЕМ ЧАТЫ НЕМЕДЛЕННО
+  loadChatHistorySync(); // ЗАГРУЖАЕМ ЧАТЫ СИНХРОННО
   showPage('main');
 });
 
