@@ -849,6 +849,18 @@ function showPage(pageName) {
       isChatMode = true;
       currentPage = 'main'; // Чат это часть главной
       isInRecommendedTests = false;
+      
+      // Проверяем не в режиме read-only ли мы
+      const chatInput = document.getElementById('chatInput');
+      const sendButton = document.getElementById('sendButton');
+      if (chatInput && chatInput.style.display === 'none') {
+        // Если поле ввода скрыто (read-only режим), не показываем его
+        console.log('Chat page shown in read-only mode');
+      } else if (chatInput && sendButton) {
+        // Иначе показываем поле ввода для активного чата
+        chatInput.style.display = 'flex';
+        sendButton.style.display = 'flex';
+      }
       break;
     case 'recommendedTests':
       recommendedTestsPage.classList.add('active');
