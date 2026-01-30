@@ -181,6 +181,39 @@ function cleanupRealtime() {
   }
   currentTelegramId = null;
 }
+// Загрузка активного чата при старте
+async function loadActiveChat() {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/chats?action=active', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Active chat response:', data);
+    
+    if (data.success && data.activeChatId) {
+      currentChatId = data.activeChatId;
+      await loadChatMessages(data.activeChatId);
+      console.log('✅ Active chat loaded:', data.activeChatId);
+    } else {
+      // Если нет активного чата, создаем первый
+      console.log('No active chat, creating first one...');
+      await createNewChat();
+    }
+  } catch (error) {
+    console.error('Error loading active chat:', error);
+    // При ошибке создаем новый чат
+    await createNewChat();
+  }
+}
+
 async function loadChatsFromAPI() {
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
@@ -205,7 +238,7 @@ async function loadChatsFromAPI() {
   }
 }
 
-// Отрисовка списка чатов с группировкой по датам
+// Отрисовка списка чатов с группировкой по датам (read-only режим)
 function renderChatsList(chats) {
   const chatHistoryList = document.getElementById('chatHistoryList');
   if (!chatHistoryList) return;
@@ -246,14 +279,55 @@ function renderChatsList(chats) {
       header.style.cssText = 'padding: 8px 16px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500;';
       chatHistoryList.appendChild(header);
       
-      // Чаты в группе
+      // Чаты в группе (read-only)
       chats.forEach(chat => {
         const chatItem = document.createElement('div');
         chatItem.className = `history-item ${chat.is_active ? 'active' : ''}`;
         chatItem.setAttribute('data-chat-id', chat.id);
         
         const title = chat.auto_created ? `${chat.title} 🔄` : chat.title;
-        chatItem.textContent = title;
+        const messageCount = chat.message_count || 0;
+        
+        // Добавляем индикатор активного чата
+        const activeIndicator = chat.is_active ? ' 📍' : '';
+        
+        chatItem.innerHTML = `
+          <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: ${chat.is_active ? 'default' : 'pointer'};">
+            <div style="font-size: 14px; font-weight: 500; color: #fff; margin-bottom: 2px;">
+              ${title}${activeIndicator}
+            </div>
+            <div style="font-size: 12px; color: rgba(255,255,255,0.6);">
+              ${messageCount} сообщений
+              ${chat.is_active ? '<span style="color: #4CAF50; margin-left: 8px;">Активный</span>' : ''}
+            </div>
+          </div>
+        `;
+
+        // Только активный чат можно кликнуть (для просмотра), остальные только для чтения
+        if (chat.is_active) {
+          chatItem.addEventListener('click', () => {
+            console.log('Viewing active chat:', chat.id);
+            closeSidebar();
+            showPage('chat');
+          });
+        } else {
+          // Старые чаты только для просмотра, не переключаем
+          chatItem.style.opacity = '0.7';
+          chatItem.addEventListener('click', () => {
+            console.log('Old chat is read-only:', chat.id);
+            // Показываем уведомление что это старый чат
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+              position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+              background: rgba(0,0,0,0.8); color: white; padding: 16px; border-radius: 8px;
+              z-index: 10000; font-size: 14px;
+            `;
+            notification.textContent = 'Это старый чат. Создайте новый чат для общения.';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+          });
+        }
+
         chatHistoryList.appendChild(chatItem);
       });
     }
@@ -357,9 +431,9 @@ async function loadChatMessages(chatId) {
   }
 }
 
-// Создание нового чата с анимацией
+// Создание нового чата (становится активным)
 async function createNewChat() {
-  console.log('Creating new chat...');
+  console.log('Creating new active chat...');
   
   try {
     // СРАЗУ закрываем сайдбар и показываем страницу чата
@@ -394,7 +468,7 @@ async function createNewChat() {
     }
 
     const data = await response.json();
-    console.log('New chat created via API:', data);
+    console.log('New active chat created:', data);
 
     // Проверяем разные форматы ответа
     const chatId = data.chatId || data.chat?.id || data.id;
@@ -407,6 +481,8 @@ async function createNewChat() {
       
       // Обновляем список чатов в фоне
       loadChatsFromAPI();
+      
+      console.log('✅ New chat is now active:', chatId);
     } else {
       console.error('No chat ID in response:', data);
       throw new Error('Invalid response format');
@@ -1097,15 +1173,10 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // История запросов (клик по чату)
+  // История запросов (старые чаты - только просмотр)
   if (e.target.closest('.history-item')) {
-    const item = e.target.closest('.history-item');
-    const chatId = item?.getAttribute('data-chat-id');
-    if (chatId) {
-      console.log('Clicking chat:', chatId);
-      switchToChat(chatId);
-      return;
-    }
+    // Клик обрабатывается внутри renderChatsList
+    return;
   }
   
   // Раскрытие разделов в базе знаний
@@ -1814,6 +1885,9 @@ async function sendMessageToAI(message) {
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - initializing app');
+  
+  // Загружаем активный чат
+  await loadActiveChat();
   
   // Показываем главную страницу
   showPage('main');
