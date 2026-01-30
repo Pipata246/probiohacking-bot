@@ -346,7 +346,7 @@ async function createNewChat() {
         'Content-Type': 'application/json',
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       },
-      body: JSON.stringify({})
+      body: JSON.stringify({ action: 'create', title: 'Новый чат' })
     });
 
     console.log('Create chat response status:', response.status);
@@ -359,7 +359,7 @@ async function createNewChat() {
     console.log('New chat created via API:', data);
 
     // Проверяем разные форматы ответа
-    const chatId = data.chat?.id || data.id || data.chatId;
+    const chatId = data.chatId || data.chat?.id || data.id;
     
     if (chatId) {
       currentChatId = chatId;
