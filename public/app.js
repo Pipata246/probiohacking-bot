@@ -274,9 +274,6 @@ function openSidebar() {
       sidebarOverlay.classList.add('active');
     });
   }
-  
-  // ГАРАНТИРУЕМ ЧТО ЧАТЫ ЗАГРУЖЕНЫ
-  ensureChatHistoryLoaded();
 }
 
 function closeSidebar() {
