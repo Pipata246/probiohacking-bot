@@ -286,22 +286,12 @@ function renderChatsList(chats) {
         chatItem.setAttribute('data-chat-id', chat.id);
         
         const title = chat.auto_created ? `${chat.title} 🔄` : chat.title;
-        const messageCount = chat.message_count || 0;
+        chatItem.textContent = title;
         
-        // Добавляем индикатор активного чата
-        const activeIndicator = chat.is_active ? ' 📍' : '';
-        
-        chatItem.innerHTML = `
-          <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: ${chat.is_active ? 'default' : 'pointer'};">
-            <div style="font-size: 14px; font-weight: 500; color: #fff; margin-bottom: 2px;">
-              ${title}${activeIndicator}
-            </div>
-            <div style="font-size: 12px; color: rgba(255,255,255,0.6);">
-              ${messageCount} сообщений
-              ${chat.is_active ? '<span style="color: #4CAF50; margin-left: 8px;">Активный</span>' : ''}
-            </div>
-          </div>
-        `;
+        // Добавляем зеленую рамку для активного чата
+        if (chat.is_active) {
+          chatItem.style.cssText = 'border-left: 3px solid #4CAF50; background: rgba(76, 175, 80, 0.1);';
+        }
 
         // Только активный чат можно кликнуть (для просмотра), остальные только для чтения
         if (chat.is_active) {
