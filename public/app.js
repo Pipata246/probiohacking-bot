@@ -238,7 +238,7 @@ async function loadChatsFromAPI() {
   }
 }
 
-// Отрисовка списка чатов с группировкой по датам (read-only режим)
+// Отрисовка списка чатов с группировкой по датам
 function renderChatsList(chats) {
   const chatHistoryList = document.getElementById('chatHistoryList');
   if (!chatHistoryList) return;
@@ -246,30 +246,55 @@ function renderChatsList(chats) {
   if (chats && chats.length > 0) {
     chatHistoryList.innerHTML = '';
     
-    // Группируем чаты по датам
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const todayChats = [];
-    const yesterdayChats = [];
-    const earlierChats = [];
-    
-    chats.forEach(chat => {
-      const chatDate = new Date(chat.updated_at || chat.created_at);
-      chatDate.setHours(0, 0, 0, 0);
+    // Сначала показываем активный чат отдельно
+    const activeChat = chats.find(chat => chat.is_active);
+    if (activeChat) {
+      const activeChatItem = document.createElement('div');
+      activeChatItem.className = 'history-item active';
+      activeChatItem.setAttribute('data-chat-id', activeChat.id);
       
-      if (chatDate.getTime() === today.getTime()) {
-        todayChats.push(chat);
-      } else if (chatDate.getTime() === yesterday.getTime()) {
+      const title = activeChat.auto_created ? `${activeChat.title} 🔄` : activeChat.title;
+      activeChatItem.textContent = title;
+      activeChatItem.style.cssText = 'border-left: 3px solid #4CAF50; background: rgba(76, 175, 80, 0.1);';
+      
+      activeChatItem.addEventListener('click', () => {
+        console.log('Viewing active chat:', activeChat.id);
+        closeSidebar();
+        showPage('chat');
+      });
+      
+      chatHistoryList.appendChild(activeChatItem);
+    }
+    
+    // Группируем остальные чаты по периодам
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const lastWeek = new Date(now);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const lastMonth = new Date(now);
+    lastMonth.setDate(lastMonth.getDate() - 30);
+    
+    const yesterdayChats = [];
+    const lastWeekChats = [];
+    const lastMonthChats = [];
+    
+    // Фильтруем неактивные чаты
+    const inactiveChats = chats.filter(chat => !chat.is_active);
+    
+    inactiveChats.forEach(chat => {
+      const chatDate = new Date(chat.updated_at || chat.created_at);
+      
+      if (chatDate >= yesterday) {
         yesterdayChats.push(chat);
-      } else {
-        earlierChats.push(chat);
+      } else if (chatDate >= lastWeek) {
+        lastWeekChats.push(chat);
+      } else if (chatDate >= lastMonth) {
+        lastMonthChats.push(chat);
       }
     });
     
-    // Добавляем группы
+    // Добавляем группы старых чатов
     function addGroup(title, chats) {
       if (chats.length === 0) return;
       
@@ -279,55 +304,104 @@ function renderChatsList(chats) {
       header.style.cssText = 'padding: 8px 16px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500;';
       chatHistoryList.appendChild(header);
       
-      // Чаты в группе (read-only)
+      // Чаты в группе
       chats.forEach(chat => {
         const chatItem = document.createElement('div');
-        chatItem.className = `history-item ${chat.is_active ? 'active' : ''}`;
+        chatItem.className = 'history-item';
         chatItem.setAttribute('data-chat-id', chat.id);
         
         const title = chat.auto_created ? `${chat.title} 🔄` : chat.title;
         chatItem.textContent = title;
+        chatItem.style.opacity = '0.7';
         
-        // Добавляем зеленую рамку для активного чата
-        if (chat.is_active) {
-          chatItem.style.cssText = 'border-left: 3px solid #4CAF50; background: rgba(76, 175, 80, 0.1);';
-        }
-
-        // Только активный чат можно кликнуть (для просмотра), остальные только для чтения
-        if (chat.is_active) {
-          chatItem.addEventListener('click', () => {
-            console.log('Viewing active chat:', chat.id);
-            closeSidebar();
-            showPage('chat');
-          });
-        } else {
-          // Старые чаты только для просмотра, не переключаем
-          chatItem.style.opacity = '0.7';
-          chatItem.addEventListener('click', () => {
-            console.log('Old chat is read-only:', chat.id);
-            // Показываем уведомление что это старый чат
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-              position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-              background: rgba(0,0,0,0.8); color: white; padding: 16px; border-radius: 8px;
-              z-index: 10000; font-size: 14px;
-            `;
-            notification.textContent = 'Это старый чат. Создайте новый чат для общения.';
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 2000);
-          });
-        }
-
+        // Добавляем дату создания/обновления
+        const chatDate = new Date(chat.updated_at || chat.created_at);
+        const dateStr = formatDate(chatDate);
+        
+        const dateElement = document.createElement('div');
+        dateElement.style.cssText = 'font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px;';
+        dateElement.textContent = dateStr;
+        
+        chatItem.addEventListener('click', () => {
+          console.log('Viewing old chat:', chat.id);
+          viewOldChat(chat.id);
+        });
+        
         chatHistoryList.appendChild(chatItem);
+        chatHistoryList.appendChild(dateElement);
       });
     }
     
-    addGroup('Сегодня', todayChats);
-    addGroup('Вчера', yesterdayChats);
-    addGroup('Ранее', earlierChats);
+    addGroup('Вчера:', yesterdayChats);
+    addGroup('Прошлая неделя:', lastWeekChats);
+    addGroup('30 дней:', lastMonthChats);
     
   } else {
     chatHistoryList.innerHTML = '';
+  }
+}
+
+// Форматирование даты
+function formatDate(date) {
+  const now = new Date();
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const chatDate = new Date(date);
+  chatDate.setHours(0, 0, 0, 0);
+  
+  if (chatDate.getTime() === today.getTime()) {
+    return 'Сегодня';
+  } else if (chatDate.getTime() === yesterday.getTime()) {
+    return 'Вчера';
+  } else {
+    return chatDate.toLocaleDateString('ru-RU', { 
+      day: 'numeric', 
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+}
+
+// Просмотр старого чата (read-only)
+async function viewOldChat(chatId) {
+  try {
+    console.log('Loading old chat for viewing:', chatId);
+    
+    // Закрываем сайдбар
+    closeSidebar();
+    
+    // Показываем страницу чата в режиме read-only
+    showPage('chat');
+    
+    // Скрываем поле ввода сообщений
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendButton');
+    if (chatInput) chatInput.style.display = 'none';
+    if (sendButton) sendButton.style.display = 'none';
+    
+    // Показываем уведомление что это старый чат
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = `
+        <div style="background: rgba(255,193,7,0.1); border-left: 3px solid #FFC107; padding: 12px; margin: 10px 0; color: #FFC107; font-size: 14px;">
+          📖 Это старый чат (только для чтения)
+        </div>
+        <div class="chat-loading-animation">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Загружаем сообщения...</div>
+        </div>
+      `;
+    }
+    
+    // Загружаем сообщения старого чата
+    await loadChatMessages(chatId);
+    
+  } catch (error) {
+    console.error('Error viewing old chat:', error);
   }
 }
 
@@ -429,6 +503,12 @@ async function createNewChat() {
     // СРАЗУ закрываем сайдбар и показываем страницу чата
     closeSidebar();
     showPage('chat');
+    
+    // Показываем поле ввода (скрыто если был старый чат)
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendButton');
+    if (chatInput) chatInput.style.display = 'flex';
+    if (sendButton) sendButton.style.display = 'flex';
     
     // Показываем анимацию загрузки
     const chatMessages = document.getElementById('chatMessages');
