@@ -3888,36 +3888,19 @@ function deleteEntry(entryId) {
 // НОВЫЙ ПРИВЕТСТВЕННЫЙ ЭКРАН - ПОЛНОСТЬЮ ОТДЕЛЬНЫЙ
 // ========================================
 
-const splashScreen = document.getElementById('splashScreen');
+// Ждем загрузки DOM перед инициализацией приветственного экрана
+document.addEventListener('DOMContentLoaded', function() {
+  const splashScreen = document.getElementById('splashScreen');
+  const mainApp = document.getElementById('mainApp');
 
-if (splashScreen) {
-  console.log('✅ Новый приветственный экран найден');
-  
-  // Обработчик клика
-  splashScreen.addEventListener('click', function() {
-    console.log('🎯 Клик по приветственному экрану');
+  if (splashScreen) {
+    console.log('✅ Новый приветственный экран найден');
     
-    // СНАЧАЛА показываем главное приложение (но оно еще прозрачное)
-    if (mainApp) {
-      mainApp.classList.add('active');
-    }
-    
-    // ПОТОМ плавно скрываем приветственный экран
-    splashScreen.classList.add('fade-out');
-    
-    // Полностью удаляем приветственный экран после анимации (1.5 секунды)
-    setTimeout(() => {
-      splashScreen.classList.add('hidden');
-      console.log('✅ Приветственный экран скрыт, главное приложение показано');
-    }, 1500);
-  });
-  
-  // Для локального тестирования - автоматический переход
-  if (typeof window.Telegram === 'undefined') {
-    setTimeout(() => {
-      console.log('🔄 Автоматический переход для локального тестирования');
+    // Обработчик клика
+    splashScreen.addEventListener('click', function() {
+      console.log('🎯 Клик по приветственному экрану');
       
-      // СНАЧАЛА показываем главное приложение
+      // СНАЧАЛА показываем главное приложение (но оно еще прозрачное)
       if (mainApp) {
         mainApp.classList.add('active');
       }
@@ -3925,15 +3908,34 @@ if (splashScreen) {
       // ПОТОМ плавно скрываем приветственный экран
       splashScreen.classList.add('fade-out');
       
+      // Полностью удаляем приветственный экран после анимации (1.5 секунды)
       setTimeout(() => {
         splashScreen.classList.add('hidden');
+        console.log('✅ Приветственный экран скрыт, главное приложение показано');
       }, 1500);
-    }, 3000);
+    });
+    
+    // Для локального тестирования - автоматический переход
+    if (typeof window.Telegram === 'undefined') {
+      setTimeout(() => {
+        console.log('🔄 Автоматический переход для локального тестирования');
+        
+        if (mainApp) {
+          mainApp.classList.add('active');
+        }
+        
+        splashScreen.classList.add('fade-out');
+        
+        setTimeout(() => {
+          splashScreen.classList.add('hidden');
+        }, 1500);
+      }, 3000);
+    }
+  } else {
+    console.error('❌ Приветственный экран не найден');
+    // Если нет приветственного экрана - сразу показываем приложение
+    if (mainApp) {
+      mainApp.classList.add('active');
+    }
   }
-} else {
-  console.error('❌ Приветственный экран не найден');
-  // Если нет приветственного экрана - сразу показываем приложение
-  if (mainApp) {
-    mainApp.classList.add('active');
-  }
-}
+});
