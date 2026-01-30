@@ -238,12 +238,44 @@ async function saveQuizResults(quizData) {
   return false;
 }
 
+// Сохранение одного ответа квиза
+async function saveQuizAnswer(telegramId, questionId, answer) {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/save-answer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
+      body: JSON.stringify({
+        telegramId: telegramId,
+        questionId: questionId,
+        answer: answer
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Answer saved:', data);
+      if (data.quizCompleted) {
+        quizCompleted = true;
+        console.log('Quiz completed!');
+      }
+      return true;
+    }
+  } catch (error) {
+    console.error('Error saving answer:', error);
+  }
+  return false;
+}
+
 // Функция для сбора данных из формы диагностики и сохранения
 async function completeDiagnosticQuiz() {
   try {
     console.log('🔍 Начинаем сбор данных из формы диагностики...');
     
-    // Собираем данные из localStorage с правильными ключами
+    // Собираем данные из localStorage
     const diagnosticPersonalData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
     const surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
     const additionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
@@ -253,92 +285,45 @@ async function completeDiagnosticQuiz() {
     console.log('Survey answers:', surveyAnswers);
     console.log('Additional answers:', additionalAnswers);
     
-    // Маппинг ID вопросов на типы данных для БД
-    const questionMapping = {
-      // Цели
-      'V17': { type: 'goals', value: 'stress_management' },
-      'V18': { type: 'goals', value: 'cardiovascular_health' },
-      'V19': { type: 'goals', value: 'respiratory_health' },
-      'V20': { type: 'goals', value: 'digestive_health' },
-      
-      // Проблемы со здоровьем
-      'V21': { type: 'health_concerns', value: 'endocrine_system' },
-      'V22': { type: 'health_concerns', value: 'musculoskeletal_system' },
-      'V23': { type: 'health_concerns', value: 'immune_system' },
-      'V24': { type: 'health_concerns', value: 'reproductive_system' },
-      
-      // Пищевые предпочтения
-      'V25': { type: 'dietary_preferences', value: 'dietary_habits' },
-      'V26': { type: 'dietary_preferences', value: 'supplements_usage' },
-      'V27': { type: 'dietary_preferences', value: 'lifestyle_factors' }
-    };
-    
-    // Извлекаем массивы из объекта surveyAnswers
-    const goals = [];
-    const health_concerns = [];
-    const dietary_preferences = [];
-    
-    // Проходим по всем ответам и группируем по типам
-    for (const [questionId, answer] of Object.entries(surveyAnswers)) {
-      const mapping = questionMapping[questionId];
-      if (mapping && answer) {
-        switch (mapping.type) {
-          case 'goals':
-            goals.push(mapping.value);
-            break;
-          case 'health_concerns':
-            health_concerns.push(mapping.value);
-            break;
-          case 'dietary_preferences':
-            dietary_preferences.push(mapping.value);
-            break;
-        }
-      }
-    }
-    
-    // Формируем данные для сохранения в БД
-    const quizData = {
-      age: parseInt(diagnosticPersonalData.age) || null,
-      gender: diagnosticPersonalData.gender || null,
-      weight: parseFloat(diagnosticPersonalData.weight) || null,
-      height: parseFloat(diagnosticPersonalData.height) || null,
-      activity_level: diagnosticPersonalData.activity || null,
-      goals: goals,
-      health_concerns: health_concerns,
-      dietary_preferences: dietary_preferences,
-      supplements: additionalAnswers.treatment ? [additionalAnswers.treatment] : [],
-      medications: additionalAnswers.diagnosis ? [additionalAnswers.diagnosis] : [],
-      sleep_hours: parseFloat(diagnosticPersonalData.sleep) || null,
-      stress_level: parseInt(diagnosticPersonalData.stress) || null,
-      energy_level: parseInt(diagnosticPersonalData.energy) || null,
-      digestion_quality: diagnosticPersonalData.digestion || null
-    };
-    
-    console.log('💾 Данные для сохранения в БД:', quizData);
-    
-    // Проверяем обязательные поля
-    if (!quizData.age || !quizData.gender) {
-      console.error('❌ Отсутствуют обязательные поля:', { age: quizData.age, gender: quizData.gender });
-      showNotificationMessage('❌ Отсутствуют обязательные данные. Пожалуйста, пройдите квиз заново.');
+    // Получаем Telegram ID
+    const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!telegramUser?.id) {
+      showNotificationMessage('❌ Ошибка: не удалось получить Telegram ID');
       return false;
     }
     
-    // Сохраняем результаты
-    const success = await saveQuizResults(quizData);
+    const telegramId = telegramUser.id;
     
-    if (success) {
-      // Показываем уведомление об успехе
-      showNotificationMessage('✅ Диагностика успешно завершена! Теперь ИИ будет давать персонализированные рекомендации.');
-      
-      // Возвращаем на главную страницу
-      setTimeout(() => {
-        showPage('main');
-      }, 2000);
-    } else {
-      showNotificationMessage('❌ Ошибка при сохранении результатов. Попробуйте еще раз.');
+    // Сохраняем персональные данные
+    await saveQuizAnswer(telegramId, 'age', diagnosticPersonalData.age || '');
+    await saveQuizAnswer(telegramId, 'gender', diagnosticPersonalData.gender || '');
+    await saveQuizAnswer(telegramId, 'weight', diagnosticPersonalData.weight || '');
+    await saveQuizAnswer(telegramId, 'height', diagnosticPersonalData.height || '');
+    await saveQuizAnswer(telegramId, 'activity', diagnosticPersonalData.activity || '');
+    await saveQuizAnswer(telegramId, 'sleep', diagnosticPersonalData.sleep || '');
+    await saveQuizAnswer(telegramId, 'stress', diagnosticPersonalData.stress || '');
+    await saveQuizAnswer(telegramId, 'energy', diagnosticPersonalData.energy || '');
+    await saveQuizAnswer(telegramId, 'digestion', diagnosticPersonalData.digestion || '');
+    
+    // Сохраняем ответы квиза
+    for (const [questionId, answer] of Object.entries(surveyAnswers)) {
+      await saveQuizAnswer(telegramId, questionId, answer);
     }
     
-    return success;
+    // Сохраняем дополнительные ответы
+    await saveQuizAnswer(telegramId, 'discomfort', additionalAnswers.discomfort || '');
+    await saveQuizAnswer(telegramId, 'diagnosis', additionalAnswers.diagnosis || '');
+    await saveQuizAnswer(telegramId, 'treatment', additionalAnswers.treatment || '');
+    
+    // Показываем уведомление об успехе
+    showNotificationMessage('✅ Диагностика успешно завершена! Теперь ИИ будет давать персонализированные рекомендации.');
+    
+    // Возвращаем на главную страницу
+    setTimeout(() => {
+      showPage('main');
+    }, 2000);
+    
+    return true;
   } catch (error) {
     console.error('Error completing diagnostic quiz:', error);
     showNotificationMessage('❌ Произошла ошибка. Попробуйте еще раз.');
