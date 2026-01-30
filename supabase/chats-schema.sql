@@ -137,9 +137,14 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION check_user_quiz_status(p_user_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
-    RETURN COALESCE((SELECT quiz_completed FROM users WHERE id = p_user_id), false);
+  RETURN COALESCE((SELECT quiz_completed FROM users WHERE id = p_user_id), false);
 END;
 $$ LANGUAGE plpgsql;
+
+-- 9. Realtime подписки для таблиц
+-- Включаем Realtime для таблиц
+ALTER PUBLICATION supabase_realtime ADD TABLE users;
+ALTER PUBLICATION supabase_realtime ADD TABLE quiz_results;
 
 -- Нормализуем данные: оставляем активным только самый свежий чат на пользователя
 WITH latest_active AS (
@@ -377,7 +382,7 @@ BEGIN
         ur.response_text,
         ur.request_type,
         ur.metadata,
-        ur.created_at
+        ur.created_at   
     FROM user_requests ur
     WHERE ur.chat_id = p_chat_id
     ORDER BY ur.created_at ASC

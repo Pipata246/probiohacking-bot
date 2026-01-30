@@ -238,6 +238,72 @@ async function saveQuizResults(quizData) {
   return false;
 }
 
+// Функция для сбора данных из формы диагностики и сохранения
+async function completeDiagnosticQuiz() {
+  try {
+    // Собираем все данные из формы
+    const quizData = {
+      age: parseInt(document.getElementById('age')?.value) || null,
+      gender: document.querySelector('input[name="gender"]:checked')?.value || null,
+      weight: parseFloat(document.getElementById('weight')?.value) || null,
+      height: parseFloat(document.getElementById('height')?.value) || null,
+      activity_level: document.querySelector('input[name="activity"]:checked')?.value || null,
+      goals: Array.from(document.querySelectorAll('input[name="goals"]:checked')).map(cb => cb.value),
+      health_concerns: Array.from(document.querySelectorAll('input[name="concerns"]:checked')).map(cb => cb.value),
+      dietary_preferences: Array.from(document.querySelectorAll('input[name="diet"]:checked')).map(cb => cb.value),
+      supplements: document.getElementById('supplements')?.value.split(',').map(s => s.trim()).filter(s => s) || [],
+      medications: document.getElementById('medications')?.value.split(',').map(m => m.trim()).filter(m => m) || [],
+      sleep_hours: parseFloat(document.getElementById('sleep')?.value) || null,
+      stress_level: parseInt(document.getElementById('stress')?.value) || null,
+      energy_level: parseInt(document.getElementById('energy')?.value) || null,
+      digestion_quality: document.querySelector('input[name="digestion"]:checked')?.value || null
+    };
+    
+    console.log('Collected quiz data:', quizData);
+    
+    // Сохраняем результаты
+    const success = await saveQuizResults(quizData);
+    
+    if (success) {
+      // Показываем уведомление об успехе
+      showNotificationMessage('✅ Диагностика успешно завершена! Теперь ИИ будет давать персонализированные рекомендации.');
+      
+      // Возвращаем на главную страницу
+      setTimeout(() => {
+        showPage('main');
+      }, 2000);
+    } else {
+      showNotificationMessage('❌ Ошибка при сохранении результатов. Попробуйте еще раз.');
+    }
+    
+    return success;
+  } catch (error) {
+    console.error('Error completing diagnostic quiz:', error);
+    showNotificationMessage('❌ Произошла ошибка. Попробуйте еще раз.');
+    return false;
+  }
+}
+
+// Показать уведомление
+function showNotificationMessage(text) {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(76, 175, 80, 0.9); color: white; padding: 16px; border-radius: 8px;
+    z-index: 10000; font-size: 14px; text-align: center;
+  `;
+  notification.innerHTML = text;
+  notification.id = 'notification';
+  document.body.appendChild(notification);
+  
+  // Автоматически скрываем через 3 секунды
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.remove();
+    }
+  }, 3000);
+}
+
 // Загрузка активного чата при старте
 async function loadActiveChat() {
   try {
@@ -1942,37 +2008,6 @@ async function sendMessageToAI(message) {
       if (data.quizCompleted !== undefined) {
         quizCompleted = data.quizCompleted;
         console.log('Updated quiz status from API:', quizCompleted);
-      }
-      
-      // Показываем рекомендацию пройти квиз если нужно
-      if (data.quizRecommendation && !quizCompleted) {
-        setTimeout(() => {
-          const quizButton = document.createElement('div');
-          quizButton.innerHTML = `
-            <div style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); 
-                        color: white; 
-                        padding: 12px; 
-                        border-radius: 12px; 
-                        margin: 16px 0;
-                        text-align: center;
-                        cursor: pointer;
-                        border: none;
-                        font-size: 14px;
-                        font-weight: 600;">
-              🎯 Пройти персональную диагностику
-            </div>
-          `;
-          
-          quizButton.addEventListener('click', () => {
-            showPage('diagnostics');
-          });
-          
-          const chatMessages = document.getElementById('chatMessages');
-          if (chatMessages) {
-            chatMessages.appendChild(quizButton);
-            chatMessagesScrollToBottom();
-          }
-        }, 1000);
       }
       
       // Обрабатываем переполнение контекста
