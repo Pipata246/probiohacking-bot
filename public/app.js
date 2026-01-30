@@ -207,6 +207,9 @@ function openSidebar() {
       sidebarOverlay.classList.add('active');
     });
   }
+  
+  // Загружаем историю чатов при открытии сайдбара
+  loadChatHistory();
 }
 
 function closeSidebar() {
