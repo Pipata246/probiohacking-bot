@@ -253,6 +253,49 @@ async function completeDiagnosticQuiz() {
     console.log('Survey answers:', surveyAnswers);
     console.log('Additional answers:', additionalAnswers);
     
+    // Маппинг ID вопросов на типы данных для БД
+    const questionMapping = {
+      // Цели
+      'V17': { type: 'goals', value: 'stress_management' },
+      'V18': { type: 'goals', value: 'cardiovascular_health' },
+      'V19': { type: 'goals', value: 'respiratory_health' },
+      'V20': { type: 'goals', value: 'digestive_health' },
+      
+      // Проблемы со здоровьем
+      'V21': { type: 'health_concerns', value: 'endocrine_system' },
+      'V22': { type: 'health_concerns', value: 'musculoskeletal_system' },
+      'V23': { type: 'health_concerns', value: 'immune_system' },
+      'V24': { type: 'health_concerns', value: 'reproductive_system' },
+      
+      // Пищевые предпочтения
+      'V25': { type: 'dietary_preferences', value: 'dietary_habits' },
+      'V26': { type: 'dietary_preferences', value: 'supplements_usage' },
+      'V27': { type: 'dietary_preferences', value: 'lifestyle_factors' }
+    };
+    
+    // Извлекаем массивы из объекта surveyAnswers
+    const goals = [];
+    const health_concerns = [];
+    const dietary_preferences = [];
+    
+    // Проходим по всем ответам и группируем по типам
+    for (const [questionId, answer] of Object.entries(surveyAnswers)) {
+      const mapping = questionMapping[questionId];
+      if (mapping && answer) {
+        switch (mapping.type) {
+          case 'goals':
+            goals.push(mapping.value);
+            break;
+          case 'health_concerns':
+            health_concerns.push(mapping.value);
+            break;
+          case 'dietary_preferences':
+            dietary_preferences.push(mapping.value);
+            break;
+        }
+      }
+    }
+    
     // Формируем данные для сохранения в БД
     const quizData = {
       age: parseInt(diagnosticPersonalData.age) || null,
@@ -260,9 +303,9 @@ async function completeDiagnosticQuiz() {
       weight: parseFloat(diagnosticPersonalData.weight) || null,
       height: parseFloat(diagnosticPersonalData.height) || null,
       activity_level: diagnosticPersonalData.activity || null,
-      goals: surveyAnswers.goals || [],
-      health_concerns: surveyAnswers.concerns || [],
-      dietary_preferences: surveyAnswers.diet || [],
+      goals: goals,
+      health_concerns: health_concerns,
+      dietary_preferences: dietary_preferences,
       supplements: additionalAnswers.treatment ? [additionalAnswers.treatment] : [],
       medications: additionalAnswers.diagnosis ? [additionalAnswers.diagnosis] : [],
       sleep_hours: parseFloat(diagnosticPersonalData.sleep) || null,
