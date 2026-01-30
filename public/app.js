@@ -205,27 +205,65 @@ async function loadChatsFromAPI() {
   }
 }
 
-// Отрисовка списка чатов
+// Отрисовка списка чатов с группировкой по датам
 function renderChatsList(chats) {
   const chatHistoryList = document.getElementById('chatHistoryList');
   if (!chatHistoryList) return;
   
   if (chats && chats.length > 0) {
     chatHistoryList.innerHTML = '';
+    
+    // Группируем чаты по датам
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const todayChats = [];
+    const yesterdayChats = [];
+    const earlierChats = [];
+    
     chats.forEach(chat => {
-      const chatItem = document.createElement('div');
-      chatItem.className = `history-item ${chat.is_active ? 'active' : ''}`;
-      chatItem.setAttribute('data-chat-id', chat.id);
+      const chatDate = new Date(chat.updated_at || chat.created_at);
+      chatDate.setHours(0, 0, 0, 0);
       
-      const title = chat.auto_created ? 
-        `${chat.title} 🔄` : 
-        chat.title;
-
-      chatItem.textContent = title;
-      chatHistoryList.appendChild(chatItem);
+      if (chatDate.getTime() === today.getTime()) {
+        todayChats.push(chat);
+      } else if (chatDate.getTime() === yesterday.getTime()) {
+        yesterdayChats.push(chat);
+      } else {
+        earlierChats.push(chat);
+      }
     });
+    
+    // Добавляем группы
+    function addGroup(title, chats) {
+      if (chats.length === 0) return;
+      
+      // Заголовок группы
+      const header = document.createElement('div');
+      header.textContent = title;
+      header.style.cssText = 'padding: 8px 16px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500;';
+      chatHistoryList.appendChild(header);
+      
+      // Чаты в группе
+      chats.forEach(chat => {
+        const chatItem = document.createElement('div');
+        chatItem.className = `history-item ${chat.is_active ? 'active' : ''}`;
+        chatItem.setAttribute('data-chat-id', chat.id);
+        
+        const title = chat.auto_created ? `${chat.title} 🔄` : chat.title;
+        chatItem.textContent = title;
+        chatHistoryList.appendChild(chatItem);
+      });
+    }
+    
+    addGroup('Сегодня', todayChats);
+    addGroup('Вчера', yesterdayChats);
+    addGroup('Ранее', earlierChats);
+    
   } else {
-    chatHistoryList.innerHTML = ''; // Убрали надпись "Начните новый чат"
+    chatHistoryList.innerHTML = '';
   }
 }
 
