@@ -1748,7 +1748,7 @@ async function sendMessageToAI(message) {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - initializing app');
   
-  // Показываем главную страницу СРАЗУ
+  // Показываем главную страницу
   showPage('main');
   
   // Проверяем Telegram WebApp
@@ -1759,27 +1759,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.Telegram.WebApp.colorScheme) {
       document.body.setAttribute('data-theme', window.Telegram.WebApp.colorScheme);
     }
-
-    // Получаем данные пользователя
-    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
-    if (telegramUser) {
-      console.log('Telegram user:', telegramUser);
-      
-      // Запускаем Realtime в фоне, не блокируя загрузку
-      setTimeout(() => {
-        initializeChatsRealtime(telegramUser.id).catch(err => {
-          console.error('Realtime initialization failed:', err);
-        });
-      }, 1000); // Запускаем через 1 секунду после загрузки
-    }
   } else {
     console.log('Local mode - no Telegram WebApp');
-    // Для локального режима тоже запускаем Realtime
-    setTimeout(() => {
-      initializeChatsRealtime('test-user').catch(err => {
-        console.error('Realtime initialization failed:', err);
-      });
-    }, 1000);
   }
 });
 
