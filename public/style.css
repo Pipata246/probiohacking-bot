@@ -49,6 +49,22 @@ body {
   text-align: center;
 }
 
+.loading-chats {
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+  opacity: 0.8;
+}
+
+.no-chats {
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+  opacity: 0.8;
+}
+
 .loading-spinner {
   width: 32px;
   height: 32px;
