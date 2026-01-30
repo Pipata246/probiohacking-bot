@@ -30,12 +30,16 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ success: false, error: 'No Telegram data' });
     }
 
-    // Парсим Telegram данные
+    // Парсим Telegram данные без URL.parse
     const params = {};
     telegramData.split('&').forEach(param => {
       const [key, value] = param.split('=');
       if (key && value) {
-        params[key] = decodeURIComponent(value);
+        try {
+          params[key] = decodeURIComponent(value.replace(/\+/g, ' '));
+        } catch (e) {
+          params[key] = value;
+        }
       }
     });
 
@@ -74,10 +78,16 @@ module.exports = async function handler(req, res) {
       const quizData = req.body;
       console.log('🔥 Quiz data:', quizData);
 
-      // Сохраняем результаты квиза
+      // Сначала удаляем старые результаты если есть
+      await supabase
+        .from('quiz_results')
+        .delete()
+        .eq('user_id', userId);
+
+      // Вставляем новые результаты
       const { data, error } = await supabase
         .from('quiz_results')
-        .upsert({
+        .insert({
           user_id: userId,
           age: quizData.age,
           gender: quizData.gender,
@@ -93,19 +103,30 @@ module.exports = async function handler(req, res) {
           stress_level: quizData.stress_level,
           energy_level: quizData.energy_level,
           digestion_quality: quizData.digestion_quality,
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
         })
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('🔥 INSERT ERROR:', error);
+        throw error;
+      }
+
+      console.log('🔥 INSERT SUCCESS:', data);
 
       // Обновляем статус прохождения квиза
-      await supabase
+      const { error: updateError } = await supabase
         .from('users')
         .update({ quiz_completed: true })
         .eq('id', userId);
+
+      if (updateError) {
+        console.error('🔥 UPDATE ERROR:', updateError);
+        throw updateError;
+      }
+
+      console.log('🔥 UPDATE SUCCESS');
 
       return res.json({ success: true, data });
     }
