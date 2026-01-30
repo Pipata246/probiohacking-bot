@@ -50,19 +50,19 @@ body {
 }
 
 .loading-chats {
-  color: #fff;
+  color: #3C805B;
   font-size: 14px;
   text-align: center;
   padding: 20px;
-  opacity: 0.8;
+  font-weight: 500;
 }
 
 .no-chats {
-  color: #fff;
+  color: #3C805B;
   font-size: 14px;
   text-align: center;
   padding: 20px;
-  opacity: 0.8;
+  font-weight: 500;
 }
 
 .loading-spinner {
