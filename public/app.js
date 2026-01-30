@@ -200,6 +200,14 @@ async function loadActiveChat() {
     
     if (data.success && data.activeChatId) {
       currentChatId = data.activeChatId;
+      
+      // Показываем поле ввода для активного чата
+      const chatInput = document.getElementById('chatInput');
+      const sendButton = document.getElementById('sendButton');
+      if (chatInput) chatInput.style.display = 'flex';
+      if (sendButton) sendButton.style.display = 'flex';
+      
+      // Загружаем сообщения активного чата
       await loadChatMessages(data.activeChatId);
       console.log('✅ Active chat loaded:', data.activeChatId);
     } else {
@@ -1914,10 +1922,12 @@ function sendChatMessage(message) {
   const trimmed = (message || '').trim();
   if (!trimmed) return;
   
+  console.log('🔍 sendChatMessage called. currentChatId:', currentChatId);
+  
   // Проверяем не в режиме read-only ли мы
   const chatInput = document.getElementById('chatInput');
   if (chatInput && chatInput.style.display === 'none') {
-    console.log('Cannot send in read-only mode - redirecting to active chat');
+    console.log('🔍 Read-only mode detected, redirecting to active chat');
     
     // Показываем уведомление
     const notification = document.createElement('div');
@@ -1931,7 +1941,9 @@ function sendChatMessage(message) {
     
     // Загружаем активный чат и отправляем сообщение
     setTimeout(async () => {
+      console.log('🔍 Before loadActiveChat, currentChatId:', currentChatId);
       await loadActiveChat();
+      console.log('🔍 After loadActiveChat, currentChatId:', currentChatId);
       notification.remove();
       
       // Очищаем поле ввода и отправляем в активный чат
@@ -1941,6 +1953,8 @@ function sendChatMessage(message) {
     
     return;
   }
+  
+  console.log('🔍 Normal mode, sending to currentChatId:', currentChatId);
   
   // Очищаем поле ввода и отправляем
   if (chatInput) chatInput.value = '';
