@@ -241,25 +241,44 @@ async function saveQuizResults(quizData) {
 // Функция для сбора данных из формы диагностики и сохранения
 async function completeDiagnosticQuiz() {
   try {
-    // Собираем все данные из формы
+    console.log('🔍 Начинаем сбор данных из формы диагностики...');
+    
+    // Собираем данные из localStorage (там сохраняются ответы квиза)
+    const diagnosticPersonalData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
+    const surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
+    const additionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
+    
+    console.log('📊 Данные из localStorage:');
+    console.log('Personal data:', diagnosticPersonalData);
+    console.log('Survey answers:', surveyAnswers);
+    console.log('Additional answers:', additionalAnswers);
+    
+    // Формируем данные для сохранения в БД
     const quizData = {
-      age: parseInt(document.getElementById('age')?.value) || null,
-      gender: document.querySelector('input[name="gender"]:checked')?.value || null,
-      weight: parseFloat(document.getElementById('weight')?.value) || null,
-      height: parseFloat(document.getElementById('height')?.value) || null,
-      activity_level: document.querySelector('input[name="activity"]:checked')?.value || null,
-      goals: Array.from(document.querySelectorAll('input[name="goals"]:checked')).map(cb => cb.value),
-      health_concerns: Array.from(document.querySelectorAll('input[name="concerns"]:checked')).map(cb => cb.value),
-      dietary_preferences: Array.from(document.querySelectorAll('input[name="diet"]:checked')).map(cb => cb.value),
-      supplements: document.getElementById('supplements')?.value.split(',').map(s => s.trim()).filter(s => s) || [],
-      medications: document.getElementById('medications')?.value.split(',').map(m => m.trim()).filter(m => m) || [],
-      sleep_hours: parseFloat(document.getElementById('sleep')?.value) || null,
-      stress_level: parseInt(document.getElementById('stress')?.value) || null,
-      energy_level: parseInt(document.getElementById('energy')?.value) || null,
-      digestion_quality: document.querySelector('input[name="digestion"]:checked')?.value || null
+      age: parseInt(diagnosticPersonalData.age) || null,
+      gender: diagnosticPersonalData.gender || null,
+      weight: parseFloat(diagnosticPersonalData.weight) || null,
+      height: parseFloat(diagnosticPersonalData.height) || null,
+      activity_level: diagnosticPersonalData.activity || null,
+      goals: surveyAnswers.goals || [],
+      health_concerns: surveyAnswers.concerns || [],
+      dietary_preferences: surveyAnswers.diet || [],
+      supplements: additionalAnswers.treatment ? [additionalAnswers.treatment] : [],
+      medications: additionalAnswers.diagnosis ? [additionalAnswers.diagnosis] : [],
+      sleep_hours: parseFloat(diagnosticPersonalData.sleep) || null,
+      stress_level: parseInt(diagnosticPersonalData.stress) || null,
+      energy_level: parseInt(diagnosticPersonalData.energy) || null,
+      digestion_quality: diagnosticPersonalData.digestion || null
     };
     
-    console.log('Collected quiz data:', quizData);
+    console.log('💾 Данные для сохранения в БД:', quizData);
+    
+    // Проверяем обязательные поля
+    if (!quizData.age || !quizData.gender) {
+      console.error('❌ Отсутствуют обязательные поля:', { age: quizData.age, gender: quizData.gender });
+      showNotificationMessage('❌ Отсутствуют обязательные данные. Пожалуйста, пройдите квиз заново.');
+      return false;
+    }
     
     // Сохраняем результаты
     const success = await saveQuizResults(quizData);

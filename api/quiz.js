@@ -49,6 +49,10 @@ export default async function handler(req, res) {
 // Сохранение результатов квиза
 async function saveQuizResults(req, res, userId) {
   try {
+    console.log('🔍 API: Получен запрос на сохранение квиза');
+    console.log('🔍 API: userId:', userId);
+    console.log('🔍 API: req.body:', req.body);
+    
     const {
       age,
       gender,
@@ -66,13 +70,23 @@ async function saveQuizResults(req, res, userId) {
       digestion_quality
     } = req.body;
 
+    console.log('🔍 API: Распакованные данные:', {
+      age, gender, weight, height, activity_level,
+      goals, health_concerns, dietary_preferences,
+      supplements, medications, sleep_hours,
+      stress_level, energy_level, digestion_quality
+    });
+
     // Валидация обязательных полей
     if (!age || !gender || !weight || !height || !activity_level) {
+      console.error('❌ API: Отсутствуют обязательные поля:', { age, gender, weight, height, activity_level });
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: age, gender, weight, height, activity_level'
       });
     }
+
+    console.log('✅ API: Валидация пройдена, вызываем Supabase функцию');
 
     // Вызов функции для сохранения результатов
     const { data, error } = await supabase.rpc('save_quiz_results', {
@@ -93,17 +107,20 @@ async function saveQuizResults(req, res, userId) {
       p_digestion_quality: digestion_quality || null
     });
 
+    console.log('🔍 API: Ответ Supabase:', { data, error });
+
     if (error) {
-      console.error('Save quiz results error:', error);
+      console.error('❌ API: Ошибка Supabase:', error);
       return res.status(500).json({ success: false, error: error.message });
     }
 
+    console.log('✅ API: Успешно сохранено!');
     return res.status(200).json({
       success: true,
       message: 'Quiz results saved successfully'
     });
   } catch (error) {
-    console.error('Save quiz results error:', error);
+    console.error('❌ API: Общая ошибка сохранения:', error);
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
