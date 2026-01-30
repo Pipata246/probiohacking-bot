@@ -232,6 +232,8 @@ function renderChatsList(chats) {
 // Переключение на другой чат
 async function switchToChat(chatId) {
   try {
+    console.log('Switching to chat:', chatId);
+    
     // Показываем индикатор загрузки
     const chatMessages = document.getElementById('chatMessages');
     if (chatMessages) {
@@ -250,21 +252,21 @@ async function switchToChat(chatId) {
     });
     
     const data = await response.json();
+    console.log('Switch chat response:', data);
     
     if (data.success) {
       currentChatId = chatId;
       
-      // Загружаем сообщения и историю параллельно
-      await Promise.all([
-        loadChatMessages(chatId),
-        loadChatHistory()
-      ]);
+      // Загружаем сообщения чата
+      await loadChatMessages(chatId);
       
       // Показываем страницу чата
       showPage('chat');
       
       // Закрываем сайдбар
       closeSidebar();
+    } else {
+      console.error('Switch chat failed:', data);
     }
   } catch (error) {
     console.error('Error switching chat:', error);
@@ -843,11 +845,7 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Кнопка нового чата
-  if (e.target.closest('#newChatBtn')) {
-    createNewChat();
-    return;
-  }
+  // Кнопка нового чата (удалил дубликат)
   
   // НАВИГАЦИЯ - ИСПРАВЛЕННАЯ ЛОГИКА
   if (e.target.closest('.nav-item')) {
@@ -1009,17 +1007,15 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // История запросов
+  // История запросов (клик по чату)
   if (e.target.closest('.history-item')) {
     const item = e.target.closest('.history-item');
     const chatId = item?.getAttribute('data-chat-id');
     if (chatId) {
+      console.log('Clicking chat:', chatId);
       switchToChat(chatId);
       return;
     }
-    closeSidebar();
-    showPage('chat');
-    return;
   }
   
   // Раскрытие разделов в базе знаний
