@@ -3386,12 +3386,36 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
   const deleteBtn = testItem.querySelector('.test-action-btn.delete');
   const viewBtn = testItem.querySelector('.test-action-btn.view');
   
-  deleteBtn.addEventListener('click', (e) => {
+  deleteBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
     console.log('Удаление файла:', fileName);
     
     if (confirm(`Удалить анализ "${fileName}"?`)) {
-      testItem.remove();
+      try {
+        // Удаляем из БД
+        const deleteResponse = await fetch('/api/analysis-photos', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-WebApp-Data': window.Telegram?.WebApp?.initData || ''
+          },
+          body: JSON.stringify({
+            telegramUser: window.Telegram?.WebApp?.initDataUnsafe?.user,
+            photo_id: photoId
+          })
+        });
+        
+        if (deleteResponse.ok) {
+          testItem.remove();
+          console.log('Файл успешно удален из БД');
+        } else {
+          console.error('Ошибка при удалении из БД');
+          alert('Ошибка при удалении файла');
+        }
+      } catch (error) {
+        console.error('Ошибка при удалении:', error);
+        alert('Ошибка при удалении файла');
+      }
     }
   });
   
@@ -3411,7 +3435,7 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
   });
   
   // Добавляем элемент на страницу
-  const testsList = document.getElementById('tests-list');
+  const testsList = document.getElementById('uploadedTestsList');
   testsList.appendChild(testItem);
 }
 
