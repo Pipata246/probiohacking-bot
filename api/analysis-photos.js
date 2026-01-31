@@ -186,9 +186,25 @@ async function handleAnalysisPhotos(req, res) {
 
   } else if (req.method === 'GET') {
     // Получение списка фотографий пользователя
-    console.log('🔥 GET /api/analysis-photos - НАЧАЛО ЗАГРУЗКИ');
-    console.log('📱 Telegram ID:', telegramId);
-    console.log('🔍 Headers:', Object.keys(req.headers));
+    const telegramData = req.headers['x-telegram-webapp-data'];
+    
+    let telegramId = null;
+    if (telegramData) {
+      // Парсим как в других API
+      const urlParams = new URLSearchParams(telegramData);
+      const userStr = urlParams.get('user');
+      if (userStr) {
+        const user = JSON.parse(decodeURIComponent(userStr));
+        telegramId = user.id;
+      }
+    }
+    
+    if (!telegramId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Telegram ID is required' 
+      });
+    }
     
     const { data, error } = await supabase
       .from('user_analysis_photos')
@@ -196,14 +212,8 @@ async function handleAnalysisPhotos(req, res) {
       .eq('telegram_id', telegramId)
       .order('upload_date', { ascending: false });
 
-    console.log('📊 Query result:', { 
-      success: !error, 
-      error: error?.message, 
-      dataCount: data?.length || 0 
-    });
-
     if (error) {
-      console.error('❌ Error fetching photos:', error);
+      console.error('Error fetching photos:', error);
       return res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch photos',
@@ -211,28 +221,11 @@ async function handleAnalysisPhotos(req, res) {
       });
     }
 
-    console.log('✅ Photos found:', data?.length || 0);
-    data?.forEach((photo, index) => {
-      console.log(`📸 Photo ${index + 1}:`, {
-        id: photo.id,
-        name: photo.photo_name,
-        group: photo.analysis_group,
-        url: photo.photo_url?.substring(0, 50) + '...'
-      });
-    });
-
-    const response = {
+    return res.status(200).json({
       success: true,
       photos: data,
       total: data?.length || 0
-    };
-
-    console.log('📤 Sending response:', {
-      success: response.success,
-      photoCount: response.total
     });
-
-    return res.status(200).json(response);
 
   } else if (req.method === 'DELETE') {
     // Удаление фотографии
