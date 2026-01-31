@@ -2279,6 +2279,9 @@ async function sendMessageToAI(message) {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - initializing app');
   
+  // Загружаем список анализов в фоновом режиме
+  loadUploadedTests();
+  
   // Проверяем статус квиза
   await checkQuizStatus();
   
@@ -3034,10 +3037,16 @@ function showMyTestsPage() {
   myTestsForm.style.display = 'flex';
   document.body.classList.add('chat-overlay-visible');
   
-  // Загружаем список уже загруженных анализов
-  setTimeout(() => {
-    loadUploadedTests();
-  }, 100);
+  // Сначала проверяем есть ли сохраненные фото
+  if (window.uploadedPhotos) {
+    console.log('Используем предварительно загруженные фото...');
+    updateUploadedTestsIfPageOpen();
+  } else {
+    // Загружаем список уже загруженных анализов
+    setTimeout(() => {
+      loadUploadedTests();
+    }, 100);
+  }
   
   // Обновляем аватар в статичной позиции
   updateAvatar(document.getElementById('myTestsAvatar'), user, userName);
@@ -3327,10 +3336,10 @@ async function loadUploadedTests() {
     console.log('Контейнер uploadedTestsList:', testsList);
     
     if (!testsList) {
-      console.error('❌ Контейнер uploadedTestsList не найден!');
-      console.log('Доступные элементы с id:', 
-        Array.from(document.querySelectorAll('[id]')).map(el => el.id).slice(0, 10)
-      );
+      console.log('❌ Контейнер uploadedTestsList не найден! Страница "Мои анализы" еще не открыта.');
+      // Сохраняем фото в глобальную переменную для использования позже
+      window.uploadedPhotos = photos;
+      console.log('Фото сохранены в window.uploadedPhotos для использования позже');
       return;
     }
     
@@ -3367,6 +3376,37 @@ async function loadUploadedTests() {
   } catch (error) {
     console.error('❌ Ошибка при загрузке анализов:', error);
     console.error('Stack trace:', error.stack);
+  }
+}
+
+// Функция для обновления списка анализов если страница уже открыта
+function updateUploadedTestsIfPageOpen() {
+  const testsList = document.getElementById('uploadedTestsList');
+  if (testsList && window.uploadedPhotos) {
+    console.log('Страница "Мои анализы" открыта, обновляем список...');
+    const photos = window.uploadedPhotos;
+    
+    // Очищаем старый список (кроме заголовка)
+    const title = testsList.querySelector('h3');
+    testsList.innerHTML = '';
+    if (title) {
+      testsList.appendChild(title);
+    }
+    
+    if (photos && photos.length > 0) {
+      photos.forEach((photo, index) => {
+        console.log(`Фото ${index + 1}:`, photo);
+        addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
+      });
+    } else {
+      const noTestsMessage = document.createElement('div');
+      noTestsMessage.className = 'no-tests-message';
+      noTestsMessage.innerHTML = `
+        <p>У вас пока нет загруженных анализов</p>
+        <p style="font-size: 14px; opacity: 0.7;">Выберите файл или сделайте фото чтобы начать</p>
+      `;
+      testsList.appendChild(noTestsMessage);
+    }
   }
 }
 
