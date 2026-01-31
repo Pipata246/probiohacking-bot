@@ -2647,6 +2647,73 @@ function showDiagnosticForm() {
   diagnosticForm.style.display = 'flex';
   document.body.classList.add('chat-overlay-visible');
   
+  // Добавляем обработчики ПОСЛЕ создания HTML
+  setTimeout(() => {
+    // Обработчик кнопки "Создать программу"
+    const additionalNextBtn = document.getElementById('additionalNextBtn');
+    if (additionalNextBtn) {
+      additionalNextBtn.addEventListener('click', async () => {
+        console.log('🔥 КНОПКА СОЗДАТЬ ПРОГРАММУ НАЖАТА!');
+        
+        // Сохраняем последние дополнительные ответы в state
+        saveAdditionalAnswersRealtime();
+        
+        // Проверяем что все 24 ответа заполнены
+        const filledCount = getFilledAnswersCount();
+        console.log(`📊 Заполнено ответов: ${filledCount}/24`);
+        
+        if (filledCount !== 24) {
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.showAlert(`Пожалуйста, заполните все поля. Заполнено: ${filledCount} из 24`);
+          }
+          return;
+        }
+        
+        // ЗАВЕРШАЕМ ДИАГНОСТИКУ
+        console.log('💾 Сохраняем все результаты в базу данных...');
+        const success = await completeDiagnosticQuiz();
+        
+        if (success) {
+          // Удаляем форму диагностики
+          const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+          isDiagnosticFormMode = false;
+          
+          console.log('🗑️ Удаляем форму...');
+          diagnosticFormOverlay.remove();
+          document.body.classList.remove('chat-overlay-visible');
+          
+          console.log('✅ Показываем Telegram уведомление...');
+          if (window.Telegram?.WebApp) {
+            // Показываем уведомление и переходим на главную после нажатия "Хорошо"
+            window.Telegram.WebApp.showAlert(
+              'Спасибо! Ваши ответы сохранены.\nТеперь ИИ будет давать персонализированные рекомендации.',
+              () => {
+                console.log('🏠 Переходим на главную страницу...');
+                showPage('main'); // Переход на главную
+              }
+            );
+          } else {
+            // Fallback для тестирования
+            console.log('🏠 Переходим на главную страницу...');
+            showPage('main');
+          }
+          
+          console.log('📊 Диагностика завершена и сохранена в БД');
+        } else {
+          // Если сохранение не удалось, показываем ошибку
+          console.error('❌ Ошибка при сохранении результатов квиза');
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.showAlert('Произошла ошибка при сохранении результатов. Попробуйте еще раз.');
+          }
+        }
+      });
+      
+      console.log('✅ Обработчик кнопки "Создать программу" добавлен');
+    } else {
+      console.error('❌ Кнопка additionalNextBtn не найдена!');
+    }
+  }, 100);
+  
   updateAvatar(document.getElementById('diagnosticFormAvatar'), user, userName);
   updateAvatar(document.getElementById('surveyFormAvatar'), user, userName);
   updateAvatar(document.getElementById('additionalFormAvatar'), user, userName);
@@ -2790,64 +2857,6 @@ function showDiagnosticForm() {
     document.getElementById('surveyStep').classList.remove('hidden');
     currentQuestionIndex = surveyQuestions.length - 1;
     showQuestion(currentQuestionIndex);
-  });
-  
-  document.getElementById('additionalNextBtn').addEventListener('click', async () => {
-    console.log('🔥 КНОПКА НАЖАТА! Начинаем обработку...');
-    
-    // Сохраняем дополнительные ответы
-    const additionalAnswers = {
-      discomfort: document.getElementById('additionalAnswer1').value.trim(),
-      diagnosis: document.getElementById('additionalAnswer2').value.trim(),
-      treatment: document.getElementById('additionalAnswer3').value.trim(),
-      timestamp: new Date().toISOString()
-    };
-    
-    console.log('💾 Сохраняем ответы:', additionalAnswers);
-    localStorage.setItem('additionalAnswers', JSON.stringify(additionalAnswers));
-    
-    // Проверяем что все 24 ответа сохранены
-    const totalSaved = checkAllSavedAnswers();
-    console.log(`📊 FINAL CHECK: ${totalSaved}/24 answers saved before completion`);
-    
-    // ЗАВЕРШАЕМ ДИАГНОСТИКУ И СОХРАНЯЕМ В БД
-    console.log('💾 Сохраняем результаты квиза в базу данных...');
-    const success = await completeDiagnosticQuiz();
-    
-    if (success) {
-      // Удаляем форму диагностики
-      const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-      isDiagnosticFormMode = false;
-      
-      console.log('🗑️ Удаляем форму...');
-      diagnosticFormOverlay.remove();
-      document.body.classList.remove('chat-overlay-visible');
-      
-      console.log('✅ Показываем Telegram уведомление...');
-      if (window.Telegram?.WebApp) {
-        // Показываем уведомление и переходим на главную после нажатия "Хорошо"
-        window.Telegram.WebApp.showAlert(
-          'Спасибо! Ваши ответы сохранены.\nТеперь ИИ будет давать персонализированные рекомендации.',
-          () => {
-            console.log('🏠 Переходим на главную страницу...');
-            showPage('main'); // Переход на главную
-          }
-        );
-      } else {
-        // Fallback для тестирования
-        console.log('🏠 Переходим на главную страницу...');
-        showPage('main');
-      }
-      
-      console.log('📊 Диагностика завершена и сохранена в БД');
-      console.log('Личные данные:', JSON.parse(localStorage.getItem('diagnosticPersonalData')));
-    } else {
-      // Если сохранение не удалось, показываем ошибку
-      console.error('❌ Ошибка при сохранении результатов квиза');
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.showAlert('Произошла ошибка при сохранении результатов. Попробуйте еще раз.');
-      }
-    }
   });
   
 }
