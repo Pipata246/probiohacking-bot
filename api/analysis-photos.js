@@ -134,7 +134,12 @@ async function handleAnalysisPhotos(req, res) {
     // Загрузка новой фотографии
     const { photo_url, photo_name, file_size, analysis_group, description } = req.body;
 
+    console.log('=== POST /api/analysis-photos ===');
+    console.log('Request body:', { photo_url, photo_name, file_size, analysis_group, description });
+    console.log('Telegram user data:', telegramUser);
+
     if (!photo_url || !analysis_group) {
+      console.log('❌ Missing required fields:', { photo_url, analysis_group });
       return res.status(400).json({ 
         success: false, 
         error: 'photo_url and analysis_group are required' 
@@ -142,12 +147,15 @@ async function handleAnalysisPhotos(req, res) {
     }
 
     if (!ANALYSIS_GROUPS.includes(analysis_group)) {
+      console.log('❌ Invalid analysis group:', analysis_group);
       return res.status(400).json({ 
         success: false, 
         error: 'Invalid analysis_group',
         valid_groups: ANALYSIS_GROUPS
       });
     }
+
+    console.log('✅ Validation passed, saving to database...');
 
     // Сохраняем фото в базу
     const { data, error } = await supabase
@@ -164,13 +172,21 @@ async function handleAnalysisPhotos(req, res) {
       .single();
 
     if (error) {
-      console.error('Error saving photo:', error);
+      console.error('❌ Database error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       return res.status(500).json({ 
         success: false, 
         error: 'Failed to save photo',
         details: error.message 
       });
     }
+
+    console.log('✅ Photo saved successfully:', data);
 
     return res.status(200).json({
       success: true,
