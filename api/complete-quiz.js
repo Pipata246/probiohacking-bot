@@ -30,9 +30,15 @@ module.exports = async function handler(req, res) {
 
     console.log('🏁 Completing quiz for telegramId:', telegramId);
 
-    // Вызываем функцию для завершения квиза
+    // Обновляем статус квиза напрямую в таблице users
     const { data, error } = await supabase
-      .rpc('complete_quiz_for_user', { p_telegram_id: telegramId });
+      .from('users')
+      .update({ 
+        quiz_completed: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('telegram_id', telegramId)
+      .select();
 
     if (error) {
       console.error('❌ Complete quiz error:', error);

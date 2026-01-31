@@ -30,18 +30,23 @@ module.exports = async function handler(req, res) {
 
     console.log('💾 Saving answer:', { telegramId, questionId, answerText });
 
-    // Используем UPSERT - обновляем существующий ответ или создаем новый
+    // Сначала удаляем существующий ответ если есть
+    await supabase
+      .from('quiz_answers')
+      .delete()
+      .eq('telegram_id', telegramId)
+      .eq('question_id', questionId);
+
+    // Вставляем новый ответ
     const { data, error } = await supabase
       .from('quiz_answers')
-      .upsert({
+      .insert({
         telegram_id: telegramId,
         question_id: questionId,
         question_text: questionText || '',
         answer_text: answerText,
         answer_value: answerValue || answerText,
         updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'telegram_id,question_id' // Уникальные ключи для обновления
       })
       .select();
 
