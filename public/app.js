@@ -3041,6 +3041,7 @@ function showMyTestsPage() {
   document.body.classList.add('chat-overlay-visible');
   
   // ВСЕГДА загружаем свежие данные из БД при открытии вкладки
+  console.log('🔥 КНОПКА "МОИ АНАЛИЗЫ" НАЖАТА - НАЧИНАЮ ЗАГРУЗКУ');
   loadUploadedTests();
   
   // Обновляем аватар в статичной позиции
