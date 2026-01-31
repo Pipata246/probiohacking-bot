@@ -207,6 +207,82 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Получаем историю сообщений только из АКТИВНОГО чата
+    let chatHistory = '';
+    
+    if (userInfo && userInfo.id) {
+      try {
+        console.log(`🔍 Looking for active chat for user ${userInfo.id}`);
+        
+        // Получаем ID активного чата через функцию
+        const { data: activeChatId, error: activeChatError } = await supabase.rpc('get_active_chat', {
+          p_user_id: userInfo.id
+        });
+
+        console.log(`📊 Active chat result:`, { 
+          activeChatId: activeChatId, 
+          error: activeChatError?.message,
+          userId: userInfo.id 
+        });
+
+        if (!activeChatError && activeChatId) {
+          // Получаем сообщения только из активного чата
+          const { data: messages, error: messagesError } = await supabase
+            .from('user_requests')
+            .select('*')
+            .eq('user_id', userInfo.id)
+            .eq('chat_id', activeChatId)
+            .order('created_at', { ascending: true })
+            .limit(20);
+
+          console.log(`📊 Messages query result for active chat:`, { 
+            messagesCount: messages?.length || 0, 
+            error: messagesError?.message,
+            activeChatId: activeChatId 
+          });
+
+          if (!messagesError && messages && messages.length > 0) {
+            chatHistory = '\n\n💬 ИСТОРИЯ АКТИВНОГО ЧАТА:\n';
+            
+            messages.forEach((msg, index) => {
+              const time = new Date(msg.created_at).toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+              
+              // Сообщение пользователя
+              chatHistory += `[${time}] Пользователь: ${msg.message_text}\n`;
+              
+              // Ответ ИИ если есть
+              if (msg.response_text) {
+                chatHistory += `[${time}] ИИ Ассистент: ${msg.response_text}\n`;
+              }
+            });
+            
+            chatHistory += '\nИСПОЛЬЗУЙ ЭТУ ИСТОРИЮ ТОЛЬКО ИЗ АКТИВНОГО ЧАТА ДЛЯ ПОНИМАНИЯ КОНТЕКСТА.\n';
+            console.log(`✅ Loaded ${messages.length} messages from active chat ${activeChatId}`);
+            console.log(`📝 Chat history preview:`, chatHistory.substring(0, 200) + '...');
+          } else {
+            console.log(`⚠️ No messages found in active chat ${activeChatId}`);
+            if (messagesError) {
+              console.error('❌ Messages error:', messagesError);
+            }
+          }
+        } else {
+          console.log(`⚠️ No active chat found for user ${userInfo.id}`);
+          if (activeChatError) {
+            console.error('❌ Active chat error:', activeChatError);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error getting active chat history:', error);
+      }
+    } else {
+      console.log(`⚠️ Cannot get chat history - userInfo: ${!!userInfo}`);
+    }
+
     // Проверяем статус прохождения квиза и получаем контекст
     let quizContext = '';
     let quizCompleted = false;
@@ -237,8 +313,13 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Формируем системный промпт с учетом статуса квиза
+    // Формируем системный промпт с учетом истории чата и квиза
     let systemPrompt = SYSTEM_PROMPT;
+    
+    // Добавляем историю чата
+    if (chatHistory) {
+      systemPrompt += chatHistory;
+    }
     
     if (!quizCompleted) {
       // Добавляем рекомендацию пройти квиз

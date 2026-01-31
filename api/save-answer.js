@@ -28,7 +28,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log('💾 Saving answer:', { telegramId, questionId, answerText });
+    console.log('� Saving answer:', { telegramId, questionId, answerText });
 
     // Сохраняем ответ с полным вопросом
     const { data, error } = await supabase

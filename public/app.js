@@ -3588,10 +3588,94 @@ function restoreAdditionalAnswers() {
   }
 }
 
+// Сохранение ответа сразу при выборе
 function saveSurveyAnswer(questionId, answer) {
   let surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
   surveyAnswers[questionId] = answer;
   localStorage.setItem('surveyAnswers', JSON.stringify(surveyAnswers));
+  
+  // СРАЗУ сохраняем в БД в реалтайме
+  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (telegramUser?.id) {
+    const question = window.surveyQuestions?.find(q => q.id === questionId);
+    if (question) {
+      let answerText = answer;
+      
+      // Если ответ - это массив, объединяем в текст
+      if (Array.isArray(answer)) {
+        answerText = answer.join(', ');
+      }
+      
+      // Ищем текст ответа в опциях
+      if (question.options) {
+        const option = question.options.find(opt => opt.value === answer);
+        if (option) {
+          answerText = option.label;
+        }
+      }
+      
+      // Сохраняем ответ в БД
+      saveQuizAnswer(telegramUser.id, questionId, question.question, answerText, answer);
+    }
+  }
+}
+
+// Сохранение персональных данных в реалтайме
+function savePersonalDataRealtime() {
+  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (!telegramUser?.id) return;
+  
+  const weight = document.getElementById('weight')?.value || '';
+  const height = document.getElementById('height')?.value || '';
+  const fullName = document.getElementById('fullName')?.value || '';
+  const birthDate = document.getElementById('birthDate')?.value || '';
+  const profession = document.getElementById('profession')?.value || '';
+  const city = document.getElementById('city')?.value || '';
+  const sport = document.getElementById('sport')?.value || '';
+  const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
+  
+  // Сохраняем в localStorage
+  const personalData = { weight, height, fullName, birthDate, profession, city, sport, gender };
+  localStorage.setItem('diagnosticPersonalData', JSON.stringify(personalData));
+  
+  // СРАЗУ сохраняем в БД
+  saveQuizAnswer(telegramUser.id, 'weight', 'Вес:', weight, weight);
+  saveQuizAnswer(telegramUser.id, 'height', 'Рост:', height, height);
+  saveQuizAnswer(telegramUser.id, 'fullName', 'ФИО:', fullName, fullName);
+  saveQuizAnswer(telegramUser.id, 'birthDate', 'Дата рождения:', birthDate, birthDate);
+  saveQuizAnswer(telegramUser.id, 'profession', 'Профессия:', profession, profession);
+  saveQuizAnswer(telegramUser.id, 'city', 'Город:', city, city);
+  saveQuizAnswer(telegramUser.id, 'sport', 'Спорт:', sport, sport);
+  saveQuizAnswer(telegramUser.id, 'gender', 'Пол:', gender, gender);
+}
+
+// Загрузка сохраненных персональных данных
+function loadSavedPersonalData() {
+  const savedData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
+  
+  setTimeout(() => {
+    const weightInput = document.getElementById('weight');
+    const heightInput = document.getElementById('height');
+    const fullNameInput = document.getElementById('fullName');
+    const birthDateInput = document.getElementById('birthDate');
+    const professionInput = document.getElementById('profession');
+    const cityInput = document.getElementById('city');
+    const sportInput = document.getElementById('sport');
+    
+    if (weightInput && savedData.weight) weightInput.value = savedData.weight;
+    if (heightInput && savedData.height) heightInput.value = savedData.height;
+    if (fullNameInput && savedData.fullName) fullNameInput.value = savedData.fullName;
+    if (birthDateInput && savedData.birthDate) birthDateInput.value = savedData.birthDate;
+    if (professionInput && savedData.profession) professionInput.value = savedData.profession;
+    if (cityInput && savedData.city) cityInput.value = savedData.city;
+    if (sportInput && savedData.sport) sportInput.value = savedData.sport;
+    
+    // Восстанавливаем пол
+    if (savedData.gender) {
+      const genderInput = document.querySelector(`input[name="gender"][value="${savedData.gender}"]`);
+      if (genderInput) genderInput.checked = true;
+    }
+  }, 200);
 }
 
 function completeSurvey() {
