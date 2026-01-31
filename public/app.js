@@ -1616,48 +1616,60 @@ document.addEventListener('click', (e) => {
     const radioInput = quizOption.querySelector('input[type="radio"]');
     const customInput = document.querySelector('.quiz-custom-input');
     
-    // Проверяем, была ли эта опция уже выбрана
-    if (radioInput.checked) {
-      // Если опция уже выбрана - отменяем выбор
-      radioInput.checked = false;
+    // Получаем текущий вопрос
+    if (currentQuestionIndex >= 0 && currentQuestionIndex < surveyQuestions.length) {
+      const currentQuestion = surveyQuestions[currentQuestionIndex];
       
-      // Включаем обратно поле для кастомного ответа
-      if (customInput) {
-        customInput.disabled = false;
-        customInput.classList.remove('disabled');
-      }
-      
-      // Включаем обратно все опции
-      const allQuizOptions = document.querySelectorAll('.quiz-option');
-      allQuizOptions.forEach(option => {
-        option.classList.remove('disabled');
-        const radio = option.querySelector('input[type="radio"]');
-        if (radio) {
-          radio.disabled = false;
+      // Проверяем, была ли эта опция уже выбрана
+      if (radioInput.checked) {
+        // Если опция уже выбрана - отменяем выбор
+        radioInput.checked = false;
+        
+        // Удаляем ответ из state
+        saveDiagnosticAnswer(currentQuestion.id, '');
+        
+        // Включаем обратно поле для кастомного ответа
+        if (customInput) {
+          customInput.disabled = false;
+          customInput.classList.remove('disabled');
         }
-      });
-    } else {
-      // Если опция не была выбрана - выбираем её
-      radioInput.checked = true;
-      
-      // Отключаем поле для кастомного ответа
-      if (customInput) {
-        customInput.value = '';
-        customInput.disabled = true;
-        customInput.classList.add('disabled');
-      }
-      
-      // Отключаем другие опции (оставляем только выбранную активной)
-      const allQuizOptions = document.querySelectorAll('.quiz-option');
-      allQuizOptions.forEach(option => {
-        if (option !== quizOption) {
-          option.classList.add('disabled');
+        
+        // Включаем обратно все опции
+        const allQuizOptions = document.querySelectorAll('.quiz-option');
+        allQuizOptions.forEach(option => {
+          option.classList.remove('disabled');
           const radio = option.querySelector('input[type="radio"]');
           if (radio) {
-            radio.disabled = true;
+            radio.disabled = false;
           }
+        });
+      } else {
+        // Если опция не была выбрана - выбираем её
+        radioInput.checked = true;
+        
+        // Сохраняем LABEL (текст) в state, а не VALUE
+        const selectedLabel = radioInput.nextElementSibling?.textContent?.trim() || radioInput.value;
+        saveDiagnosticAnswer(currentQuestion.id, selectedLabel);
+        
+        // Отключаем поле для кастомного ответа
+        if (customInput) {
+          customInput.value = '';
+          customInput.disabled = true;
+          customInput.classList.add('disabled');
         }
-      });
+        
+        // Отключаем другие опции (оставляем только выбранную активной)
+        const allQuizOptions = document.querySelectorAll('.quiz-option');
+        allQuizOptions.forEach(option => {
+          if (option !== quizOption) {
+            option.classList.add('disabled');
+            const radio = option.querySelector('input[type="radio"]');
+            if (radio) {
+              radio.disabled = true;
+            }
+          }
+        });
+      }
     }
     
     // Предотвращаем стандартное поведение
@@ -3929,6 +3941,19 @@ document.addEventListener('blur', (e) => {
 document.addEventListener('input', (e) => {
   if (e.target.closest('.quiz-custom-input')) {
     const customInput = e.target.closest('.quiz-custom-input');
+    
+    // Получаем текущий вопрос и сохраняем текст в state
+    if (currentQuestionIndex >= 0 && currentQuestionIndex < surveyQuestions.length) {
+      const currentQuestion = surveyQuestions[currentQuestionIndex];
+      
+      if (customInput.value.trim()) {
+        // Сохраняем кастомный ответ в state
+        saveDiagnosticAnswer(currentQuestion.id, customInput.value.trim());
+      } else {
+        // Если поле пустое - удаляем ответ из state
+        saveDiagnosticAnswer(currentQuestion.id, '');
+      }
+    }
     
     // Если поле стало пустым во время ввода - включаем варианты ответов
     if (!customInput.value.trim()) {
