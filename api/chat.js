@@ -1,3 +1,22 @@
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+// Import Supabase client and middleware
+const { requestService, chatService } = require('../supabase/client.js');
+const { initUserFromWebApp } = require('../supabase/userMiddleware.js');
+const { createClient } = require('@supabase/supabase-js');
+
+// Supabase client для проверки квиза
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY,
+  {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+);
+
 // Функция для получения диагностических данных пользователя
 async function getUserDiagnosticData(userId) {
   try {
@@ -95,25 +114,6 @@ function getSystemByQuestionId(questionId) {
   
   return systemMap[questionId] || 'Общее состояние';
 }
-
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-
-// Import Supabase client and middleware
-const { requestService, chatService } = require('../supabase/client.js');
-const { initUserFromWebApp } = require('../supabase/userMiddleware.js');
-const { createClient } = require('@supabase/supabase-js');
-
-// Supabase client для проверки квиза
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-  {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false
-  }
-);
 
 // Константы для управления контекстом
 const MAX_CONTEXT_MESSAGES = 20; // Максимальное количество сообщений в контексте
