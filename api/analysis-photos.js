@@ -186,11 +186,16 @@ async function handleAnalysisPhotos(req, res) {
 
   } else if (req.method === 'GET') {
     // Получение списка фотографий пользователя
+    console.log('=== GET /api/analysis-photos ===');
+    console.log('Telegram ID:', telegramId);
+    
     const { data, error } = await supabase
       .from('user_analysis_photos')
       .select('*')
       .eq('telegram_id', telegramId)
       .order('upload_date', { ascending: false });
+
+    console.log('Query result:', { data, error });
 
     if (error) {
       console.error('Error fetching photos:', error);
@@ -201,6 +206,11 @@ async function handleAnalysisPhotos(req, res) {
       });
     }
 
+    console.log('Found photos:', data.length);
+    data.forEach((photo, index) => {
+      console.log(`Photo ${index + 1}:`, photo);
+    });
+
     // Группируем фото по категориям
     const groupedPhotos = {};
     data.forEach(photo => {
@@ -208,6 +218,12 @@ async function handleAnalysisPhotos(req, res) {
         groupedPhotos[photo.analysis_group] = [];
       }
       groupedPhotos[photo.analysis_group].push(photo);
+    });
+
+    console.log('Returning response:', {
+      success: true,
+      photos: data,
+      total: data.length
     });
 
     return res.status(200).json({
