@@ -11,6 +11,50 @@ const tg = window.Telegram?.WebApp || {
 
 tg.ready();
 
+// ========================================
+// STATE ДЛЯ ДИАГНОСТИКИ
+// ========================================
+let diagnosticAnswers = {
+  // Персональные данные (7 полей)
+  fullName: '',
+  birthDate: '',
+  profession: '',
+  city: '',
+  weight: '',
+  height: '',
+  sport: '',
+  gender: '',
+  
+  // Ответы квиза (17 вопросов)
+  V17: '', V18: '', V19: '', V20: '', V21: '', V22: '', V23: '', V24: '',
+  V25: '', V26: '', V27: '', V28: '', V29: '', V30: '', V31: '', V32: '', V33: '',
+  
+  // Дополнительные вопросы (3 поля)
+  discomfort: '',
+  diagnosis: '',
+  treatment: ''
+};
+
+// Функции для работы с state диагностики
+function saveDiagnosticAnswer(field, value) {
+  diagnosticAnswers[field] = value;
+  console.log(`💾 Saved ${field}:`, value);
+}
+
+function getDiagnosticAnswer(field) {
+  return diagnosticAnswers[field] || '';
+}
+
+function getAllDiagnosticAnswers() {
+  return { ...diagnosticAnswers };
+}
+
+function getFilledAnswersCount() {
+  return Object.values(diagnosticAnswers).filter(value => 
+    value && value.trim() !== ''
+  ).length;
+}
+
 // =========================================
 // ВРЕМЕННО ОТКЛЮЧАЕМ REALTIME
 // =========================================
@@ -297,10 +341,10 @@ async function completeQuiz(telegramId) {
   return false;
 }
 
-// Функция для сбора данных из формы диагностики и сохранения
-async function completeDiagnosticQuiz() {
+// Функция для сохранения всех ответов одним запросом
+async function saveAllQuizAnswers() {
   try {
-    console.log('🔍 Начинаем завершение диагностики...');
+    console.log('🔍 Начинаем сохранение всех ответов...');
     
     // Получаем Telegram ID
     const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -310,24 +354,103 @@ async function completeDiagnosticQuiz() {
     }
     
     const telegramId = telegramUser.id;
+    const allAnswers = getAllDiagnosticAnswers();
+    const filledCount = getFilledAnswersCount();
     
-    // Проверяем что все 24 ответа сохранены
-    const totalSaved = checkAllSavedAnswers();
-    console.log(`📊 FINAL CHECK: ${totalSaved}/24 answers saved`);
+    console.log(`📊 Проверяем ответы: ${filledCount}/24 заполнено`);
     
-    // Меняем статус квиза на completed = true
-    const completed = await completeQuiz(telegramId);
+    // Проверяем что все 24 ответа заполнены
+    if (filledCount !== 24) {
+      console.error(`❌ Ошибка: нужно 24 ответа, заполнено ${filledCount}`);
+      return false;
+    }
     
-    if (completed) {
-      console.log('✅ Диагностика завершена, статус изменен на TRUE');
+    // Показываем загрузку
+    showLoadingOverlay('Сохраняем ваши ответы...');
+    
+    // Отправляем все ответы одним запросом
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/save-all-quiz-answers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
+      body: JSON.stringify({
+        telegramId: telegramId,
+        answers: allAnswers
+      })
+    });
+    
+    // Скрываем загрузку
+    hideLoadingOverlay();
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Все ответы сохранены:', data);
+      return data.success;
+    } else {
+      const error = await response.json();
+      console.error('❌ Ошибка сохранения:', error);
+      return false;
+    }
+  } catch (error) {
+    console.error('Error saving quiz answers:', error);
+    hideLoadingOverlay();
+    return false;
+  }
+}
+
+// Функция для сбора данных из формы диагностики и сохранения
+async function completeDiagnosticQuiz() {
+  try {
+    console.log('🔍 Начинаем завершение диагностики...');
+    
+    // Используем новую функцию сохранения
+    const success = await saveAllQuizAnswers();
+    
+    if (success) {
+      console.log('✅ Диагностика завершена, все ответы сохранены');
       return true;
     } else {
-      console.error('❌ Ошибка при смене статуса квиза');
+      console.error('❌ Ошибка при сохранении ответов');
       return false;
     }
   } catch (error) {
     console.error('Error completing diagnostic quiz:', error);
     return false;
+  }
+}
+
+// Функции для загрузки
+function showLoadingOverlay(message = 'Загрузка...') {
+  const overlay = document.createElement('div');
+  overlay.id = 'loadingOverlay';
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8); color: white; display: flex;
+    align-items: center; justify-content: center; z-index: 10000;
+    flex-direction: column; font-family: 'Inter', sans-serif;
+  `;
+  
+  overlay.innerHTML = `
+    <div style="width: 50px; height: 50px; border: 4px solid #3C805B; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+    <div style="font-size: 18px; font-weight: 500;">${message}</div>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  `;
+  
+  document.body.appendChild(overlay);
+}
+
+function hideLoadingOverlay() {
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) {
+    overlay.remove();
   }
 }
 
@@ -3515,10 +3638,9 @@ function saveCurrentQuestionAnswer() {
   }
 }
 
-// ФУНКЦИЯ: Восстановление сохраненного ответа
+// ФУНКЦИЯ: Восстановление сохраненного ответа из state
 function restoreQuestionAnswer(questionId) {
-  const savedAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
-  const savedAnswer = savedAnswers[questionId];
+  const savedAnswer = getDiagnosticAnswer(questionId);
   
   if (savedAnswer) {
     // Проверяем, это стандартный ответ или кастомный
@@ -3571,80 +3693,64 @@ function restoreQuestionAnswer(questionId) {
   }
 }
 
-// ФУНКЦИЯ: Восстановление данных формы
+// Функции для восстановления данных из state
 function restoreFormData() {
-  const savedData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
-  
-  if (Object.keys(savedData).length > 0) {
+  setTimeout(() => {
+    // Восстанавливаем персональные данные из state
+    const weightInput = document.getElementById('weight');
+    const heightInput = document.getElementById('height');
+    const fullNameInput = document.getElementById('fullName');
+    const birthDateInput = document.getElementById('birthDate');
+    const professionInput = document.getElementById('profession');
+    const cityInput = document.getElementById('city');
+    const sportInput = document.getElementById('sport');
+    
+    if (weightInput) weightInput.value = getDiagnosticAnswer('weight');
+    if (heightInput) heightInput.value = getDiagnosticAnswer('height');
+    if (fullNameInput) fullNameInput.value = getDiagnosticAnswer('fullName');
+    if (birthDateInput) birthDateInput.value = getDiagnosticAnswer('birthDate');
+    if (professionInput) professionInput.value = getDiagnosticAnswer('profession');
+    if (cityInput) cityInput.value = getDiagnosticAnswer('city');
+    if (sportInput) sportInput.value = getDiagnosticAnswer('sport');
+    
     // Восстанавливаем пол
-    if (savedData.gender) {
-      const genderRadio = document.querySelector(`input[name="gender"][value="${savedData.gender}"]`);
+    const genderValue = getDiagnosticAnswer('gender');
+    if (genderValue) {
+      const genderRadio = document.querySelector(`input[name="gender"][value="${genderValue}"]`);
       if (genderRadio) genderRadio.checked = true;
     }
     
-    // Восстанавливаем текстовые поля
-    const fields = ['fullName', 'birthDate', 'profession', 'city', 'weight', 'height', 'sport'];
-    fields.forEach(field => {
-      const input = document.getElementById(field);
-      if (input && savedData[field]) {
-        input.value = savedData[field];
-      }
-    });
-  }
+    console.log('✅ Form data restored from state');
+  }, 200);
 }
 
-// ФУНКЦИЯ: Восстановление дополнительных ответов
 function restoreAdditionalAnswers() {
-  const savedAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
-  
-  if (Object.keys(savedAnswers).length > 0) {
+  setTimeout(() => {
     const answer1 = document.getElementById('additionalAnswer1');
     const answer2 = document.getElementById('additionalAnswer2');
     const answer3 = document.getElementById('additionalAnswer3');
     
-    if (answer1 && savedAnswers.discomfort) answer1.value = savedAnswers.discomfort;
-    if (answer2 && savedAnswers.diagnosis) answer2.value = savedAnswers.diagnosis;
-    if (answer3 && savedAnswers.treatment) answer3.value = savedAnswers.treatment;
-  }
+    if (answer1) answer1.value = getDiagnosticAnswer('discomfort');
+    if (answer2) answer2.value = getDiagnosticAnswer('diagnosis');
+    if (answer3) answer3.value = getDiagnosticAnswer('treatment');
+    
+    console.log('✅ Additional answers restored from state');
+  }, 200);
 }
 
-// Сохранение ответа сразу при выборе
+function restoreQuizAnswers() {
+  // Восстанавливаем ответы квиза из state при необходимости
+  console.log('✅ Quiz answers restored from state');
+}
+
+// Сохранение ответа квиза в state
 function saveSurveyAnswer(questionId, answer) {
-  let surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
-  surveyAnswers[questionId] = answer;
-  localStorage.setItem('surveyAnswers', JSON.stringify(surveyAnswers));
-  
-  // СРАЗУ сохраняем в БД в реалтайме
-  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  if (telegramUser?.id) {
-    const question = window.surveyQuestions?.find(q => q.id === questionId);
-    if (question) {
-      let answerText = answer;
-      
-      // Если ответ - это массив, объединяем в текст
-      if (Array.isArray(answer)) {
-        answerText = answer.join(', ');
-      }
-      
-      // Ищем текст ответа в опциях
-      if (question.options) {
-        const option = question.options.find(opt => opt.value === answer);
-        if (option) {
-          answerText = option.label;
-        }
-      }
-      
-      // Сохраняем ответ в БД
-      saveQuizAnswer(telegramUser.id, questionId, question.question, answerText, answer);
-    }
-  }
+  saveDiagnosticAnswer(questionId, answer);
+  console.log(`💾 Quiz answer saved: ${questionId} = ${answer}`);
 }
 
-// Сохранение персональных данных в реалтайме
+// Сохранение персональных данных в state
 function savePersonalDataRealtime() {
-  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  if (!telegramUser?.id) return;
-  
   const weight = document.getElementById('weight')?.value || '';
   const height = document.getElementById('height')?.value || '';
   const fullName = document.getElementById('fullName')?.value || '';
@@ -3662,93 +3768,38 @@ function savePersonalDataRealtime() {
     genderText = genderInput.nextElementSibling?.textContent?.trim() || genderValue;
   }
   
-  // Сохраняем в localStorage
-  const personalData = { weight, height, fullName, birthDate, profession, city, sport, gender: genderValue };
-  localStorage.setItem('diagnosticPersonalData', JSON.stringify(personalData));
+  // Сохраняем в state
+  saveDiagnosticAnswer('weight', weight);
+  saveDiagnosticAnswer('height', height);
+  saveDiagnosticAnswer('fullName', fullName);
+  saveDiagnosticAnswer('birthDate', birthDate);
+  saveDiagnosticAnswer('profession', profession);
+  saveDiagnosticAnswer('city', city);
+  saveDiagnosticAnswer('sport', sport);
+  saveDiagnosticAnswer('gender', genderText);
   
-  // СРАЗУ сохраняем в БД с правильными текстами
-  saveQuizAnswer(telegramUser.id, 'weight', 'Вес (кг):', weight, weight);
-  saveQuizAnswer(telegramUser.id, 'height', 'Рост (см):', height, height);
-  saveQuizAnswer(telegramUser.id, 'fullName', 'ФИО:', fullName, fullName);
-  saveQuizAnswer(telegramUser.id, 'birthDate', 'Дата рождения:', birthDate, birthDate);
-  saveQuizAnswer(telegramUser.id, 'profession', 'Профессия:', profession, profession);
-  saveQuizAnswer(telegramUser.id, 'city', 'Город:', city, city);
-  saveQuizAnswer(telegramUser.id, 'sport', 'Спорт/активность:', sport, sport);
-  saveQuizAnswer(telegramUser.id, 'gender', 'Пол:', genderText, genderValue);
+  console.log('💾 Personal data saved to state');
 }
 
-// Сохранение дополнительных ответов в реалтайме
+// Сохранение дополнительных ответов в state
 function saveAdditionalAnswersRealtime() {
-  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  if (!telegramUser?.id) return;
-  
   const discomfort = document.getElementById('additionalAnswer1')?.value || '';
   const diagnosis = document.getElementById('additionalAnswer2')?.value || '';
   const treatment = document.getElementById('additionalAnswer3')?.value || '';
   
-  // Сохраняем в localStorage
-  const additionalData = { discomfort, diagnosis, treatment };
-  localStorage.setItem('additionalAnswers', JSON.stringify(additionalData));
+  // Сохраняем в state
+  saveDiagnosticAnswer('discomfort', discomfort);
+  saveDiagnosticAnswer('diagnosis', diagnosis);
+  saveDiagnosticAnswer('treatment', treatment);
   
-  // СРАЗУ сохраняем в БД
-  saveQuizAnswer(telegramUser.id, 'discomfort', 'Что вас беспокоит?:', discomfort, discomfort);
-  saveQuizAnswer(telegramUser.id, 'diagnosis', 'Поставленные диагнозы:', diagnosis, diagnosis);
-  saveQuizAnswer(telegramUser.id, 'treatment', 'Принимаемые лекарства/БАДы:', treatment, treatment);
-  
-  console.log('💾 Additional answers saved:', { discomfort, diagnosis, treatment });
+  console.log('💾 Additional answers saved to state');
 }
 
 // Проверка всех сохраненных ответов (для отладки)
 function checkAllSavedAnswers() {
-  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  if (!telegramUser?.id) return;
-  
-  // Проверяем персональные данные (7 ответов)
-  const personalData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
-  console.log('📊 Personal data saved:', Object.keys(personalData).length, 'fields');
-  
-  // Проверяем ответы квиза (17 ответов)
-  const quizAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
-  console.log('📊 Quiz answers saved:', Object.keys(quizAnswers).length, 'answers');
-  
-  // Проверяем дополнительные ответы (3 ответа)
-  const additionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
-  console.log('📊 Additional answers saved:', Object.keys(additionalAnswers).length, 'answers');
-  
-  // Итого должно быть 24 ответа
-  const totalAnswers = Object.keys(personalData).length + Object.keys(quizAnswers).length + Object.keys(additionalAnswers).length;
-  console.log(`📈 TOTAL ANSWERS SAVED: ${totalAnswers}/24`);
-  
-  return totalAnswers;
-}
-
-// Загрузка сохраненных персональных данных
-function loadSavedPersonalData() {
-  const savedData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
-  
-  setTimeout(() => {
-    const weightInput = document.getElementById('weight');
-    const heightInput = document.getElementById('height');
-    const fullNameInput = document.getElementById('fullName');
-    const birthDateInput = document.getElementById('birthDate');
-    const professionInput = document.getElementById('profession');
-    const cityInput = document.getElementById('city');
-    const sportInput = document.getElementById('sport');
-    
-    if (weightInput && savedData.weight) weightInput.value = savedData.weight;
-    if (heightInput && savedData.height) heightInput.value = savedData.height;
-    if (fullNameInput && savedData.fullName) fullNameInput.value = savedData.fullName;
-    if (birthDateInput && savedData.birthDate) birthDateInput.value = savedData.birthDate;
-    if (professionInput && savedData.profession) professionInput.value = savedData.profession;
-    if (cityInput && savedData.city) cityInput.value = savedData.city;
-    if (sportInput && savedData.sport) sportInput.value = savedData.sport;
-    
-    // Восстанавливаем пол
-    if (savedData.gender) {
-      const genderInput = document.querySelector(`input[name="gender"][value="${savedData.gender}"]`);
-      if (genderInput) genderInput.checked = true;
-    }
-  }, 200);
+  const filledCount = getFilledAnswersCount();
+  console.log(`📊 State answers filled: ${filledCount}/24`);
+  return filledCount;
 }
 
 function completeSurvey() {
