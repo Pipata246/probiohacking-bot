@@ -30,23 +30,19 @@ module.exports = async function handler(req, res) {
 
     console.log('💾 Saving answer:', { telegramId, questionId, answerText });
 
-    // Сначала удаляем существующий ответ если есть
-    await supabase
-      .from('quiz_answers')
-      .delete()
-      .eq('telegram_id', telegramId)
-      .eq('question_id', questionId);
-
-    // Вставляем новый ответ
+    // Используем UPSERT с правильным constraint
     const { data, error } = await supabase
       .from('quiz_answers')
-      .insert({
+      .upsert({
         telegram_id: telegramId,
         question_id: questionId,
         question_text: questionText || '',
         answer_text: answerText,
         answer_value: answerValue || answerText,
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'telegram_id,question_id', // Конфликт по уникальным полям
+        ignoreDuplicates: false // Обновляем при конфликте
       })
       .select();
 
@@ -57,9 +53,18 @@ module.exports = async function handler(req, res) {
 
     console.log('✅ Answer saved:', data);
 
+    // Проверяем сколько всего ответов у пользователя
+    const { count } = await supabase
+      .from('quiz_answers')
+      .select('*', { count: 'exact', head: true })
+      .eq('telegram_id', telegramId);
+    
+    console.log(`📊 User ${telegramId} now has ${count} answers in DB`);
+
     return res.json({ 
       success: true, 
-      data
+      data,
+      totalAnswers: count
     });
 
   } catch (error) {
