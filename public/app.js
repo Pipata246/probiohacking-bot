@@ -315,10 +315,16 @@ async function completeDiagnosticQuiz() {
     const totalSaved = checkAllSavedAnswers();
     console.log(`📊 FINAL CHECK: ${totalSaved}/24 answers saved`);
     
-    // НЕ меняем статус quiz_completed - оставляем как есть по требованию
-    console.log('✅ Диагностика завершена без смены статуса');
+    // Меняем статус квиза на completed = true
+    const completed = await completeQuiz(telegramId);
     
-    return true;
+    if (completed) {
+      console.log('✅ Диагностика завершена, статус изменен на TRUE');
+      return true;
+    } else {
+      console.error('❌ Ошибка при смене статуса квиза');
+      return false;
+    }
   } catch (error) {
     console.error('Error completing diagnostic quiz:', error);
     return false;
