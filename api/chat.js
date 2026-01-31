@@ -382,7 +382,12 @@ module.exports = async (req, res) => {
     }
 
     // Получаем диагностические данные пользователя
-    const diagnosticData = await getUserDiagnosticData(userId);
+    let diagnosticData = null;
+    if (userInfo && userInfo.telegramId) {
+      diagnosticData = await getUserDiagnosticData(userInfo.telegramId);
+    } else {
+      console.log('⚠️ No telegramId available for diagnostic data');
+    }
     
     // Формируем системный промпт с учетом диагностических данных
     let systemPrompt = SYSTEM_PROMPT;
