@@ -3037,16 +3037,8 @@ function showMyTestsPage() {
   myTestsForm.style.display = 'flex';
   document.body.classList.add('chat-overlay-visible');
   
-  // Сначала проверяем есть ли сохраненные фото
-  if (window.uploadedPhotos) {
-    console.log('Используем предварительно загруженные фото...');
-    updateUploadedTestsIfPageOpen();
-  } else {
-    // Загружаем список уже загруженных анализов
-    setTimeout(() => {
-      loadUploadedTests();
-    }, 100);
-  }
+  // ВСЕГДА загружаем свежие данные из БД при открытии вкладки
+  loadUploadedTests();
   
   // Обновляем аватар в статичной позиции
   updateAvatar(document.getElementById('myTestsAvatar'), user, userName);
@@ -3299,8 +3291,7 @@ async function handleFileUpload(file) {
 // Загрузка и отображение загруженных анализов
 async function loadUploadedTests() {
   try {
-    console.log('=== НАЧАЛО ЗАГРУЗКИ СПИСКА АНАЛИЗОВ ===');
-    console.log('Загружаем список анализов из БД...');
+    console.log('=== ЗАГРУЖАЕМ АНАЛИЗЫ ИЗ БД ===');
     
     const response = await fetch('/api/analysis-photos', {
       method: 'GET',
@@ -3310,72 +3301,40 @@ async function loadUploadedTests() {
       }
     });
     
-    console.log('Response status:', response.status);
-    console.log('Response ok:', response.ok);
-    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Response error:', errorText);
-      throw new Error('Не удалось загрузить список анализов');
-    }
-    
-    const result = await response.json();
-    console.log('📋 API Response:', result);
-    
-    const { success, photos } = result;
-    
-    if (!success) {
-      console.error('❌ API returned success=false:', result);
-      throw new Error('Ошибка при загрузке анализов');
-    }
-    
-    console.log('✅ Получены фото из БД:', photos);
-    
-    // Находим контейнер для загруженных анализов
-    const testsList = document.getElementById('uploadedTestsList');
-    console.log('🔍 Контейнер uploadedTestsList:', testsList);
-    
-    if (!testsList) {
-      console.log('❌ Контейнер uploadedTestsList не найден! Страница "Мои анализы" еще не открыта.');
-      // Сохраняем фото в глобальную переменную для использования позже
-      window.uploadedPhotos = photos;
-      console.log('💾 Фото сохранены в window.uploadedPhotos для использования позже');
+      console.error('Ошибка загрузки анализов:', response.status);
       return;
     }
     
-    console.log('✅ Контейнер найден, очищаем список...');
+    const { success, photos } = await response.json();
     
-    // Очищаем старый список (кроме заголовка)
-    const title = testsList.querySelector('h3');
-    testsList.innerHTML = '';
-    if (title) {
-      testsList.appendChild(title);
+    if (!success || !photos) {
+      console.log('Фото не найдены в БД');
+      return;
     }
     
-    if (photos && photos.length > 0) {
-      console.log('➕ Добавляем', photos.length, 'фото в список...');
-      // Добавляем каждое фото
-      photos.forEach((photo, index) => {
-        console.log(`Фото ${index + 1}:`, photo);
+    console.log('Найдено фото:', photos.length);
+    
+    // Находим контейнер
+    const testsList = document.getElementById('uploadedTestsList');
+    if (!testsList) {
+      console.log('Контейнер еще не создан');
+      return;
+    }
+    
+    // Очищаем и заполняем
+    testsList.innerHTML = '<h3>Загруженные анализы</h3>';
+    
+    if (photos.length > 0) {
+      photos.forEach(photo => {
         addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
       });
     } else {
-      console.log('📭 Фото нет, показываем сообщение...');
-      // Показываем сообщение что анализов нет
-      const noTestsMessage = document.createElement('div');
-      noTestsMessage.className = 'no-tests-message';
-      noTestsMessage.innerHTML = `
-        <p>У вас пока нет загруженных анализов</p>
-        <p style="font-size: 14px; opacity: 0.7;">Выберите файл или сделайте фото чтобы начать</p>
-      `;
-      testsList.appendChild(noTestsMessage);
+      testsList.innerHTML += '<p style="text-align: center; opacity: 0.7;">Нет загруженных анализов</p>';
     }
     
-    console.log('✅ ЗАГРУЗКА СПИСКА АНАЛИЗОВ ЗАВЕРШЕНА');
-    
   } catch (error) {
-    console.error('❌ Ошибка при загрузке анализов:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('Ошибка:', error);
   }
 }
 
