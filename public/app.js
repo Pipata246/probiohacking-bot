@@ -3290,6 +3290,7 @@ async function handleFileUpload(file) {
 // Загрузка и отображение загруженных анализов
 async function loadUploadedTests() {
   try {
+    console.log('=== НАЧАЛО ЗАГРУЗКИ СПИСКА АНАЛИЗОВ ===');
     console.log('Загружаем список анализов из БД...');
     
     const response = await fetch('/api/analysis-photos', {
@@ -3300,13 +3301,22 @@ async function loadUploadedTests() {
       }
     });
     
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+    
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Response error:', errorText);
       throw new Error('Не удалось загрузить список анализов');
     }
     
-    const { success, photos } = await response.json();
+    const result = await response.json();
+    console.log('API Response:', result);
+    
+    const { success, photos } = result;
     
     if (!success) {
+      console.error('API returned success=false:', result);
       throw new Error('Ошибка при загрузке анализов');
     }
     
@@ -3314,10 +3324,17 @@ async function loadUploadedTests() {
     
     // Находим контейнер для загруженных анализов
     const testsList = document.getElementById('uploadedTestsList');
+    console.log('Контейнер uploadedTestsList:', testsList);
+    
     if (!testsList) {
-      console.error('Контейнер uploadedTestsList не найден!');
+      console.error('❌ Контейнер uploadedTestsList не найден!');
+      console.log('Доступные элементы с id:', 
+        Array.from(document.querySelectorAll('[id]')).map(el => el.id).slice(0, 10)
+      );
       return;
     }
+    
+    console.log('✅ Контейнер найден, очищаем список...');
     
     // Очищаем старый список (кроме заголовка)
     const title = testsList.querySelector('h3');
@@ -3327,11 +3344,14 @@ async function loadUploadedTests() {
     }
     
     if (photos && photos.length > 0) {
+      console.log('Добавляем', photos.length, 'фото в список...');
       // Добавляем каждое фото
-      photos.forEach(photo => {
-        addUploadedTest(photo.photo_name, photo.file_type, photo.photo_url, photo.id, photo.analysis_group);
+      photos.forEach((photo, index) => {
+        console.log(`Фото ${index + 1}:`, photo);
+        addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
       });
     } else {
+      console.log('Фото нет, показываем сообщение...');
       // Показываем сообщение что анализов нет
       const noTestsMessage = document.createElement('div');
       noTestsMessage.className = 'no-tests-message';
@@ -3342,8 +3362,11 @@ async function loadUploadedTests() {
       testsList.appendChild(noTestsMessage);
     }
     
+    console.log('✅ ЗАГРУЗКА СПИСКА АНАЛИЗОВ ЗАВЕРШЕНА');
+    
   } catch (error) {
-    console.error('Ошибка при загрузке анализов:', error);
+    console.error('❌ Ошибка при загрузке анализов:', error);
+    console.error('Stack trace:', error.stack);
   }
 }
 
