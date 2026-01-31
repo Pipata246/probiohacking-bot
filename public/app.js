@@ -2938,7 +2938,7 @@ function showMyTestsPage() {
             <div class="file-upload-card">
               <div class="upload-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.7893 3 19.5304 3 19V15" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M7 10L12 5L17 10" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M12 5V15" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -3040,10 +3040,14 @@ function showMyTestsPage() {
   myTestsForm.style.display = 'flex';
   document.body.classList.add('chat-overlay-visible');
   
-  // Загружаем анализы
+  // ВСЕГДА загружаем свежие данные из БД при открытии вкладки
+  console.log('🔥 КНОПКА "МОИ АНАЛИЗЫ" НАЖАТА - НАЧИНАЮ ЗАГРУЗКУ');
   loadUploadedTests();
   
-  // Обработчики
+  // Обновляем аватар в статичной позиции
+  updateAvatar(document.getElementById('myTestsAvatar'), user, userName);
+  
+  // Обработчики событий
   setupMyTestsHandlers();
 }
 
@@ -3095,94 +3099,453 @@ function setupMyTestsHandlers() {
       cameraInput.click();
     });
   }
+  
+  // Переключение типов анализов - ИСПРАВЛЕННАЯ ЛОГИКА
+  const testTypeBtns = document.querySelectorAll('.test-type-btn');
+  console.log('Найдено кнопок типов анализов:', testTypeBtns.length);
+  
+  // Убеждаемся что первая кнопка активна по умолчанию
+  if (testTypeBtns.length > 0) {
+    testTypeBtns.forEach(btn => btn.classList.remove('active'));
+    testTypeBtns[0].classList.add('active');
+  }
+  
+  testTypeBtns.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+      console.log('Кнопка типа анализа нажата:', btn.textContent);
+      // Убираем active у всех кнопок
+      testTypeBtns.forEach(b => b.classList.remove('active'));
+      // Добавляем active к нажатой кнопке
+      btn.classList.add('active');
+    });
+  });
+  
+  // Действия с тестами - ВОССТАНОВЛЕННАЯ ФУНКЦИОНАЛЬНОСТЬ
+  const deleteButtons = document.querySelectorAll('.test-action-btn.delete');
+  deleteButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const testItem = btn.closest('.test-item');
+      const testName = testItem.querySelector('.test-name').textContent;
+      
+      if (confirm(`Удалить анализ "${testName}"?`)) {
+        testItem.remove();
+      }
+    });
+  });
+  
+  // Просмотр файлов - ВОССТАНОВЛЕННАЯ ФУНКЦИОНАЛЬНОСТЬ
+  const testInfos = document.querySelectorAll('.test-info');
+  testInfos.forEach(testInfo => {
+    testInfo.addEventListener('click', () => {
+      const testItem = testInfo.closest('.test-item');
+      const fileURL = testItem.getAttribute('data-file-url');
+      const fileType = testItem.getAttribute('data-file-type');
+      const fileName = testInfo.querySelector('.test-name').textContent;
+      
+      if (!fileURL) {
+        alert('Это демо-файл. Загрузите свой файл для просмотра.');
+        return;
+      }
+      
+      // Для изображений показываем в модальном окне
+      if (fileType && fileType.startsWith('image/')) {
+        showImageModal(fileURL, fileName);
+      } else if (fileType === 'application/pdf') {
+        // Для PDF открываем в новом окне
+        window.open(fileURL, '_blank');
+      } else {
+        // Для других типов файлов предлагаем скачать
+        const link = document.createElement('a');
+        link.href = fileURL;
+        link.download = fileName;
+        link.click();
+      }
+    });
+  });
 }
 
-// Загрузка и отображение загруженных анализов
-async function loadUploadedTests() {
+async function handleFileUpload(file) {
+  console.log('=== НАЧАЛО ЗАГРУЗКИ ФАЙЛА ===');
+  console.log('Имя файла:', file.name);
+  console.log('Тип файла:', file.type);
+  console.log('Размер файла:', file.size, 'байт');
+  
+  const maxSize = 10 * 1024 * 1024; // 10MB
+  
+  if (file.size > maxSize) {
+    console.log('ОШИБКА: Файл слишком большой');
+    alert('Файл слишком большой. Максимальный размер: 10MB');
+    return;
+  }
+  
+  const allowedTypes = [
+    'application/pdf', 
+    'image/jpeg', 
+    'image/jpg', 
+    'image/png', 
+    'image/webp', 
+    'image/heic', 
+    'image/heif'
+  ];
+  
+  console.log('Проверяем тип файла...');
+  if (!allowedTypes.includes(file.type)) {
+    console.log('ОШИБКА: Неподдерживаемый тип файла:', file.type);
+    alert('Неподдерживаемый формат файла. Используйте PDF, JPG, PNG, WebP или HEIC');
+    return;
+  }
+  
+  console.log('Тип файла поддерживается');
+
   try {
+    // Показываем индикатор загрузки
+    showLoadingOverlay();
+    
+    // Получаем выбранный тип анализа
+    const activeTypeBtn = document.querySelector('.test-type-btn.active');
+    const analysisGroup = activeTypeBtn ? activeTypeBtn.textContent : 'Другое';
+    
+    // Загружаем файл в Supabase Storage
+    const fileName = `${Date.now()}_${file.name}`;
+    const filePath = `analysis-photos/${window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'unknown'}/${fileName}`;
+    
+    console.log('Загружаем файл в Storage:', filePath);
+    
+    // Сначала получаем URL для загрузки
+    const uploadResponse = await fetch('/api/analysis-photos?action=upload-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-WebApp-Data': window.Telegram?.WebApp?.initData || ''
+      },
+      body: JSON.stringify({
+        fileName,
+        fileType: file.type,
+        fileSize: file.size,
+        filePath
+      })
+    });
+    
+    if (!uploadResponse.ok) {
+      throw new Error('Не удалось получить URL для загрузки');
+    }
+    
+    const { uploadUrl, publicUrl } = await uploadResponse.json();
+    
+    // Загружаем файл через signed URL
+    const uploadResult = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type
+      },
+      body: file
+    });
+    
+    if (!uploadResult.ok) {
+      const errorText = await uploadResult.text();
+      console.error('Upload error details:', errorText);
+      throw new Error(`Не удалось загрузить файл: ${uploadResult.status} ${errorText}`);
+    }
+    
+    console.log('Файл успешно загружен в Storage:', publicUrl);
+    
+    // Сохраняем информацию о файле в базу данных
+    const saveResponse = await fetch('/api/analysis-photos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-WebApp-Data': window.Telegram?.WebApp?.initData || ''
+      },
+      body: JSON.stringify({
+        telegramUser: window.Telegram?.WebApp?.initDataUnsafe?.user,
+        photo_url: publicUrl,
+        photo_name: file.name,
+        file_size: file.size,
+        analysis_group: analysisGroup,
+        description: ''
+      })
+    });
+    
+    if (!saveResponse.ok) {
+      throw new Error('Не удалось сохранить информацию о файле');
+    }
+    
+    const saveResult = await saveResponse.json();
+    console.log('Информация о файле сохранена в БД:', saveResult);
+    
+    // Добавляем элемент на страницу
+    addUploadedTest(file.name, file.type, publicUrl, saveResult.photo.id, analysisGroup);
+    
+    // Показываем уведомление об успешной загрузке
+    alert('Анализ успешно загружен!');
+    
+    // Обновляем список загруженных анализов
+    loadUploadedTests();
+    
+    console.log('=== ФАЙЛ УСПЕШНО ЗАГРУЖЕН В БД ===');
+  } catch (error) {
+    console.error('Ошибка при загрузке файла:', error);
+    alert('Ошибка при загрузке файла: ' + error.message);
+  } finally {
+    hideLoadingOverlay();
+  }
+}
+
+// Глобальное состояние для фото
+let uploadedPhotosState = [];
+let photosSubscription = null;
+
+// Инициализация Supabase Realtime для фото
+function initPhotosRealtime() {
+  if (photosSubscription) {
+    photosSubscription.unsubscribe();
+  }
+
+  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  if (!telegramId) return;
+
+  // Подписываемся на изменения в таблице user_analysis_photos
+  photosSubscription = supabase
+    .channel('user_analysis_photos')
+    .on('postgres_changes', 
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'user_analysis_photos',
+        filter: `telegram_id=eq.${telegramId}`
+      }, 
+      (payload) => {
+        console.log('Photos change:', payload);
+        
+        if (payload.eventType === 'INSERT') {
+          // Добавляем новое фото в состояние
+          uploadedPhotosState.unshift(payload.new);
+          updatePhotosUI();
+        } else if (payload.eventType === 'DELETE') {
+          // Удаляем фото из состояния
+          uploadedPhotosState = uploadedPhotosState.filter(p => p.id !== payload.old.id);
+          updatePhotosUI();
+        }
+      }
+    )
+    .subscribe();
+}
+
+// Мгновенная загрузка фото из API
+async function loadPhotosFromSupabase() {
+  try {
+    console.log('🔥 НАЧИНАЮ ЗАГРУЗКУ ФОТО...');
+    
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    console.log('📱 Telegram data:', telegramWebAppData ? 'exists' : 'missing');
+    
     const response = await fetch('/api/analysis-photos', {
       headers: {
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
     });
     
-    const testsList = document.getElementById('uploadedTestsList');
+    console.log('📡 Response status:', response.status);
     
     if (!response.ok) {
-      testsList.innerHTML = '<h3>Загруженные анализы</h3><p style="text-align: center; color: red;">Ошибка загрузки</p>';
+      const errorText = await response.text();
+      console.error('❌ Ошибка загрузки фото:', response.status, errorText);
       return;
     }
     
     const data = await response.json();
+    console.log('📋 Photos API response:', data);
     
-    if (!data.success || !data.photos || data.photos.length === 0) {
-      testsList.innerHTML = '<h3>Загруженные анализы</h3><p style="text-align: center; opacity: 0.7;">Нет загруженных анализов</p>';
+    if (!data.success) {
+      console.error('❌ API returned success=false:', data);
       return;
     }
     
-    testsList.innerHTML = '<h3>Загруженные анализы</h3>';
+    if (!data.photos || data.photos.length === 0) {
+      console.log('📭 Фото не найдены в ответе');
+      uploadedPhotosState = [];
+      return;
+    }
+
+    // Сохраняем в состояние
+    uploadedPhotosState = data.photos || [];
+    console.log('✅ Фото загружены в состояние:', uploadedPhotosState.length);
+    console.log('📸 Фото данные:', uploadedPhotosState);
     
-    data.photos.forEach(photo => {
-      const photoElement = document.createElement('div');
-      photoElement.className = 'uploaded-test';
-      photoElement.innerHTML = `
-        <div class="test-info">
-          <div class="test-name">${photo.photo_name}</div>
-          <div class="test-group">${photo.analysis_group}</div>
-        </div>
-        <div class="test-actions">
-          <button onclick="viewPhoto('${photo.photo_url}')" style="background: none; border: none; font-size: 16px;">👁</button>
-          <button onclick="deletePhoto(${photo.id})" style="background: none; border: none; font-size: 16px;">🗑</button>
-        </div>
-      `;
-      testsList.appendChild(photoElement);
-    });
+    // Обновляем UI если страница открыта
+    updatePhotosUI();
     
   } catch (error) {
-    const testsList = document.getElementById('uploadedTestsList');
-    testsList.innerHTML = '<h3>Загруженные анализы</h3><p style="text-align: center; color: red;">Ошибка загрузки</p>';
+    console.error('❌ Ошибка загрузки фото:', error);
   }
 }
 
-function closeMyTestsForm() {
-  const overlay = document.getElementById('myTestsFormOverlay');
-  if (overlay) {
-    overlay.remove();
+// Обновление UI из состояния
+function updatePhotosUI() {
+  const testsList = document.getElementById('uploadedTestsList');
+  if (!testsList) return;
+
+  testsList.innerHTML = '<h3>Загруженные анализы</h3>';
+  
+  if (uploadedPhotosState.length > 0) {
+    uploadedPhotosState.forEach(photo => {
+      addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
+    });
+  } else {
+    testsList.innerHTML += '<p style="text-align: center; opacity: 0.7;">Нет загруженных анализов</p>';
+  }
+}
+
+// Загрузка и отображение загруженных анализов (старая функция для совместимости)
+async function loadUploadedTests() {
+  // Если фото уже в состоянии, просто обновляем UI
+  if (uploadedPhotosState.length > 0) {
+    updatePhotosUI();
+    return;
+  }
+  
+  // Иначе загружаем из Supabase
+  await loadPhotosFromSupabase();
+}
+
+// Функция для обновления списка анализов если страница уже открыта
+function updateUploadedTestsIfPageOpen() {
+  const testsList = document.getElementById('uploadedTestsList');
+  if (testsList && window.uploadedPhotos) {
+    console.log('Страница "Мои анализы" открыта, обновляем список...');
+    const photos = window.uploadedPhotos;
+    
+    // Очищаем старый список (кроме заголовка)
+    const title = testsList.querySelector('h3');
+    testsList.innerHTML = '';
+    if (title) {
+      testsList.appendChild(title);
+    }
+    
+    if (photos && photos.length > 0) {
+      photos.forEach((photo, index) => {
+        console.log(`Фото ${index + 1}:`, photo);
+        addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
+      });
+    } else {
+      const noTestsMessage = document.createElement('div');
+      noTestsMessage.className = 'no-tests-message';
+      noTestsMessage.innerHTML = `
+        <p>У вас пока нет загруженных анализов</p>
+        <p style="font-size: 14px; opacity: 0.7;">Выберите файл или сделайте фото чтобы начать</p>
+      `;
+      testsList.appendChild(noTestsMessage);
+    }
+  }
+}
+
+function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
+  const testItem = document.createElement('div');
+  testItem.className = 'test-item';
+  testItem.innerHTML = `
+    <div class="test-info">
+      <p class="test-name">${fileName}</p>
+      <p class="test-type">${analysisGroup}</p>
+    </div>
+    <button class="test-action-btn delete">🗑</button>
+    <button class="test-action-btn view">👁</button>
+  `;
+  
+  // Добавляем обработчики для кнопок
+  const deleteBtn = testItem.querySelector('.test-action-btn.delete');
+  const viewBtn = testItem.querySelector('.test-action-btn.view');
+  
+  deleteBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    console.log('Удаление файла:', fileName);
+    
+    if (confirm(`Удалить анализ "${fileName}"?`)) {
+      try {
+        // Удаляем из БД
+        const deleteResponse = await fetch('/api/analysis-photos', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-WebApp-Data': window.Telegram?.WebApp?.initData || ''
+          },
+          body: JSON.stringify({
+            telegramUser: window.Telegram?.WebApp?.initDataUnsafe?.user,
+            photo_id: photoId
+          })
+        });
+        
+        if (deleteResponse.ok) {
+          testItem.remove();
+          console.log('Файл успешно удален из БД');
+        } else {
+          console.error('Ошибка при удалении из БД');
+          alert('Ошибка при удалении файла');
+        }
+      } catch (error) {
+        console.error('Ошибка при удалении:', error);
+        alert('Ошибка при удалении файла');
+      }
+    }
+  });
+  
+  viewBtn.addEventListener('click', () => {
+    console.log('Клик по файлу:', fileName, 'Тип:', fileType);
+    
+    if (fileType && fileType.startsWith('image/')) {
+      showImageModal(fileURL, fileName);
+    } else if (fileType === 'application/pdf') {
+      window.open(fileURL, '_blank');
+    } else {
+      const link = document.createElement('a');
+      link.href = fileURL;
+      link.download = fileName;
+      link.click();
+    }
+  });
+  
+  // Добавляем элемент на страницу
+  const testsList = document.getElementById('uploadedTestsList');
+  testsList.appendChild(testItem);
+}
+
+// Функция показа изображения в модальном окне
+function showImageModal(imageURL, fileName) {
+  // Создаем модальное окно для просмотра изображения
+  const modal = document.createElement('div');
+  modal.className = 'image-modal-overlay';
+  modal.innerHTML = `
+    <div class="image-modal-content">
+      <button class="image-modal-close">&times;</button>
+      <img src="${imageURL}" alt="${fileName}" class="modal-image">
+      <p class="modal-image-title">${fileName}</p>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Обработчики закрытия
+  const closeBtn = modal.querySelector('.image-modal-close');
+  closeBtn.addEventListener('click', () => {
+    document.body.removeChild(modal);
+  });
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      document.body.removeChild(modal);
+    }
+  });
+}
+
+function closeMyTestsPage() {
+  isDiagnosticFormMode = false;
+  isInRecommendedTests = false; // Сбрасываем флаг
+  const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
+  if (myTestsFormOverlay) {
+    myTestsFormOverlay.remove();
     document.body.classList.remove('chat-overlay-visible');
   }
-}
-
-function viewPhoto(url) {
-  window.open(url, '_blank');
-}
-
-async function deletePhoto(photoId) {
-  if (!confirm('Удалить этот анализ?')) return;
-  
-  try {
-    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    const response = await fetch('/api/analysis-photos', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
-      },
-      body: JSON.stringify({ photo_id: photoId })
-    });
-    
-    if (response.ok) {
-      loadUploadedTests(); // Перезагружаем список
-    }
-  } catch (error) {
-    alert('Ошибка при удалении');
-  }
-}
-
-async function handleFileUpload(file) {
-  console.log('Загрузка файла:', file.name);
-  // Здесь будет логика загрузки файла
-  alert('Функция загрузки будет добавлена позже');
+  showPage('diagnostics');
 }
 
 // ========================================
