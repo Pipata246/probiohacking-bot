@@ -3378,8 +3378,8 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
       <p class="test-name">${fileName}</p>
       <p class="test-type">${analysisGroup}</p>
     </div>
-    <button class="test-action-btn delete">Удалить</button>
-    <button class="test-action-btn view">Просмотр</button>
+    <button class="test-action-btn delete">🗑️</button>
+    <button class="test-action-btn view">👁️</button>
   `;
   
   // Добавляем обработчики для кнопок
