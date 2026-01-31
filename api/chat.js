@@ -23,20 +23,13 @@ async function getUserDiagnosticData(userId) {
     // Проверяем статус квиза
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('quiz_completed')
+      .select('quiz_completed, analyses_uploaded')
       .eq('telegram_id', userId)
       .single();
 
     if (userError || !userData) {
       console.log('User not found or error:', userError);
       return null;
-    }
-
-    if (!userData.quiz_completed) {
-      return {
-        quiz_completed: false,
-        message: 'Пользователь еще не прошел диагностику'
-      };
     }
 
     // Получаем все ответы пользователя
@@ -51,13 +44,29 @@ async function getUserDiagnosticData(userId) {
       return null;
     }
 
+    // Получаем фотографии анализов если они есть
+    let analysisPhotos = [];
+    if (userData.analyses_uploaded) {
+      const { data: photos, error: photosError } = await supabase
+        .from('user_analysis_photos')
+        .select('*')
+        .eq('telegram_id', userId)
+        .order('upload_date', { ascending: false });
+
+      if (!photosError && photos) {
+        analysisPhotos = photos;
+      }
+    }
+
     // Группируем ответы по категориям
     const diagnosticData = {
-      quiz_completed: true,
+      quiz_completed: userData.quiz_completed,
+      analyses_uploaded: userData.analyses_uploaded,
       personal_data: {},
       quiz_answers: {},
       additional_answers: {},
-      full_answers: answers
+      full_answers: answers,
+      analysis_photos: analysisPhotos
     };
 
     answers.forEach(answer => {
@@ -400,12 +409,22 @@ module.exports = async (req, res) => {
     if (!diagnosticData) {
       // Если не удалось получить данные, добавляем базовую рекомендацию
       systemPrompt += `\n\nВАЖНО: Не удалось загрузить данные диагностики. 
-Рекомендуй пользователю пройти диагностику для получения персонализированных рекомендаций.`;
+Рекомендуй пользователю пройти диагностику и загрузить анализы для получения персонализированных рекомендаций.`;
+    } else if (!diagnosticData.quiz_completed && !diagnosticData.analyses_uploaded) {
+      // Добавляем рекомендацию пройти квиз и загрузить анализы
+      systemPrompt += `\n\nВАЖНО: Пользователь еще не прошел персональную диагностику и не загрузил анализы. 
+В каждом ответе мягко рекомендуй пройти квиз и загрузить анализы для получения персонализированных рекомендаций. 
+Предлагай кнопки "Пройти диагностику" и "Загрузить анализы" для получения точных советов по здоровью.`;
     } else if (!diagnosticData.quiz_completed) {
       // Добавляем рекомендацию пройти квиз
       systemPrompt += `\n\nВАЖНО: Пользователь еще не прошел персональную диагностику. 
 В каждом ответе мягко рекомендуй пройти квиз для получения персонализированных рекомендаций. 
 Предлагай кнопку "Пройти диагностику" для получения точных советов по здоровью.`;
+    } else if (!diagnosticData.analyses_uploaded) {
+      // Добавляем рекомендацию загрузить анализы
+      systemPrompt += `\n\nВАЖНО: Пользователь еще не загрузил анализы. 
+В каждом ответе мягко рекомендуй загрузить анализы для получения более точных рекомендаций. 
+Предлагай кнопку "Загрузить анализы" для получения точных советов по здоровью.`;
     } else {
       // Добавляем полную диагностическую информацию в промпт
       systemPrompt += `\n\n📊 ДИАГНОСТИЧЕСКИЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ:
@@ -432,13 +451,35 @@ module.exports = async (req, res) => {
         systemPrompt += `\n- ${data.system}: ${data.question} → Ответ: "${data.answer}"`;
       });
 
+      // Добавляем информацию о загруженных анализах
+      if (diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
+        systemPrompt += `\n\n📷 ЗАГРУЖЕННЫЕ АНАЛИЗЫ (${diagnosticData.analysis_photos.length} шт.):`;
+        
+        // Группируем анализы по категориям
+        const groupedPhotos = {};
+        diagnosticData.analysis_photos.forEach(photo => {
+          if (!groupedPhotos[photo.analysis_group]) {
+            groupedPhotos[photo.analysis_group] = [];
+          }
+          groupedPhotos[photo.analysis_group].push(photo);
+        });
+
+        Object.entries(groupedPhotos).forEach(([group, photos]) => {
+          systemPrompt += `\n📁 ${group} (${photos.length} фото):`;
+          photos.forEach((photo, index) => {
+            systemPrompt += `\n  ${index + 1}. ${photo.photo_name || 'Фото'} (${photo.upload_date ? new Date(photo.upload_date).toLocaleDateString() : 'Дата неизвестна'})`;
+          });
+        });
+      }
+
       systemPrompt += `\n\n🎯 ИНСТРУКЦИИ ДЛЯ ИИ:
 1. Учитывай все диагностические данные при формировании рекомендаций
 2. Обращай внимание на системы, где есть проблемы (негативные ответы)
 3. Давай персонализированные советы основываясь на конкретных ответах
 4. Учитывай возраст, пол, профессию и образ жизни
-5. Ссылайсь на диагностические данные когда это уместно
-6. Будь более конкретным в рекомендациях基于 на этих данных`;
+5. Ссылайся на диагностические данные когда это уместно
+6. Если есть загруженные анализы, учитывай их при рекомендациях
+7. Будь более конкретным в рекомендациях基于 на этих данных`;
     }
 
     const payload = {
@@ -513,7 +554,9 @@ module.exports = async (req, res) => {
       newChatCreated: false,
       contextOverflow: false,
       quizCompleted: diagnosticData?.quiz_completed || false,
-      quizRecommendation: !diagnosticData?.quiz_completed ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null
+      analysesUploaded: diagnosticData?.analyses_uploaded || false,
+      quizRecommendation: !diagnosticData?.quiz_completed ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null,
+      analysesRecommendation: !diagnosticData?.analyses_uploaded ? 'Рекомендуем загрузить анализы для получения более точных рекомендаций' : null
     };
 
     return res.status(200).json(responsePayload);
