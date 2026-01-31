@@ -3034,6 +3034,11 @@ function showMyTestsPage() {
   myTestsForm.style.display = 'flex';
   document.body.classList.add('chat-overlay-visible');
   
+  // Загружаем список уже загруженных анализов
+  setTimeout(() => {
+    loadUploadedTests();
+  }, 100);
+  
   // Обновляем аватар в статичной позиции
   updateAvatar(document.getElementById('myTestsAvatar'), user, userName);
   
@@ -3274,12 +3279,71 @@ async function handleFileUpload(file) {
     loadUploadedTests();
     
     console.log('=== ФАЙЛ УСПЕШНО ЗАГРУЖЕН В БД ===');
-    
   } catch (error) {
-    console.error('ОШИБКА при загрузке файла:', error);
-    alert('Произошла ошибка при загрузке файла: ' + error.message);
+    console.error('Ошибка при загрузке файла:', error);
+    alert('Ошибка при загрузке файла: ' + error.message);
   } finally {
     hideLoadingOverlay();
+  }
+}
+
+// Загрузка и отображение загруженных анализов
+async function loadUploadedTests() {
+  try {
+    console.log('Загружаем список анализов из БД...');
+    
+    const response = await fetch('/api/analysis-photos', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-WebApp-Data': window.Telegram?.WebApp?.initData || ''
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Не удалось загрузить список анализов');
+    }
+    
+    const { success, photos } = await response.json();
+    
+    if (!success) {
+      throw new Error('Ошибка при загрузке анализов');
+    }
+    
+    console.log('Получены фото:', photos);
+    
+    // Находим контейнер для загруженных анализов
+    const testsList = document.getElementById('uploadedTestsList');
+    if (!testsList) {
+      console.error('Контейнер uploadedTestsList не найден!');
+      return;
+    }
+    
+    // Очищаем старый список (кроме заголовка)
+    const title = testsList.querySelector('h3');
+    testsList.innerHTML = '';
+    if (title) {
+      testsList.appendChild(title);
+    }
+    
+    if (photos && photos.length > 0) {
+      // Добавляем каждое фото
+      photos.forEach(photo => {
+        addUploadedTest(photo.photo_name, photo.file_type, photo.photo_url, photo.id, photo.analysis_group);
+      });
+    } else {
+      // Показываем сообщение что анализов нет
+      const noTestsMessage = document.createElement('div');
+      noTestsMessage.className = 'no-tests-message';
+      noTestsMessage.innerHTML = `
+        <p>У вас пока нет загруженных анализов</p>
+        <p style="font-size: 14px; opacity: 0.7;">Выберите файл или сделайте фото чтобы начать</p>
+      `;
+      testsList.appendChild(noTestsMessage);
+    }
+    
+  } catch (error) {
+    console.error('Ошибка при загрузке анализов:', error);
   }
 }
 
