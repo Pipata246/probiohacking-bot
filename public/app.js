@@ -2961,57 +2961,7 @@ function showMyTestsPage() {
           <div class="uploaded-tests-section">
             <div class="uploaded-tests-list" id="uploadedTestsList">
               <h3 class="uploaded-tests-title">Загруженные анализы</h3>
-              <div class="test-item">
-                <div class="test-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#6B7280"/>
-                    <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-                <div class="test-info">
-                  <h4 class="test-name">Общий анализ крови</h4>
-                  <p class="test-date">01.11.2025</p>
-                </div>
-                <div class="test-actions">
-                  <div class="test-action-btn success">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                  <button class="test-action-btn delete">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              <div class="test-item">
-                <div class="test-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#6B7280"/>
-                    <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-                <div class="test-info">
-                  <h4 class="test-name">Биохимия крови</h4>
-                  <p class="test-date">01.11.2025</p>
-                </div>
-                <div class="test-actions">
-                  <div class="test-action-btn success">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                  <button class="test-action-btn delete">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
+              <!-- Сюда будут добавляться загруженные анализы -->
             </div>
           </div>
           
@@ -3205,7 +3155,7 @@ function setupMyTestsHandlers() {
   });
 }
 
-function handleFileUpload(file) {
+async function handleFileUpload(file) {
   console.log('=== НАЧАЛО ЗАГРУЗКИ ФАЙЛА ===');
   console.log('Имя файла:', file.name);
   console.log('Тип файла:', file.type);
@@ -3239,90 +3189,124 @@ function handleFileUpload(file) {
   console.log('Тип файла поддерживается');
 
   try {
-    // Создаем URL для файла для возможности просмотра
-    const fileURL = URL.createObjectURL(file);
-    console.log('URL файла создан:', fileURL);
+    // Показываем индикатор загрузки
+    showLoadingOverlay();
     
-    // Определяем источник файла для более понятного названия
-    let displayName = file.name;
-    const isImage = file.type.startsWith('image/') || 
-                   file.name.toLowerCase().includes('img_') || 
-                   file.name.toLowerCase().includes('photo');
+    // Получаем выбранный тип анализа
+    const activeTypeBtn = document.querySelector('.test-type-btn.active');
+    const analysisGroup = activeTypeBtn ? activeTypeBtn.textContent : 'Другое';
     
-    if (isImage) {
-      // Если это фото с камеры, даем ему более понятное название
-      const now = new Date();
-      const timestamp = now.toLocaleString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).replace(/[,\s:]/g, '_');
-      const extension = file.type.split('/')[1] || 'jpg';
-      displayName = `Фото_${timestamp}.${extension}`;
+    // Загружаем файл в Supabase Storage
+    const fileName = `${Date.now()}_${file.name}`;
+    const filePath = `analysis-photos/${window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'unknown'}/${fileName}`;
+    
+    console.log('Загружаем файл в Storage:', filePath);
+    
+    // Сначала получаем URL для загрузки
+    const uploadResponse = await fetch('/api/upload-analysis-photo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-WebApp-Data': window.Telegram?.WebApp?.initData || ''
+      },
+      body: JSON.stringify({
+        fileName,
+        fileType: file.type,
+        fileSize: file.size,
+        filePath
+      })
+    });
+    
+    if (!uploadResponse.ok) {
+      throw new Error('Не удалось получить URL для загрузки');
     }
     
-    console.log('Отображаемое имя:', displayName);
+    const { uploadUrl, publicUrl } = await uploadResponse.json();
     
-    // Добавляем новый элемент в список с данными файла
-    addUploadedTest(displayName, file.type, fileURL);
+    // Загружаем файл напрямую в Supabase Storage
+    const uploadResult = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type
+      },
+      body: file
+    });
+    
+    if (!uploadResult.ok) {
+      throw new Error('Не удалось загрузить файл');
+    }
+    
+    console.log('Файл успешно загружен в Storage:', publicUrl);
+    
+    // Сохраняем информацию о файле в базу данных
+    const saveResponse = await fetch('/api/analysis-photos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Telegram-WebApp-Data': window.Telegram?.WebApp?.initData || ''
+      },
+      body: JSON.stringify({
+        telegramUser: window.Telegram?.WebApp?.initDataUnsafe?.user,
+        photo_url: publicUrl,
+        photo_name: file.name,
+        file_size: file.size,
+        analysis_group: analysisGroup,
+        description: ''
+      })
+    });
+    
+    if (!saveResponse.ok) {
+      throw new Error('Не удалось сохранить информацию о файле');
+    }
+    
+    const saveResult = await saveResponse.json();
+    console.log('Информация о файле сохранена в БД:', saveResult);
+    
+    // Добавляем элемент на страницу
+    addUploadedTest(file.name, file.type, publicUrl, saveResult.photo.id, analysisGroup);
     
     // Показываем уведомление об успешной загрузке
-    const sourceText = isImage ? 'Фото' : 'Файл';
-    alert(`${sourceText} успешно загружен!`);
+    alert('Анализ успешно загружен!');
     
-    console.log('=== ФАЙЛ УСПЕШНО ОБРАБОТАН ===');
+    // Обновляем список загруженных анализов
+    loadUploadedTests();
+    
+    console.log('=== ФАЙЛ УСПЕШНО ЗАГРУЖЕН В БД ===');
     
   } catch (error) {
-    console.error('ОШИБКА при обработке файла:', error);
-    alert('Произошла ошибка при загрузке файла');
+    console.error('ОШИБКА при загрузке файла:', error);
+    alert('Произошла ошибка при загрузке файла: ' + error.message);
+  } finally {
+    hideLoadingOverlay();
   }
 }
 
-function addUploadedTest(fileName, fileType, fileURL) {
-  const testsList = document.getElementById('uploadedTestsList');
-  const activeType = document.querySelector('.test-type-btn.active').textContent;
-  const currentDate = new Date().toLocaleDateString('ru-RU');
-  
+function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
   const testItem = document.createElement('div');
   testItem.className = 'test-item';
-  testItem.setAttribute('data-file-url', fileURL);
-  testItem.setAttribute('data-file-type', fileType);
   testItem.innerHTML = `
-    <div class="test-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" fill="#6B7280"/>
-        <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
     <div class="test-info">
-      <h4 class="test-name">${activeType} - ${fileName}</h4>
-      <p class="test-date">${currentDate}</p>
+      <p class="test-name">${fileName}</p>
+      <p class="test-type">${analysisGroup}</p>
     </div>
-    <div class="test-actions">
-      <div class="test-action-btn success">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <button class="test-action-btn delete">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </div>
+    <button class="test-action-btn delete">Удалить</button>
+    <button class="test-action-btn view">Просмотр</button>
   `;
   
-  testsList.appendChild(testItem);
-  
-  // ДОБАВЛЯЕМ ОБРАБОТЧИКИ К НОВОМУ ЭЛЕМЕНТУ
-  const testInfo = testItem.querySelector('.test-info');
+  // Добавляем обработчики для кнопок
   const deleteBtn = testItem.querySelector('.test-action-btn.delete');
+  const viewBtn = testItem.querySelector('.test-action-btn.view');
   
-  // Обработчик просмотра
-  testInfo.addEventListener('click', () => {
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    console.log('Удаление файла:', fileName);
+    
+    if (confirm(`Удалить анализ "${fileName}"?`)) {
+      testItem.remove();
+    }
+  });
+  
+  viewBtn.addEventListener('click', () => {
     console.log('Клик по файлу:', fileName, 'Тип:', fileType);
     
     if (fileType && fileType.startsWith('image/')) {
@@ -3337,18 +3321,11 @@ function addUploadedTest(fileName, fileType, fileURL) {
     }
   });
   
-  // Обработчик удаления
-  deleteBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    console.log('Удаление файла:', fileName);
-    
-    if (confirm(`Удалить анализ "${fileName}"?`)) {
-      testItem.remove();
-    }
-  });
+  // Добавляем элемент на страницу
+  const testsList = document.getElementById('tests-list');
+  testsList.appendChild(testItem);
 }
 
-// Функция просмотра файла анализа
 // Функция показа изображения в модальном окне
 function showImageModal(imageURL, fileName) {
   // Создаем модальное окно для просмотра изображения
