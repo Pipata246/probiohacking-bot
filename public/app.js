@@ -51,7 +51,7 @@ function getAllDiagnosticAnswers() {
 
 function getFilledAnswersCount() {
   return Object.values(diagnosticAnswers).filter(value => 
-    value && value.trim() !== ''
+    value && value.trim() !== '' && value !== 'undefined' && value !== 'null'
   ).length;
 }
 
@@ -361,12 +361,18 @@ async function saveAllQuizAnswers() {
     console.log('🆔 Telegram ID:', telegramId);
     console.log('📝 Все ответы:', allAnswers);
     console.log('📊 Заполнено ответов:', filledCount, '/25');
-    console.log('🔍 Пустые ответы:', Object.entries(allAnswers).filter(([key, value]) => !value || value.trim() === ''));
+    
+    const emptyFields = Object.entries(allAnswers).filter(([key, value]) => 
+      !value || value.trim() === '' || value === 'undefined' || value === 'null'
+    );
+    
+    console.log('🔍 Пустые поля:', emptyFields);
+    console.log('🔍 Количество пустых полей:', emptyFields.length);
     
     // Проверяем что все 25 ответов заполнены
     if (filledCount !== 25) {
       console.error(`❌ Ошибка: нужно 25 ответов, заполнено ${filledCount}`);
-      console.error('❌ Список пустых полей:', Object.entries(allAnswers).filter(([key, value]) => !value || value.trim() === '').map(([key]) => key));
+      console.error('❌ Список пустых полей:', emptyFields.map(([key]) => key));
       return false;
     }
     

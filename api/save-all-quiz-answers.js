@@ -34,17 +34,33 @@ module.exports = async function handler(req, res) {
 
     // Проверяем что ровно 25 ответов
     const answerCount = Object.keys(answers).length;
-    if (answerCount !== 25) {
-      console.error('❌ VALIDATION ERROR: Expected 25 answers, got', answerCount);
-      console.error('❌ Missing answers:', Object.keys(answers).filter(key => !answers[key] || answers[key].trim() === ''));
+    const validAnswersCount = Object.values(answers).filter(value => 
+      value && value.trim() !== '' && value !== 'undefined' && value !== 'null'
+    ).length;
+    
+    console.log('📊 Answer validation:', {
+      total_keys: answerCount,
+      valid_answers: validAnswersCount,
+      expected: 25
+    });
+    
+    if (validAnswersCount !== 25) {
+      const emptyFields = Object.entries(answers).filter(([key, value]) => 
+        !value || value.trim() === '' || value === 'undefined' || value === 'null'
+      );
+      
+      console.error('❌ VALIDATION ERROR: Expected 25 valid answers, got', validAnswersCount);
+      console.error('❌ Empty/invalid fields:', emptyFields);
+      
       return res.status(400).json({ 
         success: false, 
-        error: `Expected 25 answers, got ${answerCount}`,
+        error: `Expected 25 valid answers, got ${validAnswersCount}`,
         details: {
           received: answerCount,
+          valid: validAnswersCount,
           expected: 25,
-          missing: Object.keys(answers).filter(key => !answers[key] || answers[key].trim() === ''),
-          all_keys: Object.keys(answers)
+          empty_fields: emptyFields.map(([key]) => key),
+          all_answers: answers
         }
       });
     }
@@ -110,16 +126,20 @@ module.exports = async function handler(req, res) {
 
     // Создаем записи для каждого ответа
     for (const [questionId, answerValue] of Object.entries(answers)) {
-      if (answerValue && answerValue.trim() !== '') {
-        answersToInsert.push({
-          telegram_id: telegramId,
-          question_id: questionId,
-          question_text: questionTexts[questionId] || questionId,
-          answer_text: answerValue,
-          answer_value: answerValue,
-          updated_at: new Date().toISOString()
-        });
+      // Пропускаем пустые или невалидные ответы
+      if (!answerValue || answerValue.trim() === '' || answerValue === 'undefined' || answerValue === 'null') {
+        console.log('⚠️ Skipping empty/invalid answer for:', questionId, 'value:', answerValue);
+        continue;
       }
+      
+      answersToInsert.push({
+        telegram_id: telegramId,
+        question_id: questionId,
+        question_text: questionTexts[questionId] || questionId,
+        answer_text: answerValue,
+        answer_value: answerValue,
+        updated_at: new Date().toISOString()
+      });
     }
 
     console.log('📝 Inserting', answersToInsert.length, 'answers');
