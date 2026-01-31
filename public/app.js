@@ -3673,7 +3673,9 @@ function saveCurrentQuestionAnswer() {
     let customAnswer = document.querySelector('.quiz-custom-input');
     
     if (selectedAnswer) {
-      saveSurveyAnswer(currentQuestion.id, selectedAnswer.value);
+      // Сохраняем LABEL (текст который видит пользователь), а не VALUE
+      const selectedLabel = selectedAnswer.nextElementSibling?.textContent?.trim() || selectedAnswer.value;
+      saveSurveyAnswer(currentQuestion.id, selectedLabel);
     } else if (customAnswer && customAnswer.value.trim()) {
       saveSurveyAnswer(currentQuestion.id, customAnswer.value.trim());
     }
@@ -3685,8 +3687,9 @@ function restoreQuestionAnswer(questionId) {
   const savedAnswer = getDiagnosticAnswer(questionId);
   
   if (savedAnswer) {
-    // Проверяем, это стандартный ответ или кастомный
-    const radioButton = document.querySelector(`input[name="question_${questionId}"][value="${savedAnswer}"]`);
+    // Ищем радио-кнопку по тексту (label), а не по value
+    const radioButton = Array.from(document.querySelectorAll(`input[name="question_${questionId}"]`))
+      .find(radio => radio.nextElementSibling?.textContent?.trim() === savedAnswer);
     const customInput = document.querySelector('.quiz-custom-input');
     
     if (radioButton) {
