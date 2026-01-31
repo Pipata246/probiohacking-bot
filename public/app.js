@@ -2279,8 +2279,11 @@ async function sendMessageToAI(message) {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - initializing app');
   
-  // Загружаем список анализов в фоновом режиме
-  loadUploadedTests();
+  // Мгновенная загрузка фото из Supabase
+  await loadPhotosFromSupabase();
+  
+  // Инициализация Realtime для автообновления
+  initPhotosRealtime();
   
   // Проверяем статус квиза
   await checkQuizStatus();
@@ -3288,50 +3291,103 @@ async function handleFileUpload(file) {
   }
 }
 
-// Загрузка и отображение загруженных анализов
-async function loadUploadedTests() {
-  try {
-    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    const response = await fetch('/api/analysis-photos', {
-      headers: {
-        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+// Глобальное состояние для фото
+let uploadedPhotosState = [];
+let photosSubscription = null;
+
+// Инициализация Supabase Realtime для фото
+function initPhotosRealtime() {
+  if (photosSubscription) {
+    photosSubscription.unsubscribe();
+  }
+
+  const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  if (!telegramId) return;
+
+  // Подписываемся на изменения в таблице user_analysis_photos
+  photosSubscription = supabase
+    .channel('user_analysis_photos')
+    .on('postgres_changes', 
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'user_analysis_photos',
+        filter: `telegram_id=eq.${telegramId}`
+      }, 
+      (payload) => {
+        console.log('Photos change:', payload);
+        
+        if (payload.eventType === 'INSERT') {
+          // Добавляем новое фото в состояние
+          uploadedPhotosState.unshift(payload.new);
+          updatePhotosUI();
+        } else if (payload.eventType === 'DELETE') {
+          // Удаляем фото из состояния
+          uploadedPhotosState = uploadedPhotosState.filter(p => p.id !== payload.old.id);
+          updatePhotosUI();
+        }
       }
-    });
+    )
+    .subscribe();
+}
+
+// Мгновенная загрузка фото из Supabase
+async function loadPhotosFromSupabase() {
+  try {
+    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    if (!telegramId) return;
+
+    console.log('🚀 Мгновенная загрузка фото из Supabase...');
     
-    if (!response.ok) {
-      console.error('Ошибка загрузки анализов:', response.status);
+    const { data, error } = await supabase
+      .from('user_analysis_photos')
+      .select('*')
+      .eq('telegram_id', telegramId)
+      .order('upload_date', { ascending: false });
+
+    if (error) {
+      console.error('Ошибка загрузки фото:', error);
       return;
     }
+
+    // Сохраняем в состояние
+    uploadedPhotosState = data || [];
+    console.log('✅ Фото загружены в состояние:', uploadedPhotosState.length);
     
-    const data = await response.json();
-    console.log('Analysis photos response:', data);
-    
-    if (!data.success || !data.photos) {
-      console.log('Фото не найдены');
-      return;
-    }
-    
-    // Находим контейнер
-    const testsList = document.getElementById('uploadedTestsList');
-    if (!testsList) {
-      console.log('Контейнер еще не создан');
-      return;
-    }
-    
-    // Очищаем и заполняем
-    testsList.innerHTML = '<h3>Загруженные анализы</h3>';
-    
-    if (data.photos.length > 0) {
-      data.photos.forEach(photo => {
-        addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
-      });
-    } else {
-      testsList.innerHTML += '<p style="text-align: center; opacity: 0.7;">Нет загруженных анализов</p>';
-    }
+    // Обновляем UI если страница открыта
+    updatePhotosUI();
     
   } catch (error) {
     console.error('Ошибка:', error);
   }
+}
+
+// Обновление UI из состояния
+function updatePhotosUI() {
+  const testsList = document.getElementById('uploadedTestsList');
+  if (!testsList) return;
+
+  testsList.innerHTML = '<h3>Загруженные анализы</h3>';
+  
+  if (uploadedPhotosState.length > 0) {
+    uploadedPhotosState.forEach(photo => {
+      addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
+    });
+  } else {
+    testsList.innerHTML += '<p style="text-align: center; opacity: 0.7;">Нет загруженных анализов</p>';
+  }
+}
+
+// Загрузка и отображение загруженных анализов (старая функция для совместимости)
+async function loadUploadedTests() {
+  // Если фото уже в состоянии, просто обновляем UI
+  if (uploadedPhotosState.length > 0) {
+    updatePhotosUI();
+    return;
+  }
+  
+  // Иначе загружаем из Supabase
+  await loadPhotosFromSupabase();
 }
 
 // Функция для обновления списка анализов если страница уже открыта
