@@ -3203,7 +3203,7 @@ async function handleFileUpload(file) {
     console.log('Загружаем файл в Storage:', filePath);
     
     // Сначала получаем URL для загрузки
-    const uploadResponse = await fetch('/api/upload-analysis-photo', {
+    const uploadResponse = await fetch('/api/analysis-photos?action=upload-url', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
