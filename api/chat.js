@@ -512,8 +512,8 @@ module.exports = async (req, res) => {
       chatId: currentChatId,
       newChatCreated: false,
       contextOverflow: false,
-      quizCompleted: quizCompleted,
-      quizRecommendation: !quizCompleted ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null
+      quizCompleted: diagnosticData?.quiz_completed || false,
+      quizRecommendation: !diagnosticData?.quiz_completed ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null
     };
 
     return res.status(200).json(responsePayload);
