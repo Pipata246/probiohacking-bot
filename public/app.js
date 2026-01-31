@@ -3291,13 +3291,10 @@ async function handleFileUpload(file) {
 // Загрузка и отображение загруженных анализов
 async function loadUploadedTests() {
   try {
-    console.log('=== ЗАГРУЖАЕМ АНАЛИЗЫ ИЗ БД ===');
-    
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/analysis-photos', {
-      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
-        'X-Telegram-WebApp-Data': window.Telegram?.WebApp?.initData || ''
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
     });
     
@@ -3306,14 +3303,13 @@ async function loadUploadedTests() {
       return;
     }
     
-    const { success, photos } = await response.json();
+    const data = await response.json();
+    console.log('Analysis photos response:', data);
     
-    if (!success || !photos) {
-      console.log('Фото не найдены в БД');
+    if (!data.success || !data.photos) {
+      console.log('Фото не найдены');
       return;
     }
-    
-    console.log('Найдено фото:', photos.length);
     
     // Находим контейнер
     const testsList = document.getElementById('uploadedTestsList');
@@ -3325,8 +3321,8 @@ async function loadUploadedTests() {
     // Очищаем и заполняем
     testsList.innerHTML = '<h3>Загруженные анализы</h3>';
     
-    if (photos.length > 0) {
-      photos.forEach(photo => {
+    if (data.photos.length > 0) {
+      data.photos.forEach(photo => {
         addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
       });
     } else {
