@@ -357,11 +357,16 @@ async function saveAllQuizAnswers() {
     const allAnswers = getAllDiagnosticAnswers();
     const filledCount = getFilledAnswersCount();
     
-    console.log(`📊 Проверяем ответы: ${filledCount}/24 заполнено`);
+    console.log('📊 ДАННЫЕ ДЛЯ СОХРАНЕНИЯ:');
+    console.log('🆔 Telegram ID:', telegramId);
+    console.log('📝 Все ответы:', allAnswers);
+    console.log('📊 Заполнено ответов:', filledCount, '/25');
+    console.log('🔍 Пустые ответы:', Object.entries(allAnswers).filter(([key, value]) => !value || value.trim() === ''));
     
-    // Проверяем что все 24 ответа заполнены
-    if (filledCount !== 24) {
-      console.error(`❌ Ошибка: нужно 24 ответа, заполнено ${filledCount}`);
+    // Проверяем что все 25 ответов заполнены
+    if (filledCount !== 25) {
+      console.error(`❌ Ошибка: нужно 25 ответов, заполнено ${filledCount}`);
+      console.error('❌ Список пустых полей:', Object.entries(allAnswers).filter(([key, value]) => !value || value.trim() === '').map(([key]) => key));
       return false;
     }
     
@@ -370,32 +375,44 @@ async function saveAllQuizAnswers() {
     
     // Отправляем все ответы одним запросом
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const requestBody = {
+      telegramId: telegramId,
+      answers: allAnswers
+    };
+    
+    console.log('📤 Отправляем запрос:', requestBody);
+    
     const response = await fetch('/api/save-all-quiz-answers', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       },
-      body: JSON.stringify({
-        telegramId: telegramId,
-        answers: allAnswers
-      })
+      body: JSON.stringify(requestBody)
     });
+    
+    console.log('📥 Ответ сервера (статус):', response.status);
     
     // Скрываем загрузку
     hideLoadingOverlay();
     
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Все ответы сохранены:', data);
+      console.log('✅ Успешный ответ сервера:', data);
       return data.success;
     } else {
       const error = await response.json();
-      console.error('❌ Ошибка сохранения:', error);
+      console.error('❌ Ошибка сервера:', error);
+      console.error('❌ Детали ошибки:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: error
+      });
       return false;
     }
   } catch (error) {
-    console.error('Error saving quiz answers:', error);
+    console.error('❌ Ошибка в saveAllQuizAnswers:', error);
+    console.error('❌ Stack trace:', error.stack);
     hideLoadingOverlay();
     return false;
   }

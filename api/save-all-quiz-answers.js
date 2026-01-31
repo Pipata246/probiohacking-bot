@@ -30,21 +30,43 @@ module.exports = async function handler(req, res) {
 
     console.log('💾 Saving all quiz answers for telegramId:', telegramId);
     console.log('📊 Answers count:', Object.keys(answers).length);
+    console.log('📝 All answers being saved:', answers);
 
     // Проверяем что ровно 25 ответов
     const answerCount = Object.keys(answers).length;
     if (answerCount !== 25) {
+      console.error('❌ VALIDATION ERROR: Expected 25 answers, got', answerCount);
+      console.error('❌ Missing answers:', Object.keys(answers).filter(key => !answers[key] || answers[key].trim() === ''));
       return res.status(400).json({ 
         success: false, 
-        error: `Expected 25 answers, got ${answerCount}` 
+        error: `Expected 25 answers, got ${answerCount}`,
+        details: {
+          received: answerCount,
+          expected: 25,
+          missing: Object.keys(answers).filter(key => !answers[key] || answers[key].trim() === ''),
+          all_keys: Object.keys(answers)
+        }
       });
     }
 
+    console.log('✅ Validation passed, proceeding to save...');
+
     // Удаляем все старые ответы пользователя
-    await supabase
+    console.log('🗑️ Deleting old answers for telegram_id:', telegramId);
+    const { error: deleteError } = await supabase
       .from('quiz_answers')
       .delete()
       .eq('telegram_id', telegramId);
+
+    if (deleteError) {
+      console.error('❌ DELETE ERROR:', deleteError);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to delete old answers',
+        details: deleteError
+      });
+    }
+    console.log('✅ Old answers deleted successfully');
 
     // Готовим массив для вставки всех ответов
     const answersToInsert = [];
@@ -101,6 +123,7 @@ module.exports = async function handler(req, res) {
     }
 
     console.log('📝 Inserting', answersToInsert.length, 'answers');
+    console.log('📋 Sample answers to insert:', answersToInsert.slice(0, 3));
 
     // Вставляем все ответы одним запросом
     const { data, error } = await supabase
@@ -108,14 +131,26 @@ module.exports = async function handler(req, res) {
       .insert(answersToInsert)
       .select();
 
+    console.log('📊 INSERT RESULT:', { data, error });
+
     if (error) {
-      console.error('❌ Save error:', error);
-      return res.status(500).json({ success: false, error: error.message });
+      console.error('❌ INSERT ERROR DETAILS:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      return res.status(500).json({ 
+        success: false, 
+        error: error.message,
+        details: error
+      });
     }
 
     console.log('✅ All answers saved:', data?.length || 0);
 
     // Обновляем статус квиза
+    console.log('🔄 Updating quiz status to TRUE for telegram_id:', telegramId);
     const { error: updateError } = await supabase
       .from('users')
       .update({ 
@@ -124,17 +159,27 @@ module.exports = async function handler(req, res) {
       })
       .eq('telegram_id', telegramId);
 
+    console.log('📊 STATUS UPDATE RESULT:', { updateError });
+
     if (updateError) {
-      console.error('❌ Status update error:', updateError);
+      console.error('❌ STATUS UPDATE ERROR DETAILS:', {
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+        code: updateError.code
+      });
     } else {
       console.log('✅ Quiz status updated to TRUE');
     }
 
-    return res.json({ 
+    const finalResponse = { 
       success: true, 
       saved: data?.length || 0,
       total: answerCount
-    });
+    };
+    
+    console.log('🎉 FINAL SUCCESS RESPONSE:', finalResponse);
+    return res.json(finalResponse);
 
   } catch (error) {
     console.error('❌ API error:', error);
