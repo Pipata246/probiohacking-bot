@@ -3334,35 +3334,49 @@ function initPhotosRealtime() {
 // Мгновенная загрузка фото из API
 async function loadPhotosFromSupabase() {
   try {
+    console.log('🔥 НАЧИНАЮ ЗАГРУЗКУ ФОТО...');
+    
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    console.log('📱 Telegram data:', telegramWebAppData ? 'exists' : 'missing');
+    
     const response = await fetch('/api/analysis-photos', {
       headers: {
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
     });
     
+    console.log('📡 Response status:', response.status);
+    
     if (!response.ok) {
-      console.error('Ошибка загрузки фото:', response.status);
+      const errorText = await response.text();
+      console.error('❌ Ошибка загрузки фото:', response.status, errorText);
       return;
     }
     
     const data = await response.json();
     console.log('📋 Photos API response:', data);
     
-    if (!data.success || !data.photos) {
-      console.log('Фото не найдены');
+    if (!data.success) {
+      console.error('❌ API returned success=false:', data);
+      return;
+    }
+    
+    if (!data.photos || data.photos.length === 0) {
+      console.log('📭 Фото не найдены в ответе');
+      uploadedPhotosState = [];
       return;
     }
 
     // Сохраняем в состояние
     uploadedPhotosState = data.photos || [];
     console.log('✅ Фото загружены в состояние:', uploadedPhotosState.length);
+    console.log('📸 Фото данные:', uploadedPhotosState);
     
     // Обновляем UI если страница открыта
     updatePhotosUI();
     
   } catch (error) {
-    console.error('Ошибка:', error);
+    console.error('❌ Ошибка загрузки фото:', error);
   }
 }
 
