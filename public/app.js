@@ -3698,14 +3698,23 @@ function saveCurrentQuestionAnswer() {
 function restoreQuestionAnswer(questionId) {
   const savedAnswer = getDiagnosticAnswer(questionId);
   
+  console.log(`🔄 Восстанавливаем ответ для ${questionId}: "${savedAnswer}"`);
+  
   if (savedAnswer) {
-    // Ищем радио-кнопку по тексту (label), а не по value
+    // Ищем радио-кнопку по тексту с более гибким сравнением
     const radioButton = Array.from(document.querySelectorAll(`input[name="question_${questionId}"]`))
-      .find(radio => radio.nextElementSibling?.textContent?.trim() === savedAnswer);
+      .find(radio => {
+        const label = radio.nextElementSibling?.textContent?.trim();
+        console.log(`🔍 Проверяем опцию: "${label}" vs "${savedAnswer}"`);
+        return label === savedAnswer || label.includes(savedAnswer) || savedAnswer.includes(label);
+      });
     const customInput = document.querySelector('.quiz-custom-input');
+    
+    console.log(`📋 Найдена радио-кнопка: ${!!radioButton}`);
     
     if (radioButton) {
       // Это стандартный ответ - выбираем его и отключаем остальные
+      console.log('✅ Выбираем стандартный ответ');
       radioButton.checked = true;
       
       // Отключаем поле для кастомного ответа
@@ -3731,6 +3740,7 @@ function restoreQuestionAnswer(questionId) {
       
     } else if (customInput) {
       // Это кастомный ответ - заполняем поле и отключаем радио-кнопки
+      console.log('✅ Заполняем кастомный ответ');
       customInput.value = savedAnswer;
       
       // Отключаем все радио-кнопки
@@ -3746,7 +3756,11 @@ function restoreQuestionAnswer(questionId) {
       allQuizOptions.forEach(option => {
         option.classList.add('disabled');
       });
+    } else {
+      console.log('❌ Не найдено ни радио-кнопки ни кастомного поля');
     }
+  } else {
+    console.log(`📭 Нет сохраненного ответа для ${questionId}`);
   }
 }
 
