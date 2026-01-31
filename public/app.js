@@ -2651,59 +2651,69 @@ function showDiagnosticForm() {
   setTimeout(() => {
     // Обработчик кнопки "Создать программу"
     const additionalNextBtn = document.getElementById('additionalNextBtn');
+    console.log('🔍 Ищем кнопку additionalNextBtn:', additionalNextBtn);
+    
     if (additionalNextBtn) {
+      console.log('✅ Кнопка найдена, добавляем обработчик');
       additionalNextBtn.addEventListener('click', async () => {
-        console.log('🔥 КНОПКА СОЗДАТЬ ПРОГРАММУ НАЖАТА!');
-        
-        // Сохраняем последние дополнительные ответы в state
-        saveAdditionalAnswersRealtime();
-        
-        // Проверяем что все 24 ответа заполнены
-        const filledCount = getFilledAnswersCount();
-        console.log(`📊 Заполнено ответов: ${filledCount}/24`);
-        
-        if (filledCount !== 24) {
-          if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.showAlert(`Пожалуйста, заполните все поля. Заполнено: ${filledCount} из 24`);
+        try {
+          console.log('🔥 КНОПКА СОЗДАТЬ ПРОГРАММУ НАЖАТА!');
+          
+          // Сохраняем последние дополнительные ответы в state
+          saveAdditionalAnswersRealtime();
+          
+          // Проверяем что все 24 ответа заполнены
+          const filledCount = getFilledAnswersCount();
+          console.log(`📊 Заполнено ответов: ${filledCount}/24`);
+          
+          if (filledCount !== 24) {
+            if (window.Telegram?.WebApp) {
+              window.Telegram.WebApp.showAlert(`Пожалуйста, заполните все поля. Заполнено: ${filledCount} из 24`);
+            }
+            return;
           }
-          return;
-        }
-        
-        // ЗАВЕРШАЕМ ДИАГНОСТИКУ
-        console.log('💾 Сохраняем все результаты в базу данных...');
-        const success = await completeDiagnosticQuiz();
-        
-        if (success) {
-          // Удаляем форму диагностики
-          const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
-          isDiagnosticFormMode = false;
           
-          console.log('🗑️ Удаляем форму...');
-          diagnosticFormOverlay.remove();
-          document.body.classList.remove('chat-overlay-visible');
+          // ЗАВЕРШАЕМ ДИАГНОСТИКУ
+          console.log('💾 Сохраняем все результаты в базу данных...');
+          const success = await completeDiagnosticQuiz();
           
-          console.log('✅ Показываем Telegram уведомление...');
-          if (window.Telegram?.WebApp) {
-            // Показываем уведомление и переходим на главную после нажатия "Хорошо"
-            window.Telegram.WebApp.showAlert(
-              'Спасибо! Ваши ответы сохранены.\nТеперь ИИ будет давать персонализированные рекомендации.',
-              () => {
-                console.log('🏠 Переходим на главную страницу...');
-                showPage('main'); // Переход на главную
-              }
-            );
+          if (success) {
+            // Удаляем форму диагностики
+            const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+            isDiagnosticFormMode = false;
+            
+            console.log('🗑️ Удаляем форму...');
+            diagnosticFormOverlay.remove();
+            document.body.classList.remove('chat-overlay-visible');
+            
+            console.log('✅ Показываем Telegram уведомление...');
+            if (window.Telegram?.WebApp) {
+              // Показываем уведомление и переходим на главную после нажатия "Хорошо"
+              window.Telegram.WebApp.showAlert(
+                'Спасибо! Ваши ответы сохранены.\nТеперь ИИ будет давать персонализированные рекомендации.',
+                () => {
+                  console.log('🏠 Переходим на главную страницу...');
+                  showPage('main'); // Переход на главную
+                }
+              );
+            } else {
+              // Fallback для тестирования
+              console.log('🏠 Переходим на главную страницу...');
+              showPage('main');
+            }
+            
+            console.log('📊 Диагностика завершена и сохранена в БД');
           } else {
-            // Fallback для тестирования
-            console.log('🏠 Переходим на главную страницу...');
-            showPage('main');
+            // Если сохранение не удалось, показываем ошибку
+            console.error('❌ Ошибка при сохранении результатов квиза');
+            if (window.Telegram?.WebApp) {
+              window.Telegram.WebApp.showAlert('Произошла ошибка при сохранении результатов. Попробуйте еще раз.');
+            }
           }
-          
-          console.log('📊 Диагностика завершена и сохранена в БД');
-        } else {
-          // Если сохранение не удалось, показываем ошибку
-          console.error('❌ Ошибка при сохранении результатов квиза');
+        } catch (error) {
+          console.error('❌ Ошибка в обработчике кнопки:', error);
           if (window.Telegram?.WebApp) {
-            window.Telegram.WebApp.showAlert('Произошла ошибка при сохранении результатов. Попробуйте еще раз.');
+            window.Telegram.WebApp.showAlert('Произошла ошибка. Попробуйте еще раз.');
           }
         }
       });
