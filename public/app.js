@@ -15,7 +15,7 @@ tg.ready();
 // STATE ДЛЯ ДИАГНОСТИКИ
 // ========================================
 let diagnosticAnswers = {
-  // Персональные данные (7 полей)
+  // Персональные данные (8 полей включая gender)
   fullName: '',
   birthDate: '',
   profession: '',
@@ -2662,13 +2662,13 @@ function showDiagnosticForm() {
           // Сохраняем последние дополнительные ответы в state
           saveAdditionalAnswersRealtime();
           
-          // Проверяем что все 24 ответа заполнены
+          // Проверяем что все 25 ответов заполнены
           const filledCount = getFilledAnswersCount();
-          console.log(`📊 Заполнено ответов: ${filledCount}/24`);
+          console.log(`📊 Заполнено ответов: ${filledCount}/25`);
           
-          if (filledCount !== 24) {
+          if (filledCount !== 25) {
             if (window.Telegram?.WebApp) {
-              window.Telegram.WebApp.showAlert(`Пожалуйста, заполните все поля. Заполнено: ${filledCount} из 24`);
+              window.Telegram.WebApp.showAlert(`Пожалуйста, заполните все поля. Заполнено: ${filledCount} из 25`);
             }
             return;
           }

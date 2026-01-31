@@ -31,12 +31,12 @@ module.exports = async function handler(req, res) {
     console.log('💾 Saving all quiz answers for telegramId:', telegramId);
     console.log('📊 Answers count:', Object.keys(answers).length);
 
-    // Проверяем что ровно 24 ответа
+    // Проверяем что ровно 25 ответов
     const answerCount = Object.keys(answers).length;
-    if (answerCount !== 24) {
+    if (answerCount !== 25) {
       return res.status(400).json({ 
         success: false, 
-        error: `Expected 24 answers, got ${answerCount}` 
+        error: `Expected 25 answers, got ${answerCount}` 
       });
     }
 
