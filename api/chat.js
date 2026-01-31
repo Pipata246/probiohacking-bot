@@ -1,3 +1,101 @@
+// Функция для получения диагностических данных пользователя
+async function getUserDiagnosticData(userId) {
+  try {
+    // Проверяем статус квиза
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('quiz_completed')
+      .eq('telegram_id', userId)
+      .single();
+
+    if (userError || !userData) {
+      console.log('User not found or error:', userError);
+      return null;
+    }
+
+    if (!userData.quiz_completed) {
+      return {
+        quiz_completed: false,
+        message: 'Пользователь еще не прошел диагностику'
+      };
+    }
+
+    // Получаем все ответы пользователя
+    const { data: answers, error: answersError } = await supabase
+      .from('quiz_answers')
+      .select('*')
+      .eq('telegram_id', userId)
+      .order('created_at', { ascending: true });
+
+    if (answersError) {
+      console.error('Error fetching diagnostic answers:', answersError);
+      return null;
+    }
+
+    // Группируем ответы по категориям
+    const diagnosticData = {
+      quiz_completed: true,
+      personal_data: {},
+      quiz_answers: {},
+      additional_answers: {},
+      full_answers: answers
+    };
+
+    answers.forEach(answer => {
+      const questionId = answer.question_id;
+      
+      // Персональные данные
+      if (['fullName', 'birthDate', 'profession', 'city', 'weight', 'height', 'sport', 'gender'].includes(questionId)) {
+        diagnosticData.personal_data[questionId] = answer.answer_text;
+      }
+      // Дополнительные ответы
+      else if (['discomfort', 'diagnosis', 'treatment'].includes(questionId)) {
+        diagnosticData.additional_answers[questionId] = answer.answer_text;
+      }
+      // Ответы квиза
+      else {
+        diagnosticData.quiz_answers[questionId] = {
+          question: answer.question_text,
+          answer: answer.answer_text,
+          system: getSystemByQuestionId(questionId)
+        };
+      }
+    });
+
+    console.log('📊 Diagnostic data loaded for user:', userId);
+    return diagnosticData;
+
+  } catch (error) {
+    console.error('Error in getUserDiagnosticData:', error);
+    return null;
+  }
+}
+
+// Функция для определения системы по ID вопроса
+function getSystemByQuestionId(questionId) {
+  const systemMap = {
+    'V17': 'Нервная система',
+    'V18': 'Сердечно-сосудистая система', 
+    'V19': 'Дыхательная система',
+    'V20': 'Пищеварительная система',
+    'V21': 'Эндокринная система',
+    'V22': 'Иммунная система',
+    'V23': 'Опорно-двигательный аппарат',
+    'V24': 'Кожа и волосы',
+    'V25': 'Мочеполовая система',
+    'V26': 'Органы чувств',
+    'V27': 'Психоэмоциональное состояние',
+    'V28': 'Сон и отдых',
+    'V29': 'Питание и обмен веществ',
+    'V30': 'Физическая активность',
+    'V31': 'Детоксикация',
+    'V32': 'Стресс и адаптация',
+    'V33': 'Соединительная ткань'
+  };
+  
+  return systemMap[questionId] || 'Общее состояние';
+}
+
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
@@ -283,37 +381,10 @@ module.exports = async (req, res) => {
       console.log(`⚠️ Cannot get chat history - userInfo: ${!!userInfo}`);
     }
 
-    // Проверяем статус прохождения квиза и получаем контекст
-    let quizContext = '';
-    let quizCompleted = false;
+    // Получаем диагностические данные пользователя
+    const diagnosticData = await getUserDiagnosticData(userId);
     
-    if (userInfo && userInfo.id) {
-      try {
-        // Проверяем статус квиза
-        const { data: quizStatus, error: statusError } = await supabase.rpc('check_user_quiz_status', {
-          p_user_id: userInfo.id
-        });
-        
-        if (!statusError) {
-          quizCompleted = quizStatus;
-          
-          // Если квиз пройден, получаем контекст
-          if (quizCompleted) {
-            const { data: contextData, error: contextError } = await supabase.rpc('get_user_quiz_context', {
-              p_user_id: userInfo.id
-            });
-            
-            if (!contextError && contextData && contextData !== 'Нет данных квиза') {
-              quizContext = contextData;
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error checking quiz status:', error);
-      }
-    }
-
-    // Формируем системный промпт с учетом истории чата и квиза
+    // Формируем системный промпт с учетом диагностических данных
     let systemPrompt = SYSTEM_PROMPT;
     
     // Добавляем историю чата
@@ -321,14 +392,48 @@ module.exports = async (req, res) => {
       systemPrompt += chatHistory;
     }
     
-    if (!quizCompleted) {
+    if (!diagnosticData) {
+      // Если не удалось получить данные, добавляем базовую рекомендацию
+      systemPrompt += `\n\nВАЖНО: Не удалось загрузить данные диагностики. 
+Рекомендуй пользователю пройти диагностику для получения персонализированных рекомендаций.`;
+    } else if (!diagnosticData.quiz_completed) {
       // Добавляем рекомендацию пройти квиз
       systemPrompt += `\n\nВАЖНО: Пользователь еще не прошел персональную диагностику. 
 В каждом ответе мягко рекомендуй пройти квиз для получения персонализированных рекомендаций. 
 Предлагай кнопку "Пройти диагностику" для получения точных советов по здоровью.`;
-    } else if (quizContext) {
-      // Добавляем контекст из квиза
-      systemPrompt += `\n\n${quizContext}`;
+    } else {
+      // Добавляем полную диагностическую информацию в промпт
+      systemPrompt += `\n\n📊 ДИАГНОСТИЧЕСКИЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ:
+      
+👤 ПЕРСОНАЛЬНЫЕ ДАННЫЕ:
+- ФИО: ${diagnosticData.personal_data.fullName || 'Не указано'}
+- Возраст/Дата рождения: ${diagnosticData.personal_data.birthDate || 'Не указано'}
+- Профессия: ${diagnosticData.personal_data.profession || 'Не указано'}
+- Город: ${diagnosticData.personal_data.city || 'Не указано'}
+- Вес: ${diagnosticData.personal_data.weight || 'Не указано'}
+- Рост: ${diagnosticData.personal_data.height || 'Не указано'}
+- Спорт: ${diagnosticData.personal_data.sport || 'Не указано'}
+- Пол: ${diagnosticData.personal_data.gender || 'Не указано'}
+
+🔍 ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ:
+- Что беспокоит: ${diagnosticData.additional_answers.discomfort || 'Не указано'}
+- Диагнозы: ${diagnosticData.additional_answers.diagnosis || 'Не указано'}
+- Лечение: ${diagnosticData.additional_answers.treatment || 'Не указано'}
+
+📋 РЕЗУЛЬТАТЫ ОПРОСА ПО СИСТЕМАМ ОРГАНИЗМА:`;
+
+      // Добавляем ответы по системам организма
+      Object.entries(diagnosticData.quiz_answers).forEach(([questionId, data]) => {
+        systemPrompt += `\n- ${data.system}: ${data.question} → Ответ: "${data.answer}"`;
+      });
+
+      systemPrompt += `\n\n🎯 ИНСТРУКЦИИ ДЛЯ ИИ:
+1. Учитывай все диагностические данные при формировании рекомендаций
+2. Обращай внимание на системы, где есть проблемы (негативные ответы)
+3. Давай персонализированные советы основываясь на конкретных ответах
+4. Учитывай возраст, пол, профессию и образ жизни
+5. Ссылайсь на диагностические данные когда это уместно
+6. Будь более конкретным в рекомендациях基于 на этих данных`;
     }
 
     const payload = {
