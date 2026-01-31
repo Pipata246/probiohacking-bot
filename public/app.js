@@ -300,88 +300,27 @@ async function completeQuiz(telegramId) {
 // Функция для сбора данных из формы диагностики и сохранения
 async function completeDiagnosticQuiz() {
   try {
-    console.log('🔍 Начинаем сбор данных из формы диагностики...');
-    
-    // Собираем данные из localStorage
-    const diagnosticPersonalData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
-    const surveyAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
-    const additionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
-    
-    console.log('📊 Данные из localStorage:');
-    console.log('Personal data:', diagnosticPersonalData);
-    console.log('Survey answers:', surveyAnswers);
-    console.log('Additional answers:', additionalAnswers);
+    console.log('🔍 Начинаем завершение диагностики...');
     
     // Получаем Telegram ID
     const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (!telegramUser?.id) {
-      showNotificationMessage('❌ Ошибка: не удалось получить Telegram ID');
+      console.error('❌ Ошибка: не удалось получить Telegram ID');
       return false;
     }
     
     const telegramId = telegramUser.id;
     
-    // Сохраняем персональные данные с полными вопросами
-    await saveQuizAnswer(telegramId, 'age', 'Ваш возраст:', diagnosticPersonalData.age || '', diagnosticPersonalData.age || '');
-    await saveQuizAnswer(telegramId, 'gender', 'Ваш пол:', diagnosticPersonalData.gender || '', diagnosticPersonalData.gender || '');
-    await saveQuizAnswer(telegramId, 'weight', 'Ваш вес (кг):', diagnosticPersonalData.weight || '', diagnosticPersonalData.weight || '');
-    await saveQuizAnswer(telegramId, 'height', 'Ваш рост (см):', diagnosticPersonalData.height || '', diagnosticPersonalData.height || '');
-    await saveQuizAnswer(telegramId, 'activity', 'Уровень физической активности:', diagnosticPersonalData.activity || '', diagnosticPersonalData.activity || '');
-    await saveQuizAnswer(telegramId, 'sleep', 'Продолжительность сна (часов):', diagnosticPersonalData.sleep || '', diagnosticPersonalData.sleep || '');
-    await saveQuizAnswer(telegramId, 'stress', 'Уровень стресса (1-10):', diagnosticPersonalData.stress || '', diagnosticPersonalData.stress || '');
-    await saveQuizAnswer(telegramId, 'energy', 'Уровень энергии (1-10):', diagnosticPersonalData.energy || '', diagnosticPersonalData.energy || '');
-    await saveQuizAnswer(telegramId, 'digestion', 'Качество пищеварения:', diagnosticPersonalData.digestion || '', diagnosticPersonalData.digestion || '');
+    // Проверяем что все 24 ответа сохранены
+    const totalSaved = checkAllSavedAnswers();
+    console.log(`📊 FINAL CHECK: ${totalSaved}/24 answers saved`);
     
-    // Сохраняем ответы квиза с полными вопросами
-    const surveyQuestions = window.surveyQuestions || [];
-    for (const [questionId, answerValue] of Object.entries(surveyAnswers)) {
-      const question = surveyQuestions.find(q => q.id === questionId);
-      if (question) {
-        let answerText = answerValue;
-        
-        // Если ответ - это массив, объединяем в текст
-        if (Array.isArray(answerValue)) {
-          answerText = answerValue.join(', ');
-        }
-        
-        // Ищем текст ответа в опциях
-        if (question.options) {
-          const option = question.options.find(opt => opt.value === answerValue);
-          if (option) {
-            answerText = option.label;
-          }
-        }
-        
-        await saveQuizAnswer(telegramId, questionId, question.question, answerText, answerValue);
-      }
-    }
+    // НЕ меняем статус quiz_completed - оставляем как есть по требованию
+    console.log('✅ Диагностика завершена без смены статуса');
     
-    // Сохраняем дополнительные ответы
-    await saveQuizAnswer(telegramId, 'discomfort', 'Что вас беспокоит?', additionalAnswers.discomfort || '', additionalAnswers.discomfort || '');
-    await saveQuizAnswer(telegramId, 'diagnosis', 'Есть ли диагнозы?', additionalAnswers.diagnosis || '', additionalAnswers.diagnosis || '');
-    await saveQuizAnswer(telegramId, 'treatment', 'Принимаете ли лечение/добавки?', additionalAnswers.treatment || '', additionalAnswers.treatment || '');
-    
-    // Завершаем квиз (ставим статус completed = true)
-    const completed = await completeQuiz(telegramId);
-    
-    if (completed) {
-      // Показываем уведомление об успехе
-      showNotificationMessage('✅ Диагностика успешно завершена! Теперь ИИ будет давать персонализированные рекомендации.');
-      
-      // Возвращаем на главную страницу
-      setTimeout(() => {
-        showPage('main');
-      }, 2000);
-      
-      return true;
-    } else {
-      showNotificationMessage('❌ Ошибка при завершении квиза. Попробуйте еще раз.');
-    }
-    
-    return false;
+    return true;
   } catch (error) {
     console.error('Error completing diagnostic quiz:', error);
-    showNotificationMessage('❌ Произошла ошибка. Попробуйте еще раз.');
     return false;
   }
 }
@@ -2755,12 +2694,20 @@ function showDiagnosticForm() {
       diagnosticFormOverlay.remove();
       document.body.classList.remove('chat-overlay-visible');
       
-      console.log('🏥 ПЕРЕХОДИМ НА СТРАНИЦУ ЗДОРОВЬЯ!');
-      showPage('health'); // Перенаправляем на страницу здоровья
-      
-      console.log('✅ Показываем уведомление...');
+      console.log('✅ Показываем Telegram уведомление...');
       if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.showAlert('Спасибо! Ваши ответы сохранены.\nТеперь ИИ будет давать персонализированные рекомендации.');
+        // Показываем уведомление и переходим на главную после нажатия "Хорошо"
+        window.Telegram.WebApp.showAlert(
+          'Спасибо! Ваши ответы сохранены.\nТеперь ИИ будет давать персонализированные рекомендации.',
+          () => {
+            console.log('🏠 Переходим на главную страницу...');
+            showPage('main'); // Переход на главную
+          }
+        );
+      } else {
+        // Fallback для тестирования
+        console.log('🏠 Переходим на главную страницу...');
+        showPage('main');
       }
       
       console.log('📊 Диагностика завершена и сохранена в БД');

@@ -28,17 +28,20 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    console.log('� Saving answer:', { telegramId, questionId, answerText });
+    console.log('💾 Saving answer:', { telegramId, questionId, answerText });
 
-    // Сохраняем ответ с полным вопросом
+    // Используем UPSERT - обновляем существующий ответ или создаем новый
     const { data, error } = await supabase
       .from('quiz_answers')
-      .insert({
+      .upsert({
         telegram_id: telegramId,
         question_id: questionId,
         question_text: questionText || '',
         answer_text: answerText,
-        answer_value: answerValue || answerText
+        answer_value: answerValue || answerText,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'telegram_id,question_id' // Уникальные ключи для обновления
       })
       .select();
 
