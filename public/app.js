@@ -3331,27 +3331,31 @@ function initPhotosRealtime() {
     .subscribe();
 }
 
-// Мгновенная загрузка фото из Supabase
+// Мгновенная загрузка фото из API
 async function loadPhotosFromSupabase() {
   try {
-    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    if (!telegramId) return;
-
-    console.log('🚀 Мгновенная загрузка фото из Supabase...');
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/analysis-photos', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
     
-    const { data, error } = await supabase
-      .from('user_analysis_photos')
-      .select('*')
-      .eq('telegram_id', telegramId)
-      .order('upload_date', { ascending: false });
-
-    if (error) {
-      console.error('Ошибка загрузки фото:', error);
+    if (!response.ok) {
+      console.error('Ошибка загрузки фото:', response.status);
+      return;
+    }
+    
+    const data = await response.json();
+    console.log('📋 Photos API response:', data);
+    
+    if (!data.success || !data.photos) {
+      console.log('Фото не найдены');
       return;
     }
 
     // Сохраняем в состояние
-    uploadedPhotosState = data || [];
+    uploadedPhotosState = data.photos || [];
     console.log('✅ Фото загружены в состояние:', uploadedPhotosState.length);
     
     // Обновляем UI если страница открыта
