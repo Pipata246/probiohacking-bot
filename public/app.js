@@ -2913,142 +2913,16 @@ function showDiagnosticForm() {
 }
 
 // ========================================
-// СТРАНИЦА "МОИ АНАЛИЗЫ"
+// СТРАНИЦА "МОИ АНАЛИЗЫ" - ПЕРЕНАПРАВЛЕНИЕ НА ПРОСТУЮ ВЕРСИЮ
 // ========================================
 
 function showMyTestsPage() {
-  isDiagnosticFormMode = true; // Устанавливаем флаг что мы в специальном режиме
-  isInRecommendedTests = false; // Сбрасываем флаг рекомендуемых анализов
-  
-  const myTestsForm = document.createElement('div');
-  myTestsForm.className = 'diagnostic-form-overlay';
-  myTestsForm.id = 'myTestsFormOverlay';
-  
-  myTestsForm.innerHTML = `
-    <div class="diagnostic-form-content">
-      <div class="form-step" id="myTestsStep">
-        <!-- Статичный аватар в правом верхнем углу -->
-        <div class="static-avatar" id="myTestsAvatar">AM</div>
-        
-        <div class="my-tests-content">
-          <h2 class="my-tests-title">Мои анализы</h2>
-          <p class="my-tests-subtitle">Загрузите результаты исследований</p>
-          
-          <div class="file-upload-section">
-            <div class="file-upload-card">
-              <div class="upload-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M7 10L12 5L17 10" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M12 5V15" stroke="#4A8B6C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <h3 class="upload-title">Загрузить файл</h3>
-              <p class="upload-subtitle">Поддерживаются форматы PDF, JPG, PNG или сделайте фото</p>
-              <div class="upload-buttons">
-                <button class="upload-btn-primary" id="selectFileBtn">Выбрать файл</button>
-                <button class="upload-btn-secondary" id="takePhotoBtn">Сделать фото</button>
-              </div>
-              <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif" style="display: none;">
-              <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
-            </div>
-          </div>
-          
-          <div class="test-type-section">
-            <h3 class="section-title">Тип анализа</h3>
-            <div class="test-type-buttons">
-              <button class="test-type-btn active" data-type="blood">Анализ крови</button>
-              <button class="test-type-btn" data-type="hormones">Гормоны</button>
-              <button class="test-type-btn" data-type="vitamins">Витамины</button>
-              <button class="test-type-btn" data-type="other">Другое</button>
-            </div>
-          </div>
-          
-          <div class="uploaded-tests-section">
-            <div class="uploaded-tests-list" id="uploadedTestsList">
-              <h3 class="uploaded-tests-title">Загруженные анализы</h3>
-              <!-- Сюда будут добавляться загруженные анализы -->
-            </div>
-          </div>
-          
-          <div class="recommendations-section">
-            <button class="recommendations-btn" id="viewRecommendationsBtn">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M9 11H15M9 15H15M17 21L21 17M3 5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V15C21 16.1046 20.1046 17 19 17H7L3 21V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>Посмотреть рекомендованные анализы</span>
-              <div class="help-icon" id="helpIcon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                  <path d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-            </button>
-          </div>
-        </div>
-        
-        <!-- Модальное окно с информацией -->
-        <div class="modal-overlay" id="recommendationsModal">
-          <div class="modal-content">
-            <button class="modal-close" id="closeModal">×</button>
-            <div class="modal-text">
-              <p>Следует отметить, что высокотехнологичная концепция общественного уклада, в своём классическом представлении, допускает внедрение как самодостаточных, так и внешне зависимых концептуальных решений. Являясь всего лишь частью общей картины, представители современных социальных резервов лишь добавляют фракционных разногласий и объявлены нарушающими общечеловеческие нормы этики и морали.</p>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Навигация -->
-        <nav class="bottom-nav">
-          <button class="nav-item">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>Главная</span>
-          </button>
-          <button class="nav-item active">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>Диагностика</span>
-          </button>
-          <button class="nav-item">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M4.5 16.5C3 14 3 11 3 9C3 5.5 5.5 3 9 3C10 3 11 3.5 12 4C13 3.5 14 3 15 3C18.5 3 21 5.5 21 9C21 11 21 14 19.5 16.5L12 22L4.5 16.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>Здоровье</span>
-          </button>
-          <button class="nav-item">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-              <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <span>Дневник</span>
-          </button>
-          <button class="nav-item">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>База знаний</span>
-          </button>
-        </nav>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(myTestsForm);
-  myTestsForm.style.display = 'flex';
-  document.body.classList.add('chat-overlay-visible');
-  
-  // ВСЕГДА загружаем свежие данные из БД при открытии вкладки
-  console.log('🔥 КНОПКА "МОИ АНАЛИЗЫ" НАЖАТА - НАЧИНАЮ ЗАГРУЗКУ');
-  loadUploadedTests();
-  
-  // Обновляем аватар в статичной позиции
-  updateAvatar(document.getElementById('myTestsAvatar'), user, userName);
-  
-  // Обработчики событий
-  setupMyTestsHandlers();
+  // Вызываем новую простую функцию из отдельного файла
+  if (typeof showMyTestsPageSimple === 'function') {
+    showMyTestsPageSimple();
+  } else {
+    console.error('showMyTestsPageSimple not found - check my-tests-simple.js');
+  }
 }
 
 function setupMyTestsHandlers() {
