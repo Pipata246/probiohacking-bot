@@ -3315,31 +3315,31 @@ async function loadUploadedTests() {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Response error:', errorText);
+      console.error('❌ Response error:', errorText);
       throw new Error('Не удалось загрузить список анализов');
     }
     
     const result = await response.json();
-    console.log('API Response:', result);
+    console.log('📋 API Response:', result);
     
     const { success, photos } = result;
     
     if (!success) {
-      console.error('API returned success=false:', result);
+      console.error('❌ API returned success=false:', result);
       throw new Error('Ошибка при загрузке анализов');
     }
     
-    console.log('Получены фото:', photos);
+    console.log('✅ Получены фото из БД:', photos);
     
     // Находим контейнер для загруженных анализов
     const testsList = document.getElementById('uploadedTestsList');
-    console.log('Контейнер uploadedTestsList:', testsList);
+    console.log('🔍 Контейнер uploadedTestsList:', testsList);
     
     if (!testsList) {
       console.log('❌ Контейнер uploadedTestsList не найден! Страница "Мои анализы" еще не открыта.');
       // Сохраняем фото в глобальную переменную для использования позже
       window.uploadedPhotos = photos;
-      console.log('Фото сохранены в window.uploadedPhotos для использования позже');
+      console.log('💾 Фото сохранены в window.uploadedPhotos для использования позже');
       return;
     }
     
@@ -3353,14 +3353,14 @@ async function loadUploadedTests() {
     }
     
     if (photos && photos.length > 0) {
-      console.log('Добавляем', photos.length, 'фото в список...');
+      console.log('➕ Добавляем', photos.length, 'фото в список...');
       // Добавляем каждое фото
       photos.forEach((photo, index) => {
         console.log(`Фото ${index + 1}:`, photo);
         addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
       });
     } else {
-      console.log('Фото нет, показываем сообщение...');
+      console.log('📭 Фото нет, показываем сообщение...');
       // Показываем сообщение что анализов нет
       const noTestsMessage = document.createElement('div');
       noTestsMessage.className = 'no-tests-message';
