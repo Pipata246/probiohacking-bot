@@ -2586,6 +2586,37 @@ function showDiagnosticForm() {
   // ВОССТАНАВЛИВАЕМ СОХРАНЕННЫЕ ДАННЫЕ ФОРМЫ
   restoreFormData();
   
+  // Добавляем обработчики для реалтайм сохранения персональных данных
+  setTimeout(() => {
+    // Поля ввода
+    const weightInput = document.getElementById('weight');
+    const heightInput = document.getElementById('height');
+    const fullNameInput = document.getElementById('fullName');
+    const birthDateInput = document.getElementById('birthDate');
+    const professionInput = document.getElementById('profession');
+    const cityInput = document.getElementById('city');
+    const sportInput = document.getElementById('sport');
+    
+    // Radio кнопки пола
+    const genderInputs = document.querySelectorAll('input[name="gender"]');
+    
+    // Добавляем обработчики на поля ввода
+    if (weightInput) weightInput.addEventListener('input', savePersonalDataRealtime);
+    if (heightInput) heightInput.addEventListener('input', savePersonalDataRealtime);
+    if (fullNameInput) fullNameInput.addEventListener('input', savePersonalDataRealtime);
+    if (birthDateInput) birthDateInput.addEventListener('input', savePersonalDataRealtime);
+    if (professionInput) professionInput.addEventListener('input', savePersonalDataRealtime);
+    if (cityInput) cityInput.addEventListener('input', savePersonalDataRealtime);
+    if (sportInput) sportInput.addEventListener('input', savePersonalDataRealtime);
+    
+    // Добавляем обработчики на radio кнопки пола
+    genderInputs.forEach(input => {
+      input.addEventListener('change', savePersonalDataRealtime);
+    });
+    
+    console.log('✅ Realtime save handlers added for personal data');
+  }, 200);
+  
   // АВТОМАТИЧЕСКИ ПЕРЕХОДИМ К НУЖНОМУ ШАГУ
   if (diagnosticState === 'additional') {
     // Если был в дополнительных вопросах - переходим к ним
@@ -2593,6 +2624,17 @@ function showDiagnosticForm() {
       document.getElementById('personalDataStep').classList.add('hidden');
       document.getElementById('additionalQuestionsStep').classList.remove('hidden');
       restoreAdditionalAnswers();
+      
+      // Добавляем обработчики для дополнительных полей
+      const additionalAnswer1 = document.getElementById('additionalAnswer1');
+      const additionalAnswer2 = document.getElementById('additionalAnswer2');
+      const additionalAnswer3 = document.getElementById('additionalAnswer3');
+      
+      if (additionalAnswer1) additionalAnswer1.addEventListener('input', saveAdditionalAnswersRealtime);
+      if (additionalAnswer2) additionalAnswer2.addEventListener('input', saveAdditionalAnswersRealtime);
+      if (additionalAnswer3) additionalAnswer3.addEventListener('input', saveAdditionalAnswersRealtime);
+      
+      console.log('✅ Realtime save handlers added for additional answers');
     }, 100);
   } else if (diagnosticState === 'quiz') {
     // Если был в квизе - сразу переходим к квизу
@@ -2651,6 +2693,27 @@ function showDiagnosticForm() {
     initSurvey();
   });
   
+  // Обработчик перехода к дополнительным вопросам из квиза
+  document.getElementById('goToAdditionalBtn').addEventListener('click', () => {
+    diagnosticState = 'additional';
+    document.getElementById('surveyStep').classList.add('hidden');
+    document.getElementById('additionalQuestionsStep').classList.remove('hidden');
+    restoreAdditionalAnswers();
+    
+    // Добавляем обработчики для дополнительных полей
+    setTimeout(() => {
+      const additionalAnswer1 = document.getElementById('additionalAnswer1');
+      const additionalAnswer2 = document.getElementById('additionalAnswer2');
+      const additionalAnswer3 = document.getElementById('additionalAnswer3');
+      
+      if (additionalAnswer1) additionalAnswer1.addEventListener('input', saveAdditionalAnswersRealtime);
+      if (additionalAnswer2) additionalAnswer2.addEventListener('input', saveAdditionalAnswersRealtime);
+      if (additionalAnswer3) additionalAnswer3.addEventListener('input', saveAdditionalAnswersRealtime);
+      
+      console.log('✅ Realtime save handlers added for additional answers (from quiz)');
+    }, 100);
+  });
+  
   // Обработчики дополнительных вопросов
   document.getElementById('additionalBackBtn').addEventListener('click', () => {
     // Возвращаемся к последнему вопросу квиза
@@ -2674,6 +2737,10 @@ function showDiagnosticForm() {
     
     console.log('💾 Сохраняем ответы:', additionalAnswers);
     localStorage.setItem('additionalAnswers', JSON.stringify(additionalAnswers));
+    
+    // Проверяем что все 24 ответа сохранены
+    const totalSaved = checkAllSavedAnswers();
+    console.log(`📊 FINAL CHECK: ${totalSaved}/24 answers saved before completion`);
     
     // ЗАВЕРШАЕМ ДИАГНОСТИКУ И СОХРАНЯЕМ В БД
     console.log('💾 Сохраняем результаты квиза в базу данных...');
@@ -3632,21 +3699,74 @@ function savePersonalDataRealtime() {
   const profession = document.getElementById('profession')?.value || '';
   const city = document.getElementById('city')?.value || '';
   const sport = document.getElementById('sport')?.value || '';
-  const gender = document.querySelector('input[name="gender"]:checked')?.value || '';
+  const genderInput = document.querySelector('input[name="gender"]:checked');
+  
+  // Получаем правильный текст для пола
+  let genderText = '';
+  let genderValue = '';
+  if (genderInput) {
+    genderValue = genderInput.value;
+    genderText = genderInput.nextElementSibling?.textContent?.trim() || genderValue;
+  }
   
   // Сохраняем в localStorage
-  const personalData = { weight, height, fullName, birthDate, profession, city, sport, gender };
+  const personalData = { weight, height, fullName, birthDate, profession, city, sport, gender: genderValue };
   localStorage.setItem('diagnosticPersonalData', JSON.stringify(personalData));
   
-  // СРАЗУ сохраняем в БД
-  saveQuizAnswer(telegramUser.id, 'weight', 'Вес:', weight, weight);
-  saveQuizAnswer(telegramUser.id, 'height', 'Рост:', height, height);
+  // СРАЗУ сохраняем в БД с правильными текстами
+  saveQuizAnswer(telegramUser.id, 'weight', 'Вес (кг):', weight, weight);
+  saveQuizAnswer(telegramUser.id, 'height', 'Рост (см):', height, height);
   saveQuizAnswer(telegramUser.id, 'fullName', 'ФИО:', fullName, fullName);
   saveQuizAnswer(telegramUser.id, 'birthDate', 'Дата рождения:', birthDate, birthDate);
   saveQuizAnswer(telegramUser.id, 'profession', 'Профессия:', profession, profession);
   saveQuizAnswer(telegramUser.id, 'city', 'Город:', city, city);
-  saveQuizAnswer(telegramUser.id, 'sport', 'Спорт:', sport, sport);
-  saveQuizAnswer(telegramUser.id, 'gender', 'Пол:', gender, gender);
+  saveQuizAnswer(telegramUser.id, 'sport', 'Спорт/активность:', sport, sport);
+  saveQuizAnswer(telegramUser.id, 'gender', 'Пол:', genderText, genderValue);
+}
+
+// Сохранение дополнительных ответов в реалтайме
+function saveAdditionalAnswersRealtime() {
+  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (!telegramUser?.id) return;
+  
+  const discomfort = document.getElementById('additionalAnswer1')?.value || '';
+  const diagnosis = document.getElementById('additionalAnswer2')?.value || '';
+  const treatment = document.getElementById('additionalAnswer3')?.value || '';
+  
+  // Сохраняем в localStorage
+  const additionalData = { discomfort, diagnosis, treatment };
+  localStorage.setItem('additionalAnswers', JSON.stringify(additionalData));
+  
+  // СРАЗУ сохраняем в БД
+  saveQuizAnswer(telegramUser.id, 'discomfort', 'Что вас беспокоит?:', discomfort, discomfort);
+  saveQuizAnswer(telegramUser.id, 'diagnosis', 'Поставленные диагнозы:', diagnosis, diagnosis);
+  saveQuizAnswer(telegramUser.id, 'treatment', 'Принимаемые лекарства/БАДы:', treatment, treatment);
+  
+  console.log('💾 Additional answers saved:', { discomfort, diagnosis, treatment });
+}
+
+// Проверка всех сохраненных ответов (для отладки)
+function checkAllSavedAnswers() {
+  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (!telegramUser?.id) return;
+  
+  // Проверяем персональные данные (7 ответов)
+  const personalData = JSON.parse(localStorage.getItem('diagnosticPersonalData') || '{}');
+  console.log('📊 Personal data saved:', Object.keys(personalData).length, 'fields');
+  
+  // Проверяем ответы квиза (17 ответов)
+  const quizAnswers = JSON.parse(localStorage.getItem('surveyAnswers') || '{}');
+  console.log('📊 Quiz answers saved:', Object.keys(quizAnswers).length, 'answers');
+  
+  // Проверяем дополнительные ответы (3 ответа)
+  const additionalAnswers = JSON.parse(localStorage.getItem('additionalAnswers') || '{}');
+  console.log('📊 Additional answers saved:', Object.keys(additionalAnswers).length, 'answers');
+  
+  // Итого должно быть 24 ответа
+  const totalAnswers = Object.keys(personalData).length + Object.keys(quizAnswers).length + Object.keys(additionalAnswers).length;
+  console.log(`📈 TOTAL ANSWERS SAVED: ${totalAnswers}/24`);
+  
+  return totalAnswers;
 }
 
 // Загрузка сохраненных персональных данных
