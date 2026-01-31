@@ -87,54 +87,33 @@ async function handleUploadUrl(req, res) {
 
   console.log('Creating upload URL for:', filePath);
 
-  // Пробуем прямой upload без signed URL
-  try {
-    // Получаем public URL напрямую
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('analysis-photos')
-      .getPublicUrl(filePath);
+  // Создаем signed URL для загрузки файла в Supabase Storage
+  const { data, error } = await supabaseAdmin.storage
+    .from('analysis-photos')
+    .createSignedUploadUrl(filePath, 60 * 5); // URL действителен 5 минут
 
-    console.log('Direct upload URL created successfully');
-
-    return res.status(200).json({
-      success: true,
-      uploadUrl: null, // Не используем signed URL
-      publicUrl: publicUrl,
-      filePath: filePath,
-      useDirectUpload: true // Флаг для фронтенда
-    });
-  } catch (directError) {
-    console.log('Direct upload failed, trying signed URL:', directError.message);
-    
-    // Если прямой upload не работает, пробуем signed URL
-    const { data, error } = await supabaseAdmin.storage
-      .from('analysis-photos')
-      .createSignedUploadUrl(filePath, 60 * 5);
-
-    if (error) {
-      console.error('Error creating signed upload URL:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Failed to create upload URL',
-        details: error.message 
-      });
-    }
-
-    // Получаем public URL для файла
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('analysis-photos')
-      .getPublicUrl(filePath);
-
-    console.log('Signed URL created successfully');
-
-    return res.status(200).json({
-      success: true,
-      uploadUrl: data.signedUrl,
-      publicUrl: publicUrl,
-      filePath: filePath,
-      useDirectUpload: false
+  if (error) {
+    console.error('Error creating signed upload URL:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Failed to create upload URL',
+      details: error.message 
     });
   }
+
+  // Получаем public URL для файла
+  const { data: { publicUrl } } = supabaseAdmin.storage
+    .from('analysis-photos')
+    .getPublicUrl(filePath);
+
+  console.log('Upload URL created successfully');
+
+  return res.status(200).json({
+    success: true,
+    uploadUrl: data.signedUrl,
+    publicUrl: publicUrl,
+    filePath: filePath
+  });
 }
 
 // Управление фото в БД

@@ -3221,43 +3221,24 @@ async function handleFileUpload(file) {
       throw new Error('Не удалось получить URL для загрузки');
     }
     
-    const { uploadUrl, publicUrl, useDirectUpload } = await uploadResponse.json();
+    const { uploadUrl, publicUrl } = await uploadResponse.json();
     
-    if (useDirectUpload) {
-      // Прямая загрузка файла через FormData
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const directUploadResponse = await fetch(`https://mahsrckfuutckyhglctw.supabase.co/storage/v1/object/analysis-photos/${filePath}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHNyY2tmdXV0Y2t5aGdsY3R3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzgzMDA2NzQsImV4cCI6MjA1Mzg3NjY3NH0.YMI9r_i8ZQZz6pN3Lr44h1qP5g6TnJcJg-2jv4k5q0`,
-          // Content-Type не устанавливаем - FormData установит автоматически с boundary
-        },
-        body: formData
-      });
-      
-      if (!directUploadResponse.ok) {
-        throw new Error('Не удалось загрузить файл напрямую');
-      }
-      
-      console.log('Файл успешно загружен напрямую:', publicUrl);
-    } else {
-      // Загружаем файл через signed URL
-      const uploadResult = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type
-        },
-        body: file
-      });
-      
-      if (!uploadResult.ok) {
-        throw new Error('Не удалось загрузить файл');
-      }
-      
-      console.log('Файл успешно загружен в Storage:', publicUrl);
+    // Загружаем файл через signed URL
+    const uploadResult = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type
+      },
+      body: file
+    });
+    
+    if (!uploadResult.ok) {
+      const errorText = await uploadResult.text();
+      console.error('Upload error details:', errorText);
+      throw new Error(`Не удалось загрузить файл: ${uploadResult.status} ${errorText}`);
     }
+    
+    console.log('Файл успешно загружен в Storage:', publicUrl);
     
     // Сохраняем информацию о файле в базу данных
     const saveResponse = await fetch('/api/analysis-photos', {
