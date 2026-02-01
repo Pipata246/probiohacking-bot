@@ -1852,29 +1852,33 @@ function escapeHtml(text) {
 
 function addUserMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages.querySelector('.chat-messages-container');
   const messageDiv = document.createElement('div');
   messageDiv.className = 'user-message';
   
   let userAvatarHtml = '';
-  if (user?.photo_url) {
-    userAvatarHtml = `<div class="user-avatar" style="background-image: url(${user.photo_url}); background-size: cover; background-position: center;"></div>`;
+  if (user && user.photo_url) {
+    userAvatarHtml = `<img src="${user.photo_url}" alt="${user.first_name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
   } else {
-    const safeName = (typeof userName === 'string' && userName.trim()) ? userName.trim() : 'U';
-    userAvatarHtml = `<div class="user-avatar">${escapeHtml(safeName.charAt(0).toUpperCase())}</div>`;
+    const initials = user ? (user.first_name || 'U').substring(0, 2).toUpperCase() : 'U';
+    userAvatarHtml = initials;
   }
   
   messageDiv.innerHTML = `
-    ${userAvatarHtml}
+    <div class="user-avatar" style="background-image: url('${user?.photo_url || ''}');">
+      ${!user?.photo_url ? (user ? (user.first_name || 'U').substring(0, 2).toUpperCase() : 'U') : ''}
+    </div>
     <div class="message-bubble">
       <div class="message-text">${escapeHtml(text)}</div>
     </div>
   `;
-  chatMessages.appendChild(messageDiv);
+  container.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function addBotMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages.querySelector('.chat-messages-container');
   const messageDiv = document.createElement('div');
   messageDiv.className = 'bot-message';
 
@@ -1892,7 +1896,7 @@ function addBotMessage(text) {
     </div>
   `;
 
-  chatMessages.appendChild(messageDiv);
+  container.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 

@@ -1667,14 +1667,26 @@ body.chat-overlay-visible .search-container {
 
 .chat-messages {
   flex: 1;
-  padding: 20px 24px;
-  overflow-y: auto;
+  padding: 20px 0;
+  overflow-y: visible;
   overflow-x: hidden;
-  /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
-  padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px)) !important;
   margin-top: 0;
   /* Убираем webkit scrollbar для чистого вида */
   -webkit-overflow-scrolling: touch;
+}
+
+/* Контейнер для сообщений с ограниченной шириной */
+.chat-messages-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
+.chat-messages-container {
+  padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 /* Скрываем скроллбар в webkit браузерах */
