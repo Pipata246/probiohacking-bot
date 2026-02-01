@@ -1689,65 +1689,81 @@ body.chat-overlay-visible .search-container {
   padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
-/* AI ACTIONS НА ВСЮ ШИРИНУ (СТАРЫЙ ДИЗАЙН) */
-.ai-actions-full-width {
-  padding: 16px 20px;
+/* БЫСТРЫЕ ЗАПРОСЫ НА ГЛАВНОЙ С ВИННЫМ ФОНОМ ДО КОНЦА ЭКРАНА */
+.main-page .quick-requests-section {
+  background: linear-gradient(135deg, #722F37, #4A1A1F) !important;
+  margin: 0 -24px !important;
+  padding: 24px !important;
+  position: relative !important;
+}
+
+.main-page .quick-requests-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(114, 47, 55, 0.9), rgba(74, 26, 31, 0.95)) !important;
+  z-index: 1 !important;
+}
+
+.main-page .quick-requests-section > * {
+  position: relative;
+  z-index: 2;
+}
+
+.main-page .quick-request-card {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  max-width: none !important;
-  margin: 0;
   box-sizing: border-box;
 }
 
-.ai-actions-row {
-  display: flex;
-  gap: 8px;
-  width: 100%;
+.main-page .quick-request-card:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px);
 }
 
-.ai-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border: 1px solid rgba(100, 100, 100, 0.3) !important;
-  border-radius: 8px;
-  background: rgba(100, 100, 100, 0.25) !important;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: 1;
-  width: 100%;
-  backdrop-filter: blur(10px);
+.main-page .quick-request-card:active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(0) scale(0.98);
 }
 
-.ai-action-btn:hover {
-  background: rgba(100, 100, 100, 0.35) !important;
-  border-color: rgba(100, 100, 100, 0.45) !important;
+.main-page .quick-request-icon svg {
+  stroke: rgba(255, 255, 255, 0.8) !important;
 }
 
-.ai-action-btn:active {
-  background: rgba(100, 100, 100, 0.45) !important;
-  transform: scale(0.98);
+.main-page .quick-request-title {
+  color: #fff !important;
+  font-weight: 600;
 }
 
-.ai-action-btn svg {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+.main-page .quick-request-subtitle {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 12px;
+  margin-top: 4px;
 }
 
-/* Мобильная адаптация */
-@media (max-width: 480px) {
-  .ai-actions-full-width {
-    padding: 12px 16px;
-  }
-  
-  .ai-action-btn {
-    padding: 10px 12px;
-    font-size: 13px;
-  }
+/* Убираем скролл у главной страницы */
+.main-page {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+
+/* Скролл только для контента */
+.main-page .main-content {
+  overflow-y: auto !important;
+  height: calc(100vh - 80px) !important;
 }
 
 /* Скрываем скроллбар в webkit браузерах */
