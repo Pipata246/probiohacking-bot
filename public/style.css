@@ -718,33 +718,35 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(60, 128, 91, 0.85); /* Зеленый прозрачный фон */
+  background: rgba(140, 140, 150, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); /* Возвращаем тень */
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
   z-index: 100;
   transition: background-color 0.3s ease;
-  border-radius: 20px;
+  border-radius: 24px;
   flex-shrink: 0;
 }
 
-/* Нижняя навигация в экране вопросов - ЗЕЛЕНЫЙ ПРОЗРАЧНЫЙ ФОН */
 #surveyStep .bottom-nav {
   position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(60, 128, 91, 0.85); /* Зеленый прозрачный фон */
+  background: rgba(140, 140, 150, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); /* Возвращаем тень */
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
   z-index: 100;
   transition: background-color 0.3s ease;
-  border-radius: 20px;
+  border-radius: 24px;
   flex-shrink: 0;
-  /* Адаптация к клавиатуре */
   bottom: max(12px, env(keyboard-inset-height, 0px) + 12px);
 }
 
@@ -1129,29 +1131,35 @@ body.chat-overlay-visible .search-container {
 
 
 /* Нижняя навигация - ЗЕЛЕНЫЙ ПРОЗРАЧНЫЙ ФОН для всех страниц кроме главной */
+/* Нижняя панель навигации — прозрачно-серая, эффект матового стекла */
 .bottom-nav {
   position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(60, 128, 91, 0.85); /* Зеленый прозрачный фон как был */
+  background: rgba(140, 140, 150, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); /* Возвращаем тень */
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
   z-index: 100;
   transition: background-color 0.3s ease;
-  border-radius: 20px;
+  border-radius: 24px;
 }
 
-/* Главная страница - оставляем как есть с фоном */
 .app .bottom-nav {
-  background: rgba(60, 128, 91, 0.85);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  background: rgba(140, 140, 150, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
 }
 
 .bottom-nav.blue-bg {
-  background: rgba(59, 79, 107, 0.85);
+  background: rgba(100, 115, 140, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .nav-item {
@@ -1161,17 +1169,17 @@ body.chat-overlay-visible .search-container {
   gap: 4px;
   background: none;
   border: none;
-  color: rgba(0, 0, 0, 0.7); /* Черный цвет для иконок */
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   padding: 8px 4px;
   font-size: 11px;
-  transition: color 0.3s;
+  transition: color 0.2s, opacity 0.2s;
   flex: 1;
   max-width: 80px;
 }
 
 .nav-item.active {
-  color: rgba(0, 0, 0, 0.95); /* Черный цвет для активной иконки */
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .nav-item svg {
@@ -1853,10 +1861,13 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(60, 128, 91, 0.85); /* Зеленый прозрачный фон */
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); /* Возвращаем тень */
+  background: rgba(140, 140, 150, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+  border-radius: 24px;
   flex-shrink: 0;
-  min-height: 80px; /* Минимальная высота навигации */
+  min-height: 80px;
 }
 
 .chat-input {
