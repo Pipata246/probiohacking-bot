@@ -810,15 +810,20 @@ async function loadChatMessages(chatId, isReadOnly = false) {
         }
       }
       
-      // Восстанавливаем сообщения в хронологическом порядке
-      data.messages.forEach(msg => {
-        if (msg.message_text) {
-          addUserMessage(msg.message_text);
-        }
-        if (msg.response_text) {
-          addBotMessage(msg.response_text);
-        }
-      });
+      // Если нет сообщений, добавляем приветствие с быстрыми запросами
+      if (!data.messages || data.messages.length === 0) {
+        addWelcomeMessage();
+      } else {
+        // Восстанавливаем сообщения в хронологическом порядке
+        data.messages.forEach(msg => {
+          if (msg.message_text) {
+            addUserMessage(msg.message_text);
+          }
+          if (msg.response_text) {
+            addBotMessage(msg.response_text);
+          }
+        });
+      }
     }
   } catch (error) {
     console.error('Error loading chat messages:', error);
@@ -1856,6 +1861,69 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
+function addWelcomeMessage() {
+  const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages.querySelector('.chat-messages-container');
+  
+  // Добавляем приветственное сообщение
+  const welcomeDiv = document.createElement('div');
+  welcomeDiv.className = 'bot-message';
+  welcomeDiv.innerHTML = `
+    <div class="bot-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="10" cy="11" r="0.5" fill="white"/>
+        <circle cx="14" cy="11" r="0.5" fill="white"/>
+      </svg>
+    </div>
+    <div class="message-bubble">
+      <div class="message-text">👋 Здравствуйте! Я ваш персональный ассистент по здоровью. Чем могу помочь?</div>
+    </div>
+  `;
+  container.appendChild(welcomeDiv);
+  
+  // Добавляем быстрые запросы на всю ширину
+  const quickRequestsDiv = document.createElement('div');
+  quickRequestsDiv.className = 'quick-requests-full-width';
+  quickRequestsDiv.innerHTML = `
+    <div class="quick-request-card" data-query="Расскажи о моих анализах">
+      <div class="quick-request-icon">📊</div>
+      <div class="quick-request-content">
+        <div class="quick-request-title">Мои анализы</div>
+        <div class="quick-request-desc">Посмотреть результаты и рекомендации</div>
+      </div>
+    </div>
+    <div class="quick-request-card" data-query="Проведи диагностику здоровья">
+      <div class="quick-request-icon">🔍</div>
+      <div class="quick-request-content">
+        <div class="quick-request-title">Диагностика</div>
+        <div class="quick-request-desc">Оценить текущее состояние здоровья</div>
+      </div>
+    </div>
+    <div class="quick-request-card" data-query="Дай рекомендации по питанию">
+      <div class="quick-request-icon">🥗</div>
+      <div class="quick-request-content">
+        <div class="quick-request-title">Питание</div>
+        <div class="quick-request-desc">Персональные рекомендации по рациону</div>
+      </div>
+    </div>
+    <div class="quick-request-card" data-query="Посоветуй витамины и добавки">
+      <div class="quick-request-icon">💊</div>
+      <div class="quick-request-content">
+        <div class="quick-request-title">Витамины</div>
+        <div class="quick-request-desc">Подобрать необходимые добавки</div>
+      </div>
+    </div>
+  `;
+  
+  // Добавляем быстрые запросы в chatMessages (не в контейнер!)
+  chatMessages.appendChild(quickRequestsDiv);
+  
+  // Прокручиваем вниз
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 function addUserMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
   const container = chatMessages.querySelector('.chat-messages-container');
@@ -1981,32 +2049,11 @@ function safeRemove(el) {
 }
 
 function appendAiActions(bubble) {
-  if (!bubble) return;
-  if (bubble.querySelector('.ai-actions')) return; // уже есть
-  const actionsDiv = document.createElement('div');
-  actionsDiv.className = 'ai-actions';
-  actionsDiv.innerHTML = `
-    <div class="ai-actions-row">
-      <button class="ai-action-btn my-tests-btn" onclick="showMyTestsPage()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Мои анализы
-      </button>
-      <button class="ai-action-btn" onclick="handleDiagnosticButton()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Диагностика
-      </button>
-    </div>
-  `;
-  bubble.appendChild(actionsDiv);
+  // УДАЛЕНО - быстрые запросы теперь в addWelcomeMessage()
+  return;
 }
 
-function finalizeTypingBubble({ appendActions } = { appendActions: true }) {
+function finalizeTypingBubble({ appendActions } = { appendActions: false }) {
   const typingIndicator = document.getElementById('typingIndicator');
   if (!typingIndicator) return;
 
@@ -2025,10 +2072,11 @@ function finalizeTypingBubble({ appendActions } = { appendActions: true }) {
   const actions = typingIndicator.querySelector('#typingActions');
   if (actions) safeRemove(actions);
 
-  const bubble = typingIndicator.querySelector('.message-bubble');
-  if (appendActions && bubble) {
-    appendAiActions(bubble);
-  }
+  // УДАЛЕНО - больше не добавляем ai-actions
+  // const bubble = typingIndicator.querySelector('.message-bubble');
+  // if (appendActions && bubble) {
+  //   appendAiActions(bubble);
+  // }
 }
 
 function stopActiveTypewriter() {
@@ -2053,7 +2101,7 @@ function typeMessage(text, callback) {
   let stopped = false;
 
   function finalizeTyping() {
-    finalizeTypingBubble({ appendActions: true });
+    finalizeTypingBubble({ appendActions: false });
     if (callback) callback();
   }
 
@@ -2125,7 +2173,7 @@ function stopAIResponse() {
 
   // Stop typewriter but keep whatever is already written.
   stopActiveTypewriter();
-  finalizeTypingBubble({ appendActions: true });
+  finalizeTypingBubble({ appendActions: false });
 
   isAiBusy = false;
   setChatSendButtonMode('send');
