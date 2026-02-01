@@ -568,8 +568,9 @@ async function createNewChat() {
     
     // Показываем анимацию загрузки
     const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-      chatMessages.innerHTML = `
+    const container = chatMessages.querySelector('.chat-messages-container');
+    if (container) {
+      container.innerHTML = `
         <div class="chat-loading-animation">
           <div class="loading-spinner"></div>
           <div class="loading-text">Создаем новый чат...</div>
@@ -618,8 +619,9 @@ async function createNewChat() {
     
     // Показываем ошибку
     const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-      chatMessages.innerHTML = '<div class="error-message">Не удалось создать чат. Попробуйте еще раз.</div>';
+    const container = chatMessages.querySelector('.chat-messages-container');
+    if (container) {
+      container.innerHTML = '<div class="error-message">Не удалось создать чат. Попробуйте еще раз.</div>';
     }
   }
 }
@@ -793,28 +795,29 @@ async function loadChatMessages(chatId, isReadOnly = false) {
     
     if (data.success) {
       const chatMessages = document.getElementById('chatMessages');
-      if (chatMessages) {
+      const container = chatMessages.querySelector('.chat-messages-container');
+      if (container) {
         // Если не read-only, очищаем все сообщения
         if (!isReadOnly) {
-          chatMessages.innerHTML = '';
+          container.innerHTML = '';
         } else {
           // Если read-only, убираем только загрузку, оставляя уведомление
-          const loadingElement = chatMessages.querySelector('.chat-loading-animation');
+          const loadingElement = container.querySelector('.chat-loading-animation');
           if (loadingElement) {
             loadingElement.remove();
           }
         }
-        
-        // Восстанавливаем сообщения в хронологическом порядке
-        data.messages.forEach(msg => {
-          if (msg.message_text) {
-            addUserMessage(msg.message_text);
-          }
-          if (msg.response_text) {
-            addBotMessage(msg.response_text);
-          }
-        });
       }
+      
+      // Восстанавливаем сообщения в хронологическом порядке
+      data.messages.forEach(msg => {
+        if (msg.message_text) {
+          addUserMessage(msg.message_text);
+        }
+        if (msg.response_text) {
+          addBotMessage(msg.response_text);
+        }
+      });
     }
   } catch (error) {
     console.error('Error loading chat messages:', error);
@@ -838,8 +841,9 @@ async function createNewChat() {
     
     // Показываем анимацию загрузки
     const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-      chatMessages.innerHTML = `
+    const container = chatMessages.querySelector('.chat-messages-container');
+    if (container) {
+      container.innerHTML = `
         <div class="chat-loading-animation">
           <div class="loading-spinner"></div>
           <div class="loading-text">Создаем новый чат...</div>
@@ -889,8 +893,9 @@ async function createNewChat() {
     
     // Показываем ошибку
     const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-      chatMessages.innerHTML = '<div class="error-message">Не удалось создать чат. Попробуйте еще раз.</div>';
+    const container = chatMessages.querySelector('.chat-messages-container');
+    if (container) {
+      container.innerHTML = '<div class="error-message">Не удалось создать чат. Попробуйте еще раз.</div>';
     }
   }
 }
