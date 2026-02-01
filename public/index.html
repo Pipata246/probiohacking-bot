@@ -1688,7 +1688,14 @@
             <div class="avatar" id="diaryAvatar">AM</div>
         </header>
 
-        <div class="diary-content">
+        <!-- Калитка: показывается, если quiz_completed === false -->
+        <div class="diary-gate" id="diaryGate">
+            <h1 class="diary-gate-title">Дневник</h1>
+            <p class="diary-gate-text">Данный раздел станет доступен после прохождения диагностики вашего здоровья, в которой мы назначим вам рекомендации!</p>
+            <button type="button" class="diary-gate-btn" id="diaryGateBtn">Пройти диагностику</button>
+        </div>
+
+        <div class="diary-content" id="diaryContentBlock">
             <h1 class="diary-title">Дневник</h1>
             <p class="diary-subtitle">Отслеживайте самочувствие</p>
 

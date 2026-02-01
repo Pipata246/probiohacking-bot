@@ -245,7 +245,7 @@ async function checkQuizStatus() {
     
     if (response.ok) {
       const data = await response.json();
-      quizCompleted = data.quiz_completed || false;
+      quizCompleted = data.quiz_completed ?? data.quizCompleted ?? false;
       console.log('Quiz status:', quizCompleted);
       return quizCompleted;
     }
@@ -1220,15 +1220,24 @@ function showPage(pageName) {
       isInRecommendedTests = false;
       console.log('🎯 Текущая страница установлена:', currentPage);
       break;
-    case 'diary':
+    case 'diary': {
       const diaryPage = document.getElementById('diaryPage');
+      const diaryGate = document.getElementById('diaryGate');
+      const diaryContentBlock = document.getElementById('diaryContentBlock');
       diaryPage.classList.add('active');
       currentPage = 'diary';
       isChatMode = false;
       isInRecommendedTests = false;
-      // Инициализируем дневник при первом открытии
-      initializeDiary();
+      if (quizCompleted && diaryGate && diaryContentBlock) {
+        diaryGate.classList.add('hidden');
+        diaryContentBlock.classList.remove('hidden');
+        initializeDiary();
+      } else if (diaryGate && diaryContentBlock) {
+        diaryGate.classList.remove('hidden');
+        diaryContentBlock.classList.add('hidden');
+      }
       break;
+    }
     case 'chat':
       chatOverlay.classList.add('active');
       document.body.classList.add('chat-overlay-visible');
@@ -1497,8 +1506,8 @@ document.addEventListener('click', (e) => {
       case 2: // Здоровье
         showPage('health');
         break;
-      case 3: // Дневник
-        showPage('diary');
+      case 3: // Дневник — проверяем quiz_completed, затем показываем страницу
+        checkQuizStatus().then(() => showPage('diary'));
         break;
       case 4: // База знаний
         showPage('knowledge');
@@ -1745,6 +1754,12 @@ document.addEventListener('click', (e) => {
     return;
   }
   
+  // Калитка Дневника: кнопка «Пройти диагностику»
+  if (e.target.closest('#diaryGateBtn') || e.target.closest('.diary-gate-btn')) {
+    showPage('diagnostics');
+    return;
+  }
+
   // Дневник - кнопка добавления записи
   if (e.target.closest('.add-entry-btn')) {
     openDiaryModal();
