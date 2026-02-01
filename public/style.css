@@ -1820,9 +1820,9 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: #4A8B6C;
-  color: #FEF7EC;
-  border: none;
+  background: rgba(128, 128, 128, 0.2);
+  color: #333;
+  border: 1px solid rgba(128, 128, 128, 0.3);
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
@@ -1830,15 +1830,17 @@ body.chat-overlay-visible .search-container {
   transition: background 0.2s, transform 0.1s;
   width: 100%;
   justify-content: flex-start;
+  backdrop-filter: blur(10px);
 }
 
 .ai-action-btn:hover {
-  background: #3C7358;
+  background: rgba(128, 128, 128, 0.3);
+  border-color: rgba(128, 128, 128, 0.4);
 }
 
 .ai-action-btn:active {
+  background: rgba(128, 128, 128, 0.4);
   transform: scale(0.98);
-  background: #356A50;
 }
 
 .ai-action-btn svg {
