@@ -1808,12 +1808,15 @@ body.chat-overlay-visible .search-container {
  }
 
  .ai-actions {
-   display: flex;
-   flex-direction: column;
-   gap: 8px;
    margin-top: 12px;
    width: 100%;
- }
+}
+
+.ai-actions-row {
+   display: flex;
+   gap: 8px;
+   width: 100%;
+}
 
 .ai-action-btn {
   display: flex;
@@ -1828,7 +1831,7 @@ body.chat-overlay-visible .search-container {
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
-  width: 100%;
+  flex: 1;
   justify-content: flex-start;
   backdrop-filter: blur(10px);
 }
