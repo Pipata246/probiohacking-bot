@@ -762,8 +762,9 @@ async function viewOldChat(chatId) {
     
     // Показываем уведомление что это старый чат
     const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-      chatMessages.innerHTML = `
+    const container = chatMessages.querySelector('.chat-messages-container');
+    if (container) {
+      container.innerHTML = `
         <div style="background: rgba(255,193,7,0.1); border-left: 3px solid #FFC107; padding: 12px; margin: 10px 0; color: #FFC107; font-size: 14px;">
           📖 Это старый чат (только для чтения)
         </div>
@@ -1907,6 +1908,7 @@ function addBotMessage(text) {
 
 function addBotMessageWithButton(text, buttonText, buttonAction) {
   const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages.querySelector('.chat-messages-container');
   const messageDiv = document.createElement('div');
   messageDiv.className = 'bot-message';
   messageDiv.innerHTML = `
@@ -1923,12 +1925,13 @@ function addBotMessageWithButton(text, buttonText, buttonAction) {
       <button class="message-button" onclick="${buttonAction}">${buttonText}</button>
     </div>
   `;
-  chatMessages.appendChild(messageDiv);
+  container.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function addBotTypingIndicator() {
   const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages.querySelector('.chat-messages-container');
   const messageDiv = document.createElement('div');
   messageDiv.className = 'bot-message typing-indicator';
   messageDiv.id = 'typingIndicator';
@@ -1951,7 +1954,7 @@ function addBotTypingIndicator() {
       <div class="ai-actions" id="typingActions" style="display:none;"></div>
     </div>
   `;
-  chatMessages.appendChild(messageDiv);
+  container.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
