@@ -147,13 +147,14 @@ body.chat-overlay-visible {
   max-width: 100%;
   margin: 0 auto;
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   /* ОТСТУП СВЕРХУ как на других страницах - calc(env(safe-area-inset-top, 44px) + 20px) */
   padding-top: calc(env(safe-area-inset-top, 44px) + 20px) !important;
-  /* ФИКСИРОВАННЫЙ отступ снизу - БЕЗОПАСНОЕ расстояние от навигации */
-  padding-bottom: 120px !important;
   box-sizing: border-box;
   position: relative !important;
 }
@@ -360,44 +361,42 @@ body.chat-overlay-visible .search-container {
   background: #F3F4F6;
 }
 
-/* Новый синий блок быстрых запросов - МАКСИМАЛЬНО КОМПАКТНЫЙ */
-.quick-requests-block {
-  /* ФИКСИРОВАННЫЕ отступы - одинаково на всех устройствах */
-  margin: 8px 0 10px; /* 8px сверху, 0 по бокам (касается краев), 10px снизу */
-  
-  /* ОЧЕНЬ МАЛЕНЬКАЯ высота - помещается на любом экране */
-  height: 200px; /* УМЕНЬШАЕМ с 300px до 200px */
-  max-height: none; /* Убираем адаптивную максимальную высоту */
-  
-  /* Синий фон и скругление */
+/* Скроллируемый контент главной страницы — скролл на всей странице */
+.main-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Синяя секция быстрых запросов — фон на весь экран, без внутреннего скролла */
+.quick-requests-section {
+  margin: 0;
+  padding: 20px 20px 120px;
   background: #2A3F5F;
-  border-radius: 20px;
-  
-  /* Статичное позиционирование */
-  position: static;
-  
-  /* Не сжимается */
+  border-radius: 20px 20px 0 0;
   flex-shrink: 0;
-  
-  /* Убираем любые переходы */
-  transition: none;
-  
-  /* УМЕНЬШЕННЫЕ внутренние отступы */
-  padding: 12px; /* УМЕНЬШАЕМ с 20px до 12px */
-  
-  /* Флекс для вертикального расположения */
   display: flex;
   flex-direction: column;
 }
 
-/* УБИРАЕМ мобильную версию - везде одинаково */
+/* Список карточек — скролл идёт вместе с главной страницей */
+.quick-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
 
-/* Заголовок быстрых запросов - компактный */
+/* Заголовок быстрых запросов */
 .quick-requests-title {
   color: #FFFFFF;
-  font-size: 16px; /* УМЕНЬШАЕМ с 18px до 16px */
+  font-size: 18px;
   font-weight: 600;
-  margin: 0 0 10px 0; /* УМЕНЬШАЕМ отступ с 16px до 10px */
+  margin: 0;
   text-align: left;
 }
 
@@ -436,55 +435,20 @@ body.chat-overlay-visible .search-container {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Контейнер со скроллом - компактный */
-.quick-requests-scroll {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 4px; /* УМЕНЬШАЕМ зазор с 8px до 4px */
-  
-  /* Стилизация скроллбара */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-}
-
-/* УБИРАЕМ мобильную версию контейнера - везде одинаково */
-
-.quick-requests-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-
-.quick-requests-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.quick-requests-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-}
-
-.quick-requests-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* Карточки быстрых запросов - МАКСИМАЛЬНО КОМПАКТНЫЕ */
+/* Карточки быстрых запросов — светлые на синем фоне, как на скриншоте 2 */
 .quick-request-card {
-  background: #FFFFFF; /* Белый фон */
-  border-radius: 10px; /* УМЕНЬШАЕМ с 12px до 10px */
-  padding: 8px 10px; /* УМЕНЬШАЕМ отступы с 12px 14px до 8px 10px */
+  background: #FEF7EC;
+  border-radius: 12px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
-  gap: 8px; /* УМЕНЬШАЕМ зазор с 10px до 8px */
+  gap: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
   flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* УМЕНЬШАЕМ тень */
-  height: 45px; /* УМЕНЬШАЕМ высоту с 65px до 45px */
-  min-height: 45px;
-  max-height: 45px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  min-height: 56px;
 }
 
 /* УБИРАЕМ мобильную версию карточек - везде одинаково */
@@ -500,12 +464,12 @@ body.chat-overlay-visible .search-container {
   background: #F1F3F4;
 }
 
-/* Иконка в карточке - МАКСИМАЛЬНО компактная */
+/* Иконка в карточке */
 .quick-request-icon {
-  width: 24px; /* УМЕНЬШАЕМ с 32px до 24px */
-  height: 24px; /* УМЕНЬШАЕМ с 32px до 24px */
-  background: #F3F4F6;
-  border-radius: 4px; /* УМЕНЬШАЕМ скругление с 6px до 4px */
+  width: 32px;
+  height: 32px;
+  background: rgba(42, 63, 95, 0.1);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -513,8 +477,12 @@ body.chat-overlay-visible .search-container {
 }
 
 .quick-request-icon svg {
-  width: 12px; /* УМЕНЬШАЕМ с 16px до 12px */
-  height: 12px; /* УМЕНЬШАЕМ с 16px до 12px */
+  width: 16px;
+  height: 16px;
+}
+
+.quick-request-icon svg path {
+  stroke: #2A3F5F;
 }
 
 /* Контент карточки */
@@ -522,32 +490,31 @@ body.chat-overlay-visible .search-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1px; /* Минимальный зазор */
-  overflow: hidden; /* Обрезаем лишний текст */
+  gap: 2px;
+  overflow: hidden;
+  min-width: 0;
 }
 
-/* Заголовок карточки - МАКСИМАЛЬНО компактный */
+/* Заголовок карточки */
 .quick-request-title {
   color: #1F2937;
-  font-size: 11px; /* УМЕНЬШАЕМ с 13px до 11px */
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1.0; /* УМЕНЬШАЕМ с 1.1 до 1.0 */
+  line-height: 1.2;
   margin: 0;
-  white-space: nowrap; /* Не переносим */
-  overflow: hidden;
-  text-overflow: ellipsis; /* Троеточие если не помещается */
+  text-align: left;
 }
 
-/* Подзаголовок карточки - МАКСИМАЛЬНО компактный */
+/* Подзаголовок карточки */
 .quick-request-subtitle {
   color: #6B7280;
-  font-size: 9px; /* УМЕНЬШАЕМ с 11px до 9px */
+  font-size: 12px;
   font-weight: 400;
-  line-height: 1.1; /* УМЕНЬШАЕМ с 1.2 до 1.1 */
+  line-height: 1.3;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* Максимум 2 строки */
-  line-clamp: 2; /* Стандартное свойство для совместимости */
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1687,83 +1654,6 @@ body.chat-overlay-visible .search-container {
 /* БЕЗОПАСНЫЙ отступ снизу - никогда не налезает на навигацию */
 .chat-messages-container {
   padding-bottom: calc(220px + env(safe-area-inset-bottom, 0px)) !important;
-}
-
-/* БЫСТРЫЕ ЗАПРОСЫ НА ГЛАВНОЙ С ВИННЫМ ФОНОМ ДО КОНЦА ЭКРАНА */
-.main-page .quick-requests-section {
-  background: linear-gradient(135deg, #722F37, #4A1A1F) !important;
-  margin: 0 -24px !important;
-  padding: 24px !important;
-  position: relative !important;
-}
-
-.main-page .quick-requests-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(114, 47, 55, 0.9), rgba(74, 26, 31, 0.95)) !important;
-  z-index: 1 !important;
-}
-
-.main-page .quick-requests-section > * {
-  position: relative;
-  z-index: 2;
-}
-
-.main-page .quick-request-card {
-  background: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.main-page .quick-request-card:hover {
-  background: rgba(255, 255, 255, 0.15) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  transform: translateY(-2px);
-}
-
-.main-page .quick-request-card:active {
-  background: rgba(255, 255, 255, 0.2) !important;
-  transform: translateY(0) scale(0.98);
-}
-
-.main-page .quick-request-icon svg {
-  stroke: rgba(255, 255, 255, 0.8) !important;
-}
-
-.main-page .quick-request-title {
-  color: #fff !important;
-  font-weight: 600;
-}
-
-.main-page .quick-request-subtitle {
-  color: rgba(255, 255, 255, 0.7) !important;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-/* Убираем скролл у главной страницы */
-.main-page {
-  overflow: hidden !important;
-  height: 100vh !important;
-}
-
-/* Скролл только для контента */
-.main-page .main-content {
-  overflow-y: auto !important;
-  height: calc(100vh - 80px) !important;
 }
 
 /* Скрываем скроллбар в webkit браузерах */
