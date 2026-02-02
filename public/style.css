@@ -718,11 +718,13 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: #4A6B5D;
+  background: rgba(74, 107, 93, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
   z-index: 100;
   border-radius: 24px;
   flex-shrink: 0;
@@ -733,11 +735,13 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: #4A6B5D;
+  background: rgba(74, 107, 93, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
   z-index: 100;
   border-radius: 24px;
   flex-shrink: 0;
@@ -1124,27 +1128,33 @@ body.chat-overlay-visible .search-container {
 
 
 
-/* Нижняя навигация - зеленый фон */
+/* Нижняя навигация - зеленый прозрачный фон */
 .bottom-nav {
   position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: #4A6B5D;
+  background: rgba(74, 107, 93, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
   z-index: 100;
   border-radius: 24px;
 }
 
 .app .bottom-nav {
-  background: #4A6B5D;
+  background: rgba(74, 107, 93, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .bottom-nav.blue-bg {
-  background: #4A6B5D;
+  background: rgba(74, 107, 93, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .nav-item {
@@ -1856,8 +1866,10 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: #4A6B5D;
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
+  background: rgba(74, 107, 93, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
   border-radius: 24px;
   flex-shrink: 0;
   min-height: 80px;
