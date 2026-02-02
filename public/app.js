@@ -2505,6 +2505,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function openChatWithMessage(message) {
   showPage('chat');
   
+  // Показываем индикатор загрузки
+  const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages?.querySelector('.chat-messages-container');
+  if (container) {
+    container.innerHTML = `
+      <div class="chat-loading-overlay">
+        <div class="chat-loading-spinner"></div>
+        <div class="chat-loading-text">Подготовка чата...</div>
+      </div>
+    `;
+  }
+  
   // Ждём пока загрузится активный чат
   if (!currentChatId) {
     await loadActiveChat();
