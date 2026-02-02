@@ -404,7 +404,7 @@ body.chat-overlay-visible .search-container {
 .status-recommendations {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(245, 241, 232, 0.2);
 }
 
 .status-recommendation-item {
@@ -420,8 +420,8 @@ body.chat-overlay-visible .search-container {
 
 .recommendation-text {
   font-size: 14px;
-  font-weight: 600;
-  color: #2A3F5F;
+  font-weight: 700;
+  color: #FEF7EC;
 }
 
 .recommendation-btn {
