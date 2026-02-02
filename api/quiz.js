@@ -171,11 +171,39 @@ module.exports = async function handler(req, res) {
 
       console.log('🔥 Quiz status data:', data);
 
+      // Проверяем прошёл ли месяц с момента прохождения
+      let quizCompleted = data?.quiz_completed ?? false;
+      const completionDate = data?.quiz_completion_date;
+      
+      if (quizCompleted && completionDate) {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const quizDate = new Date(completionDate);
+        
+        console.log('🔥 Checking quiz expiration:', {
+          quizDate: quizDate.toISOString(),
+          oneMonthAgo: oneMonthAgo.toISOString(),
+          expired: quizDate < oneMonthAgo
+        });
+        
+        // Если прошёл месяц - сбрасываем статус
+        if (quizDate < oneMonthAgo) {
+          console.log('🔥 Quiz expired! Resetting status to FALSE');
+          
+          await supabase
+            .from('users')
+            .update({ quiz_completed: false })
+            .eq('id', userId);
+          
+          quizCompleted = false;
+        }
+      }
+
       return res.json({ 
         success: true, 
-        quizCompleted: data?.quiz_completed ?? false,
-        quiz_completed: data?.quiz_completed ?? false,
-        quiz_completion_date: data?.quiz_completion_date || null
+        quizCompleted: quizCompleted,
+        quiz_completed: quizCompleted,
+        quiz_completion_date: quizCompleted ? (data?.quiz_completion_date || null) : null
       });
     }
 
