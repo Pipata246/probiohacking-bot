@@ -712,21 +712,18 @@ body.chat-overlay-visible .search-container {
   pointer-events: auto; /* Включаем события только для кнопок */
 }
 
-/* Нижняя навигация в экране ввода данных - ЗЕЛЕНЫЙ ПРОЗРАЧНЫЙ ФОН */
+/* Нижняя навигация в экране ввода данных */
 #personalDataStep .bottom-nav {
   position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(140, 140, 150, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #4A6B5D;
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
   z-index: 100;
-  transition: background-color 0.3s ease;
   border-radius: 24px;
   flex-shrink: 0;
 }
@@ -736,15 +733,12 @@ body.chat-overlay-visible .search-container {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(140, 140, 150, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #4A6B5D;
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
   z-index: 100;
-  transition: background-color 0.3s ease;
   border-radius: 24px;
   flex-shrink: 0;
   bottom: max(12px, env(keyboard-inset-height, 0px) + 12px);
@@ -1130,36 +1124,27 @@ body.chat-overlay-visible .search-container {
 
 
 
-/* Нижняя навигация - ЗЕЛЕНЫЙ ПРОЗРАЧНЫЙ ФОН для всех страниц кроме главной */
-/* Нижняя панель навигации — прозрачно-серая, эффект матового стекла */
+/* Нижняя навигация - зеленый фон */
 .bottom-nav {
   position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(140, 140, 150, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #4A6B5D;
   display: flex;
   justify-content: space-around;
   padding: 8px 0 12px;
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
   z-index: 100;
-  transition: background-color 0.3s ease;
   border-radius: 24px;
 }
 
 .app .bottom-nav {
-  background: rgba(140, 140, 150, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+  background: #4A6B5D;
 }
 
 .bottom-nav.blue-bg {
-  background: rgba(100, 115, 140, 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #4A6B5D;
 }
 
 .nav-item {
@@ -1169,28 +1154,38 @@ body.chat-overlay-visible .search-container {
   gap: 4px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
   padding: 8px 4px;
   font-size: 11px;
-  transition: color 0.2s, opacity 0.2s;
+  transition: opacity 0.2s;
   flex: 1;
   max-width: 80px;
 }
 
 .nav-item.active {
-  color: rgba(255, 255, 255, 0.55);
+  opacity: 0.6;
 }
 
+/* Иконки черные */
 .nav-item svg {
   width: 24px;
   height: 24px;
+  stroke: #000000;
+  color: #000000;
 }
 
+.nav-item svg path,
+.nav-item svg rect,
+.nav-item svg circle {
+  stroke: #000000;
+}
+
+/* Текст белый */
 .nav-item span {
   font-weight: 500;
   text-align: center;
   line-height: 1.2;
+  color: #FFFFFF;
 }
 
 
@@ -1855,16 +1850,14 @@ body.chat-overlay-visible .search-container {
   min-height: 48px; /* Минимальная высота */
 }
 
-/* Навигация в чате - ЗЕЛЕНЫЙ ПРОЗРАЧНЫЙ ФОН */
+/* Навигация в чате */
 .chat-overlay .bottom-nav {
   position: absolute;
   bottom: 12px;
   left: 12px;
   right: 12px;
-  background: rgba(140, 140, 150, 0.45);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.12);
+  background: #4A6B5D;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
   border-radius: 24px;
   flex-shrink: 0;
   min-height: 80px;
