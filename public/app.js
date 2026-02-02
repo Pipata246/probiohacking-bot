@@ -2081,6 +2081,17 @@ let isAiBusy = false;
 let activeTypewriter = null;
 let pendingAiMessages = [];
 
+// Защита от зависания AI - время последней активности
+let lastAiActivityTime = null;
+const AI_STUCK_TIMEOUT = 60000; // 60 секунд без активности = зависание
+
+// Безопасный сброс состояния AI
+function resetAiState() {
+  isAiBusy = false;
+  lastAiActivityTime = null;
+  setChatSendButtonMode('send');
+}
+
 function escapeHtml(text) {
   return String(text)
     .replace(/&/g, '&amp;')
@@ -2306,6 +2317,11 @@ function stopActiveTypewriter() {
   activeTypewriter = null;
 }
 
+// Timeout для защиты от зависания typewriter (30 секунд)
+let typewriterTimeout = null;
+let typewriterStartTime = null;
+const TYPEWRITER_MAX_TIME = 30000; // 30 секунд максимум
+
 function typeMessage(text, callback) {
   const typingIndicator = document.getElementById('typingIndicator');
   const typingDots = typingIndicator?.querySelector('.typing-dots');
@@ -2338,8 +2354,21 @@ function typeMessage(text, callback) {
   let currentText = ''; // Накапливаем напечатанный текст
   const baseSpeed = 8;
   let stopped = false;
+  let finalized = false;
+  
+  typewriterStartTime = Date.now();
 
   function finalizeTyping() {
+    // Защита от повторного вызова
+    if (finalized) return;
+    finalized = true;
+    
+    // Очищаем timeout
+    if (typewriterTimeout) {
+      clearTimeout(typewriterTimeout);
+      typewriterTimeout = null;
+    }
+    
     finalizeTypingBubble({ appendActions: false });
     
     // Добавляем кнопки после завершения печати
@@ -2347,14 +2376,42 @@ function typeMessage(text, callback) {
       addActionButtons(typingIndicator, buttons);
     }
     
+    activeTypewriter = null;
     if (callback) callback();
   }
+  
+  // Принудительное завершение если текст не допечатан
+  function forceFinalize() {
+    console.warn('⚠️ Typewriter timeout - forcing completion');
+    if (finalized) return;
+    
+    // Показываем весь текст сразу
+    typingText.innerHTML = formatMarkdown(cleanText);
+    chatMessagesScrollToBottom();
+    finalizeTyping();
+  }
+  
+  // Устанавливаем защитный timeout
+  typewriterTimeout = setTimeout(forceFinalize, TYPEWRITER_MAX_TIME);
 
   function typeChar() {
+    if (finalized) return;
+    
+    // Обновляем время активности при каждом символе
+    lastAiActivityTime = Date.now();
+    
     if (stopped) {
       finalizeTyping();
       return;
     }
+    
+    // Проверка на зависание (если вкладка была неактивна)
+    const elapsed = Date.now() - typewriterStartTime;
+    if (elapsed > TYPEWRITER_MAX_TIME) {
+      forceFinalize();
+      return;
+    }
+    
     if (index < cleanText.length) {
       const char = cleanText.charAt(index);
       currentText += char;
@@ -2379,8 +2436,11 @@ function typeMessage(text, callback) {
 
   activeTypewriter = {
     stop() {
-      if (stopped) return;
+      if (stopped || finalized) return;
       stopped = true;
+    },
+    forceComplete() {
+      forceFinalize();
     }
   };
 
@@ -2503,9 +2563,8 @@ function stopAIResponse() {
   finalizeTypingBubble({ appendActions: false });
 
   // Сбрасываем состояние
-  isAiBusy = false;
+  resetAiState();
   pendingAiMessages = []; // Очищаем очередь
-  setChatSendButtonMode('send');
   
   console.log('✅ AI response stopped');
 }
@@ -2532,6 +2591,9 @@ function processAiQueue() {
 
 async function sendMessageToAI(message) {
   console.log('🤖 sendMessageToAI called with:', message?.substring(0, 50) + '...');
+  
+  // Обновляем время активности
+  lastAiActivityTime = Date.now();
   
   try {
     const indicatorAdded = addBotTypingIndicator();
@@ -2594,8 +2656,7 @@ async function sendMessageToAI(message) {
       const serverMsg = (data && (data.error || data.message)) ? String(data.error || data.message) : '';
       const hint = serverMsg ? `Ошибка сервера: ${serverMsg}` : `Ошибка сервера: ${response.status}`;
       addBotMessage(hint);
-      isAiBusy = false;
-      setChatSendButtonMode('send');
+      resetAiState();
       aiAbortController = null;
       processAiQueue();
       return;
@@ -2605,8 +2666,7 @@ async function sendMessageToAI(message) {
       finalizeTypingBubble({ appendActions: false });
       const serverMsg = data?.error ? `Ошибка сервера: ${String(data.error)}` : 'Извините, произошла ошибка при обработке запроса. Попробуйте позже.';
       addBotMessage(serverMsg);
-      isAiBusy = false;
-      setChatSendButtonMode('send');
+      resetAiState();
       aiAbortController = null;
       processAiQueue();
       return;
@@ -2615,8 +2675,7 @@ async function sendMessageToAI(message) {
     aiAbortController = null;
     typeMessage(data.response, () => {
       chatMessagesScrollToBottom();
-      isAiBusy = false;
-      setChatSendButtonMode('send');
+      resetAiState();
       processAiQueue();
       
       // Обрабатываем статус квиза из ответа
@@ -2668,10 +2727,11 @@ async function sendMessageToAI(message) {
       }
     });
   } catch (error) {
+    console.error('❌ sendMessageToAI error:', error);
+    
     if (error && (error.name === 'AbortError' || error.message === 'The user aborted a request.')) {
       // user stopped / new message arrived
-      isAiBusy = false;
-      setChatSendButtonMode('send');
+      resetAiState();
       aiAbortController = null;
       finalizeTypingBubble({ appendActions: true });
       processAiQueue();
@@ -2681,8 +2741,7 @@ async function sendMessageToAI(message) {
     const msg = error?.message ? String(error.message) : '';
     const shown = msg ? `Не удалось выполнить запрос: ${msg}` : 'Не удалось выполнить запрос к серверу.';
     addBotMessage(shown);
-    isAiBusy = false;
-    setChatSendButtonMode('send');
+    resetAiState();
     aiAbortController = null;
     processAiQueue();
   }
@@ -2722,6 +2781,46 @@ async function loadAppData() {
   console.log(`✅ Все данные загружены за ${Date.now() - startTime}ms`);
 }
 
+// Проверка и восстановление состояния AI
+function checkAndRecoverAiState() {
+  if (!isAiBusy) return;
+  
+  const now = Date.now();
+  if (lastAiActivityTime && (now - lastAiActivityTime) > AI_STUCK_TIMEOUT) {
+    console.warn('⚠️ AI appears stuck, recovering state...');
+    
+    // Завершаем typewriter принудительно
+    if (activeTypewriter?.forceComplete) {
+      activeTypewriter.forceComplete();
+    }
+    
+    // Сбрасываем состояние
+    finalizeTypingBubble({ appendActions: false });
+    resetAiState();
+    pendingAiMessages = [];
+    
+    console.log('✅ AI state recovered');
+  }
+}
+
+// Обработка возврата в приложение (visibility change)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    console.log('📱 App became visible, checking state...');
+    
+    // Проверяем не завис ли AI
+    checkAndRecoverAiState();
+    
+    // Если был активный typewriter, завершаем его
+    if (activeTypewriter) {
+      console.log('⚠️ Active typewriter found, forcing completion...');
+      if (activeTypewriter.forceComplete) {
+        activeTypewriter.forceComplete();
+      }
+    }
+  }
+});
+
 // Инициализация при загрузке - СРАЗУ начинаем загрузку
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - starting data load immediately');
@@ -2740,6 +2839,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     console.log('Local mode - no Telegram WebApp');
   }
+  
+  // Периодическая проверка на зависание (каждые 10 секунд)
+  setInterval(checkAndRecoverAiState, 10000);
 });
 
 async function openChatWithMessage(message) {
