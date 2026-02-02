@@ -112,7 +112,59 @@ async function handleAnalysisPhotos(req, res) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { telegramUser, telegramWebAppData } = req.body || {};
+  // Для GET запросов получаем telegram ID из заголовка
+  if (req.method === 'GET') {
+    const telegramData = req.headers['x-telegram-webapp-data'];
+    
+    let telegramId = null;
+    if (telegramData) {
+      try {
+        const urlParams = new URLSearchParams(telegramData);
+        const userStr = urlParams.get('user');
+        if (userStr) {
+          const user = JSON.parse(decodeURIComponent(userStr));
+          telegramId = user.id;
+        }
+      } catch (e) {
+        console.error('Error parsing telegram data:', e);
+      }
+    }
+    
+    if (!telegramId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Telegram ID is required' 
+      });
+    }
+    
+    console.log('📋 GET /api/analysis-photos for telegram_id:', telegramId);
+    
+    const { data, error } = await supabase
+      .from('user_analysis_photos')
+      .select('*')
+      .eq('telegram_id', telegramId)
+      .order('upload_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching photos:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch photos',
+        details: error.message 
+      });
+    }
+
+    console.log('✅ Found photos:', data?.length || 0);
+
+    return res.status(200).json({
+      success: true,
+      photos: data || [],
+      total: data?.length || 0
+    });
+  }
+
+  // Для POST и DELETE запросов получаем данные из body
+  const { telegramUser } = req.body || {};
 
   if (!telegramUser || !telegramUser.id) {
     return res.status(400).json({ success: false, error: 'Telegram user data required' });
@@ -182,49 +234,6 @@ async function handleAnalysisPhotos(req, res) {
       success: true,
       photo: data,
       message: 'Фото успешно загружено'
-    });
-
-  } else if (req.method === 'GET') {
-    // Получение списка фотографий пользователя
-    const telegramData = req.headers['x-telegram-webapp-data'];
-    
-    let telegramId = null;
-    if (telegramData) {
-      // Парсим как в других API
-      const urlParams = new URLSearchParams(telegramData);
-      const userStr = urlParams.get('user');
-      if (userStr) {
-        const user = JSON.parse(decodeURIComponent(userStr));
-        telegramId = user.id;
-      }
-    }
-    
-    if (!telegramId) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Telegram ID is required' 
-      });
-    }
-    
-    const { data, error } = await supabase
-      .from('user_analysis_photos')
-      .select('*')
-      .eq('telegram_id', telegramId)
-      .order('upload_date', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching photos:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Failed to fetch photos',
-        details: error.message 
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      photos: data,
-      total: data?.length || 0
     });
 
   } else if (req.method === 'DELETE') {

@@ -3453,31 +3453,10 @@ function showTestsLoading(show) {
 // Функция для обновления списка анализов если страница уже открыта
 function updateUploadedTestsIfPageOpen() {
   const testsList = document.getElementById('uploadedTestsList');
-  if (testsList && window.uploadedPhotos) {
+  if (testsList) {
     console.log('Страница "Мои анализы" открыта, обновляем список...');
-    const photos = window.uploadedPhotos;
-    
-    // Очищаем старый список (кроме заголовка)
-    const title = testsList.querySelector('h3');
-    testsList.innerHTML = '';
-    if (title) {
-      testsList.appendChild(title);
-    }
-    
-    if (photos && photos.length > 0) {
-      photos.forEach((photo, index) => {
-        console.log(`Фото ${index + 1}:`, photo);
-        addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
-      });
-    } else {
-      const noTestsMessage = document.createElement('div');
-      noTestsMessage.className = 'no-tests-message';
-      noTestsMessage.innerHTML = `
-        <p>У вас пока нет загруженных анализов</p>
-        <p style="font-size: 14px; opacity: 0.7;">Выберите файл или сделайте фото чтобы начать</p>
-      `;
-      testsList.appendChild(noTestsMessage);
-    }
+    // Просто вызываем единую функцию обновления UI
+    updatePhotosUI();
   }
 }
 
@@ -3499,7 +3478,7 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
   
   deleteBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    console.log('Удаление файла:', fileName);
+    console.log('Удаление файла:', fileName, 'photoId:', photoId);
     
     if (confirm(`Удалить анализ "${fileName}"?`)) {
       try {
@@ -3517,10 +3496,15 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
         });
         
         if (deleteResponse.ok) {
-          testItem.remove();
-          console.log('Файл успешно удален из БД');
+          // Удаляем из локального состояния
+          uploadedPhotosState = uploadedPhotosState.filter(p => p.id !== photoId);
+          console.log('✅ Файл удален, осталось в состоянии:', uploadedPhotosState.length);
+          
+          // Обновляем UI
+          updatePhotosUI();
         } else {
-          console.error('Ошибка при удалении из БД');
+          const errorData = await deleteResponse.json();
+          console.error('Ошибка при удалении из БД:', errorData);
           alert('Ошибка при удалении файла');
         }
       } catch (error) {
