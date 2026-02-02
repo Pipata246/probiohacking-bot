@@ -757,6 +757,17 @@ async function createNewChat() {
 }
 
 async function loadChatsFromAPI() {
+  const chatHistoryList = document.getElementById('chatHistoryList');
+  
+  // Показываем спиннер загрузки
+  if (chatHistoryList) {
+    chatHistoryList.innerHTML = `
+      <div class="history-loading">
+        <div class="history-spinner"></div>
+      </div>
+    `;
+  }
+  
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats?action=list', {
@@ -777,6 +788,9 @@ async function loadChatsFromAPI() {
     }
   } catch (error) {
     console.error('Error loading chats:', error);
+    if (chatHistoryList) {
+      chatHistoryList.innerHTML = '';
+    }
   }
 }
 
