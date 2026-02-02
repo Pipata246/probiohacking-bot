@@ -3168,8 +3168,8 @@ body.chat-overlay-visible .search-container {
 .test-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 0;
+  gap: clamp(12px, 3vw, 16px);
+  padding: clamp(12px, 3vw, 16px) 0;
   margin-bottom: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
@@ -3177,28 +3177,12 @@ body.chat-overlay-visible .search-container {
 }
 
 .test-item:hover {
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 .test-item:last-child {
   margin-bottom: 0;
   border-bottom: none;
-}
-
-.test-icon {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #2A3F5F;
-}
-
-.test-icon svg {
-  stroke: #2A3F5F;
 }
 
 .test-info {
@@ -3207,77 +3191,55 @@ body.chat-overlay-visible .search-container {
 }
 
 .test-name {
-  font-size: 15px;
+  font-size: clamp(14px, 3.5vw, 16px);
   font-weight: 500;
-  color: #2A3F5F;
-  margin: 0 0 4px 0;
+  color: #FFFFFF;
+  margin: 0 0 clamp(4px, 1vw, 6px) 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.test-date {
-  font-size: 13px;
-  color: rgba(42, 63, 95, 0.6);
+.test-type {
+  font-size: clamp(12px, 3vw, 14px);
+  color: rgba(255, 255, 255, 0.6);
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.test-date::before {
-  content: '📅';
-  font-size: 11px;
 }
 
 .test-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-/* Галочка - статус загружен */
-.test-status-icon {
+/* Галочка - синий/бирюзовый фон */
+.test-check-btn {
   width: 32px;
   height: 32px;
   border-radius: 50%;
+  background: #5B9A8B;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid;
 }
 
-.test-status-icon.check {
-  border-color: #5B9A8B;
-  color: #5B9A8B;
-}
-
-.test-status-icon.check svg {
-  stroke: #5B9A8B;
-}
-
-/* Кнопка удаления - крестик */
+/* Кнопка удаления - молочный кружок */
 .test-delete-btn {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid #E8A87C;
-  background: transparent;
+  border: none;
+  background: #F9EBE5;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #E8A87C;
-}
-
-.test-delete-btn svg {
-  stroke: #E8A87C;
 }
 
 .test-delete-btn:hover {
-  background: rgba(232, 168, 124, 0.1);
+  opacity: 0.85;
 }
 
 .test-delete-btn:active {

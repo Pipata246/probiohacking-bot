@@ -3464,34 +3464,27 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
   const testItem = document.createElement('div');
   testItem.className = 'test-item';
   testItem.innerHTML = `
-    <div class="test-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </div>
     <div class="test-info">
       <p class="test-name">${fileName}</p>
-      <p class="test-date">${analysisGroup}</p>
+      <p class="test-type">${analysisGroup}</p>
     </div>
     <div class="test-actions">
-      <div class="test-status-icon check">
+      <div class="test-check-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <button class="test-delete-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18 6L6 18M6 6L18 18" stroke="#C7563E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
     </div>
   `;
   
-  // Клик по элементу - просмотр файла
+  // Клик по элементу (кроме кнопок) - просмотр файла
   testItem.addEventListener('click', (e) => {
-    // Не открываем просмотр если кликнули на кнопку удаления
-    if (e.target.closest('.test-delete-btn')) return;
+    if (e.target.closest('.test-delete-btn') || e.target.closest('.test-check-btn')) return;
     
     console.log('Клик по файлу:', fileName, 'URL:', fileURL);
     
