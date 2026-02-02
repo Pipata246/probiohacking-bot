@@ -274,13 +274,31 @@ async function checkQuizStatus() {
 function updateDiagnosticsUI() {
   // Карточка повторного прохождения на странице Здоровье
   const retakeCard = document.getElementById('retakeDiagnosticCard');
+  // Дата на странице Диагностика
+  const completionDateBlock = document.getElementById('quizCompletionDate');
+  const dateValue = document.getElementById('quizDateValue');
   
   if (quizCompleted) {
     // Показываем карточку повторного прохождения
     if (retakeCard) retakeCard.style.display = 'block';
+    
+    // Показываем дату
+    if (completionDateBlock) completionDateBlock.style.display = 'block';
+    
+    // Форматируем и показываем дату
+    if (dateValue && quizCompletionDate) {
+      const date = new Date(quizCompletionDate);
+      const formattedDate = date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      dateValue.textContent = formattedDate;
+    }
   } else {
-    // Скрываем карточку
+    // Скрываем элементы
     if (retakeCard) retakeCard.style.display = 'none';
+    if (completionDateBlock) completionDateBlock.style.display = 'none';
   }
 }
 
@@ -1293,6 +1311,8 @@ function showPage(pageName) {
       currentPage = 'diagnostics';
       isChatMode = false;
       isInRecommendedTests = false;
+      // Обновляем UI (показываем дату если есть)
+      updateDiagnosticsUI();
       break;
     case 'knowledge':
       knowledgeBase.classList.add('active');

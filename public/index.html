@@ -365,6 +365,11 @@
                     </svg>
                     Заполнить анкету
                 </button>
+                
+                <!-- Дата последнего прохождения (показывается при quiz_completed=true) -->
+                <div class="quiz-completion-date" id="quizCompletionDate" style="display: none;">
+                    <span class="completion-date-text">Последняя дата прохождения: <span id="quizDateValue">--.--.----</span></span>
+                </div>
 
                 <div class="diagnostics-features">
                     <div class="feature-item">
@@ -638,7 +643,6 @@
                 <div class="retake-card-content">
                     <div class="retake-card-text">
                         <h4 class="retake-card-title">Пройти повторно диагностику</h4>
-                        <p class="retake-card-subtitle">12 вопросов о вашем здоровье и образе жизни</p>
                     </div>
                     <div class="retake-card-arrow">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">

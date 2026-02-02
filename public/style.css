@@ -2240,6 +2240,23 @@ body.chat-overlay-visible .search-container {
   color: #FEF7EC;
 }
 
+/* Дата последнего прохождения диагностики */
+.quiz-completion-date {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.completion-date-text {
+  font-size: 13px;
+  color: #5A6B7D;
+  font-weight: 500;
+}
+
+#quizDateValue {
+  font-weight: 600;
+  color: #2A3F5F;
+}
+
 /* Карточка повторного прохождения диагностики (на странице Здоровье) */
 .retake-diagnostic-card {
   background: linear-gradient(135deg, #4A8B6C 0%, #3D7A5D 100%);
