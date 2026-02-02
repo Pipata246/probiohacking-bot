@@ -1524,6 +1524,19 @@ body.chat-overlay-visible .search-container {
   overflow: hidden;
 }
 
+/* Заголовок "Анализы для спортсменов" */
+.sports-analyses-title {
+  font-size: clamp(18px, 4.5vw, 22px);
+  font-weight: 600;
+  color: #FEF7EC;
+  margin: clamp(24px, 5vw, 32px) 0 clamp(12px, 3vw, 16px) 0;
+  padding: 0;
+}
+
+.sports-block {
+  margin-bottom: clamp(16px, 4vw, 24px);
+}
+
 .recommended-section-header {
   display: flex;
   align-items: center;
