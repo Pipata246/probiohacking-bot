@@ -3496,7 +3496,7 @@ body.chat-overlay-visible .search-container {
   flex-shrink: 0;
 }
 
-/* Галочка - без фона */
+/* Галочка - без фона, белый цвет */
 .test-check-btn {
   width: 32px;
   height: 32px;
@@ -3506,11 +3506,11 @@ body.chat-overlay-visible .search-container {
 }
 
 .test-check-btn svg {
-  stroke: #5B9A8B;
+  stroke: #FEF7EC;
 }
 
 .test-check-btn svg path {
-  stroke: #5B9A8B;
+  stroke: #FEF7EC;
 }
 
 /* Кнопка удаления - молочный кружок */
