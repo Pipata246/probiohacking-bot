@@ -497,6 +497,15 @@ async function saveAllQuizAnswers() {
     if (response.ok) {
       const data = await response.json();
       console.log('✅ Успешный ответ сервера:', data);
+      
+      // Обновляем локальный статус
+      quizCompleted = true;
+      quizCompletionDate = new Date().toISOString();
+      console.log('📋 Локальный статус обновлён: quizCompleted =', quizCompleted);
+      
+      // Обновляем UI
+      updateDiagnosticsUI();
+      
       return data.success;
     } else {
       const error = await response.json();

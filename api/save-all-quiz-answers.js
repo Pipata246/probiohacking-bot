@@ -169,12 +169,13 @@ module.exports = async function handler(req, res) {
 
     console.log('✅ All answers saved:', data?.length || 0);
 
-    // Обновляем статус квиза
+    // Обновляем статус квиза и дату прохождения
     console.log('🔄 Updating quiz status to TRUE for telegram_id:', telegramId);
     const { error: updateError } = await supabase
       .from('users')
       .update({ 
         quiz_completed: true,
+        quiz_completion_date: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('telegram_id', telegramId);
