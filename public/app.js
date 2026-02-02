@@ -1905,6 +1905,22 @@ function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
+// Форматирование markdown в HTML для сообщений ИИ
+function formatMarkdown(text) {
+  let formatted = escapeHtml(text);
+  
+  // **текст** → <strong>текст</strong>
+  formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  
+  // *текст* → <em>текст</em>
+  formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  
+  // Переносы строк → <br>
+  formatted = formatted.replace(/\n/g, '<br>');
+  
+  return formatted;
+}
+
 function addWelcomeMessage() {
   // УДАЛЕНО - больше не добавляем приветствие в чат
   // Быстрые запросы теперь на главной странице
@@ -1961,7 +1977,7 @@ function addBotMessage(text) {
       </svg>
     </div>
     <div class="message-bubble">
-      <div class="message-text">${escapeHtml(cleanText)}</div>
+      <div class="message-text">${formatMarkdown(cleanText)}</div>
     </div>
   `;
 
@@ -2066,18 +2082,15 @@ function finalizeTypingBubble({ appendActions } = { appendActions: false }) {
 
   const typingText = typingIndicator.querySelector('#typingText');
   if (typingText) {
+    // Применяем форматирование markdown после завершения печати
+    const rawText = typingText.textContent;
+    typingText.innerHTML = formatMarkdown(rawText);
     typingText.style.display = 'block';
     typingText.removeAttribute('id');
   }
 
   const actions = typingIndicator.querySelector('#typingActions');
   if (actions) safeRemove(actions);
-
-  // УДАЛЕНО - больше не добавляем ai-actions
-  // const bubble = typingIndicator.querySelector('.message-bubble');
-  // if (appendActions && bubble) {
-  //   appendAiActions(bubble);
-  // }
 }
 
 function stopActiveTypewriter() {

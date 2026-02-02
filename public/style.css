@@ -1776,10 +1776,24 @@ body.chat-overlay-visible .search-container {
 .message-text {
   font-size: 15px;
   color: #FEF7EC;
-  line-height: 1.4;
+  line-height: 1.5;
   margin: 0;
   word-wrap: break-word;
   word-break: break-word;
+}
+
+.message-text strong {
+  font-weight: 700;
+}
+
+.message-text em {
+  font-style: italic;
+}
+
+.message-text br + br {
+  display: block;
+  content: '';
+  margin-top: 8px;
 }
 
 /* Кнопка в сообщении бота */
