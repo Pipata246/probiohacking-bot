@@ -238,25 +238,34 @@ let quizCompletionDate = null;
 async function checkQuizStatus() {
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    console.log('📋 Checking quiz status... TelegramData:', !!telegramWebAppData);
+    
     const response = await fetch('/api/quiz?action=status', {
       headers: {
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
     });
     
+    console.log('📋 Quiz status response:', response.status, response.ok);
+    
     if (response.ok) {
       const data = await response.json();
+      console.log('📋 Quiz status data:', data);
+      
       quizCompleted = data.quiz_completed ?? data.quizCompleted ?? false;
       quizCompletionDate = data.quiz_completion_date || null;
-      console.log('Quiz status:', quizCompleted, 'Date:', quizCompletionDate);
+      console.log('📋 Quiz status SET:', quizCompleted, 'Date:', quizCompletionDate);
       
       // Обновляем UI диагностики
       updateDiagnosticsUI();
       
       return quizCompleted;
+    } else {
+      const errorText = await response.text();
+      console.error('📋 Quiz status error response:', errorText);
     }
   } catch (error) {
-    console.error('Error checking quiz status:', error);
+    console.error('📋 Error checking quiz status:', error);
   }
   return false;
 }
@@ -2579,6 +2588,15 @@ async function sendMessageToAI(message) {
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded - initializing app');
   
+  // Ждём инициализации Telegram WebApp
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.ready();
+    console.log('📱 Telegram WebApp ready');
+  }
+  
+  // Небольшая задержка для инициализации Telegram
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
   // Мгновенная загрузка фото из Supabase
   await loadPhotosFromSupabase();
   
@@ -2587,6 +2605,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Проверяем статус квиза
   await checkQuizStatus();
+  console.log('📋 After checkQuizStatus, quizCompleted =', quizCompleted);
   
   // Загружаем активный чат
   await loadActiveChat();

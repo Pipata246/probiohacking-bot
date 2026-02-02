@@ -116,13 +116,27 @@ module.exports = async function handler(req, res) {
       console.log('🔥 INSERT SUCCESS:', data);
 
       // Обновляем статус прохождения квиза и дату
-      const { error: updateError } = await supabase
+      let updateError = null;
+      
+      // Сначала пробуем с датой
+      const result1 = await supabase
         .from('users')
         .update({ 
           quiz_completed: true,
           quiz_completion_date: new Date().toISOString()
         })
         .eq('id', userId);
+      
+      if (result1.error) {
+        console.log('🔥 Update with date failed, trying without date...');
+        // Если не получилось с датой - пробуем только статус
+        const result2 = await supabase
+          .from('users')
+          .update({ quiz_completed: true })
+          .eq('id', userId);
+        
+        updateError = result2.error;
+      }
 
       if (updateError) {
         console.error('🔥 UPDATE ERROR:', updateError);
@@ -135,19 +149,33 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'status') {
-      const { data, error } = await supabase
+      // Сначала пробуем получить с датой
+      let { data, error } = await supabase
         .from('users')
         .select('quiz_completed, quiz_completion_date')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      // Если ошибка (возможно поле не существует) - пробуем без даты
+      if (error) {
+        console.log('🔥 Trying without quiz_completion_date...');
+        const result = await supabase
+          .from('users')
+          .select('quiz_completed')
+          .eq('id', userId)
+          .single();
+        
+        if (result.error) throw result.error;
+        data = result.data;
+      }
+
+      console.log('🔥 Quiz status data:', data);
 
       return res.json({ 
         success: true, 
-        quizCompleted: data.quiz_completed,
-        quiz_completed: data.quiz_completed,
-        quiz_completion_date: data.quiz_completion_date
+        quizCompleted: data?.quiz_completed ?? false,
+        quiz_completed: data?.quiz_completed ?? false,
+        quiz_completion_date: data?.quiz_completion_date || null
       });
     }
 
