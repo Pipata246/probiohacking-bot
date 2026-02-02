@@ -3213,15 +3213,21 @@ body.chat-overlay-visible .search-container {
   flex-shrink: 0;
 }
 
-/* Галочка - синий/бирюзовый фон */
+/* Галочка - без фона */
 .test-check-btn {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background: #5B9A8B;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.test-check-btn svg {
+  stroke: #5B9A8B;
+}
+
+.test-check-btn svg path {
+  stroke: #5B9A8B;
 }
 
 /* Кнопка удаления - молочный кружок */

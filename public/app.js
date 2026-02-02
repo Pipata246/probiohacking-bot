@@ -3470,8 +3470,8 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
     </div>
     <div class="test-actions">
       <div class="test-check-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-          <path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17L4 12" stroke="#5B9A8B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <button class="test-delete-btn">
