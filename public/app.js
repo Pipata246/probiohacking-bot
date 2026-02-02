@@ -2986,6 +2986,11 @@ function showMyTestsPage() {
           <div class="uploaded-tests-section">
             <div class="uploaded-tests-list" id="uploadedTestsList">
               <h3 class="uploaded-tests-title">Загруженные анализы</h3>
+              <!-- Индикатор загрузки -->
+              <div class="tests-loading" id="testsLoading">
+                <div class="tests-loading-spinner"></div>
+                <p>Загрузка анализов...</p>
+              </div>
               <!-- Сюда будут добавляться загруженные анализы -->
             </div>
           </div>
@@ -3405,27 +3410,39 @@ function updatePhotosUI() {
   const testsList = document.getElementById('uploadedTestsList');
   if (!testsList) return;
 
-  testsList.innerHTML = '<h3>Загруженные анализы</h3>';
+  // Сохраняем заголовок, очищаем всё остальное
+  testsList.innerHTML = '<h3 class="uploaded-tests-title">Загруженные анализы</h3>';
   
   if (uploadedPhotosState.length > 0) {
     uploadedPhotosState.forEach(photo => {
       addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
     });
   } else {
-    testsList.innerHTML += '<p style="text-align: center; opacity: 0.7;">Нет загруженных анализов</p>';
+    const emptyMsg = document.createElement('p');
+    emptyMsg.className = 'no-tests-message';
+    emptyMsg.textContent = 'Нет загруженных анализов';
+    testsList.appendChild(emptyMsg);
   }
 }
 
-// Загрузка и отображение загруженных анализов (старая функция для совместимости)
+// Загрузка и отображение загруженных анализов — ВСЕГДА загружаем свежие данные из БД
 async function loadUploadedTests() {
-  // Если фото уже в состоянии, просто обновляем UI
-  if (uploadedPhotosState.length > 0) {
-    updatePhotosUI();
-    return;
-  }
+  // Показываем индикатор загрузки
+  showTestsLoading(true);
   
-  // Иначе загружаем из Supabase
+  // ВСЕГДА загружаем свежие данные из БД
   await loadPhotosFromSupabase();
+  
+  // Скрываем индикатор загрузки (updatePhotosUI вызывается внутри loadPhotosFromSupabase)
+  showTestsLoading(false);
+}
+
+// Показать/скрыть индикатор загрузки анализов
+function showTestsLoading(show) {
+  const loadingEl = document.getElementById('testsLoading');
+  if (loadingEl) {
+    loadingEl.style.display = show ? 'flex' : 'none';
+  }
 }
 
 // Функция для обновления списка анализов если страница уже открыта
