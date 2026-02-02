@@ -232,6 +232,7 @@ function cleanupRealtime() {
 // Глобальные переменные чата
 let currentChatId = null;
 let quizCompleted = false;
+let quizCompletionDate = null;
 
 // Проверка статуса квиза
 async function checkQuizStatus() {
@@ -246,13 +247,91 @@ async function checkQuizStatus() {
     if (response.ok) {
       const data = await response.json();
       quizCompleted = data.quiz_completed ?? data.quizCompleted ?? false;
-      console.log('Quiz status:', quizCompleted);
+      quizCompletionDate = data.quiz_completion_date || null;
+      console.log('Quiz status:', quizCompleted, 'Date:', quizCompletionDate);
+      
+      // Обновляем UI диагностики
+      updateDiagnosticsUI();
+      
       return quizCompleted;
     }
   } catch (error) {
     console.error('Error checking quiz status:', error);
   }
   return false;
+}
+
+// Обновление UI страницы диагностики
+function updateDiagnosticsUI() {
+  const completionDateBlock = document.getElementById('quizCompletionDate');
+  const dateValue = document.getElementById('quizDateValue');
+  const retakeBtn = document.getElementById('retakeQuizBtn');
+  
+  if (quizCompleted) {
+    // Показываем дату и кнопку повторного прохождения
+    if (completionDateBlock) completionDateBlock.style.display = 'block';
+    if (retakeBtn) retakeBtn.style.display = 'flex';
+    
+    // Форматируем и показываем дату
+    if (dateValue && quizCompletionDate) {
+      const date = new Date(quizCompletionDate);
+      const formattedDate = date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      dateValue.textContent = formattedDate;
+    }
+  } else {
+    // Скрываем элементы
+    if (completionDateBlock) completionDateBlock.style.display = 'none';
+    if (retakeBtn) retakeBtn.style.display = 'none';
+  }
+}
+
+// Показать модальное окно повторного прохождения
+function showRetakeQuizModal() {
+  const modal = document.getElementById('retakeQuizModal');
+  if (modal) {
+    modal.classList.add('active');
+  }
+}
+
+// Скрыть модальное окно
+function hideRetakeQuizModal() {
+  const modal = document.getElementById('retakeQuizModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+// Начать повторное прохождение квиза
+function startRetakeQuiz() {
+  hideRetakeQuizModal();
+  
+  // Сбрасываем локальный статус для прохождения
+  // НЕ меняем quizCompleted - данные перезапишутся только после завершения
+  
+  // Очищаем сохранённый прогресс
+  localStorage.removeItem('diagnosticPersonalData');
+  localStorage.removeItem('diagnosticProgress');
+  localStorage.removeItem('diagnosticAdditional');
+  
+  // Открываем форму диагностики напрямую (минуя проверку quizCompleted)
+  openDiagnosticFormDirectly();
+}
+
+// Открыть форму диагностики напрямую (для повторного прохождения)
+function openDiagnosticFormDirectly() {
+  isDiagnosticFormMode = true;
+  diagnosticState = getDiagnosticState();
+  
+  // Создаём форму (копия из showDiagnosticForm, но без проверки)
+  const existingForm = document.getElementById('diagnosticFormOverlay');
+  if (existingForm) existingForm.remove();
+  
+  // Вызываем создание формы
+  createDiagnosticFormUI();
 }
 
 // Сохранение результатов квиза
@@ -1219,6 +1298,8 @@ function showPage(pageName) {
       currentPage = 'diagnostics';
       isChatMode = false;
       isInRecommendedTests = false;
+      // Проверяем статус квиза и обновляем UI
+      checkQuizStatus();
       break;
     case 'knowledge':
       knowledgeBase.classList.add('active');
@@ -1566,6 +1647,30 @@ document.addEventListener('click', (e) => {
   // Кнопка "Заполнить анкету"
   if (e.target.closest('.fill-form-btn')) {
     showDiagnosticForm();
+    return;
+  }
+  
+  // Кнопка "Пройти диагностику повторно"
+  if (e.target.closest('#retakeQuizBtn') || e.target.closest('.retake-quiz-btn')) {
+    showRetakeQuizModal();
+    return;
+  }
+  
+  // Подтверждение повторного прохождения
+  if (e.target.closest('#retakeQuizConfirmBtn')) {
+    startRetakeQuiz();
+    return;
+  }
+  
+  // Отмена модального окна повторного прохождения
+  if (e.target.closest('#retakeQuizCancelBtn')) {
+    hideRetakeQuizModal();
+    return;
+  }
+  
+  // Закрытие модального окна по клику на overlay
+  if (e.target.classList.contains('retake-quiz-modal-overlay')) {
+    hideRetakeQuizModal();
     return;
   }
   
@@ -2614,6 +2719,17 @@ function resetViewportOnQuestionChange() {
 // ========================================
 
 function showDiagnosticForm() {
+  // Если диагностика уже пройдена - перенаправляем на вкладку Здоровье
+  if (quizCompleted) {
+    showPage('health');
+    return;
+  }
+  
+  createDiagnosticFormUI();
+}
+
+// Создание UI формы диагностики (используется и для первого, и для повторного прохождения)
+function createDiagnosticFormUI() {
   isDiagnosticFormMode = true;
   diagnosticState = getDiagnosticState();
   

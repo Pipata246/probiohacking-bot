@@ -115,10 +115,13 @@ module.exports = async function handler(req, res) {
 
       console.log('🔥 INSERT SUCCESS:', data);
 
-      // Обновляем статус прохождения квиза
+      // Обновляем статус прохождения квиза и дату
       const { error: updateError } = await supabase
         .from('users')
-        .update({ quiz_completed: true })
+        .update({ 
+          quiz_completed: true,
+          quiz_completion_date: new Date().toISOString()
+        })
         .eq('id', userId);
 
       if (updateError) {
@@ -134,13 +137,18 @@ module.exports = async function handler(req, res) {
     if (action === 'status') {
       const { data, error } = await supabase
         .from('users')
-        .select('quiz_completed')
+        .select('quiz_completed, quiz_completion_date')
         .eq('id', userId)
         .single();
 
       if (error) throw error;
 
-      return res.json({ success: true, quizCompleted: data.quiz_completed });
+      return res.json({ 
+        success: true, 
+        quizCompleted: data.quiz_completed,
+        quiz_completed: data.quiz_completed,
+        quiz_completion_date: data.quiz_completion_date
+      });
     }
 
     if (action === 'context') {

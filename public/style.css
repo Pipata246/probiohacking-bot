@@ -2240,6 +2240,157 @@ body.chat-overlay-visible .search-container {
   color: #FEF7EC;
 }
 
+/* Дата последнего прохождения диагностики */
+.quiz-completion-date {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.completion-date-text {
+  font-size: 13px;
+  color: #5A6B7D;
+  font-weight: 500;
+}
+
+#quizDateValue {
+  font-weight: 600;
+  color: #2A3F5F;
+}
+
+/* Кнопка повторного прохождения */
+.retake-quiz-btn {
+  width: 100%;
+  padding: clamp(10px, 2.5vw, 14px);
+  border-radius: clamp(12px, 3vw, 16px);
+  border: 1px solid #5A6B7D;
+  background: transparent;
+  color: #5A6B7D;
+  font-size: clamp(13px, 3vw, 14px);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: clamp(16px, 3vh, 20px);
+}
+
+.retake-quiz-btn:hover {
+  background: rgba(90, 107, 125, 0.1);
+  border-color: #2A3F5F;
+  color: #2A3F5F;
+}
+
+.retake-quiz-btn svg path {
+  transition: stroke 0.3s ease;
+}
+
+.retake-quiz-btn:hover svg path {
+  stroke: #2A3F5F;
+}
+
+/* Модальное окно повторного прохождения */
+.retake-quiz-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  padding: 20px;
+}
+
+.retake-quiz-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.retake-quiz-modal {
+  background: #FEF7EC;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.retake-quiz-modal-overlay.active .retake-quiz-modal {
+  transform: scale(1);
+}
+
+.retake-quiz-modal-icon {
+  margin-bottom: 16px;
+}
+
+.retake-quiz-modal-icon svg {
+  color: #F59E0B;
+}
+
+.retake-quiz-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2A3F5F;
+  margin-bottom: 12px;
+}
+
+.retake-quiz-modal-text {
+  font-size: 14px;
+  color: #5A6B7D;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.retake-quiz-modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.retake-quiz-confirm-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #4A8B6C;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retake-quiz-confirm-btn:hover {
+  background: #3D7A5D;
+}
+
+.retake-quiz-cancel-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #D1D5DB;
+  background: transparent;
+  color: #5A6B7D;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retake-quiz-cancel-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 .diagnostics-features {
   margin-bottom: clamp(16px, 3vh, 20px);
 }
