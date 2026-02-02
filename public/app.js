@@ -539,8 +539,8 @@ function sendChatMessage(message) {
   
   console.log('🔍 sendChatMessage called. currentChatId:', currentChatId);
   
-  // Очищаем поле ввода и отправляем
-  const chatInput = document.getElementById('chatInput');
+  // Очищаем поле ввода
+  const chatInput = document.querySelector('.chat-input');
   if (chatInput) chatInput.value = '';
   
   // Показываем сообщение в интерфейсе
@@ -755,8 +755,8 @@ async function viewOldChat(chatId) {
     showPage('chat');
     
     // Скрываем поле ввода сообщений
-    const chatInput = document.getElementById('chatInput');
-    const sendButton = document.getElementById('sendButton');
+    const chatInput = document.querySelector('.chat-input');
+    const sendButton = document.querySelector('.chat-send-btn');
     if (chatInput) chatInput.style.display = 'none';
     if (sendButton) sendButton.style.display = 'none';
     
@@ -861,8 +861,8 @@ async function createNewChat() {
     showPage('chat');
     
     // Показываем поле ввода (скрыто если был старый чат)
-    const chatInput = document.getElementById('chatInput');
-    const sendButton = document.getElementById('sendButton');
+    const chatInput = document.querySelector('.chat-input');
+    const sendButton = document.querySelector('.chat-send-btn');
     if (chatInput) chatInput.style.display = 'flex';
     if (sendButton) sendButton.style.display = 'flex';
     
@@ -1267,8 +1267,8 @@ function showPage(pageName) {
       isInRecommendedTests = false;
       
       // Всегда показываем поле ввода в чате
-      const chatInputEl = document.getElementById('chatInput');
-      const sendButtonEl = document.getElementById('sendButton');
+      const chatInputEl = document.querySelector('.chat-input');
+      const sendButtonEl = document.querySelector('.chat-send-btn');
       if (chatInputEl && sendButtonEl) {
         chatInputEl.style.display = 'flex';
         sendButtonEl.style.display = 'flex';
