@@ -2083,7 +2083,7 @@ let pendingAiMessages = [];
 
 // Защита от зависания AI - время последней активности
 let lastAiActivityTime = null;
-const AI_STUCK_TIMEOUT = 60000; // 60 секунд без активности = зависание
+const AI_STUCK_TIMEOUT = 120000; // 120 секунд без активности = зависание
 
 // Безопасный сброс состояния AI
 function resetAiState() {
@@ -2320,7 +2320,7 @@ function stopActiveTypewriter() {
 // Timeout для защиты от зависания typewriter (30 секунд)
 let typewriterTimeout = null;
 let typewriterStartTime = null;
-const TYPEWRITER_MAX_TIME = 30000; // 30 секунд максимум
+const TYPEWRITER_MAX_TIME = 90000; // 90 секунд - достаточно для длинных сообщений
 
 function typeMessage(text, callback) {
   const typingIndicator = document.getElementById('typingIndicator');

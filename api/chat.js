@@ -588,7 +588,7 @@ module.exports = async (req, res) => {
         { role: 'user', content: userContent }
       ],
       temperature: 0.7,
-      max_tokens: 800 // Увеличиваем для более детальных ответов с анализами
+      max_tokens: 2000 // Достаточно для полных развёрнутых ответов
     };
 
     const response = await doRequest(DEEPSEEK_API_URL, {
