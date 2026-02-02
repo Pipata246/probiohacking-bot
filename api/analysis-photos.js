@@ -230,6 +230,14 @@ async function handleAnalysisPhotos(req, res) {
 
     console.log('✅ Photo saved successfully:', data);
 
+    // Обновляем статус analyses_uploaded на TRUE
+    await supabase
+      .from('users')
+      .update({ analyses_uploaded: true })
+      .eq('telegram_id', telegramId);
+
+    console.log('✅ analyses_uploaded status set to TRUE');
+
     return res.status(200).json({
       success: true,
       photo: data,
@@ -284,12 +292,15 @@ async function handleAnalysisPhotos(req, res) {
       .select('*', { count: 'exact', head: true })
       .eq('telegram_id', telegramId);
 
+    console.log('📊 Remaining photos count:', count);
+
     // Обновляем флаг в users если фото не осталось
     if (count === 0) {
       await supabase
         .from('users')
         .update({ analyses_uploaded: false })
         .eq('telegram_id', telegramId);
+      console.log('✅ analyses_uploaded status set to FALSE (no photos left)');
     }
 
     return res.status(200).json({

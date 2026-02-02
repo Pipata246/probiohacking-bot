@@ -3168,10 +3168,16 @@ body.chat-overlay-visible .search-container {
 .test-item {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 3vw, 16px);
-  padding: clamp(12px, 3vw, 16px) 0;
+  gap: 12px;
+  padding: 12px 0;
   margin-bottom: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.test-item:hover {
+  opacity: 0.9;
 }
 
 .test-item:last-child {
@@ -3181,72 +3187,100 @@ body.chat-overlay-visible .search-container {
 
 .test-icon {
   flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2A3F5F;
+}
+
+.test-icon svg {
+  stroke: #2A3F5F;
 }
 
 .test-info {
   flex: 1;
   min-width: 0;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.test-info:hover {
-  opacity: 0.8;
 }
 
 .test-name {
-  font-size: clamp(14px, 3.5vw, 16px);
+  font-size: 15px;
   font-weight: 500;
-  color: #FFFFFF;
-  margin: 0 0 clamp(4px, 1vw, 6px) 0;
+  color: #2A3F5F;
+  margin: 0 0 4px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .test-date {
-  font-size: clamp(12px, 3vw, 14px);
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  color: rgba(42, 63, 95, 0.6);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.test-date::before {
+  content: '📅';
+  font-size: 11px;
 }
 
 .test-actions {
   display: flex;
-  gap: clamp(8px, 2vw, 12px);
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.test-action-btn {
-  width: clamp(32px, 8vw, 40px);
-  height: clamp(32px, 8vw, 40px);
+/* Галочка - статус загружен */
+.test-status-icon {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid;
 }
 
-.test-action-btn.success {
-  background: #6B7280;
-  color: white;
-  cursor: default;
-  pointer-events: none;
+.test-status-icon.check {
+  border-color: #5B9A8B;
+  color: #5B9A8B;
 }
 
-.test-action-btn.delete {
-  background: white;
-  color: #EF4444;
+.test-status-icon.check svg {
+  stroke: #5B9A8B;
+}
+
+/* Кнопка удаления - крестик */
+.test-delete-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #E8A87C;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  color: #E8A87C;
 }
 
-.test-action-btn.delete:hover {
-  background: #F3F4F6;
-  transform: scale(1.05);
+.test-delete-btn svg {
+  stroke: #E8A87C;
 }
 
-.test-action-btn.delete:active {
-  background: #E5E7EB;
+.test-delete-btn:hover {
+  background: rgba(232, 168, 124, 0.1);
+}
+
+.test-delete-btn:active {
   transform: scale(0.95);
 }
 

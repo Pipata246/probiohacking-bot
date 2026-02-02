@@ -3464,25 +3464,59 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
   const testItem = document.createElement('div');
   testItem.className = 'test-item';
   testItem.innerHTML = `
+    <div class="test-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
     <div class="test-info">
       <p class="test-name">${fileName}</p>
-      <p class="test-type">${analysisGroup}</p>
+      <p class="test-date">${analysisGroup}</p>
     </div>
-    <button class="test-action-btn delete">🗑</button>
-    <button class="test-action-btn view">👁</button>
+    <div class="test-actions">
+      <div class="test-status-icon check">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <button class="test-delete-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
   `;
   
-  // Добавляем обработчики для кнопок
-  const deleteBtn = testItem.querySelector('.test-action-btn.delete');
-  const viewBtn = testItem.querySelector('.test-action-btn.view');
+  // Клик по элементу - просмотр файла
+  testItem.addEventListener('click', (e) => {
+    // Не открываем просмотр если кликнули на кнопку удаления
+    if (e.target.closest('.test-delete-btn')) return;
+    
+    console.log('Клик по файлу:', fileName, 'URL:', fileURL);
+    
+    const url = fileURL || '';
+    const name = fileName || '';
+    const isImage = /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(url) || /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(name);
+    const isPdf = /\.pdf$/i.test(url) || /\.pdf$/i.test(name);
+    
+    if (isImage) {
+      showImageModal(fileURL, fileName);
+    } else if (isPdf) {
+      window.open(fileURL, '_blank');
+    } else {
+      showImageModal(fileURL, fileName);
+    }
+  });
   
+  // Кнопка удаления
+  const deleteBtn = testItem.querySelector('.test-delete-btn');
   deleteBtn.addEventListener('click', async (e) => {
     e.stopPropagation();
     console.log('Удаление файла:', fileName, 'photoId:', photoId);
     
     if (confirm(`Удалить анализ "${fileName}"?`)) {
       try {
-        // Удаляем из БД
         const deleteResponse = await fetch('/api/analysis-photos', {
           method: 'DELETE',
           headers: {
@@ -3496,11 +3530,8 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
         });
         
         if (deleteResponse.ok) {
-          // Удаляем из локального состояния
           uploadedPhotosState = uploadedPhotosState.filter(p => p.id !== photoId);
           console.log('✅ Файл удален, осталось в состоянии:', uploadedPhotosState.length);
-          
-          // Обновляем UI
           updatePhotosUI();
         } else {
           const errorData = await deleteResponse.json();
@@ -3514,26 +3545,6 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
     }
   });
   
-  viewBtn.addEventListener('click', () => {
-    console.log('Клик по файлу:', fileName, 'URL:', fileURL);
-    
-    // Определяем тип по расширению URL или имени файла
-    const url = fileURL || '';
-    const name = fileName || '';
-    const isImage = /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(url) || /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(name);
-    const isPdf = /\.pdf$/i.test(url) || /\.pdf$/i.test(name);
-    
-    if (isImage) {
-      showImageModal(fileURL, fileName);
-    } else if (isPdf) {
-      window.open(fileURL, '_blank');
-    } else {
-      // Для изображений из Supabase Storage (без расширения в URL) пробуем открыть как картинку
-      showImageModal(fileURL, fileName);
-    }
-  });
-  
-  // Добавляем элемент на страницу
   const testsList = document.getElementById('uploadedTestsList');
   testsList.appendChild(testItem);
 }
