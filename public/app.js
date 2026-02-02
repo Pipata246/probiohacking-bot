@@ -1581,8 +1581,17 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Отправка сообщения в чате
+  // Отправка сообщения или остановка ИИ
   if (e.target.closest('.chat-send-btn') || e.target.closest('#sendButton')) {
+    const btn = document.querySelector('.chat-send-btn');
+    
+    // Если режим "stop" - останавливаем ИИ
+    if (btn?.dataset.mode === 'stop') {
+      stopAIResponse();
+      return;
+    }
+    
+    // Иначе отправляем сообщение
     const chatInput = document.querySelector('.chat-input');
     const message = chatInput?.value?.trim();
     if (message) {
@@ -2094,6 +2103,12 @@ function finalizeTypingBubble({ appendActions } = { appendActions: false }) {
 function stopActiveTypewriter() {
   if (activeTypewriter && typeof activeTypewriter.stop === 'function') {
     activeTypewriter.stop();
+    
+    // Добавляем индикатор остановки к сообщению
+    const typingText = document.getElementById('typingText');
+    if (typingText && typingText.innerHTML.trim()) {
+      typingText.innerHTML += '<br><span style="opacity: 0.6; font-size: 12px;">⏹ Остановлено</span>';
+    }
   }
   activeTypewriter = null;
 }
@@ -2270,22 +2285,29 @@ function setChatSendButtonMode(mode) {
 }
 
 function stopAIResponse() {
+  console.log('🛑 Stopping AI response...');
+  
+  // Останавливаем запрос к API
   if (aiAbortController) {
     try {
       aiAbortController.abort();
-    } catch (_) {
-      // ignore
+      console.log('✅ API request aborted');
+    } catch (e) {
+      console.log('⚠️ Error aborting:', e);
     }
   }
   aiAbortController = null;
 
-  // Stop typewriter but keep whatever is already written.
+  // Останавливаем печать и финализируем сообщение
   stopActiveTypewriter();
   finalizeTypingBubble({ appendActions: false });
 
+  // Сбрасываем состояние
   isAiBusy = false;
+  pendingAiMessages = []; // Очищаем очередь
   setChatSendButtonMode('send');
-  processAiQueue();
+  
+  console.log('✅ AI response stopped');
 }
 
 function processAiQueue() {
