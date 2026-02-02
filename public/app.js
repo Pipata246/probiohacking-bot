@@ -2082,9 +2082,7 @@ function finalizeTypingBubble({ appendActions } = { appendActions: false }) {
 
   const typingText = typingIndicator.querySelector('#typingText');
   if (typingText) {
-    // Применяем форматирование markdown после завершения печати
-    const rawText = typingText.textContent;
-    typingText.innerHTML = formatMarkdown(rawText);
+    // Форматирование уже применено в реальном времени
     typingText.style.display = 'block';
     typingText.removeAttribute('id');
   }
@@ -2119,9 +2117,10 @@ function typeMessage(text, callback) {
 
   if (typingDots) typingDots.style.display = 'none';
   typingText.style.display = 'block';
-  typingText.textContent = '';
+  typingText.innerHTML = '';
 
   let index = 0;
+  let currentText = ''; // Накапливаем напечатанный текст
   const baseSpeed = 8;
   let stopped = false;
 
@@ -2143,7 +2142,9 @@ function typeMessage(text, callback) {
     }
     if (index < cleanText.length) {
       const char = cleanText.charAt(index);
-      typingText.textContent += char;
+      currentText += char;
+      // Применяем форматирование в реальном времени
+      typingText.innerHTML = formatMarkdown(currentText);
       index++;
 
       let delay = baseSpeed;
