@@ -4300,8 +4300,15 @@ function setupSurveyNavigation() {
       return;
     }
     
-    // СОХРАНЯЕМ ТЕКУЩИЙ ОТВЕТ
-    let answerValue = selectedAnswer ? selectedAnswer.value : customAnswer.value.trim();
+    // СОХРАНЯЕМ ТЕКУЩИЙ ОТВЕТ - используем ТЕКСТ ответа (label), а не value
+    let answerValue;
+    if (selectedAnswer) {
+      // Получаем текст из span рядом с radio кнопкой
+      const selectedLabel = selectedAnswer.nextElementSibling?.textContent?.trim();
+      answerValue = selectedLabel || selectedAnswer.value;
+    } else {
+      answerValue = customAnswer.value.trim();
+    }
     saveSurveyAnswer(currentQuestion.id, answerValue);
     
     if (currentQuestionIndex < surveyQuestions.length - 1) {
