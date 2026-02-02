@@ -1810,7 +1810,41 @@ body.chat-overlay-visible .search-container {
    width: 100%;
 }
 
+/* Контейнер кнопок действий ИИ */
+.ai-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .ai-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #4A8B6C !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-action-btn:hover {
+  background: #3d7a5c !important;
+  transform: translateY(-1px);
+}
+
+.ai-action-btn:active {
+  transform: translateY(0);
+}
+
+.ai-action-btn-old {
   display: flex;
   align-items: center;
   gap: 8px;

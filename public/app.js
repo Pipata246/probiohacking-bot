@@ -1942,6 +1942,15 @@ function addBotMessage(text) {
   const messageDiv = document.createElement('div');
   messageDiv.className = 'bot-message';
 
+  // Извлекаем и удаляем кнопки из текста
+  const buttonRegex = /\[BUTTON:(DIAGNOSTIC|ANALYSIS):([^\]]+)\]/g;
+  const buttons = [];
+  let match;
+  while ((match = buttonRegex.exec(text)) !== null) {
+    buttons.push({ type: match[1], text: match[2] });
+  }
+  const cleanText = text.replace(buttonRegex, '').trim();
+
   messageDiv.innerHTML = `
     <div class="bot-avatar">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -1952,11 +1961,17 @@ function addBotMessage(text) {
       </svg>
     </div>
     <div class="message-bubble">
-      <div class="message-text">${escapeHtml(text)}</div>
+      <div class="message-text">${escapeHtml(cleanText)}</div>
     </div>
   `;
 
   container.appendChild(messageDiv);
+  
+  // Добавляем кнопки если есть
+  if (buttons.length > 0) {
+    addActionButtons(messageDiv, buttons);
+  }
+  
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
@@ -2078,6 +2093,17 @@ function typeMessage(text, callback) {
   const typingText = document.getElementById('typingText');
   if (!typingIndicator || !typingText) return;
 
+  // Извлекаем кнопки из текста
+  const buttonRegex = /\[BUTTON:(DIAGNOSTIC|ANALYSIS):([^\]]+)\]/g;
+  const buttons = [];
+  let match;
+  while ((match = buttonRegex.exec(text)) !== null) {
+    buttons.push({ type: match[1], text: match[2] });
+  }
+  
+  // Удаляем теги кнопок из текста
+  const cleanText = text.replace(buttonRegex, '').trim();
+
   if (typingDots) typingDots.style.display = 'none';
   typingText.style.display = 'block';
   typingText.textContent = '';
@@ -2088,6 +2114,12 @@ function typeMessage(text, callback) {
 
   function finalizeTyping() {
     finalizeTypingBubble({ appendActions: false });
+    
+    // Добавляем кнопки после завершения печати
+    if (buttons.length > 0) {
+      addActionButtons(typingIndicator, buttons);
+    }
+    
     if (callback) callback();
   }
 
@@ -2096,8 +2128,8 @@ function typeMessage(text, callback) {
       finalizeTyping();
       return;
     }
-    if (index < text.length) {
-      const char = text.charAt(index);
+    if (index < cleanText.length) {
+      const char = cleanText.charAt(index);
       typingText.textContent += char;
       index++;
 
@@ -2124,6 +2156,36 @@ function typeMessage(text, callback) {
   };
 
   typeChar();
+}
+
+// Добавление кнопок действий к сообщению
+function addActionButtons(messageElement, buttons) {
+  const bubble = messageElement?.querySelector('.message-bubble');
+  if (!bubble) return;
+  
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.className = 'ai-action-buttons';
+  
+  buttons.forEach(btn => {
+    const button = document.createElement('button');
+    button.className = 'ai-action-btn';
+    button.textContent = btn.text;
+    
+    button.addEventListener('click', () => {
+      if (btn.type === 'DIAGNOSTIC') {
+        // Переход на диагностику
+        showDiagnosticForm();
+      } else if (btn.type === 'ANALYSIS') {
+        // Переход на загрузку анализов
+        showMyTestsPage();
+      }
+    });
+    
+    buttonsContainer.appendChild(button);
+  });
+  
+  bubble.appendChild(buttonsContainer);
+  chatMessagesScrollToBottom();
 }
 
 function setChatSendButtonMode(mode) {
