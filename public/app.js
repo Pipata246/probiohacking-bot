@@ -2158,6 +2158,52 @@ function typeMessage(text, callback) {
   typeChar();
 }
 
+// Добавление рекомендаций под последним сообщением на основе статусов
+function addStatusRecommendations(quizCompleted, analysesUploaded) {
+  // Если оба статуса TRUE - ничего не добавляем
+  if (quizCompleted && analysesUploaded) return;
+  
+  const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages?.querySelector('.chat-messages-container');
+  if (!container) return;
+  
+  // Находим последнее сообщение бота
+  const lastBotMessage = container.querySelector('.bot-message:last-of-type');
+  if (!lastBotMessage) return;
+  
+  const bubble = lastBotMessage.querySelector('.message-bubble');
+  if (!bubble) return;
+  
+  // Создаём блок рекомендаций
+  const recommendationsBlock = document.createElement('div');
+  recommendationsBlock.className = 'status-recommendations';
+  
+  let html = '';
+  
+  if (!quizCompleted) {
+    html += `
+      <div class="status-recommendation-item">
+        <span class="recommendation-text">Чтобы ответ был точнее: пройди диагностику</span>
+        <button class="recommendation-btn" onclick="showDiagnosticForm()">Пройти диагностику</button>
+      </div>
+    `;
+  }
+  
+  if (!analysesUploaded) {
+    html += `
+      <div class="status-recommendation-item">
+        <span class="recommendation-text">Загрузи анализы для персональных рекомендаций</span>
+        <button class="recommendation-btn" onclick="showMyTestsPage()">Загрузить анализы</button>
+      </div>
+    `;
+  }
+  
+  recommendationsBlock.innerHTML = html;
+  bubble.appendChild(recommendationsBlock);
+  
+  chatMessagesScrollToBottom();
+}
+
 // Добавление кнопок действий к сообщению
 function addActionButtons(messageElement, buttons) {
   const bubble = messageElement?.querySelector('.message-bubble');
@@ -2324,6 +2370,9 @@ async function sendMessageToAI(message) {
         quizCompleted = data.quizCompleted;
         console.log('Updated quiz status from API:', quizCompleted);
       }
+      
+      // Добавляем рекомендации под сообщением если нужно
+      addStatusRecommendations(data.quizCompleted, data.analysesUploaded);
       
       // Обрабатываем переполнение контекста
       if (false && (data.newChatCreated || data.contextOverflow)) {

@@ -400,7 +400,54 @@ body.chat-overlay-visible .search-container {
   text-align: left;
 }
 
-/* Удалён статичный reminder - теперь рекомендации управляются динамически через API */
+/* Динамические рекомендации под сообщением */
+.status-recommendations {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.status-recommendation-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.status-recommendation-item:last-child {
+  margin-bottom: 0;
+}
+
+.recommendation-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2A3F5F;
+}
+
+.recommendation-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background: #4A8B6C;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.recommendation-btn:hover {
+  background: #3d7a5c;
+  transform: translateY(-1px);
+}
+
+.recommendation-btn:active {
+  transform: translateY(0);
+}
 
 /* Additional bottom padding for "Мои анализы" and "Диагностика" pages */
 #myTestsStep,
