@@ -578,6 +578,35 @@ function hideLoadingOverlay() {
   }
 }
 
+// Индикатор загрузки при переходе на страницу
+function showPageLoading(pageName) {
+  // Удаляем старый если есть
+  hidePageLoading();
+  
+  const loader = document.createElement('div');
+  loader.id = 'pageLoadingOverlay';
+  loader.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(60, 128, 91, 0.95); display: flex;
+    align-items: center; justify-content: center; z-index: 9998;
+    flex-direction: column;
+  `;
+  
+  loader.innerHTML = `
+    <div style="width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px;"></div>
+    <div style="color: white; font-size: 16px; font-weight: 500;">Загрузка...</div>
+  `;
+  
+  document.body.appendChild(loader);
+}
+
+function hidePageLoading() {
+  const loader = document.getElementById('pageLoadingOverlay');
+  if (loader) {
+    loader.remove();
+  }
+}
+
 // Показать уведомление
 function showNotificationMessage(text) {
   const notification = document.createElement('div');
@@ -1641,7 +1670,11 @@ document.addEventListener('click', (e) => {
         showPage('health');
         break;
       case 3: // Дневник — проверяем quiz_completed, затем показываем страницу
-        checkQuizStatus().then(() => showPage('diary'));
+        showPageLoading('diary');
+        checkQuizStatus().then(() => {
+          hidePageLoading();
+          showPage('diary');
+        });
         break;
       case 4: // База знаний
         showPage('knowledge');
