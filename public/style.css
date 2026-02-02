@@ -1528,12 +1528,14 @@ body.chat-overlay-visible .search-container {
 .sports-analyses-title {
   font-size: clamp(18px, 4.5vw, 22px);
   font-weight: 600;
-  color: #FEF7EC;
-  margin: clamp(24px, 5vw, 32px) 0 clamp(12px, 3vw, 16px) 0;
-  padding: 0;
+  color: #31674A;
+  margin: 0;
+  padding: clamp(16px, 4vw, 20px) clamp(16px, 4vw, 20px) clamp(8px, 2vw, 12px);
+  border-bottom: 1px solid rgba(49, 103, 74, 0.1);
 }
 
 .sports-block {
+  margin-top: clamp(24px, 5vw, 32px);
   margin-bottom: clamp(16px, 4vw, 24px);
 }
 
@@ -1609,9 +1611,12 @@ body.chat-overlay-visible .search-container {
 /* Кнопки действий в рекомендуемых анализах */
 .recommended-actions {
   padding: clamp(16px, 4vw, 20px);
+  padding-top: clamp(20px, 5vw, 28px);
   display: flex;
   flex-direction: column;
   gap: clamp(12px, 3vw, 16px);
+  border-top: 1px solid rgba(49, 103, 74, 0.1);
+  margin-top: clamp(8px, 2vw, 12px);
 }
 
 .recommended-action-btn {
