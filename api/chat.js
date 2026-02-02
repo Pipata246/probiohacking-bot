@@ -232,11 +232,7 @@ const SYSTEM_PROMPT = `Ты — PROBIOHACKING AI: персональный ас�
 - Если данных недостаточно — задавай уточняющие вопросы
 - По умолчанию отвечай кратко (6–10 строк). Подробный разбор только по запросу
 - Не назначай рецептурные препараты
-
-КНОПКИ ДЕЙСТВИЙ:
-- Если нужно направить на диагностику, в КОНЦЕ сообщения добавь: [BUTTON:DIAGNOSTIC:Пройти диагностику]
-- Если нужно направить на загрузку анализов, в КОНЦЕ сообщения добавь: [BUTTON:ANALYSIS:Загрузить анализы]
-- Кнопки добавляй ТОЛЬКО если они уместны и пользователь ещё не выполнил это действие`;
+- НЕ добавляй никаких кнопок или тегов [BUTTON:...] — они добавляются автоматически`;
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -417,44 +413,54 @@ module.exports = async (req, res) => {
       systemPrompt += chatHistory;
     }
     
-    if (!diagnosticData) {
-      // Если не удалось получить данные, добавляем базовую рекомендацию
-      systemPrompt += `\n\n⚠️ СТАТУС ПОЛЬЗОВАТЕЛЯ:
-- Диагностика: НЕ ПРОЙДЕНА
-- Анализы: НЕ ЗАГРУЖЕНЫ
+    // Определяем статусы
+    const quizDone = diagnosticData?.quiz_completed === true;
+    const analysesDone = diagnosticData?.analyses_uploaded === true;
+    
+    console.log('📋 Status check:', { quizDone, analysesDone });
 
-В конце ответа добавь рекомендацию пройти диагностику и загрузить анализы.
-Обязательно добавь кнопки:
-[BUTTON:DIAGNOSTIC:Пройти диагностику]
-[BUTTON:ANALYSIS:Загрузить анализы]`;
-    } else if (!diagnosticData.quiz_completed && !diagnosticData.analyses_uploaded) {
-      // Добавляем рекомендацию пройти квиз и загрузить анализы
-      systemPrompt += `\n\n⚠️ СТАТУС ПОЛЬЗОВАТЕЛЯ:
-- Диагностика: НЕ ПРОЙДЕНА
-- Анализы: НЕ ЗАГРУЖЕНЫ
+    if (!quizDone && !analysesDone) {
+      // Оба статуса FALSE — НЕ показываем данные, просто информируем
+      systemPrompt += `\n\n⚠️ СТАТУС: У пользователя нет данных диагностики и анализов.
+Отвечай на основе общих знаний. НЕ ссылайся на какие-либо персональные данные пользователя.`;
+    } else if (!quizDone && analysesDone) {
+      // Только анализы загружены, диагностика не пройдена — показываем только анализы
+      systemPrompt += `\n\n⚠️ СТАТУС: Диагностика НЕ пройдена, но анализы загружены.
+Отвечай на основе общих знаний. НЕ ссылайся на данные диагностики.`;
+      
+      // Добавляем информацию об анализах если есть
+      if (diagnosticData?.analysis_photos?.length > 0) {
+        systemPrompt += `\n\n📷 ЗАГРУЖЕННЫЕ АНАЛИЗЫ (${diagnosticData.analysis_photos.length} шт.):`;
+        const groupedPhotos = {};
+        diagnosticData.analysis_photos.forEach(photo => {
+          if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = [];
+          groupedPhotos[photo.analysis_group].push(photo);
+        });
+        Object.entries(groupedPhotos).forEach(([group, photos]) => {
+          systemPrompt += `\n📁 ${group}: ${photos.map(p => p.photo_name).join(', ')}`;
+        });
+      }
+    } else if (quizDone && !analysesDone) {
+      // Диагностика пройдена, анализы не загружены — показываем только диагностику
+      systemPrompt += `\n\n✅ СТАТУС: Диагностика пройдена, анализы НЕ загружены.`;
+      
+      // Добавляем данные диагностики
+      systemPrompt += `\n\n📊 ДАННЫЕ ДИАГНОСТИКИ:
+👤 ФИО: ${diagnosticData?.personal_data?.fullName || 'Не указано'}
+📅 Возраст: ${diagnosticData?.personal_data?.birthDate || 'Не указано'}
+⚖️ Вес/Рост: ${diagnosticData?.personal_data?.weight || '?'}/${diagnosticData?.personal_data?.height || '?'}
+👤 Пол: ${diagnosticData?.personal_data?.gender || 'Не указано'}
+🏃 Спорт: ${diagnosticData?.personal_data?.sport || 'Не указано'}
 
-Для персонализированных рекомендаций мягко предложи пройти диагностику и загрузить анализы.
-В конце сообщения ОБЯЗАТЕЛЬНО добавь кнопки:
-[BUTTON:DIAGNOSTIC:Пройти диагностику]
-[BUTTON:ANALYSIS:Загрузить анализы]`;
-    } else if (!diagnosticData.quiz_completed) {
-      // Добавляем рекомендацию пройти квиз
-      systemPrompt += `\n\n⚠️ СТАТУС ПОЛЬЗОВАТЕЛЯ:
-- Диагностика: НЕ ПРОЙДЕНА
-- Анализы: Загружены ✅
+🔍 Беспокоит: ${diagnosticData?.additional_answers?.discomfort || 'Не указано'}
+📋 Диагнозы: ${diagnosticData?.additional_answers?.diagnosis || 'Не указано'}`;
 
-Для более точных рекомендаций предложи пройти диагностику.
-В конце сообщения ОБЯЗАТЕЛЬНО добавь кнопку:
-[BUTTON:DIAGNOSTIC:Пройти диагностику]`;
-    } else if (!diagnosticData.analyses_uploaded) {
-      // Добавляем рекомендацию загрузить анализы
-      systemPrompt += `\n\n⚠️ СТАТУС ПОЛЬЗОВАТЕЛЯ:
-- Диагностика: Пройдена ✅
-- Анализы: НЕ ЗАГРУЖЕНЫ
-
-Для более точных рекомендаций предложи загрузить анализы.
-В конце сообщения ОБЯЗАТЕЛЬНО добавь кнопку:
-[BUTTON:ANALYSIS:Загрузить анализы]`;
+      if (diagnosticData?.quiz_answers && Object.keys(diagnosticData.quiz_answers).length > 0) {
+        systemPrompt += `\n\n📋 ОТВЕТЫ КВИЗА:`;
+        Object.entries(diagnosticData.quiz_answers).forEach(([id, data]) => {
+          systemPrompt += `\n• ${data.system}: ${data.answer}`;
+        });
+      }
     } else {
       // Добавляем полную диагностическую информацию в промпт
       systemPrompt += `\n\n📊 ДИАГНОСТИЧЕСКИЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ:
