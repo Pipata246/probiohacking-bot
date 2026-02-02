@@ -2201,7 +2201,23 @@ function addBotMessageWithButton(text, buttonText, buttonAction) {
 
 function addBotTypingIndicator() {
   const chatMessages = document.getElementById('chatMessages');
+  if (!chatMessages) {
+    console.error('❌ addBotTypingIndicator: chatMessages not found');
+    return false;
+  }
+  
   const container = chatMessages.querySelector('.chat-messages-container');
+  if (!container) {
+    console.error('❌ addBotTypingIndicator: container not found');
+    return false;
+  }
+  
+  // Удаляем индикатор загрузки если есть
+  const loadingOverlay = container.querySelector('.chat-loading-overlay');
+  if (loadingOverlay) {
+    loadingOverlay.remove();
+  }
+  
   const messageDiv = document.createElement('div');
   messageDiv.className = 'bot-message typing-indicator';
   messageDiv.id = 'typingIndicator';
@@ -2226,6 +2242,7 @@ function addBotTypingIndicator() {
   `;
   container.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  return true;
 }
 
 function removeTypingIndicator() {
@@ -2293,7 +2310,14 @@ function typeMessage(text, callback) {
   const typingIndicator = document.getElementById('typingIndicator');
   const typingDots = typingIndicator?.querySelector('.typing-dots');
   const typingText = document.getElementById('typingText');
-  if (!typingIndicator || !typingText) return;
+  
+  if (!typingIndicator || !typingText) {
+    console.error('❌ typeMessage: typingIndicator or typingText not found');
+    // Добавляем сообщение напрямую
+    addBotMessage(text);
+    if (callback) callback();
+    return;
+  }
 
   // Извлекаем кнопки из текста
   const buttonRegex = /\[BUTTON:(DIAGNOSTIC|ANALYSIS):([^\]]+)\]/g;
@@ -2487,21 +2511,39 @@ function stopAIResponse() {
 }
 
 function processAiQueue() {
-  if (isAiBusy) return;
+  console.log('🔄 processAiQueue called, isAiBusy:', isAiBusy, 'queue length:', pendingAiMessages.length);
+  
+  if (isAiBusy) {
+    console.log('⏳ AI is busy, waiting...');
+    return;
+  }
+  
   const next = pendingAiMessages.shift();
-  if (!next) return;
+  if (!next) {
+    console.log('📭 Queue empty');
+    return;
+  }
+  
+  console.log('✅ Processing message:', next?.substring(0, 50) + '...');
   isAiBusy = true;
   setChatSendButtonMode('stop');
   sendMessageToAI(next);
 }
 
 async function sendMessageToAI(message) {
+  console.log('🤖 sendMessageToAI called with:', message?.substring(0, 50) + '...');
+  
   try {
-    addBotTypingIndicator();
+    const indicatorAdded = addBotTypingIndicator();
+    if (!indicatorAdded) {
+      console.warn('⚠️ Typing indicator not added, but continuing...');
+    }
 
     // Get Telegram user data and initData
     const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    
+    console.log('📡 Sending to API, chatId:', currentChatId);
 
     aiAbortController = new AbortController();
     const response = await fetch('/api/chat', {
@@ -2701,11 +2743,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function openChatWithMessage(message) {
+  console.log('🚀 openChatWithMessage called with:', message);
+  
   showPage('chat');
   
   // Показываем индикатор загрузки
   const chatMessages = document.getElementById('chatMessages');
-  const container = chatMessages?.querySelector('.chat-messages-container');
+  let container = chatMessages?.querySelector('.chat-messages-container');
   if (container) {
     container.innerHTML = `
       <div class="chat-loading-overlay">
@@ -2715,16 +2759,41 @@ async function openChatWithMessage(message) {
     `;
   }
   
-  // Ждём пока загрузится активный чат
-  if (!currentChatId) {
+  try {
+    // Всегда загружаем активный чат для получения актуального ID
     await loadActiveChat();
+    console.log('✅ Chat loaded, currentChatId:', currentChatId);
+    
+    // Обновляем ссылку на контейнер (мог измениться после loadActiveChat)
+    container = chatMessages?.querySelector('.chat-messages-container');
+    
+    // Удаляем индикатор загрузки если остался
+    const loadingOverlay = container?.querySelector('.chat-loading-overlay');
+    if (loadingOverlay) {
+      loadingOverlay.remove();
+    }
+    
+    // Даём время на рендеринг UI
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    // Проверяем что всё готово
+    if (!currentChatId) {
+      console.error('❌ No currentChatId after loadActiveChat');
+      return;
+    }
+    
+    // Отправляем сообщение
+    console.log('📤 Sending message to chat:', currentChatId);
+    sendChatMessage(message);
+    
+  } catch (error) {
+    console.error('❌ Error in openChatWithMessage:', error);
+    // Удаляем индикатор загрузки при ошибке
+    const loadingOverlay = container?.querySelector('.chat-loading-overlay');
+    if (loadingOverlay) {
+      loadingOverlay.remove();
+    }
   }
-  
-  // Даём время на рендеринг UI
-  await new Promise(resolve => setTimeout(resolve, 100));
-  
-  // Отправляем сообщение
-  sendChatMessage(message);
 }
 
 function handleDiagnosticButton() {
