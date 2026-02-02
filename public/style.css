@@ -4787,6 +4787,27 @@ body.chat-overlay-visible .search-container {
   display: none !important;
 }
 
+/* Состояние загрузки */
+.splash-screen.loading .splash-content::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 24px auto 0;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.splash-screen.loading .splash-text::after {
+  content: 'Загрузка...';
+  display: block;
+  margin-top: 16px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
 .splash-content {
   max-width: 400px;
   padding: 40px 20px;

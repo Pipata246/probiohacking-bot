@@ -2590,9 +2590,14 @@ async function sendMessageToAI(message) {
   }
 }
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM loaded - initializing app');
+// Флаг готовности приложения
+let appDataLoaded = false;
+
+// Загрузка всех данных приложения
+async function loadAppData() {
+  if (appDataLoaded) return;
+  
+  console.log('🚀 Загрузка данных приложения...');
   
   // Ждём инициализации Telegram WebApp
   if (window.Telegram?.WebApp) {
@@ -2616,8 +2621,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Загружаем активный чат
   await loadActiveChat();
   
-  // Показываем главную страницу
-  showPage('main');
+  appDataLoaded = true;
+  console.log('✅ Все данные загружены');
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOM loaded - initializing app');
+  
+  // Если нет splash screen - загружаем данные сразу
+  const splashScreen = document.getElementById('splashScreen');
+  if (!splashScreen) {
+    await loadAppData();
+    showPage('main');
+  }
+  // Иначе загрузка произойдёт при клике на splash screen
   
   // Проверяем Telegram WebApp
   if (window.Telegram?.WebApp) {
@@ -5083,11 +5101,19 @@ document.addEventListener('DOMContentLoaded', function() {
   if (splashScreen) {
     console.log('✅ Новый приветственный экран найден');
     
-    // Обработчик клика
-    splashScreen.addEventListener('click', function() {
-      console.log('🎯 Клик по приветственному экрану');
+    // Функция для скрытия splash и показа приложения
+    async function hideSplashAndShowApp() {
+      // Показываем индикатор загрузки на splash screen
+      splashScreen.classList.add('loading');
+      console.log('⏳ Загрузка данных...');
       
-      // СНАЧАЛА показываем главное приложение (но оно еще прозрачное)
+      // Загружаем все данные
+      await loadAppData();
+      
+      // Показываем главную страницу
+      showPage('main');
+      
+      // СНАЧАЛА показываем главное приложение
       if (mainApp) {
         mainApp.classList.add('active');
       }
@@ -5095,28 +5121,25 @@ document.addEventListener('DOMContentLoaded', function() {
       // ПОТОМ плавно скрываем приветственный экран
       splashScreen.classList.add('fade-out');
       
-      // Полностью удаляем приветственный экран после анимации (1.5 секунды)
+      // Полностью удаляем приветственный экран после анимации
       setTimeout(() => {
         splashScreen.classList.add('hidden');
         console.log('✅ Приветственный экран скрыт, главное приложение показано');
-      }, 1500);
+      }, 1000);
+    }
+    
+    // Обработчик клика
+    splashScreen.addEventListener('click', function() {
+      console.log('🎯 Клик по приветственному экрану');
+      hideSplashAndShowApp();
     });
     
     // Для локального тестирования - автоматический переход
     if (typeof window.Telegram === 'undefined') {
       setTimeout(() => {
         console.log('🔄 Автоматический переход для локального тестирования');
-        
-        if (mainApp) {
-          mainApp.classList.add('active');
-        }
-        
-        splashScreen.classList.add('fade-out');
-        
-        setTimeout(() => {
-          splashScreen.classList.add('hidden');
-        }, 1500);
-      }, 3000);
+        hideSplashAndShowApp();
+      }, 2000);
     }
   } else {
     console.error('❌ Приветственный экран не найден');
