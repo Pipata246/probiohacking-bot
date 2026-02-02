@@ -2419,7 +2419,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function openChatWithMessage(message) {
   showPage('chat');
-  // Просто отправляем сообщение в активный чат
+  
+  // Ждём пока загрузится активный чат
+  if (!currentChatId) {
+    await loadActiveChat();
+  }
+  
+  // Даём время на рендеринг UI
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Отправляем сообщение
   sendChatMessage(message);
 }
 
