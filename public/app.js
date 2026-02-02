@@ -785,6 +785,13 @@ async function viewOldChat(chatId) {
 
 // Загрузка сообщений чата
 async function loadChatMessages(chatId, isReadOnly = false) {
+  console.log('📥 loadChatMessages called for chatId:', chatId);
+  
+  if (!chatId) {
+    console.error('❌ loadChatMessages: No chatId provided');
+    return;
+  }
+  
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch(`/api/chats?action=messages&chatId=${chatId}`, {
@@ -794,26 +801,33 @@ async function loadChatMessages(chatId, isReadOnly = false) {
     });
     const data = await response.json();
     
+    console.log('📋 Chat messages response:', data);
+    
     if (data.success) {
       const chatMessages = document.getElementById('chatMessages');
-      const container = chatMessages.querySelector('.chat-messages-container');
-      if (container) {
-        // Если не read-only, очищаем все сообщения
-        if (!isReadOnly) {
-          container.innerHTML = '';
-        } else {
-          // Если read-only, убираем только загрузку, оставляя уведомление
-          const loadingElement = container.querySelector('.chat-loading-animation');
-          if (loadingElement) {
-            loadingElement.remove();
-          }
+      const container = chatMessages?.querySelector('.chat-messages-container');
+      
+      if (!container) {
+        console.error('❌ Chat messages container not found');
+        return;
+      }
+      
+      // Очищаем контейнер
+      if (!isReadOnly) {
+        container.innerHTML = '';
+      } else {
+        const loadingElement = container.querySelector('.chat-loading-animation');
+        if (loadingElement) {
+          loadingElement.remove();
         }
       }
       
-      // Если нет сообщений, добавляем приветствие с быстрыми запросами
+      // Если нет сообщений, добавляем приветствие
       if (!data.messages || data.messages.length === 0) {
+        console.log('💬 No messages, showing welcome');
         addWelcomeMessage();
       } else {
+        console.log(`✅ Loading ${data.messages.length} messages`);
         // Восстанавливаем сообщения в хронологическом порядке
         data.messages.forEach(msg => {
           if (msg.message_text) {
@@ -823,10 +837,17 @@ async function loadChatMessages(chatId, isReadOnly = false) {
             addBotMessage(msg.response_text);
           }
         });
+        
+        // Прокручиваем к последнему сообщению
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 100);
       }
+    } else {
+      console.error('❌ API returned success=false:', data);
     }
   } catch (error) {
-    console.error('Error loading chat messages:', error);
+    console.error('❌ Error loading chat messages:', error);
   }
 }
 
@@ -1246,11 +1267,19 @@ function showPage(pageName) {
       isInRecommendedTests = false;
       
       // Всегда показываем поле ввода в чате
-      const chatInput = document.getElementById('chatInput');
-      const sendButton = document.getElementById('sendButton');
-      if (chatInput && sendButton) {
-        chatInput.style.display = 'flex';
-        sendButton.style.display = 'flex';
+      const chatInputEl = document.getElementById('chatInput');
+      const sendButtonEl = document.getElementById('sendButton');
+      if (chatInputEl && sendButtonEl) {
+        chatInputEl.style.display = 'flex';
+        sendButtonEl.style.display = 'flex';
+      }
+      
+      // ВСЕГДА загружаем историю чата при открытии
+      if (currentChatId) {
+        loadChatMessages(currentChatId, false);
+      } else {
+        // Если нет активного чата, загружаем или создаём
+        loadActiveChat();
       }
       break;
     case 'recommendedTests':
