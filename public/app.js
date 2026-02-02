@@ -3298,14 +3298,14 @@ async function handleFileUpload(file) {
     const saveResult = await saveResponse.json();
     console.log('Информация о файле сохранена в БД:', saveResult);
     
-    // Добавляем элемент на страницу
-    addUploadedTest(file.name, file.type, publicUrl, saveResult.photo.id, analysisGroup);
+    // Добавляем фото в состояние и обновляем UI (НЕ перезагружаем весь список)
+    if (saveResult.photo) {
+      uploadedPhotosState.unshift(saveResult.photo);
+      updatePhotosUI();
+    }
     
     // Показываем уведомление об успешной загрузке
     alert('Анализ успешно загружен!');
-    
-    // Обновляем список загруженных анализов
-    loadUploadedTests();
     
     console.log('=== ФАЙЛ УСПЕШНО ЗАГРУЖЕН В БД ===');
   } catch (error) {
@@ -3410,9 +3410,13 @@ function updatePhotosUI() {
   const testsList = document.getElementById('uploadedTestsList');
   if (!testsList) return;
 
+  // Скрываем индикатор загрузки перед обновлением
+  showTestsLoading(false);
+
   // Сохраняем заголовок, очищаем всё остальное
   testsList.innerHTML = '<h3 class="uploaded-tests-title">Загруженные анализы</h3>';
   
+  // Показываем анализы или сообщение о пустом списке
   if (uploadedPhotosState.length > 0) {
     uploadedPhotosState.forEach(photo => {
       // addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup)
