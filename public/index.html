@@ -365,20 +365,6 @@
                     </svg>
                     Заполнить анкету
                 </button>
-                
-                <!-- Дата последнего прохождения (показывается только при quiz_completed=true) -->
-                <div class="quiz-completion-date" id="quizCompletionDate" style="display: none;">
-                    <span class="completion-date-text">Последняя дата прохождения: <span id="quizDateValue">--.--.----</span></span>
-                </div>
-                
-                <!-- Кнопка повторного прохождения (показывается только при quiz_completed=true) -->
-                <button class="retake-quiz-btn" id="retakeQuizBtn" style="display: none;">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M2.5 10C2.5 5.85786 5.85786 2.5 10 2.5C14.1421 2.5 17.5 5.85786 17.5 10C17.5 14.1421 14.1421 17.5 10 17.5" stroke="#3B4F6B" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M2.5 7.5L2.5 10L5 10" stroke="#3B4F6B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Пройти диагностику повторно
-                </button>
 
                 <div class="diagnostics-features">
                     <div class="feature-item">
@@ -645,6 +631,21 @@
                 </div>
                 
                 <button class="create-program-btn">Создать программу</button>
+            </div>
+            
+            <!-- Кнопка повторного прохождения диагностики (показывается при quiz_completed=true) -->
+            <div class="retake-diagnostic-card" id="retakeDiagnosticCard" style="display: none;">
+                <div class="retake-card-content">
+                    <div class="retake-card-text">
+                        <h4 class="retake-card-title">Пройти повторно диагностику</h4>
+                        <p class="retake-card-subtitle">12 вопросов о вашем здоровье и образе жизни</p>
+                    </div>
+                    <div class="retake-card-arrow">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M9 18L15 12L9 6" stroke="#FEF7EC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
 

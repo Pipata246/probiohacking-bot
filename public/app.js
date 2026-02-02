@@ -270,31 +270,17 @@ async function checkQuizStatus() {
   return false;
 }
 
-// Обновление UI страницы диагностики
+// Обновление UI на основе статуса квиза
 function updateDiagnosticsUI() {
-  const completionDateBlock = document.getElementById('quizCompletionDate');
-  const dateValue = document.getElementById('quizDateValue');
-  const retakeBtn = document.getElementById('retakeQuizBtn');
+  // Карточка повторного прохождения на странице Здоровье
+  const retakeCard = document.getElementById('retakeDiagnosticCard');
   
   if (quizCompleted) {
-    // Показываем дату и кнопку повторного прохождения
-    if (completionDateBlock) completionDateBlock.style.display = 'block';
-    if (retakeBtn) retakeBtn.style.display = 'flex';
-    
-    // Форматируем и показываем дату
-    if (dateValue && quizCompletionDate) {
-      const date = new Date(quizCompletionDate);
-      const formattedDate = date.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-      dateValue.textContent = formattedDate;
-    }
+    // Показываем карточку повторного прохождения
+    if (retakeCard) retakeCard.style.display = 'block';
   } else {
-    // Скрываем элементы
-    if (completionDateBlock) completionDateBlock.style.display = 'none';
-    if (retakeBtn) retakeBtn.style.display = 'none';
+    // Скрываем карточку
+    if (retakeCard) retakeCard.style.display = 'none';
   }
 }
 
@@ -1307,8 +1293,6 @@ function showPage(pageName) {
       currentPage = 'diagnostics';
       isChatMode = false;
       isInRecommendedTests = false;
-      // Проверяем статус квиза и обновляем UI
-      checkQuizStatus();
       break;
     case 'knowledge':
       knowledgeBase.classList.add('active');
@@ -1329,6 +1313,8 @@ function showPage(pageName) {
       currentPage = 'health';
       isChatMode = false;
       isInRecommendedTests = false;
+      // Обновляем UI (показываем/скрываем карточку повторного прохождения)
+      updateDiagnosticsUI();
       console.log('🎯 Текущая страница установлена:', currentPage);
       break;
     case 'diary': {
@@ -1659,8 +1645,8 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Кнопка "Пройти диагностику повторно"
-  if (e.target.closest('#retakeQuizBtn') || e.target.closest('.retake-quiz-btn')) {
+  // Карточка "Пройти повторно диагностику" на странице Здоровье
+  if (e.target.closest('#retakeDiagnosticCard') || e.target.closest('.retake-diagnostic-card')) {
     showRetakeQuizModal();
     return;
   }

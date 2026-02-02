@@ -2240,54 +2240,47 @@ body.chat-overlay-visible .search-container {
   color: #FEF7EC;
 }
 
-/* Дата последнего прохождения диагностики */
-.quiz-completion-date {
-  text-align: center;
-  margin-bottom: 12px;
-}
-
-.completion-date-text {
-  font-size: 13px;
-  color: #5A6B7D;
-  font-weight: 500;
-}
-
-#quizDateValue {
-  font-weight: 600;
-  color: #2A3F5F;
-}
-
-/* Кнопка повторного прохождения */
-.retake-quiz-btn {
-  width: 100%;
-  padding: clamp(10px, 2.5vw, 14px);
-  border-radius: clamp(12px, 3vw, 16px);
-  border: 1px solid #5A6B7D;
-  background: transparent;
-  color: #5A6B7D;
-  font-size: clamp(13px, 3vw, 14px);
-  font-weight: 500;
+/* Карточка повторного прохождения диагностики (на странице Здоровье) */
+.retake-diagnostic-card {
+  background: linear-gradient(135deg, #4A8B6C 0%, #3D7A5D 100%);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-top: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.retake-diagnostic-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 139, 108, 0.3);
+}
+
+.retake-card-content {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: clamp(16px, 3vh, 20px);
+  justify-content: space-between;
 }
 
-.retake-quiz-btn:hover {
-  background: rgba(90, 107, 125, 0.1);
-  border-color: #2A3F5F;
-  color: #2A3F5F;
+.retake-card-text {
+  flex: 1;
 }
 
-.retake-quiz-btn svg path {
-  transition: stroke 0.3s ease;
+.retake-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #FEF7EC;
+  margin: 0 0 4px 0;
 }
 
-.retake-quiz-btn:hover svg path {
-  stroke: #2A3F5F;
+.retake-card-subtitle {
+  font-size: 13px;
+  color: rgba(254, 247, 236, 0.7);
+  margin: 0;
+}
+
+.retake-card-arrow {
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
 /* Модальное окно повторного прохождения */
