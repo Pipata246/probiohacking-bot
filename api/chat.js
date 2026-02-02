@@ -217,7 +217,19 @@ async function doRequest(url, options) {
   });
 }
 
-const SYSTEM_PROMPT = `Ты — PROBIOHACKING AI: персональный ассистент по здоровью и биохакингу.
+// Функция для получения системного промпта с актуальной датой
+function getSystemPrompt() {
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('ru-RU', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+  
+  return `Ты — PROBIOHACKING AI: персональный ассистент по здоровью и биохакингу.
+
+📅 ТЕКУЩАЯ ДАТА: ${dateStr}
+⚠️ ВАЖНО: При расчёте возраста пользователя используй ТЕКУЩУЮ дату ${dateStr}. Год сейчас ${today.getFullYear()}.
 
 ПРАВИЛА ФОРМАТИРОВАНИЯ (ВАЖНО!):
 - Используй эмодзи в начале каждого раздела для наглядности
@@ -233,6 +245,7 @@ const SYSTEM_PROMPT = `Ты — PROBIOHACKING AI: персональный ас�
 - По умолчанию отвечай кратко (6–10 строк). Подробный разбор только по запросу
 - Не назначай рецептурные препараты
 - НЕ добавляй никаких кнопок или тегов [BUTTON:...] — они добавляются автоматически`;
+}
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -405,8 +418,8 @@ module.exports = async (req, res) => {
       console.log('⚠️ No telegramId available for diagnostic data');
     }
     
-    // Формируем системный промпт с учетом диагностических данных
-    let systemPrompt = SYSTEM_PROMPT;
+    // Формируем системный промпт с учетом диагностических данных и актуальной датой
+    let systemPrompt = getSystemPrompt();
     
     // Добавляем историю чата
     if (chatHistory) {
