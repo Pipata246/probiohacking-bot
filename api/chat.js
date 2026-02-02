@@ -231,13 +231,6 @@ function getSystemPrompt() {
 📅 ТЕКУЩАЯ ДАТА: ${dateStr}
 ⚠️ ВАЖНО: При расчёте возраста пользователя используй ТЕКУЩУЮ дату ${dateStr}. Год сейчас ${today.getFullYear()}.
 
-🔬 АНАЛИЗ ИЗОБРАЖЕНИЙ:
-- Если пользователь загрузил фотографии анализов, ты МОЖЕШЬ и ДОЛЖЕН их анализировать
-- Внимательно изучай все показатели на изображениях анализов
-- Сравнивай показатели с нормой и давай рекомендации
-- Если на изображении плохо видно — попроси загрузить более четкое фото
-- Учитывай ВСЕ загруженные анализы при формировании рекомендаций
-
 ПРАВИЛА ФОРМАТИРОВАНИЯ (ВАЖНО!):
 - Используй эмодзи в начале каждого раздела для наглядности
 - Делай ОТСТУПЫ между абзацами (пустая строка)
@@ -548,44 +541,12 @@ module.exports = async (req, res) => {
 - Пользователь УЖЕ ВСЁ СДЕЛАЛ, у тебя есть все данные!`;
     }
 
-    // Формируем контент сообщения пользователя
-    // Если есть загруженные анализы - добавляем их как изображения для vision
-    let userContent;
-    
-    if (analysesDone && diagnosticData?.analysis_photos?.length > 0) {
-      // Multimodal формат с изображениями
-      userContent = [];
-      
-      // Добавляем изображения анализов (максимум 5 последних)
-      const photosToInclude = diagnosticData.analysis_photos.slice(0, 5);
-      photosToInclude.forEach(photo => {
-        if (photo.photo_url) {
-          userContent.push({
-            type: 'image_url',
-            image_url: {
-              url: photo.photo_url
-            }
-          });
-        }
-      });
-      
-      // Добавляем текст сообщения
-      userContent.push({
-        type: 'text',
-        text: message
-      });
-      
-      console.log(`📷 Including ${photosToInclude.length} analysis images in request`);
-    } else {
-      // Обычный текстовый формат
-      userContent = message;
-    }
-
+    // DeepSeek не поддерживает vision - используем только текстовый формат
     const payload = {
       model: 'deepseek-chat',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent }
+        { role: 'user', content: message }
       ],
       temperature: 0.7,
       max_tokens: 2000 // Достаточно для полных развёрнутых ответов
