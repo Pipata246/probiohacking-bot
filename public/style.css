@@ -650,7 +650,7 @@ body.chat-overlay-visible .search-container {
   padding: clamp(16px, 4vw, 24px);
   box-sizing: border-box;
   overflow-y: auto;
-  padding-bottom: 120px; /* Отступ для нижней навигации */
+  padding-bottom: 160px; /* Увеличенный отступ для нижней навигации */
   /* ПОЛНОСТЬЮ убираем отступ сверху */
   padding-top: 0 !important;
 }
@@ -3052,7 +3052,7 @@ body.chat-overlay-visible .search-container {
   padding: clamp(16px, 4vw, 24px);
   box-sizing: border-box;
   overflow-y: auto;
-  padding-bottom: 120px; /* Отступ для нижней навигации */
+  padding-bottom: 160px; /* Увеличенный отступ для нижней навигации */
 }
 
 #additionalQuestionsStep.hidden {
