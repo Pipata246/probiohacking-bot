@@ -3375,6 +3375,8 @@ async function loadPhotosFromSupabase() {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Ошибка загрузки фото:', response.status, errorText);
+      uploadedPhotosState = [];
+      updatePhotosUI();
       return;
     }
     
@@ -3383,25 +3385,23 @@ async function loadPhotosFromSupabase() {
     
     if (!data.success) {
       console.error('❌ API returned success=false:', data);
+      uploadedPhotosState = [];
+      updatePhotosUI();
       return;
     }
     
-    if (!data.photos || data.photos.length === 0) {
-      console.log('📭 Фото не найдены в ответе');
-      uploadedPhotosState = [];
-      return;
-    }
-
-    // Сохраняем в состояние
+    // Сохраняем в состояние (пустой массив если нет фото)
     uploadedPhotosState = data.photos || [];
     console.log('✅ Фото загружены в состояние:', uploadedPhotosState.length);
     console.log('📸 Фото данные:', uploadedPhotosState);
     
-    // Обновляем UI если страница открыта
+    // ВСЕГДА обновляем UI
     updatePhotosUI();
     
   } catch (error) {
     console.error('❌ Ошибка загрузки фото:', error);
+    uploadedPhotosState = [];
+    updatePhotosUI();
   }
 }
 
@@ -3415,7 +3415,8 @@ function updatePhotosUI() {
   
   if (uploadedPhotosState.length > 0) {
     uploadedPhotosState.forEach(photo => {
-      addUploadedTest(photo.photo_name, photo.photo_url, photo.id, photo.analysis_group);
+      // addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup)
+      addUploadedTest(photo.photo_name, null, photo.photo_url, photo.id, photo.analysis_group);
     });
   } else {
     const emptyMsg = document.createElement('p');
@@ -3526,17 +3527,21 @@ function addUploadedTest(fileName, fileType, fileURL, photoId, analysisGroup) {
   });
   
   viewBtn.addEventListener('click', () => {
-    console.log('Клик по файлу:', fileName, 'Тип:', fileType);
+    console.log('Клик по файлу:', fileName, 'URL:', fileURL);
     
-    if (fileType && fileType.startsWith('image/')) {
+    // Определяем тип по расширению URL или имени файла
+    const url = fileURL || '';
+    const name = fileName || '';
+    const isImage = /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(url) || /\.(jpg|jpeg|png|gif|webp|heic|heif)$/i.test(name);
+    const isPdf = /\.pdf$/i.test(url) || /\.pdf$/i.test(name);
+    
+    if (isImage) {
       showImageModal(fileURL, fileName);
-    } else if (fileType === 'application/pdf') {
+    } else if (isPdf) {
       window.open(fileURL, '_blank');
     } else {
-      const link = document.createElement('a');
-      link.href = fileURL;
-      link.download = fileName;
-      link.click();
+      // Для изображений из Supabase Storage (без расширения в URL) пробуем открыть как картинку
+      showImageModal(fileURL, fileName);
     }
   });
   
