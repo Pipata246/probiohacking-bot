@@ -1373,7 +1373,8 @@ function showPage(pageName) {
   // СНАЧАЛА показываем нужную страницу, ПОТОМ скрываем остальные
   switch(pageName) {
     case 'main':
-      mainApp.style.display = 'block';
+      mainApp.classList.add('active');
+      mainApp.style.display = 'flex';
       currentPage = 'main';
       isChatMode = false;
       isInRecommendedTests = false;
@@ -1505,6 +1506,7 @@ function showPage(pageName) {
   
   // ТЕПЕРЬ скрываем все остальные страницы
   if (pageName !== 'main') {
+    mainApp.classList.remove('active');
     mainApp.style.display = 'none';
   }
   if (pageName !== 'knowledge') {
@@ -5577,7 +5579,8 @@ document.addEventListener('DOMContentLoaded', async function() {
       
       // Показываем приложение
       if (mainApp) {
-        mainApp.style.display = 'block';
+        mainApp.classList.add('active');
+        mainApp.style.display = 'flex';
       }
       
       // Скрываем splash screen если есть
