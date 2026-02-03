@@ -5307,3 +5307,7 @@ body.chat-overlay-visible .search-container {
 .admin-nav-item {
   display: none;
 }
+
+.admin-nav-item.active {
+  display: flex;
+}
