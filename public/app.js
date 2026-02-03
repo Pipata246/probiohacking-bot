@@ -231,6 +231,8 @@ function cleanupRealtime() {
 
 // Глобальные переменные чата
 let currentChatId = null;
+/** При просмотре неактивного чата (is_active=false) — только чтение, отправка недоступна */
+let viewingInactiveChatId = null;
 let quizCompleted = false;
 let quizCompletionDate = null;
 
@@ -664,6 +666,7 @@ async function loadActiveChat() {
 
 // Отправка сообщения
 function sendChatMessage(message) {
+  if (viewingInactiveChatId) return; // В режиме просмотра неактивного чата отправка недоступна
   const trimmed = (message || '').trim();
   if (!trimmed) return;
   
@@ -813,9 +816,10 @@ function renderChatsList(chats) {
       activeChatItem.textContent = title;
       activeChatItem.style.cssText = 'border-left: 3px solid #4CAF50; background: rgba(76, 175, 80, 0.1);';
       
-      // Активный чат можно кликнуть для перехода в чат
+      // Активный чат можно кликнуть для перехода в чат (с возможностью отправки)
       activeChatItem.addEventListener('click', () => {
         console.log('Active chat clicked - opening chat');
+        viewingInactiveChatId = null;
         closeSidebar();
         showPage('chat');
       });
@@ -833,7 +837,7 @@ function renderChatsList(chats) {
       header.style.cssText = 'padding: 8px 16px; font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500;';
       chatHistoryList.appendChild(header);
       
-      // Старые чаты (только для информации)
+      // Неактивные чаты — можно открыть для просмотра (без отправки сообщений)
       inactiveChats.forEach(chat => {
         const chatItem = document.createElement('div');
         chatItem.className = 'history-item';
@@ -841,8 +845,12 @@ function renderChatsList(chats) {
         
         const title = chat.auto_created ? `${chat.title} 🔄` : chat.title;
         chatItem.textContent = title;
-        chatItem.style.opacity = '0.7';
-        chatItem.style.cursor = 'default';
+        chatItem.style.opacity = '0.9';
+        chatItem.style.cursor = 'pointer';
+        
+        chatItem.addEventListener('click', () => {
+          viewOldChat(chat.id);
+        });
         
         // Добавляем дату
         const chatDate = new Date(chat.updated_at || chat.created_at);
@@ -887,10 +895,11 @@ function formatDate(date) {
   }
 }
 
-// Просмотр старого чата (read-only)
+// Просмотр неактивного чата (read-only: только чтение, без отправки; чат не становится активным)
 async function viewOldChat(chatId) {
   try {
     console.log('Loading old chat for viewing:', chatId);
+    viewingInactiveChatId = chatId;
     
     // Закрываем сайдбар
     closeSidebar();
@@ -998,6 +1007,7 @@ async function loadChatMessages(chatId, isReadOnly = false) {
 // Создание нового чата (становится активным)
 async function createNewChat() {
   console.log('Creating new active chat...');
+  viewingInactiveChatId = null;
   
   try {
     // СРАЗУ закрываем сайдбар и показываем страницу чата
@@ -1332,6 +1342,7 @@ let isInRecommendedTests = false; // Флаг для отслеживания н
 // Функции навигации
 function showPage(pageName) {
   console.log('🚀 showPage вызвана с параметром:', pageName);
+  if (pageName !== 'chat') viewingInactiveChatId = null;
   
   // Закрываем диагностическую форму если она открыта
   const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
@@ -1414,20 +1425,24 @@ function showPage(pageName) {
       currentPage = 'main'; // Чат это часть главной
       isInRecommendedTests = false;
       
-      // Всегда показываем поле ввода в чате
       const chatInputEl = document.querySelector('.chat-input');
       const sendButtonEl = document.querySelector('.chat-send-btn');
-      if (chatInputEl && sendButtonEl) {
-        chatInputEl.style.display = 'flex';
-        sendButtonEl.style.display = 'flex';
-      }
       
-      // ВСЕГДА загружаем историю чата при открытии
-      if (currentChatId) {
-        loadChatMessages(currentChatId, false);
+      if (viewingInactiveChatId) {
+        // Просмотр неактивного чата: только чтение, без отправки
+        if (chatInputEl) chatInputEl.style.display = 'none';
+        if (sendButtonEl) sendButtonEl.style.display = 'none';
+        // Сообщения загрузит viewOldChat после showPage
       } else {
-        // Если нет активного чата, загружаем или создаём
-        loadActiveChat();
+        if (chatInputEl && sendButtonEl) {
+          chatInputEl.style.display = 'flex';
+          sendButtonEl.style.display = 'flex';
+        }
+        if (currentChatId) {
+          loadChatMessages(currentChatId, false);
+        } else {
+          loadActiveChat();
+        }
       }
       break;
     case 'recommendedTests':
@@ -1785,6 +1800,11 @@ document.addEventListener('click', (e) => {
   // История запросов (старые чаты - только просмотр)
   if (e.target.closest('.history-item')) {
     // Клик обрабатывается внутри renderChatsList
+    return;
+  }
+  
+  // В режиме просмотра неактивного чата отправка запрещена
+  if (viewingInactiveChatId && (e.target.closest('.chat-send-btn') || e.target.closest('#sendButton'))) {
     return;
   }
   
