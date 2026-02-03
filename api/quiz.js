@@ -149,10 +149,10 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'status') {
-      // Сначала пробуем получить с датой
+      // Сначала пробуем получить с датой и admin статусом
       let { data, error } = await supabase
         .from('users')
-        .select('quiz_completed, quiz_completion_date')
+        .select('quiz_completed, quiz_completion_date, admin')
         .eq('id', userId)
         .single();
 
@@ -203,7 +203,8 @@ module.exports = async function handler(req, res) {
         success: true, 
         quizCompleted: quizCompleted,
         quiz_completed: quizCompleted,
-        quiz_completion_date: quizCompleted ? (data?.quiz_completion_date || null) : null
+        quiz_completion_date: quizCompleted ? (data?.quiz_completion_date || null) : null,
+        admin: data?.admin === true
       });
     }
 

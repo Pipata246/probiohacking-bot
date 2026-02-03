@@ -235,6 +235,7 @@ let currentChatId = null;
 let viewingInactiveChatId = null;
 let quizCompleted = false;
 let quizCompletionDate = null;
+let isAdmin = false;
 
 // Проверка статуса квиза
 async function checkQuizStatus() {
@@ -256,10 +257,12 @@ async function checkQuizStatus() {
       
       quizCompleted = data.quiz_completed ?? data.quizCompleted ?? false;
       quizCompletionDate = data.quiz_completion_date || null;
-      console.log('📋 Quiz status SET:', quizCompleted, 'Date:', quizCompletionDate);
+      isAdmin = data.admin === true;
+      console.log('📋 Quiz status SET:', quizCompleted, 'Date:', quizCompletionDate, 'Admin:', isAdmin);
       
-      // Обновляем UI диагностики
+      // Обновляем UI диагностики и админской панели
       updateDiagnosticsUI();
+      updateAdminPanelVisibility();
       
       return quizCompleted;
     } else {
@@ -270,6 +273,14 @@ async function checkQuizStatus() {
     console.error('📋 Error checking quiz status:', error);
   }
   return false;
+}
+
+// Обновление видимости админской панели
+function updateAdminPanelVisibility() {
+  const adminNavItems = document.querySelectorAll('.admin-nav-item');
+  adminNavItems.forEach(item => {
+    item.style.display = isAdmin ? 'flex' : 'none';
+  });
 }
 
 // Обновление UI на основе статуса квиза
@@ -1451,6 +1462,17 @@ function showPage(pageName) {
       isChatMode = false;
       isInRecommendedTests = true;
       break;
+    case 'admin':
+      const adminPage = document.getElementById('adminPage');
+      if (adminPage) {
+        adminPage.classList.add('active');
+        currentPage = 'admin';
+        isChatMode = false;
+        isInRecommendedTests = false;
+        // Загружаем список пользователей при открытии
+        loadAdminUsers();
+      }
+      break;
   }
   
   // ТЕПЕРЬ скрываем все остальные страницы
@@ -1468,6 +1490,10 @@ function showPage(pageName) {
   }
   if (pageName !== 'recommendedTests') {
     recommendedTestsPage.classList.remove('active');
+  }
+  if (pageName !== 'admin') {
+    const adminPage = document.getElementById('adminPage');
+    if (adminPage) adminPage.classList.remove('active');
   }
   
   // Скрываем страницу здоровье если не она выбрана
@@ -1524,6 +1550,9 @@ function updateAllNavigations() {
         case 4: // База знаний
           shouldBeActive = (currentPage === 'knowledge');
           break;
+        case 5: // Админ (если есть)
+          shouldBeActive = (currentPage === 'admin');
+          break;
       }
       
       if (shouldBeActive) {
@@ -1566,6 +1595,7 @@ updateAvatar(document.getElementById('diagnosticsAvatar'), user, userName);
 updateAvatar(document.getElementById('healthAvatar'), user, userName);
 updateAvatar(document.getElementById('diaryAvatar'), user, userName);
 updateAvatar(document.getElementById('recommendedTestsAvatar'), user, userName);
+updateAvatar(document.getElementById('adminAvatar'), user, userName);
 
 // Принудительное обновление всех аватарок
 function forceUpdateAllAvatars() {
@@ -1573,7 +1603,7 @@ function forceUpdateAllAvatars() {
   
   const avatarElements = [
     'avatar', 'sidebarAvatar', 'knowledgeAvatar', 'diagnosticsAvatar', 
-    'healthAvatar', 'diaryAvatar', 'recommendedTestsAvatar'
+    'healthAvatar', 'diaryAvatar', 'recommendedTestsAvatar', 'adminAvatar'
   ];
   
   avatarElements.forEach(id => {
@@ -1707,6 +1737,11 @@ document.addEventListener('click', (e) => {
         break;
       case 4: // База знаний
         showPage('knowledge');
+        break;
+      case 5: // Админ
+        if (isAdmin) {
+          showPage('admin');
+        }
         break;
     }
     return;
@@ -5416,5 +5451,440 @@ document.addEventListener('DOMContentLoaded', function() {
       mainApp.classList.add('active');
     }
     loadAppData().then(() => showPage('main'));
+  }
+});
+
+// ========================================
+// АДМИНСКАЯ ПАНЕЛЬ
+// ========================================
+
+let adminCurrentView = 'users'; // 'users' | 'quiz' | 'analyses'
+let adminCurrentUserId = null;
+let adminPendingChanges = {
+  quiz: [],
+  analyses: []
+};
+
+// Загрузка списка пользователей
+async function loadAdminUsers() {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/admin?action=users', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      renderAdminUsers(data.users || []);
+    }
+  } catch (error) {
+    console.error('Error loading admin users:', error);
+    const list = document.getElementById('adminUsersList');
+    if (list) {
+      list.innerHTML = '<div class="admin-error">Ошибка загрузки пользователей</div>';
+    }
+  }
+}
+
+// Отрисовка списка пользователей
+function renderAdminUsers(users) {
+  const list = document.getElementById('adminUsersList');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  users.forEach(user => {
+    const userItem = document.createElement('div');
+    userItem.className = 'admin-user-item';
+    userItem.setAttribute('data-user-id', user.id);
+
+    const name = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || `ID: ${user.telegram_id}`;
+    
+    userItem.innerHTML = `
+      <div class="admin-user-info">
+        <span class="admin-user-name">${name}</span>
+        <span class="admin-user-status">
+          ${user.quiz_completed ? '✓ Диагностика' : '✗ Диагностика'} | 
+          ${user.analyses_uploaded ? '✓ Анализы' : '✗ Анализы'}
+        </span>
+      </div>
+      <button class="admin-expand-btn" data-user-id="${user.id}">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    `;
+
+    const expandBtn = userItem.querySelector('.admin-expand-btn');
+    expandBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleUserExpanded(user.id);
+    });
+
+    // Подменю (скрыто по умолчанию)
+    const submenu = document.createElement('div');
+    submenu.className = 'admin-user-submenu';
+    submenu.id = `adminSubmenu_${user.id}`;
+    submenu.style.display = 'none';
+    
+    submenu.innerHTML = `
+      <button class="admin-submenu-item" data-action="quiz" data-user-id="${user.id}">
+        <span>Диагностика пользователя</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="admin-submenu-item" data-action="analyses" data-user-id="${user.id}">
+        <span>Анализы пользователя</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    `;
+
+    submenu.querySelectorAll('.admin-submenu-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        const userId = btn.dataset.userId;
+        if (action === 'quiz') {
+          viewUserQuiz(userId);
+        } else if (action === 'analyses') {
+          viewUserAnalyses(userId);
+        }
+      });
+    });
+
+    userItem.appendChild(submenu);
+    list.appendChild(userItem);
+  });
+}
+
+// Переключение раскрытия подменю пользователя
+function toggleUserExpanded(userId) {
+  const submenu = document.getElementById(`adminSubmenu_${userId}`);
+  if (!submenu) return;
+
+  const isExpanded = submenu.style.display !== 'none';
+  submenu.style.display = isExpanded ? 'none' : 'block';
+  
+  const btn = document.querySelector(`[data-user-id="${userId}"] .admin-expand-btn`);
+  if (btn) {
+    btn.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(45deg)';
+  }
+}
+
+// Просмотр диагностики пользователя
+async function viewUserQuiz(userId) {
+  try {
+    adminCurrentView = 'quiz';
+    adminCurrentUserId = userId;
+    adminPendingChanges.quiz = [];
+
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch(`/api/admin?action=quiz&userId=${userId}`, {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    if (!data.success) throw new Error('API error');
+
+    const quizView = document.getElementById('adminQuizView');
+    const answersContainer = document.getElementById('adminQuizAnswers');
+    if (!quizView || !answersContainer) return;
+
+    if (!data.quiz_completed || !data.answers || data.answers.length === 0) {
+      answersContainer.innerHTML = '<div class="admin-message">У пользователя не пройдена диагностика</div>';
+      showAdminNavigation(true);
+      return;
+    }
+
+    // Загружаем вопросы из surveyQuestions
+    const questions = surveyQuestions || [];
+    
+    answersContainer.innerHTML = '';
+    
+    data.answers.forEach((answer, idx) => {
+      const question = questions.find(q => q.id === answer.question_id) || { text: `Вопрос ${answer.question_id}` };
+      
+      const answerItem = document.createElement('div');
+      answerItem.className = 'admin-quiz-item';
+      answerItem.innerHTML = `
+        <div class="admin-quiz-question">
+          <strong>Вопрос:</strong> ${question.text || question.question || 'Неизвестный вопрос'}
+        </div>
+        <div class="admin-quiz-answer">
+          <strong>Ответ:</strong> 
+          <input type="text" class="admin-quiz-input" 
+                 data-question-id="${answer.question_id}" 
+                 value="${(answer.answer_text || '').replace(/"/g, '&quot;')}" 
+                 placeholder="Введите ответ">
+        </div>
+      `;
+
+      const input = answerItem.querySelector('.admin-quiz-input');
+      input.addEventListener('input', () => {
+        const questionId = input.dataset.questionId;
+        const existing = adminPendingChanges.quiz.findIndex(c => c.question_id === questionId);
+        if (existing >= 0) {
+          adminPendingChanges.quiz[existing].answer_text = input.value;
+        } else {
+          adminPendingChanges.quiz.push({
+            question_id: questionId,
+            answer_text: input.value
+          });
+        }
+        updateAdminSaveButton();
+      });
+
+      answersContainer.appendChild(answerItem);
+    });
+
+    showAdminNavigation(true);
+  } catch (error) {
+    console.error('Error loading user quiz:', error);
+    const answersContainer = document.getElementById('adminQuizAnswers');
+    if (answersContainer) {
+      answersContainer.innerHTML = '<div class="admin-error">Ошибка загрузки диагностики</div>';
+    }
+  }
+}
+
+// Просмотр анализов пользователя
+async function viewUserAnalyses(userId) {
+  try {
+    adminCurrentView = 'analyses';
+    adminCurrentUserId = userId;
+    adminPendingChanges.analyses = [];
+
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch(`/api/admin?action=analyses&userId=${userId}`, {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    if (!data.success) throw new Error('API error');
+
+    const analysesView = document.getElementById('adminAnalysesView');
+    const analysesList = document.getElementById('adminAnalysesList');
+    if (!analysesView || !analysesList) return;
+
+    if (!data.analyses_uploaded || !data.analyses || data.analyses.length === 0) {
+      analysesList.innerHTML = '<div class="admin-message">У пользователя нет загруженных анализов</div>';
+      showAdminNavigation(true);
+      return;
+    }
+
+    analysesList.innerHTML = '';
+
+    const categories = ['Анализ крови', 'Гормоны', 'Витамины', 'Другое'];
+
+    data.analyses.forEach(analysis => {
+      const analysisItem = document.createElement('div');
+      analysisItem.className = 'admin-analysis-item';
+      analysisItem.setAttribute('data-analysis-id', analysis.id);
+
+      const currentCategory = analysis.category || 'Другое';
+      
+      analysisItem.innerHTML = `
+        <div class="admin-analysis-image">
+          <img src="${analysis.photo_url}" alt="Анализ" onerror="this.style.display='none'">
+        </div>
+        <div class="admin-analysis-controls">
+          <select class="admin-analysis-category" data-analysis-id="${analysis.id}">
+            ${categories.map(cat => `<option value="${cat}" ${cat === currentCategory ? 'selected' : ''}>${cat}</option>`).join('')}
+          </select>
+          <button class="admin-analysis-delete" data-analysis-id="${analysis.id}">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      `;
+
+      const select = analysisItem.querySelector('.admin-analysis-category');
+      select.addEventListener('change', () => {
+        const analysisId = select.dataset.analysisId;
+        const existing = adminPendingChanges.analyses.findIndex(c => c.id === analysisId);
+        if (existing >= 0) {
+          adminPendingChanges.analyses[existing].category = select.value;
+        } else {
+          adminPendingChanges.analyses.push({
+            id: analysisId,
+            category: select.value,
+            action: 'update'
+          });
+        }
+        updateAdminSaveButton();
+      });
+
+      const deleteBtn = analysisItem.querySelector('.admin-analysis-delete');
+      deleteBtn.addEventListener('click', () => {
+        const analysisId = deleteBtn.dataset.analysisId;
+        const existing = adminPendingChanges.analyses.findIndex(c => c.id === analysisId);
+        if (existing >= 0 && adminPendingChanges.analyses[existing].action === 'update') {
+          adminPendingChanges.analyses[existing].action = 'delete';
+        } else {
+          adminPendingChanges.analyses.push({
+            id: analysisId,
+            action: 'delete'
+          });
+        }
+        analysisItem.style.opacity = '0.5';
+        updateAdminSaveButton();
+      });
+
+      analysesList.appendChild(analysisItem);
+    });
+
+    showAdminNavigation(true);
+  } catch (error) {
+    console.error('Error loading user analyses:', error);
+    const analysesList = document.getElementById('adminAnalysesList');
+    if (analysesList) {
+      analysesList.innerHTML = '<div class="admin-error">Ошибка загрузки анализов</div>';
+    }
+  }
+}
+
+// Показать/скрыть навигацию админки (кнопки Назад и Сохранить)
+function showAdminNavigation(show) {
+  const nav = document.getElementById('adminNavButtons');
+  if (nav) {
+    nav.style.display = show ? 'flex' : 'none';
+  }
+  
+  // Скрываем/показываем основной контент и view
+  const content = document.getElementById('adminContent');
+  const quizView = document.getElementById('adminQuizView');
+  const analysesView = document.getElementById('adminAnalysesView');
+  
+  if (show) {
+    if (content) content.style.display = 'none';
+    if (adminCurrentView === 'quiz' && quizView) {
+      quizView.style.display = 'block';
+      if (analysesView) analysesView.style.display = 'none';
+    } else if (adminCurrentView === 'analyses' && analysesView) {
+      analysesView.style.display = 'block';
+      if (quizView) quizView.style.display = 'none';
+    }
+  } else {
+    if (content) content.style.display = 'block';
+    if (quizView) quizView.style.display = 'none';
+    if (analysesView) analysesView.style.display = 'none';
+  }
+}
+
+// Обновление кнопки Сохранить
+function updateAdminSaveButton() {
+  const saveBtn = document.getElementById('adminSaveBtn');
+  if (!saveBtn) return;
+
+  const hasChanges = adminPendingChanges.quiz.length > 0 || 
+                     adminPendingChanges.analyses.length > 0;
+  saveBtn.style.display = hasChanges ? 'flex' : 'none';
+}
+
+// Сохранение изменений
+async function saveAdminChanges() {
+  if (!adminCurrentUserId) return;
+
+  const saveBtn = document.getElementById('adminSaveBtn');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Сохранение...';
+  }
+
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+    };
+
+    // Сохраняем диагностику
+    if (adminPendingChanges.quiz.length > 0) {
+      const response = await fetch(`/api/admin?action=quiz&userId=${adminCurrentUserId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ answers: adminPendingChanges.quiz })
+      });
+      if (!response.ok) throw new Error('Failed to save quiz');
+    }
+
+    // Сохраняем анализы
+    for (const change of adminPendingChanges.analyses) {
+      if (change.action === 'delete') {
+        const response = await fetch(`/api/admin?action=analyses&userId=${adminCurrentUserId}&analysisId=${change.id}`, {
+          method: 'DELETE',
+          headers
+        });
+        if (!response.ok) throw new Error('Failed to delete analysis');
+      } else if (change.action === 'update') {
+        const response = await fetch(`/api/admin?action=analyses&userId=${adminCurrentUserId}&analysisId=${change.id}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ category: change.category })
+        });
+        if (!response.ok) throw new Error('Failed to update analysis');
+      }
+    }
+
+    // Сбрасываем изменения и возвращаемся к списку
+    adminPendingChanges = { quiz: [], analyses: [] };
+    adminCurrentView = 'users';
+    adminCurrentUserId = null;
+    showAdminNavigation(false);
+    await loadAdminUsers();
+  } catch (error) {
+    console.error('Error saving admin changes:', error);
+    alert('Ошибка сохранения изменений');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Сохранить';
+    }
+  }
+}
+
+// Обработчики админской панели
+document.addEventListener('DOMContentLoaded', () => {
+  const adminBackBtn = document.getElementById('adminBackBtn');
+  const adminSaveBtn = document.getElementById('adminSaveBtn');
+  const adminNavItem = document.getElementById('adminNavItem');
+
+  if (adminBackBtn) {
+    adminBackBtn.addEventListener('click', () => {
+      adminCurrentView = 'users';
+      adminCurrentUserId = null;
+      adminPendingChanges = { quiz: [], analyses: [] };
+      showAdminNavigation(false);
+      loadAdminUsers();
+    });
+  }
+
+  if (adminSaveBtn) {
+    adminSaveBtn.addEventListener('click', saveAdminChanges);
+  }
+
+  if (adminNavItem) {
+    adminNavItem.addEventListener('click', () => {
+      if (isAdmin) {
+        showPage('admin');
+      }
+    });
   }
 });

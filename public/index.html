@@ -297,6 +297,12 @@
                     </svg>
                 <span>База знаний</span>
             </button>
+            <button class="nav-item admin-nav-item" id="adminNavItem" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
+            </button>
         </nav>
     </div>
 
@@ -531,6 +537,12 @@
                     </svg>
                 <span>База знаний</span>
             </button>
+            <button class="nav-item admin-nav-item" id="adminNavItem" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
+            </button>
         </nav>
     </div>
 
@@ -711,6 +723,12 @@
                     </svg>
                 <span>База знаний</span>
             </button>
+            <button class="nav-item admin-nav-item" id="adminNavItem" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
+            </button>
         </nav>
     </div>
 
@@ -778,6 +796,12 @@
                         <path d="M0.777778 3.88888C0.777778 3.88888 2.33333 0.777771 7.77778 0.777771C13.2222 0.777771 14 3.88888 14 3.88888" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
                     </svg>
                 <span>База знаний</span>
+            </button>
+            <button class="nav-item admin-nav-item" id="adminNavItem" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
             </button>
         </nav>
     </div>
@@ -1386,6 +1410,12 @@
                     </svg>
                 <span>База знаний</span>
             </button>
+            <button class="nav-item admin-nav-item" id="adminNavItem" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
+            </button>
         </nav>
     </div>
 
@@ -1903,6 +1933,12 @@
                     </svg>
                 <span>База знаний</span>
             </button>
+            <button class="nav-item admin-nav-item" id="adminNavItem" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
+            </button>
         </nav>
     </div>
 
@@ -2059,6 +2095,118 @@
                     </svg>
                 <span>База знаний</span>
             </button>
+            <button class="nav-item admin-nav-item" id="adminNavItem" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Страница Админ Панель -->
+    <div class="admin-page" id="adminPage">
+        <header class="header">
+            <button class="menu-btn" id="adminMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="avatar" id="adminAvatar">AM</div>
+        </header>
+
+        <!-- Список пользователей -->
+        <div class="admin-content" id="adminContent">
+            <h1 class="admin-title">Админ Панель</h1>
+            <div class="admin-users-list" id="adminUsersList">
+                <div class="admin-loading">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Загрузка пользователей...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Просмотр диагностики пользователя -->
+        <div class="admin-quiz-view" id="adminQuizView" style="display: none;">
+            <div class="admin-view-header">
+                <h2 class="admin-view-title">Диагностика пользователя</h2>
+            </div>
+            <div class="admin-quiz-answers" id="adminQuizAnswers">
+                <!-- Ответы будут загружены динамически -->
+            </div>
+        </div>
+
+        <!-- Просмотр анализов пользователя -->
+        <div class="admin-analyses-view" id="adminAnalysesView" style="display: none;">
+            <div class="admin-view-header">
+                <h2 class="admin-view-title">Анализы пользователя</h2>
+            </div>
+            <div class="admin-analyses-list" id="adminAnalysesList">
+                <!-- Анализы будут загружены динамически -->
+            </div>
+        </div>
+
+        <!-- Кнопки навигации (Назад и Сохранить) -->
+        <div class="admin-nav-buttons" id="adminNavButtons" style="display: none;">
+            <button class="admin-back-btn" id="adminBackBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="admin-save-btn" id="adminSaveBtn">
+                Сохранить
+            </button>
+        </div>
+
+        <!-- Нижняя навигация -->
+        <nav class="bottom-nav">
+            <button class="nav-item">
+                <svg width="24" height="27" viewBox="0 0 24 27" fill="none">
+                    <path d="M1.5 13.1393C1.5 11.1027 1.5 10.0844 1.91169 9.18926C2.32338 8.29415 3.09655 7.63144 4.64288 6.30601L6.14288 5.0203C8.93785 2.6246 10.3353 1.42676 12 1.42676C13.6647 1.42676 15.0621 2.6246 17.8571 5.0203L19.3571 6.30601C20.9035 7.63144 21.6766 8.29415 22.0883 9.18926C22.5 10.0844 22.5 11.1027 22.5 13.1393V19.4999C22.5 22.3283 22.5 23.7425 21.6213 24.6212C20.7426 25.4999 19.3284 25.4999 16.5 25.4999H7.5C4.67157 25.4999 3.25736 25.4999 2.37868 24.6212C1.5 23.7425 1.5 22.3283 1.5 19.4999V13.1393Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M15.75 25.5V18C15.75 17.1716 15.0784 16.5 14.25 16.5H9.75C8.92157 16.5 8.25 17.1716 8.25 18V25.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Главная</span>
+            </button>
+            <button class="nav-item">
+                <svg width="20" height="25" viewBox="0 0 20 25" fill="none">
+                    <path d="M18.4001 8.80001V20.8C18.4001 22.1255 17.3256 23.2 16.0001 23.2H4.0001C2.67461 23.2 1.6001 22.1255 1.6001 20.8V4.00001C1.6001 2.67452 2.67461 1.60001 4.0001 1.60001H11.2001M18.4001 8.80001H13.6001C12.2746 8.80001 11.2001 7.72549 11.2001 6.40001V1.60001M18.4001 8.80001L11.2001 1.60001M6.4001 13.6H8.8001M6.4001 18.4H12.4001" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Диагностика</span>
+            </button>
+            <button class="nav-item">
+                <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+                    <path d="M10.8888 21.7778L21.7777 10.8889C23.9255 8.74112 23.9255 5.25889 21.7777 3.11112C19.6299 0.963344 16.1477 0.96334 13.9999 3.11111L3.11106 14C0.963283 16.1478 0.963283 19.63 3.11106 21.7778C5.25883 23.9256 8.74106 23.9256 10.8888 21.7778Z" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16.3334 16.3333C12.8384 14.8355 10.0535 12.0506 8.55566 8.55556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Здоровье</span>
+            </button>
+            <button class="nav-item">
+                <svg width="28" height="25" viewBox="0 0 28 25" fill="none">
+                    <path d="M26.25 9.39178V8.90178C26.25 7.07227 26.25 6.15752 25.894 5.45874C25.5808 4.84408 25.081 4.34434 24.4664 4.03116C23.7676 3.67511 22.8528 3.67511 21.0233 3.67511H6.97667C5.14716 3.67511 4.23241 3.67511 3.53363 4.03116C2.91897 4.34434 2.41923 4.84408 2.10605 5.45874C1.75 6.15752 1.75 7.07227 1.75 8.90178V9.39178M26.25 9.39178V18.4568C26.25 20.2863 26.25 21.201 25.894 21.8998C25.5808 22.5145 25.081 23.0142 24.4664 23.3274C23.7676 23.6834 22.8528 23.6834 21.0233 23.6834H6.97667C5.14716 23.6834 4.23241 23.6834 3.53363 23.3274C2.91897 23.0142 2.41923 22.5145 2.10605 21.8998C1.75 21.201 1.75 20.2863 1.75 18.4568V9.39178M26.25 9.39178H1.75" stroke="currentColor" stroke-width="1.63333"/>
+                    <path d="M8.2832 0.816666L8.2832 6.53333M19.7165 0.816666L19.7165 6.53333" stroke="currentColor" stroke-width="1.63333" stroke-linecap="round"/>
+                    <path d="M14 20.1104L14 12.9646" stroke="currentColor" stroke-width="1.63333" stroke-linecap="round"/>
+                    <path d="M18.083 16.5376L9.91634 16.5376" stroke="currentColor" stroke-width="1.63333" stroke-linecap="round"/>
+                </svg>
+                <span>Дневник</span>
+            </button>
+            <button class="nav-item">
+                <svg width="28" height="24" viewBox="0 0 28 24" fill="none">
+                    <path d="M14 3.88889V22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M27.2222 3.88889V22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M0.777832 3.88889V22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M27.2222 22.5556C27.2222 22.5556 25.6667 19.4444 20.2222 19.4444C14.7778 19.4444 14 22.5556 14 22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M0.777778 22.5556C0.777778 22.5556 2.33333 19.4444 7.77778 19.4444C13.2222 19.4444 14 22.5556 14 22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M27.2222 3.88888C27.2222 3.88888 25.6667 0.777771 20.2222 0.777771C14.7778 0.777771 14 3.88888 14 3.88888" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M0.777778 3.88888C0.777778 3.88888 2.33333 0.777771 7.77778 0.777771C13.2222 0.777771 14 3.88888 14 3.88888" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                </svg>
+                <span>База знаний</span>
+            </button>
+            <button class="nav-item active admin-nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
+            </button>
         </nav>
     </div>
 
@@ -2097,6 +2245,90 @@
                 <button class="diary-modal-btn" id="diaryModalBtn">Закрепить</button>
             </div>
         </div>
+    </div>
+
+    <!-- Страница Админ Панель -->
+    <div class="admin-page" id="adminPage">
+        <header class="header">
+            <button class="menu-btn" id="adminMenuBtn">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="avatar" id="adminAvatar">AM</div>
+        </header>
+
+        <div class="admin-content">
+            <h1 class="admin-title">Админ Панель</h1>
+            
+            <!-- Список пользователей -->
+            <div class="admin-users-list" id="adminUsersList">
+                <!-- Пользователи будут загружены динамически -->
+            </div>
+        </div>
+
+        <!-- Навигация назад/сохранить -->
+        <div class="admin-navigation" id="adminNavigation" style="display: none;">
+            <button class="admin-nav-btn admin-back-btn" id="adminBackBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="admin-nav-btn admin-save-btn" id="adminSaveBtn" style="display: none;">
+                Сохранить
+            </button>
+        </div>
+
+        <!-- Нижняя навигация -->
+        <nav class="bottom-nav">
+            <button class="nav-item">
+                <svg width="24" height="27" viewBox="0 0 24 27" fill="none">
+                    <path d="M1.5 13.1393C1.5 11.1027 1.5 10.0844 1.91169 9.18926C2.32338 8.29415 3.09655 7.63144 4.64288 6.30601L6.14288 5.0203C8.93785 2.6246 10.3353 1.42676 12 1.42676C13.6647 1.42676 15.0621 2.6246 17.8571 5.0203L19.3571 6.30601C20.9035 7.63144 21.6766 8.29415 22.0883 9.18926C22.5 10.0844 22.5 11.1027 22.5 13.1393V19.4999C22.5 22.3283 22.5 23.7425 21.6213 24.6212C20.7426 25.4999 19.3284 25.4999 16.5 25.4999H7.5C4.67157 25.4999 3.25736 25.4999 2.37868 24.6212C1.5 23.7425 1.5 22.3283 1.5 19.4999V13.1393Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M15.75 25.5V18C15.75 17.1716 15.0784 16.5 14.25 16.5H9.75C8.92157 16.5 8.25 17.1716 8.25 18V25.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Главная</span>
+            </button>
+            <button class="nav-item">
+                <svg width="20" height="25" viewBox="0 0 20 25" fill="none">
+                    <path d="M18.4001 8.80001V20.8C18.4001 22.1255 17.3256 23.2 16.0001 23.2H4.0001C2.67461 23.2 1.6001 22.1255 1.6001 20.8V4.00001C1.6001 2.67452 2.67461 1.60001 4.0001 1.60001H11.2001M18.4001 8.80001H13.6001C12.2746 8.80001 11.2001 7.72549 11.2001 6.40001V1.60001M18.4001 8.80001L11.2001 1.60001M6.4001 13.6H8.8001M6.4001 18.4H12.4001" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Диагностика</span>
+            </button>
+            <button class="nav-item">
+                <svg width="25" height="25" viewBox="0 0 25 25" fill="none">
+                    <path d="M10.8888 21.7778L21.7777 10.8889C23.9255 8.74112 23.9255 5.25889 21.7777 3.11112C19.6299 0.963344 16.1477 0.96334 13.9999 3.11111L3.11106 14C0.963283 16.1478 0.963283 19.63 3.11106 21.7778C5.25883 23.9256 8.74106 23.9256 10.8888 21.7778Z" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16.3334 16.3333C12.8384 14.8355 10.0535 12.0506 8.55566 8.55556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Здоровье</span>
+            </button>
+            <button class="nav-item">
+                <svg width="28" height="25" viewBox="0 0 28 25" fill="none">
+                    <path d="M26.25 9.39178V8.90178C26.25 7.07227 26.25 6.15752 25.894 5.45874C25.5808 4.84408 25.081 4.34434 24.4664 4.03116C23.7676 3.67511 22.8528 3.67511 21.0233 3.67511H6.97667C5.14716 3.67511 4.23241 3.67511 3.53363 4.03116C2.91897 4.34434 2.41923 4.84408 2.10605 5.45874C1.75 6.15752 1.75 7.07227 1.75 8.90178V9.39178M26.25 9.39178V18.4568C26.25 20.2863 26.25 21.201 25.894 21.8998C25.5808 22.5145 25.081 23.0142 24.4664 23.3274C23.7676 23.6834 22.8528 23.6834 21.0233 23.6834H6.97667C5.14716 23.6834 4.23241 23.6834 3.53363 23.3274C2.91897 23.0142 2.41923 22.5145 2.10605 21.8998C1.75 21.201 1.75 20.2863 1.75 18.4568V9.39178M26.25 9.39178H1.75" stroke="currentColor" stroke-width="1.63333"/>
+                    <path d="M8.2832 0.816666L8.2832 6.53333M19.7165 0.816666L19.7165 6.53333" stroke="currentColor" stroke-width="1.63333" stroke-linecap="round"/>
+                    <path d="M14 20.1104L14 12.9646" stroke="currentColor" stroke-width="1.63333" stroke-linecap="round"/>
+                    <path d="M18.083 16.5376L9.91634 16.5376" stroke="currentColor" stroke-width="1.63333" stroke-linecap="round"/>
+                </svg>
+                <span>Дневник</span>
+            </button>
+            <button class="nav-item">
+                <svg width="28" height="24" viewBox="0 0 28 24" fill="none">
+                    <path d="M14 3.88889V22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M27.2222 3.88889V22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M0.777832 3.88889V22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M27.2222 22.5556C27.2222 22.5556 25.6667 19.4444 20.2222 19.4444C14.7778 19.4444 14 22.5556 14 22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M0.777778 22.5556C0.777778 22.5556 2.33333 19.4444 7.77778 19.4444C13.2222 19.4444 14 22.5556 14 22.5556" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M27.2222 3.88888C27.2222 3.88888 25.6667 0.777771 20.2222 0.777771C14.7778 0.777771 14 3.88888 14 3.88888" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                    <path d="M0.777778 3.88888C0.777778 3.88888 2.33333 0.777771 7.77778 0.777771C13.2222 0.777771 14 3.88888 14 3.88888" stroke="currentColor" stroke-width="1.55556" stroke-linecap="round"/>
+                </svg>
+                <span>База знаний</span>
+            </button>
+            <button class="nav-item admin-nav-item" id="adminNavItem" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Админ</span>
+            </button>
+        </nav>
     </div>
 
     <!-- Модальное окно подтверждения повторного прохождения диагностики -->
