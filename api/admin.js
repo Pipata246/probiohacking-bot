@@ -14,14 +14,20 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Telegram-WebApp-Data');
+  // Отключаем кеширование для админских запросов
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   try {
+    console.log('🔧 Admin API called:', req.method, req.url, 'action:', req.query.action);
     const telegramData = req.headers['x-telegram-webapp-data'];
     if (!telegramData) {
+      console.error('❌ No Telegram data in request');
       return res.status(401).json({ success: false, error: 'No Telegram data' });
     }
 
@@ -55,13 +61,18 @@ module.exports = async function handler(req, res) {
 
     // Получение списка всех пользователей
     if (action === 'users' && req.method === 'GET') {
+      console.log('📥 Fetching users list...');
       const { data: users, error } = await supabase
         .from('users')
         .select('id, telegram_id, first_name, last_name, username, quiz_completed, analyses_uploaded, created_at')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching users:', error);
+        throw error;
+      }
 
+      console.log('✅ Users fetched:', users?.length || 0);
       return res.json({ success: true, users });
     }
 

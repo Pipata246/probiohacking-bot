@@ -1467,36 +1467,50 @@ function showPage(pageName) {
     case 'admin':
       console.log('🔧 Opening admin page, isAdmin:', isAdmin);
       const adminPage = document.getElementById('adminPage');
-      if (adminPage) {
-        console.log('✅ Admin page found, showing it');
-        adminPage.classList.add('active');
-        adminPage.style.display = 'flex';
-        currentPage = 'admin';
-        isChatMode = false;
-        isInRecommendedTests = false;
-        
-        // Показываем индикатор загрузки
-        const adminContent = document.getElementById('adminContent');
-        const adminUsersList = document.getElementById('adminUsersList');
-        if (adminUsersList) {
-          adminUsersList.innerHTML = `
-            <div class="admin-loading">
-              <div class="loading-spinner"></div>
-              <div class="loading-text">Загрузка пользователей...</div>
-            </div>
-          `;
-        }
-        
-        // Загружаем список пользователей при открытии (асинхронно)
-        loadAdminUsers().catch(err => {
-          console.error('Error loading admin users:', err);
-          if (adminUsersList) {
-            adminUsersList.innerHTML = '<div class="admin-error">Ошибка загрузки пользователей</div>';
-          }
-        });
-      } else {
-        console.error('❌ Admin page not found!');
+      if (!adminPage) {
+        console.error('❌ Admin page element not found in DOM!');
+        alert('Админская панель не найдена. Обновите страницу.');
+        return;
       }
+      
+      console.log('✅ Admin page found, showing it');
+      // Скрываем все остальные страницы сначала
+      mainApp.style.display = 'none';
+      knowledgeBase.classList.remove('active');
+      diagnosticsPage.classList.remove('active');
+      chatOverlay.classList.remove('active');
+      recommendedTestsPage.classList.remove('active');
+      const healthPage = document.getElementById('healthPage');
+      if (healthPage) healthPage.classList.remove('active');
+      const diaryPage = document.getElementById('diaryPage');
+      if (diaryPage) diaryPage.classList.remove('active');
+      
+      // Показываем админскую страницу
+      adminPage.classList.add('active');
+      adminPage.style.display = 'flex';
+      currentPage = 'admin';
+      isChatMode = false;
+      isInRecommendedTests = false;
+      
+      // Показываем индикатор загрузки
+      const adminUsersList = document.getElementById('adminUsersList');
+      if (adminUsersList) {
+        adminUsersList.innerHTML = `
+          <div class="admin-loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Загрузка пользователей...</div>
+          </div>
+        `;
+      }
+      
+      console.log('📤 Starting to load admin users...');
+      // Загружаем список пользователей при открытии (асинхронно)
+      loadAdminUsers().catch(err => {
+        console.error('❌ Error loading admin users:', err);
+        if (adminUsersList) {
+          adminUsersList.innerHTML = `<div class="admin-error">Ошибка загрузки пользователей: ${err.message}</div>`;
+        }
+      });
       break;
   }
   
@@ -1526,6 +1540,7 @@ function showPage(pageName) {
   
   // Закрываем диагностическую форму и "Мои анализы" если открываем админку
   if (pageName === 'admin') {
+    console.log('🔧 Closing overlays before showing admin page');
     const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
     const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
     if (diagnosticFormOverlay) {
@@ -1537,6 +1552,25 @@ function showPage(pageName) {
       isDiagnosticFormMode = false;
     }
     document.body.classList.remove('chat-overlay-visible');
+    
+    // Проверяем что страница действительно видна
+    setTimeout(() => {
+      const adminPage = document.getElementById('adminPage');
+      if (adminPage) {
+        const isVisible = adminPage.classList.contains('active') && adminPage.style.display === 'flex';
+        console.log('🔍 Admin page visibility check:', {
+          hasActive: adminPage.classList.contains('active'),
+          display: adminPage.style.display,
+          computedDisplay: window.getComputedStyle(adminPage).display,
+          isVisible: isVisible
+        });
+        if (!isVisible) {
+          console.error('❌ Admin page is not visible! Forcing display...');
+          adminPage.style.display = 'flex';
+          adminPage.classList.add('active');
+        }
+      }
+    }, 100);
   }
   
   // Скрываем страницу здоровье если не она выбрана
@@ -1587,9 +1621,15 @@ function updateAllNavigations() {
         nav.appendChild(adminBtn);
         
         // Добавляем обработчик клика
-        adminBtn.addEventListener('click', () => {
+        adminBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('🔧 Admin button clicked (from updateAllNavigations), isAdmin:', isAdmin);
           if (isAdmin) {
+            console.log('✅ Opening admin page from button...');
             showPage('admin');
+          } else {
+            console.log('❌ User is not admin');
           }
         });
       }
@@ -1723,13 +1763,18 @@ document.addEventListener('click', (e) => {
     // Если это кнопка админа - обрабатываем отдельно
     if (navItem.classList.contains('admin-nav-item')) {
       console.log('🔧 Admin button clicked, isAdmin:', isAdmin);
+      e.preventDefault();
+      e.stopPropagation();
+      
       if (isAdmin) {
         console.log('✅ Opening admin page...');
+        // Показываем страницу сразу
         showPage('admin');
       } else {
-        console.log('❌ User is not admin');
+        console.log('❌ User is not admin, cannot open admin panel');
+        alert('У вас нет прав администратора');
       }
-      return;
+      return false;
     }
     
     const nav = navItem.closest('.bottom-nav');
@@ -5591,36 +5636,48 @@ async function loadAdminUsers() {
     console.log('📥 Loading admin users...');
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     
+    // Добавляем timestamp чтобы избежать кеширования
+    const timestamp = Date.now();
+    
     // Используем Promise.race для таймаута
-    const fetchPromise = fetch('/api/admin?action=users', {
+    const fetchPromise = fetch(`/api/admin?action=users&_t=${timestamp}`, {
+      method: 'GET',
       headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
     });
     
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout')), 10000)
+      setTimeout(() => reject(new Error('Timeout after 10 seconds')), 10000)
     );
     
+    console.log('📤 Sending request to /api/admin?action=users');
     const response = await Promise.race([fetchPromise, timeoutPromise]);
+    
+    console.log('📥 Response status:', response.status, response.statusText);
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ Response error:', response.status, errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('✅ Admin users loaded:', data.users?.length || 0);
+    console.log('✅ Admin users loaded:', data.users?.length || 0, 'users');
     
     if (data.success) {
       renderAdminUsers(data.users || []);
     } else {
+      console.error('❌ API returned success: false', data);
       throw new Error('API returned success: false');
     }
   } catch (error) {
     console.error('❌ Error loading admin users:', error);
     const list = document.getElementById('adminUsersList');
     if (list) {
-      list.innerHTML = '<div class="admin-error">Ошибка загрузки пользователей. Попробуйте обновить страницу.</div>';
+      list.innerHTML = `<div class="admin-error">Ошибка загрузки пользователей: ${error.message}. Попробуйте обновить страницу.</div>`;
     }
   }
 }

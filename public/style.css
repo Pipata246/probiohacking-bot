@@ -5005,14 +5005,15 @@ body.chat-overlay-visible .search-container {
    ======================================== */
 
 .admin-page {
-  display: none;
+  display: none !important;
   flex-direction: column;
   min-height: 100vh;
   background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
   position: relative;
-  z-index: 1;
+  z-index: 1000;
+  width: 100%;
 }
 
 .admin-page.active {
