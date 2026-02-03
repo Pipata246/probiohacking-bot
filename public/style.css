@@ -5453,3 +5453,104 @@ body.chat-overlay-visible .search-container {
 .admin-nav-item.active {
   display: flex;
 }
+
+/* Контейнер кнопки сохранения в основном контенте админки */
+.admin-content-save-container {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: flex-end;
+  border-bottom: 1px solid rgba(254, 247, 236, 0.2);
+}
+
+/* Модальное окно для выдачи админских прав */
+.admin-grant-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.admin-grant-modal-overlay.active {
+  display: flex;
+}
+
+.admin-grant-modal-content {
+  background: #FEF7EC;
+  border-radius: 20px;
+  padding: 0;
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.admin-grant-modal-header {
+  padding: 20px 20px 0;
+}
+
+.admin-grant-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.admin-grant-modal-body {
+  padding: 20px;
+}
+
+.admin-grant-modal-warning {
+  font-size: 15px;
+  color: #6B7280;
+  line-height: 1.5;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.admin-grant-modal-footer {
+  padding: 0 20px 20px;
+  display: flex;
+  gap: 12px;
+}
+
+.admin-grant-modal-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.admin-grant-modal-btn-cancel {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.admin-grant-modal-btn-cancel:active {
+  background: #E5E7EB;
+  transform: scale(0.98);
+}
+
+.admin-grant-modal-btn-continue {
+  background: #2A3F5F;
+  color: #FFFFFF;
+}
+
+.admin-grant-modal-btn-continue:active {
+  background: #1E2D42;
+  transform: scale(0.98);
+}

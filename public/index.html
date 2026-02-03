@@ -2118,6 +2118,12 @@
         <!-- Список пользователей -->
         <div class="admin-content" id="adminContent">
             <h1 class="admin-title">Админ Панель</h1>
+            <!-- Кнопка сохранения для изменений статуса админа -->
+            <div class="admin-content-save-container" id="adminContentSaveContainer" style="display: none;">
+                <button class="admin-save-btn" id="adminContentSaveBtn" style="display: none;">
+                    Сохранить
+                </button>
+            </div>
             <div class="admin-users-list" id="adminUsersList">
                 <div class="admin-loading">
                     <div class="loading-spinner"></div>
@@ -2218,6 +2224,29 @@
                 <span>Админ</span>
             </button>
         </nav>
+    </div>
+
+    <!-- Модальное окно для выдачи админских прав -->
+    <div class="admin-grant-modal-overlay" id="adminGrantModal">
+        <div class="admin-grant-modal-content">
+            <div class="admin-grant-modal-header">
+                <h3 class="admin-grant-modal-title">Выдать админские права</h3>
+            </div>
+            <div class="admin-grant-modal-body">
+                <p class="admin-grant-modal-warning">
+                    Вы уверены, что хотите выдать админские права этому пользователю? 
+                    Пользователь получит доступ к админской панели и сможет управлять другими пользователями.
+                </p>
+            </div>
+            <div class="admin-grant-modal-footer">
+                <button class="admin-grant-modal-btn admin-grant-modal-btn-cancel" id="adminGrantModalCancel">
+                    Отмена
+                </button>
+                <button class="admin-grant-modal-btn admin-grant-modal-btn-continue" id="adminGrantModalContinue">
+                    Продолжить
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Модальное окно для записей -->

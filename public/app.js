@@ -1497,6 +1497,12 @@ function showPage(pageName) {
       isChatMode = false;
       isInRecommendedTests = false;
       
+      // Если мы возвращаемся к списку пользователей, сбрасываем изменения
+      if (adminCurrentView === 'users') {
+        adminPendingChanges = { quiz: [], analyses: [], adminStatus: null };
+        updateAdminSaveButton();
+      }
+      
       // Показываем индикатор загрузки
       const adminUsersList = document.getElementById('adminUsersList');
       if (adminUsersList) {
@@ -5659,7 +5665,8 @@ let adminCurrentView = 'users'; // 'users' | 'quiz' | 'analyses'
 let adminCurrentUserId = null;
 let adminPendingChanges = {
   quiz: [],
-  analyses: []
+  analyses: [],
+  adminStatus: null // { userId: number, isAdmin: boolean }
 };
 
 // Загрузка списка пользователей
@@ -5782,6 +5789,12 @@ function renderAdminUsers(users) {
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+      <button class="admin-submenu-item" data-action="grant-admin" data-user-id="${user.id}">
+        <span>Выдать админские права</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     `;
 
     submenu.querySelectorAll('.admin-submenu-item').forEach(btn => {
@@ -5792,6 +5805,8 @@ function renderAdminUsers(users) {
           viewUserQuiz(userId);
         } else if (action === 'analyses') {
           viewUserAnalyses(userId);
+        } else if (action === 'grant-admin') {
+          showGrantAdminModal(userId);
         }
       });
     });
@@ -6119,6 +6134,60 @@ async function viewUserAnalyses(userId) {
   }
 }
 
+// Показать модальное окно для выдачи админских прав
+function showGrantAdminModal(userId) {
+  const modal = document.getElementById('adminGrantModal');
+  if (!modal) return;
+
+  modal.classList.add('active');
+
+  // Обработчик кнопки "Отмена"
+  const cancelBtn = document.getElementById('adminGrantModalCancel');
+  const continueBtn = document.getElementById('adminGrantModalContinue');
+
+  // Закрытие модального окна
+  const closeModal = () => {
+    modal.classList.remove('active');
+  };
+
+  // Удаляем старые обработчики через клонирование элементов
+  const cancelBtnClone = cancelBtn.cloneNode(true);
+  const continueBtnClone = continueBtn.cloneNode(true);
+  cancelBtn.parentNode.replaceChild(cancelBtnClone, cancelBtn);
+  continueBtn.parentNode.replaceChild(continueBtnClone, continueBtn);
+
+  // Обработчик клика на overlay (только один раз)
+  const overlayClickHandler = (e) => {
+    if (e.target === modal) {
+      closeModal();
+      modal.removeEventListener('click', overlayClickHandler);
+    }
+  };
+  modal.addEventListener('click', overlayClickHandler);
+
+  // Обработчик кнопки "Отмена"
+  cancelBtnClone.addEventListener('click', () => {
+    closeModal();
+    modal.removeEventListener('click', overlayClickHandler);
+  });
+
+  // Обработчик кнопки "Продолжить"
+  continueBtnClone.addEventListener('click', () => {
+    // Сохраняем изменение в pending changes
+    adminPendingChanges.adminStatus = {
+      userId: parseInt(userId),
+      isAdmin: true
+    };
+    
+    // Обновляем кнопку сохранения
+    updateAdminSaveButton();
+    
+    // Закрываем модальное окно
+    closeModal();
+    modal.removeEventListener('click', overlayClickHandler);
+  });
+}
+
 // Показать/скрыть навигацию админки (кнопки Назад и Сохранить)
 function showAdminNavigation(show) {
   const navQuiz = document.getElementById('adminNavButtonsQuiz');
@@ -6162,6 +6231,15 @@ function updateAdminSaveButton() {
   
   const hasQuizChanges = adminPendingChanges.quiz.length > 0;
   const hasAnalysesChanges = adminPendingChanges.analyses.length > 0;
+  const hasAdminStatusChange = adminPendingChanges.adminStatus !== null;
+  
+  // Показываем кнопку сохранения в списке пользователей если есть изменения статуса админа
+  const adminContentSaveContainer = document.getElementById('adminContentSaveContainer');
+  const adminContentSaveBtn = document.getElementById('adminContentSaveBtn');
+  if (adminContentSaveContainer && adminContentSaveBtn) {
+    adminContentSaveContainer.style.display = hasAdminStatusChange ? 'flex' : 'none';
+    adminContentSaveBtn.style.display = hasAdminStatusChange ? 'flex' : 'none';
+  }
   
   if (saveBtnQuiz) {
     saveBtnQuiz.style.display = hasQuizChanges ? 'flex' : 'none';
@@ -6171,9 +6249,73 @@ function updateAdminSaveButton() {
   }
 }
 
+// Сохранение изменений статуса админа (отдельная функция для списка пользователей)
+async function saveAdminStatusChange() {
+  if (!adminPendingChanges.adminStatus) return;
+
+  const saveBtn = document.getElementById('adminContentSaveBtn');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Сохранение...';
+  }
+
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+    };
+
+    const { userId, isAdmin } = adminPendingChanges.adminStatus;
+    const response = await fetch(`/api/admin?action=setAdmin&userId=${userId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ isAdmin })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Failed to update admin status: ' + errorText);
+    }
+
+    const result = await response.json();
+    console.log('✅ Admin status updated successfully:', result);
+
+    // Сбрасываем изменение
+    adminPendingChanges.adminStatus = null;
+    updateAdminSaveButton();
+
+    // Перезагружаем список пользователей
+    await loadAdminUsers();
+
+    if (saveBtn) {
+      saveBtn.textContent = 'Сохранено!';
+      setTimeout(() => {
+        saveBtn.textContent = 'Сохранить';
+      }, 2000);
+    }
+  } catch (error) {
+    console.error('Error saving admin status:', error);
+    alert('Ошибка сохранения изменения статуса админа');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      if (saveBtn.textContent === 'Сохранение...') {
+        saveBtn.textContent = 'Сохранить';
+      }
+    }
+  }
+}
+
 // Сохранение изменений
 async function saveAdminChanges() {
-  if (!adminCurrentUserId) return;
+  if (!adminCurrentUserId) {
+    // Если мы в списке пользователей, сохраняем изменение статуса админа
+    if (adminPendingChanges.adminStatus) {
+      await saveAdminStatusChange();
+    }
+    return;
+  }
 
   const saveBtnQuiz = document.getElementById('adminSaveBtnQuiz');
   const saveBtnAnalyses = document.getElementById('adminSaveBtnAnalyses');
@@ -6240,7 +6382,7 @@ async function saveAdminChanges() {
     }
 
     // Сбрасываем изменения и возвращаемся к списку
-    adminPendingChanges = { quiz: [], analyses: [] };
+    adminPendingChanges = { quiz: [], analyses: [], adminStatus: null };
     adminCurrentView = 'users';
     adminCurrentUserId = null;
     showAdminNavigation(false);
@@ -6280,12 +6422,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminSaveBtnQuiz = document.getElementById('adminSaveBtnQuiz');
   const adminBackBtnAnalyses = document.getElementById('adminBackBtnAnalyses');
   const adminSaveBtnAnalyses = document.getElementById('adminSaveBtnAnalyses');
+  const adminContentSaveBtn = document.getElementById('adminContentSaveBtn');
 
   if (adminBackBtnQuiz) {
     adminBackBtnQuiz.addEventListener('click', () => {
       adminCurrentView = 'users';
       adminCurrentUserId = null;
-      adminPendingChanges = { quiz: [], analyses: [] };
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null };
       showAdminNavigation(false);
       loadAdminUsers();
     });
@@ -6299,7 +6442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminBackBtnAnalyses.addEventListener('click', () => {
       adminCurrentView = 'users';
       adminCurrentUserId = null;
-      adminPendingChanges = { quiz: [], analyses: [] };
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null };
       showAdminNavigation(false);
       loadAdminUsers();
     });
@@ -6307,6 +6450,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (adminSaveBtnAnalyses) {
     adminSaveBtnAnalyses.addEventListener('click', saveAdminChanges);
+  }
+
+  if (adminContentSaveBtn) {
+    adminContentSaveBtn.addEventListener('click', saveAdminStatusChange);
   }
   
   // Обработчик клика на кнопку админа (делегирование событий)
