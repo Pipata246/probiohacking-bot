@@ -226,61 +226,13 @@ function getSystemPrompt() {
     year: 'numeric' 
   });
   
-  return `Ты — PROBIOHACKING AI "Профи": профессиональный ассистент по здоровью и биохакингу.
+  return `Ты — PROBIOHACKING AI "Профи": специалист по функциональной медицине.
 
-📅 ТЕКУЩАЯ ДАТА: ${dateStr}
-⚠️ ВАЖНО: При расчёте возраста пользователя используй ТЕКУЩУЮ дату ${dateStr}. Год сейчас ${today.getFullYear()}.
+📅 ${dateStr} (год ${today.getFullYear()})
 
-🎯 ТВОЯ РОЛЬ И МЕТОДОЛОГИЯ:
-
-Ты работаешь как специалист по функциональной медицине и биохакингу. Твоя задача — проводить синдромальный анализ, выявлять взаимосвязанные блоки проблем и давать комплексные, обоснованные рекомендации.
-
-СТРУКТУРА ОТВЕТА (когда есть данные диагностики/анализов):
-
-1. СИНДРОМАЛЬНЫЙ АНАЛИЗ:
-   - Группируй проблемы в логические блоки (например: "Энергия и метаболизм", "Углеводный обмен", "Стресс и восстановление")
-   - Для каждого блока указывай:
-     • Данные: конкретные показатели из анализов/диагностики
-     • Интерпретация: что это означает
-     • Механизм: краткое объяснение почему это происходит (биохимия, физиология)
-
-2. КОМПЛЕКСНЫЙ ПРОТОКОЛ:
-   - Разбивай рекомендации по категориям: Питание, Добавки, Образ жизни, Физическая активность, Специальные процедуры
-   - Указывай последовательность, длительность, конкретные формы применения
-   - Объясняй механизм действия каждой рекомендации (почему это работает)
-
-3. ПРОТИВОПОКАЗАНИЯ:
-   - Указывай, когда нельзя применять те или иные методы в конкретном случае
-
-РАБОТА С ЛАБОРАТОРНЫМИ ДАННЫМИ:
-
-- Используй конкретные значения из анализов (ферритин, витамин D, инсулин, глюкоза и т.д.)
-- Указывай не просто "норму", а ОПТИМАЛЬНЫЕ ЦЕЛЕВЫЕ ЗНАЧЕНИЯ (например: "ферритин должен быть равен вашему нормальному весу", "витамин D целевой коридор 50-80 нг/мл")
-- Сравнивай текущие показатели с целевыми и объясняй разницу
-
-ПРАВИЛА ФОРМАТИРОВАНИЯ:
-- Используй эмодзи в начале каждого раздела для наглядности
-- Делай ОТСТУПЫ между абзацами (пустая строка)
-- НЕ используй символы ** для выделения — просто пиши текст
-- Используй нумерованные списки (1. 2. 3.) или буллеты (•) для рекомендаций
-- Структурируй ответ: сначала анализ, затем рекомендации
-
-ОБРАЗОВАТЕЛЬНЫЙ КОМПОНЕНТ:
-- Каждая рекомендация должна сопровождаться кратким объяснением механизма действия
-- Связывай симптомы с показателями анализов и данными диагностики
-- Объясняй взаимосвязи между разными системами организма
-
-ОГРАНИЧЕНИЯ:
-- Ты не заменяешь врача. При серьёзных симптомах настоятельно рекомендуй обратиться к врачу
-- Не назначай рецептурные препараты
-- НЕ добавляй никаких кнопок или тегов [BUTTON:...] — они добавляются автоматически
-- Если данных недостаточно — задавай уточняющие вопросы, но не проси пройти диагностику (если она уже пройдена)
-
-СТИЛЬ ОБЩЕНИЯ:
-- Профессиональный, но дружелюбный тон
-- Используй терминологию специалиста, но объясняй сложные понятия
-- Будь конкретным и практичным
-- Отвечай подробно когда есть данные для анализа, кратко — только если данных нет или вопрос простой`;
+МЕТОД: Синдромальный анализ → блоки проблем → рекомендации с механизмами.
+ФОРМАТ: Эмодзи, списки, отступы. Без ** и [BUTTON:...].
+ОГРАНИЧЕНИЯ: Не заменяешь врача. Не рецептурные препараты.`;
 }
 
 module.exports = async (req, res) => {
@@ -384,14 +336,14 @@ module.exports = async (req, res) => {
         });
 
         if (!activeChatError && activeChatId) {
-          // Получаем сообщения только из активного чата
+          // Получаем сообщения только из активного чата (ограничиваем для скорости)
           const { data: messages, error: messagesError } = await supabase
             .from('user_requests')
-            .select('*')
+            .select('message_text, response_text, created_at')
             .eq('user_id', userInfo.id)
             .eq('chat_id', activeChatId)
-            .order('created_at', { ascending: true })
-            .limit(20);
+            .order('created_at', { ascending: false })
+            .limit(5); // Минимум для контекста, максимум скорости
 
           console.log(`📊 Messages query result for active chat:`, { 
             messagesCount: messages?.length || 0, 
@@ -400,28 +352,21 @@ module.exports = async (req, res) => {
           });
 
           if (!messagesError && messages && messages.length > 0) {
-            chatHistory = '\n\n💬 ИСТОРИЯ АКТИВНОГО ЧАТА:\n';
+            // Компактный формат истории для ускорения
+            chatHistory = '\n💬 История:\n';
             
-            messages.forEach((msg, index) => {
-              const time = new Date(msg.created_at).toLocaleString('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-              });
-              
-              // Сообщение пользователя
-              chatHistory += `[${time}] Пользователь: ${msg.message_text}\n`;
-              
-              // Ответ ИИ если есть
+            // Обратный порядок для правильной последовательности
+            const sortedMessages = messages.reverse();
+            sortedMessages.forEach((msg) => {
+              if (msg.message_text) {
+                chatHistory += `П: ${msg.message_text.substring(0, 80)}${msg.message_text.length > 80 ? '...' : ''}\n`;
+              }
               if (msg.response_text) {
-                chatHistory += `[${time}] ИИ Ассистент: ${msg.response_text}\n`;
+                chatHistory += `ИИ: ${msg.response_text.substring(0, 120)}${msg.response_text.length > 120 ? '...' : ''}\n`;
               }
             });
             
-            chatHistory += '\nИСПОЛЬЗУЙ ЭТУ ИСТОРИЮ ТОЛЬКО ИЗ АКТИВНОГО ЧАТА ДЛЯ ПОНИМАНИЯ КОНТЕКСТА.\n';
-            console.log(`✅ Loaded ${messages.length} messages from active chat ${activeChatId}`);
-            console.log(`📝 Chat history preview:`, chatHistory.substring(0, 200) + '...');
+            console.log(`✅ Loaded ${sortedMessages.length} recent messages from active chat ${activeChatId}`);
           } else {
             console.log(`⚠️ No messages found in active chat ${activeChatId}`);
             if (messagesError) {
@@ -469,214 +414,67 @@ module.exports = async (req, res) => {
     console.log('📋 Status check:', { quizDone, analysesDone });
 
     if (!quizDone && !analysesDone) {
-      // Оба статуса FALSE — НЕ показываем данные, просто информируем
-      systemPrompt += `\n\n⚠️ СТАТУС: У пользователя нет данных диагностики и анализов.
-Отвечай на основе общих знаний. НЕ ссылайся на какие-либо персональные данные пользователя.`;
+      // Компактное сообщение
+      systemPrompt += `\n⚠️ Нет данных диагностики и анализов. Отвечай на основе общих знаний.`;
     } else if (!quizDone && analysesDone) {
-      // Только анализы загружены, диагностика не пройдена — показываем только анализы
-      systemPrompt += `\n\n⚠️ СТАТУС: Диагностика НЕ пройдена, но анализы загружены.
-Отвечай на основе общих знаний и категорий анализов. НЕ ссылайся на данные диагностики.`;
+      // Компактный формат
+      systemPrompt += `\n⚠️ Статус: Анализы загружены, диагностики нет. Работай с категориями анализов.`;
       
-      // Добавляем информацию об анализах если есть
+      // Компактная информация об анализах
       if (diagnosticData?.analysis_photos?.length > 0) {
-        systemPrompt += `\n\n📷 ЗАГРУЖЕННЫЕ АНАЛИЗЫ (${diagnosticData.analysis_photos.length} шт.):`;
         const groupedPhotos = {};
         diagnosticData.analysis_photos.forEach(photo => {
-          if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = [];
-          groupedPhotos[photo.analysis_group].push(photo);
+          if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = 0;
+          groupedPhotos[photo.analysis_group]++;
         });
-        Object.entries(groupedPhotos).forEach(([group, photos]) => {
-          systemPrompt += `\n📁 ${group} (${photos.length} фото):`;
-          photos.forEach((photo, index) => {
-            const dateStr = photo.upload_date ? new Date(photo.upload_date).toLocaleDateString('ru-RU') : 'Дата неизвестна';
-            systemPrompt += `\n  ${index + 1}. ${photo.photo_name || 'Фото'} (${dateStr})`;
-            if (photo.description) {
-              systemPrompt += `\n     Описание: ${photo.description}`;
-            }
-          });
-        });
-        
-        systemPrompt += `\n\n🎯 ИНСТРУКЦИИ:
-- Работай с категориями анализов (${Object.keys(groupedPhotos).join(', ')})
-- Если пользователь спрашивает о конкретных показателях, попроси указать значения или дай общие рекомендации по категории
-- Используй профессиональный подход: объясняй механизмы, давай целевые значения показателей
-- НЕ ссылайся на диагностику — её нет`;
+        systemPrompt += `\n📷 Анализы: ${Object.entries(groupedPhotos).map(([g, c]) => `${g}(${c})`).join(', ')}. При показателях — попроси значения.`;
       }
     } else if (quizDone && !analysesDone) {
-      // Диагностика пройдена, анализы не загружены — показываем только диагностику
-      systemPrompt += `\n\n✅ СТАТУС: Диагностика пройдена, анализы НЕ загружены.`;
-      
-      // Добавляем данные диагностики с улучшенной структурой
-      systemPrompt += `\n\n📊 ДАННЫЕ ДИАГНОСТИКИ:
-
-👤 ПЕРСОНАЛЬНЫЕ ДАННЫЕ:
-- ФИО: ${diagnosticData?.personal_data?.fullName || 'Не указано'}
-- Дата рождения/Возраст: ${diagnosticData?.personal_data?.birthDate || 'Не указано'}
-- Вес: ${diagnosticData?.personal_data?.weight || 'Не указано'} кг
-- Рост: ${diagnosticData?.personal_data?.height || 'Не указано'} см
-- Пол: ${diagnosticData?.personal_data?.gender || 'Не указано'}
-- Профессия: ${diagnosticData?.personal_data?.profession || 'Не указано'}
-- Город: ${diagnosticData?.personal_data?.city || 'Не указано'}
-- Спорт/Активность: ${diagnosticData?.personal_data?.sport || 'Не указано'}
-
-🔍 ЖАЛОБЫ И АНАМНЕЗ:
-- Что беспокоит: ${diagnosticData?.additional_answers?.discomfort || 'Не указано'}
-- Поставленные диагнозы: ${diagnosticData?.additional_answers?.diagnosis || 'Не указано'}
-- Принимаемые лекарства/БАДы: ${diagnosticData?.additional_answers?.treatment || 'Не указано'}`;
+      // Компактный формат для ускорения
+      const p = diagnosticData?.personal_data || {};
+      systemPrompt += `\n\n📊 Данные: ${p.fullName || 'не указано'}, ${p.birthDate || 'возраст не указан'}, ${p.gender || 'пол не указан'}, ${p.weight || '?'}кг/${p.height || '?'}см, ${p.profession || 'профессия не указана'}, спорт: ${p.sport || 'не указан'}. Жалобы: ${diagnosticData?.additional_answers?.discomfort || 'не указано'}. Диагнозы: ${diagnosticData?.additional_answers?.diagnosis || 'не указано'}. Лечение: ${diagnosticData?.additional_answers?.treatment || 'не указано'}.`;
 
       if (diagnosticData?.quiz_answers && Object.keys(diagnosticData.quiz_answers).length > 0) {
-        systemPrompt += `\n\n📋 РЕЗУЛЬТАТЫ ОПРОСА ПО СИСТЕМАМ ОРГАНИЗМА:`;
-        
-        // Группируем по системам для лучшего анализа
+        // Компактная группировка по системам
         const systemsMap = {};
         Object.entries(diagnosticData.quiz_answers).forEach(([id, data]) => {
-          if (!systemsMap[data.system]) {
-            systemsMap[data.system] = [];
-          }
-          systemsMap[data.system].push({
-            question: data.question,
-            answer: data.answer
-          });
+          if (!systemsMap[data.system]) systemsMap[data.system] = [];
+          systemsMap[data.system].push(data.answer);
         });
         
         Object.entries(systemsMap).forEach(([system, answers]) => {
-          systemPrompt += `\n\n🔸 ${system}:`;
-          answers.forEach(item => {
-            systemPrompt += `\n  • Вопрос: ${item.question}`;
-            systemPrompt += `\n    Ответ: ${item.answer}`;
-          });
+          systemPrompt += `\n${system}: ${answers.join('; ')}`;
         });
       }
       
-      systemPrompt += `\n\n🎯 ИНСТРУКЦИИ:
-- Проведи синдромальный анализ: группируй проблемы в логические блоки
-- Обращай внимание на системы с негативными ответами
-- Связывай жалобы с данными опроса
-- Давай комплексные рекомендации с объяснением механизмов`;
+      systemPrompt += `\n🎯 Группируй в блоки, связывай жалобы с опросом, рекомендации с механизмами.`;
     } else {
-      // Добавляем полную диагностическую информацию в промпт
-      systemPrompt += `\n\n📊 ДИАГНОСТИЧЕСКИЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ:
-      
-👤 ПЕРСОНАЛЬНЫЕ ДАННЫЕ:
-- ФИО: ${diagnosticData.personal_data.fullName || 'Не указано'}
-- Возраст/Дата рождения: ${diagnosticData.personal_data.birthDate || 'Не указано'}
-- Профессия: ${diagnosticData.personal_data.profession || 'Не указано'}
-- Город: ${diagnosticData.personal_data.city || 'Не указано'}
-- Вес: ${diagnosticData.personal_data.weight || 'Не указано'}
-- Рост: ${diagnosticData.personal_data.height || 'Не указано'}
-- Спорт: ${diagnosticData.personal_data.sport || 'Не указано'}
-- Пол: ${diagnosticData.personal_data.gender || 'Не указано'}
+      // Компактный формат данных для ускорения обработки
+      const personal = diagnosticData.personal_data;
+      systemPrompt += `\n\n📊 Данные: ${personal.fullName || 'не указано'}, ${personal.birthDate || 'возраст не указан'}, ${personal.gender || 'пол не указан'}, ${personal.weight || '?'}кг/${personal.height || '?'}см, ${personal.profession || 'профессия не указана'}, спорт: ${personal.sport || 'не указан'}. Жалобы: ${diagnosticData.additional_answers.discomfort || 'не указано'}. Диагнозы: ${diagnosticData.additional_answers.diagnosis || 'не указано'}. Лечение: ${diagnosticData.additional_answers.treatment || 'не указано'}.`;
 
-🔍 ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ:
-- Что беспокоит: ${diagnosticData.additional_answers.discomfort || 'Не указано'}
-- Диагнозы: ${diagnosticData.additional_answers.diagnosis || 'Не указано'}
-- Лечение: ${diagnosticData.additional_answers.treatment || 'Не указано'}
-
-📋 РЕЗУЛЬТАТЫ ОПРОСА ПО СИСТЕМАМ ОРГАНИЗМА:`;
-
-      // Группируем ответы по системам для лучшего синдромального анализа
+      // Компактная группировка по системам
       const systemsMap = {};
       Object.entries(diagnosticData.quiz_answers).forEach(([questionId, data]) => {
-        if (!systemsMap[data.system]) {
-          systemsMap[data.system] = [];
-        }
-        systemsMap[data.system].push({
-          question: data.question,
-          answer: data.answer
-        });
+        if (!systemsMap[data.system]) systemsMap[data.system] = [];
+        systemsMap[data.system].push(data.answer);
       });
       
       Object.entries(systemsMap).forEach(([system, answers]) => {
-        systemPrompt += `\n\n🔸 ${system}:`;
-        answers.forEach(item => {
-          systemPrompt += `\n  • Вопрос: ${item.question}`;
-          systemPrompt += `\n    Ответ: ${item.answer}`;
-        });
+        systemPrompt += `\n${system}: ${answers.join('; ')}`;
       });
 
-      // Добавляем информацию о загруженных анализах
+      // Компактная информация об анализах
       if (diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
-        systemPrompt += `\n\n📷 ЗАГРУЖЕННЫЕ АНАЛИЗЫ (${diagnosticData.analysis_photos.length} шт.):`;
-        
-        // Группируем анализы по категориям
         const groupedPhotos = {};
         diagnosticData.analysis_photos.forEach(photo => {
-          if (!groupedPhotos[photo.analysis_group]) {
-            groupedPhotos[photo.analysis_group] = [];
-          }
-          groupedPhotos[photo.analysis_group].push(photo);
+          if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = 0;
+          groupedPhotos[photo.analysis_group]++;
         });
-
-        Object.entries(groupedPhotos).forEach(([group, photos]) => {
-          systemPrompt += `\n📁 ${group} (${photos.length} фото):`;
-          photos.forEach((photo, index) => {
-            const dateStr = photo.upload_date ? new Date(photo.upload_date).toLocaleDateString('ru-RU') : 'Дата неизвестна';
-            systemPrompt += `\n  ${index + 1}. ${photo.photo_name || 'Фото'} (${dateStr})`;
-            if (photo.description) {
-              systemPrompt += `\n     Описание: ${photo.description}`;
-            }
-          });
-        });
-        
-        systemPrompt += `\n\n⚠️ ВАЖНО: Анализы загружены как изображения. Если пользователь спрашивает о конкретных показателях, попроси его указать значения из анализов или опиши общие рекомендации на основе категории анализов.`;
+        systemPrompt += `\n📷 Анализы: ${Object.entries(groupedPhotos).map(([g, c]) => `${g}(${c})`).join(', ')}. При запросе показателей — попроси значения.`;
       }
 
-      systemPrompt += `\n\n✅ СТАТУС ПОЛЬЗОВАТЕЛЯ: ВСЁ ВЫПОЛНЕНО
-- Диагностика: Пройдена ✅
-- Анализы: Загружены ✅
-
-🎯 МЕТОДОЛОГИЯ РАБОТЫ С ДАННЫМИ:
-
-1. СИНДРОМАЛЬНЫЙ АНАЛИЗ:
-   - Проанализируй все данные диагностики и анализов
-   - Выяви взаимосвязанные блоки проблем (например: дефициты → усталость → проблемы с метаболизмом)
-   - Группируй проблемы логически, не просто перечисляй симптомы
-
-2. РАБОТА С АНАЛИЗАМИ:
-   - Если в данных есть конкретные показатели (ферритин, витамин D, инсулин, глюкоза и т.д.) — используй их
-   - Указывай целевые оптимальные значения, а не просто "норму"
-   - Объясняй взаимосвязь между показателями и симптомами
-
-3. СТРУКТУРА РЕКОМЕНДАЦИЙ:
-   - Разбивай на категории: Питание, Добавки, Образ жизни, Физическая активность
-   - Указывай последовательность и длительность
-   - Объясняй механизм действия каждой рекомендации
-
-4. ПЕРСОНАЛИЗАЦИЯ:
-   - Учитывай возраст, пол, профессию, образ жизни из персональных данных
-   - Обращай внимание на системы организма с проблемами (негативные ответы в квизе)
-   - Связывай жалобы из "Что беспокоит" с данными диагностики
-
-5. ОБРАЗОВАТЕЛЬНЫЙ КОМПОНЕНТ:
-   - Объясняй почему возникают проблемы (биохимия, физиология)
-   - Показывай взаимосвязи между разными системами
-   - Давай обоснование каждой рекомендации
-
-⛔ ЗАПРЕЩЕНО:
-- НЕ ДОБАВЛЯЙ кнопки [BUTTON:...]
-- НЕ пиши "Чтобы ответ был точнее" или подобные фразы
-- НЕ рекомендуй пройти диагностику или загрузить анализы
-- НЕ пиши "открой Диагностика" или "загрузи анализы"
-- Пользователь УЖЕ ВСЁ СДЕЛАЛ, у тебя есть все данные!
-
-💡 ПРИМЕР ПРАВИЛЬНОГО ОТВЕТА:
-
-"Завершена первичная обработка ваших диагностических данных. На основании жалоб и лабораторных показателей я составил предварительный синдромальный профиль.
-
-СИНДРОМАЛЬНЫЙ АНАЛИЗ:
-
-Блок 1: "Энергия и метаболизм"
-• Данные: [конкретные показатели из анализов/диагностики]
-• Интерпретация: [что это означает]
-• Механизм: [почему это происходит]
-
-КОМПЛЕКСНЫЙ ПРОТОКОЛ:
-1. Восполнение дефицитов: [конкретные рекомендации с дозировками]
-2. Питание: [персонализированные рекомендации]
-3. Образ жизни: [специфические советы]
-
-ПРОТИВОПОКАЗАНИЯ:
-• [что нельзя в вашем случае]"`;
+      systemPrompt += `\n✅ Группируй в блоки, используй целевые значения, рекомендации по категориям с механизмами. Запрещено: [BUTTON:...], просить диагностику.`;
     }
 
     // DeepSeek не поддерживает vision - используем только текстовый формат
@@ -686,8 +484,9 @@ module.exports = async (req, res) => {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message }
       ],
-      temperature: 0.7,
-      max_tokens: 3000 // Увеличено для более подробных профессиональных ответов
+      temperature: 0.7, // Оптимальный баланс между качеством и скоростью
+      max_tokens: 2000, // Достаточно для качественных ответов
+      top_p: 0.9 // Ускоряет генерацию без потери качества
     };
 
     const response = await doRequest(DEEPSEEK_API_URL, {
