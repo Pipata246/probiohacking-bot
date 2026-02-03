@@ -5336,7 +5336,7 @@ body.chat-overlay-visible .search-container {
 .admin-nav-btn {
   padding: 14px 24px;
   border-radius: 24px;
-  border: none;
+  border: none !important;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -5345,6 +5345,8 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   justify-content: center;
   min-height: 48px;
+  box-shadow: none;
+  outline: none;
 }
 
 .admin-back-btn {
@@ -5354,10 +5356,13 @@ body.chat-overlay-visible .search-container {
   height: 48px;
   padding: 0;
   border-radius: 50%;
+  border: none !important;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: none;
+  outline: none;
 }
 
 .admin-back-btn svg {
@@ -5372,9 +5377,18 @@ body.chat-overlay-visible .search-container {
 .admin-save-btn {
   background: #FEF7EC;
   color: #2A3F5F;
-  flex: 1;
+  border: none !important;
   border-radius: 24px;
   font-weight: 600;
+  padding: 12px 20px;
+  font-size: 15px;
+  white-space: nowrap;
+  min-width: auto;
+  width: auto;
+  box-shadow: none;
+  outline: none;
+  margin-left: auto; /* Прижимаем к правому краю */
+  flex-shrink: 0;
 }
 
 .admin-save-btn:active {
