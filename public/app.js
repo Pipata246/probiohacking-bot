@@ -5789,11 +5789,8 @@ function renderAdminUsers(users) {
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-      <button class="admin-submenu-item" data-action="grant-admin" data-user-id="${user.id}">
+      <button class="admin-submenu-item admin-submenu-item-no-arrow" data-action="grant-admin" data-user-id="${user.id}">
         <span>Выдать админские права</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
       </button>
     `;
 
@@ -6172,19 +6169,45 @@ function showGrantAdminModal(userId) {
   });
 
   // Обработчик кнопки "Продолжить"
-  continueBtnClone.addEventListener('click', () => {
-    // Сохраняем изменение в pending changes
-    adminPendingChanges.adminStatus = {
-      userId: parseInt(userId),
-      isAdmin: true
-    };
+  continueBtnClone.addEventListener('click', async () => {
+    // Отключаем кнопку на время сохранения
+    continueBtnClone.disabled = true;
+    continueBtnClone.textContent = 'Сохранение...';
     
-    // Обновляем кнопку сохранения
-    updateAdminSaveButton();
-    
-    // Закрываем модальное окно
-    closeModal();
-    modal.removeEventListener('click', overlayClickHandler);
+    try {
+      // Сразу отправляем запрос на сервер для изменения статуса
+      const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      };
+
+      const response = await fetch(`/api/admin?action=setAdmin&userId=${userId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ isAdmin: true })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error('Failed to update admin status: ' + errorText);
+      }
+
+      const result = await response.json();
+      console.log('✅ Admin status updated successfully:', result);
+
+      // Закрываем модальное окно
+      closeModal();
+      modal.removeEventListener('click', overlayClickHandler);
+
+      // Перезагружаем список пользователей для отображения актуальных данных
+      await loadAdminUsers();
+    } catch (error) {
+      console.error('Error saving admin status:', error);
+      alert('Ошибка сохранения изменения статуса админа');
+      continueBtnClone.disabled = false;
+      continueBtnClone.textContent = 'Продолжить';
+    }
   });
 }
 

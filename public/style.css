@@ -5178,6 +5178,14 @@ body.chat-overlay-visible .search-container {
   background: rgba(254, 247, 236, 0.15);
 }
 
+.admin-submenu-item-no-arrow {
+  justify-content: flex-start !important;
+}
+
+.admin-submenu-item-no-arrow svg {
+  display: none;
+}
+
 .admin-section-title {
   font-size: 20px;
   font-weight: 600;
