@@ -5085,11 +5085,21 @@ body.chat-overlay-visible .search-container {
   background: rgba(254, 247, 236, 0.15);
 }
 
+.admin-user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  cursor: pointer;
+  gap: 12px;
+}
+
 .admin-user-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
   flex: 1;
+  min-width: 0; /* Позволяет тексту обрезаться при необходимости */
 }
 
 .admin-user-name {
@@ -5117,6 +5127,7 @@ body.chat-overlay-visible .search-container {
   transition: background-color 0.2s ease;
   color: #FEF7EC;
   position: relative;
+  margin-left: auto; /* Прижимаем кнопку к правому краю */
 }
 
 .admin-expand-btn:hover {
