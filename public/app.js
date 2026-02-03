@@ -1465,14 +1465,19 @@ function showPage(pageName) {
       isInRecommendedTests = true;
       break;
     case 'admin':
+      console.log('🔧 Opening admin page, isAdmin:', isAdmin);
       const adminPage = document.getElementById('adminPage');
       if (adminPage) {
+        console.log('✅ Admin page found, showing it');
         adminPage.classList.add('active');
+        adminPage.style.display = 'flex';
         currentPage = 'admin';
         isChatMode = false;
         isInRecommendedTests = false;
         // Загружаем список пользователей при открытии
         loadAdminUsers();
+      } else {
+        console.error('❌ Admin page not found!');
       }
       break;
   }
@@ -1495,7 +1500,25 @@ function showPage(pageName) {
   }
   if (pageName !== 'admin') {
     const adminPage = document.getElementById('adminPage');
-    if (adminPage) adminPage.classList.remove('active');
+    if (adminPage) {
+      adminPage.classList.remove('active');
+      adminPage.style.display = 'none';
+    }
+  }
+  
+  // Закрываем диагностическую форму и "Мои анализы" если открываем админку
+  if (pageName === 'admin') {
+    const diagnosticFormOverlay = document.getElementById('diagnosticFormOverlay');
+    const myTestsFormOverlay = document.getElementById('myTestsFormOverlay');
+    if (diagnosticFormOverlay) {
+      diagnosticFormOverlay.remove();
+      isDiagnosticFormMode = false;
+    }
+    if (myTestsFormOverlay) {
+      myTestsFormOverlay.remove();
+      isDiagnosticFormMode = false;
+    }
+    document.body.classList.remove('chat-overlay-visible');
   }
   
   // Скрываем страницу здоровье если не она выбрана
@@ -1681,8 +1704,12 @@ document.addEventListener('click', (e) => {
     
     // Если это кнопка админа - обрабатываем отдельно
     if (navItem.classList.contains('admin-nav-item')) {
+      console.log('🔧 Admin button clicked, isAdmin:', isAdmin);
       if (isAdmin) {
+        console.log('✅ Opening admin page...');
         showPage('admin');
+      } else {
+        console.log('❌ User is not admin');
       }
       return;
     }
@@ -3171,6 +3198,9 @@ function createDiagnosticFormUI() {
             </svg>
           </button>
         </div>
+        
+        <!-- Навигация в форме -->
+        <nav class="bottom-nav"></nav>
       </div>
       
       <!-- Экран квиза -->
@@ -3195,6 +3225,9 @@ function createDiagnosticFormUI() {
             </svg>
           </button>
         </div>
+        
+        <!-- Навигация в квизе -->
+        <nav class="bottom-nav"></nav>
       </div>
       
       <!-- Экран дополнительных вопросов -->
@@ -3266,6 +3299,9 @@ function createDiagnosticFormUI() {
           </button>
           <button class="create-program-final-btn" id="additionalNextBtn">Создать программу</button>
         </div>
+        
+        <!-- Навигация в дополнительных вопросах -->
+        <nav class="bottom-nav"></nav>
       </div>
     </div>
   `;
@@ -3276,6 +3312,9 @@ function createDiagnosticFormUI() {
   
   // Добавляем обработчики ПОСЛЕ создания HTML
   setTimeout(() => {
+    // Инициализируем панели навигации в диагностической форме
+    updateAllNavigations();
+    
     // Обработчик кнопки "Создать программу"
     const additionalNextBtn = document.getElementById('additionalNextBtn');
     console.log('🔍 Ищем кнопку additionalNextBtn:', additionalNextBtn);
@@ -3587,6 +3626,9 @@ function showMyTestsPage() {
             </div>
           </div>
         </div>
+        
+        <!-- Навигация -->
+        <nav class="bottom-nav"></nav>
       </div>
     </div>
   `;
@@ -3594,6 +3636,11 @@ function showMyTestsPage() {
   document.body.appendChild(myTestsForm);
   myTestsForm.style.display = 'flex';
   document.body.classList.add('chat-overlay-visible');
+  
+  // Инициализируем панель навигации в "Мои анализы"
+  setTimeout(() => {
+    updateAllNavigations();
+  }, 100);
   
   // ВСЕГДА загружаем свежие данные из БД при открытии вкладки
   console.log('🔥 КНОПКА "МОИ АНАЛИЗЫ" НАЖАТА - НАЧИНАЮ ЗАГРУЗКУ');
