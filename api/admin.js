@@ -107,6 +107,15 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ success: false, error: 'Invalid answers format' });
       }
 
+      // Получаем telegram_id пользователя
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
       // Обновляем каждый ответ
       for (const answer of answers) {
         const { error } = await supabase
@@ -115,21 +124,28 @@ module.exports = async function handler(req, res) {
             answer_text: answer.answer_text,
             updated_at: new Date().toISOString()
           })
-          .eq('user_id', userId)
+          .eq('telegram_id', userData.telegram_id)
           .eq('question_id', answer.question_id);
 
         if (error) {
           console.error('Error updating answer:', error);
           // Если записи нет - создаём
-          await supabase
+          const { error: insertError } = await supabase
             .from('quiz_answers')
             .insert({
-              user_id: userId,
+              telegram_id: userData.telegram_id,
               question_id: answer.question_id,
+              question_text: answer.question_id, // Будет обновлено при следующем сохранении
               answer_text: answer.answer_text,
+              answer_value: answer.answer_text,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
+          
+          if (insertError) {
+            console.error('Error inserting answer:', insertError);
+            throw insertError;
+          }
         }
       }
 

@@ -5905,6 +5905,48 @@ async function viewUserQuiz(userId) {
       answersContainer.appendChild(answerItem);
     });
 
+    // Добавляем 3 дополнительных вопроса (которые пользователь вводит вручную)
+    const additionalQuestions = [
+      { id: 'discomfort', text: 'Что вас беспокоит?:' },
+      { id: 'diagnosis', text: 'Поставленные диагнозы:' },
+      { id: 'treatment', text: 'Принимаемые лекарства/БАДы:' }
+    ];
+
+    additionalQuestions.forEach((question, idx) => {
+      const answerText = answersMap.get(question.id) || '';
+      
+      const answerItem = document.createElement('div');
+      answerItem.className = 'admin-quiz-item';
+      answerItem.innerHTML = `
+        <div class="admin-quiz-question">
+          <strong>Вопрос ${questions.length + idx + 1}:</strong> ${question.text}
+        </div>
+        <div class="admin-quiz-answer">
+          <strong>Ответ:</strong> 
+          <textarea class="admin-quiz-textarea" 
+                 data-question-id="${question.id}" 
+                 placeholder="Введите ответ">${answerText.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}</textarea>
+        </div>
+      `;
+
+      const textarea = answerItem.querySelector('.admin-quiz-textarea');
+      textarea.addEventListener('input', () => {
+        const questionId = textarea.dataset.questionId;
+        const existing = adminPendingChanges.quiz.findIndex(c => c.question_id === questionId);
+        if (existing >= 0) {
+          adminPendingChanges.quiz[existing].answer_text = textarea.value;
+        } else {
+          adminPendingChanges.quiz.push({
+            question_id: questionId,
+            answer_text: textarea.value
+          });
+        }
+        updateAdminSaveButton();
+      });
+
+      answersContainer.appendChild(answerItem);
+    });
+
     showAdminNavigation(true);
   } catch (error) {
     console.error('Error loading user quiz:', error);
@@ -6087,12 +6129,19 @@ async function saveAdminChanges() {
 
     // Сохраняем диагностику
     if (adminPendingChanges.quiz.length > 0) {
+      console.log('💾 Saving quiz changes:', adminPendingChanges.quiz);
       const response = await fetch(`/api/admin?action=quiz&userId=${adminCurrentUserId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ answers: adminPendingChanges.quiz })
       });
-      if (!response.ok) throw new Error('Failed to save quiz');
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Failed to save quiz:', errorText);
+        throw new Error('Failed to save quiz: ' + errorText);
+      }
+      const result = await response.json();
+      console.log('✅ Quiz saved successfully:', result);
     }
 
     // Сохраняем анализы
