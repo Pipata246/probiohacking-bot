@@ -907,20 +907,16 @@ async function viewOldChat(chatId) {
     // Показываем страницу чата в режиме read-only
     showPage('chat');
     
-    // Скрываем поле ввода сообщений
-    const chatInput = document.querySelector('.chat-input');
-    const sendButton = document.querySelector('.chat-send-btn');
-    if (chatInput) chatInput.style.display = 'none';
-    if (sendButton) sendButton.style.display = 'none';
+    const titleEl = document.getElementById('chatOverlayTitle');
+    if (titleEl) titleEl.textContent = 'Просмотр чата';
+    const inputContainer = document.querySelector('.chat-overlay .chat-input-container');
+    if (inputContainer) inputContainer.style.display = 'none';
     
-    // Показываем уведомление что это старый чат
     const chatMessages = document.getElementById('chatMessages');
-    const container = chatMessages.querySelector('.chat-messages-container');
+    const container = chatMessages?.querySelector('.chat-messages-container');
     if (container) {
       container.innerHTML = `
-        <div style="background: rgba(255,193,7,0.1); border-left: 3px solid #FFC107; padding: 12px; margin: 10px 0; color: #FFC107; font-size: 14px;">
-          📖 Это старый чат (только для чтения)
-        </div>
+        <div class="chat-readonly-notice">Этот чат только для просмотра. Отправка сообщений недоступна.</div>
         <div class="chat-loading-animation">
           <div class="loading-spinner"></div>
           <div class="loading-text">Загружаем сообщения...</div>
@@ -1429,11 +1425,15 @@ function showPage(pageName) {
       const sendButtonEl = document.querySelector('.chat-send-btn');
       
       if (viewingInactiveChatId) {
-        // Просмотр неактивного чата: только чтение, без отправки
-        if (chatInputEl) chatInputEl.style.display = 'none';
-        if (sendButtonEl) sendButtonEl.style.display = 'none';
-        // Сообщения загрузит viewOldChat после showPage
+        const titleEl = document.getElementById('chatOverlayTitle');
+        if (titleEl) titleEl.textContent = 'Просмотр чата';
+        const inputContainer = document.querySelector('.chat-overlay .chat-input-container');
+        if (inputContainer) inputContainer.style.display = 'none';
       } else {
+        const titleEl = document.getElementById('chatOverlayTitle');
+        if (titleEl) titleEl.textContent = 'Чат';
+        const inputContainer = document.querySelector('.chat-overlay .chat-input-container');
+        if (inputContainer) inputContainer.style.display = 'flex';
         if (chatInputEl && sendButtonEl) {
           chatInputEl.style.display = 'flex';
           sendButtonEl.style.display = 'flex';

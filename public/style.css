@@ -186,7 +186,43 @@ body.chat-overlay-visible {
   justify-content: space-between;
 }
 
-/* Хедер в чате - аватар всегда справа */
+/* Хедер в чате — закреплён сверху при прокрутке, в тему страницы */
+.chat-overlay-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  flex-shrink: 0;
+  z-index: 1002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
+  border-bottom: 1px solid rgba(254, 247, 236, 0.12);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.chat-overlay-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #FEF7EC;
+  letter-spacing: 0.02em;
+}
+
+.chat-readonly-notice {
+  background: rgba(254, 247, 236, 0.12);
+  border-left: 3px solid rgba(254, 247, 236, 0.5);
+  padding: 12px 16px;
+  margin: 10px 0;
+  color: #FEF7EC;
+  font-size: 14px;
+  border-radius: 0 8px 8px 0;
+}
+
+/* Совместимость: старый класс .header внутри чата */
 .chat-overlay .header {
   justify-content: space-between;
   flex-shrink: 0;
