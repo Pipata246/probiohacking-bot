@@ -236,6 +236,7 @@ let viewingInactiveChatId = null;
 let quizCompleted = false;
 let quizCompletionDate = null;
 let isAdmin = false;
+let diaryInitialized = false; // Флаг инициализации дневника
 
 // Проверка статуса квиза
 async function checkQuizStatus() {
@@ -772,11 +773,11 @@ async function createNewChat() {
   }
 }
 
-async function loadChatsFromAPI() {
+async function loadChatsFromAPI(showLoading = true) {
   const chatHistoryList = document.getElementById('chatHistoryList');
   
-  // Показываем спиннер загрузки
-  if (chatHistoryList) {
+  // Показываем спиннер загрузки только если явно запрошено (при открытии сайдбара)
+  if (showLoading && chatHistoryList) {
     chatHistoryList.innerHTML = `
       <div class="history-loading">
         <div class="history-spinner"></div>
@@ -800,11 +801,14 @@ async function loadChatsFromAPI() {
     
     if (data.success) {
       cachedChats = data.chats || [];
-      renderChatsList(cachedChats);
+      // Обновляем список только если элемент существует (при предзагрузке может не быть)
+      if (chatHistoryList) {
+        renderChatsList(cachedChats);
+      }
     }
   } catch (error) {
     console.error('Error loading chats:', error);
-    if (chatHistoryList) {
+    if (showLoading && chatHistoryList) {
       chatHistoryList.innerHTML = '';
     }
   }
@@ -1104,8 +1108,15 @@ function openSidebar() {
     });
   }
   
-  // Загружаем чаты при открытии сайдбара
-  loadChatsFromAPI();
+  // Чаты уже загружены при запуске приложения, просто обновляем список если нужно
+  // Если список пустой, загружаем заново
+  const chatHistoryList = document.getElementById('chatHistoryList');
+  if (chatHistoryList && (!cachedChats || cachedChats.length === 0)) {
+    loadChatsFromAPI();
+  } else {
+    // Просто обновляем отображение уже загруженных чатов
+    renderChatsList(cachedChats || []);
+  }
 }
 
 function closeSidebar() {
@@ -1421,7 +1432,11 @@ function showPage(pageName) {
       if (quizCompleted && diaryGate && diaryContentBlock) {
         diaryGate.classList.add('hidden');
         diaryContentBlock.classList.remove('hidden');
-        initializeDiary();
+        // Данные дневника уже предзагружены при запуске, просто обновляем если нужно
+        if (!diaryInitialized) {
+          initializeDiary();
+          diaryInitialized = true;
+        }
       } else if (diaryGate && diaryContentBlock) {
         diaryGate.classList.remove('hidden');
         diaryContentBlock.classList.add('hidden');
@@ -1857,12 +1872,9 @@ document.addEventListener('click', (e) => {
       case 2: // Здоровье
         showPage('health');
         break;
-      case 3: // Дневник — проверяем quiz_completed, затем показываем страницу
-        showPageLoading('diary');
-        checkQuizStatus().then(() => {
-          hidePageLoading();
-          showPage('diary');
-        });
+      case 3: // Дневник — данные уже предзагружены, просто показываем страницу
+        // Статус уже загружен при запуске, просто показываем страницу
+        showPage('diary');
         break;
       case 4: // База знаний
         showPage('knowledge');
@@ -2945,13 +2957,26 @@ async function loadAppData() {
   }
   
   // Запускаем ВСЕ загрузки ПАРАЛЛЕЛЬНО
+  // Загружаем все данные параллельно при запуске приложения
   appDataPromise = Promise.all([
     loadPhotosFromSupabase().catch(e => console.warn('Photos load error:', e)),
     checkQuizStatus().catch(e => console.warn('Quiz status error:', e)),
-    loadActiveChat().catch(e => console.warn('Chat load error:', e))
+    loadActiveChat().catch(e => console.warn('Chat load error:', e)),
+    // Предзагрузка истории чатов (без показа спиннера)
+    loadChatsFromAPI(false).catch(e => console.warn('Chats history load error:', e))
   ]);
   
   await appDataPromise;
+  
+  // После загрузки статуса квиза, предзагружаем данные дневника если квиз пройден
+  if (quizCompleted) {
+    console.log('📝 Предзагрузка данных дневника...');
+    try {
+      initializeDiary();
+    } catch (e) {
+      console.warn('Diary initialization error:', e);
+    }
+  }
   
   // Инициализация Realtime (не блокирует)
   initPhotosRealtime();
