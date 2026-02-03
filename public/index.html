@@ -2134,6 +2134,17 @@
             <div class="admin-quiz-answers" id="adminQuizAnswers">
                 <!-- Ответы будут загружены динамически -->
             </div>
+            <!-- Кнопки навигации (Назад и Сохранить) для опросника -->
+            <div class="admin-nav-buttons" id="adminNavButtonsQuiz" style="display: none;">
+                <button class="admin-back-btn" id="adminBackBtnQuiz">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="admin-save-btn" id="adminSaveBtnQuiz">
+                    Сохранить
+                </button>
+            </div>
         </div>
 
         <!-- Просмотр анализов пользователя -->
@@ -2144,18 +2155,17 @@
             <div class="admin-analyses-list" id="adminAnalysesList">
                 <!-- Анализы будут загружены динамически -->
             </div>
-        </div>
-
-        <!-- Кнопки навигации (Назад и Сохранить) -->
-        <div class="admin-nav-buttons" id="adminNavButtons" style="display: none;">
-            <button class="admin-back-btn" id="adminBackBtn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <button class="admin-save-btn" id="adminSaveBtn">
-                Сохранить
-            </button>
+            <!-- Кнопки навигации (Назад и Сохранить) для анализов -->
+            <div class="admin-nav-buttons" id="adminNavButtonsAnalyses" style="display: none;">
+                <button class="admin-back-btn" id="adminBackBtnAnalyses">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button class="admin-save-btn" id="adminSaveBtnAnalyses">
+                    Сохранить
+                </button>
+            </div>
         </div>
 
         <!-- Нижняя навигация -->

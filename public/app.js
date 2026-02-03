@@ -6121,10 +6121,8 @@ async function viewUserAnalyses(userId) {
 
 // Показать/скрыть навигацию админки (кнопки Назад и Сохранить)
 function showAdminNavigation(show) {
-  const nav = document.getElementById('adminNavButtons');
-  if (nav) {
-    nav.style.display = show ? 'flex' : 'none';
-  }
+  const navQuiz = document.getElementById('adminNavButtonsQuiz');
+  const navAnalyses = document.getElementById('adminNavButtonsAnalyses');
   
   // Скрываем/показываем основной контент и view
   const content = document.getElementById('adminContent');
@@ -6134,37 +6132,62 @@ function showAdminNavigation(show) {
   if (show) {
     if (content) content.style.display = 'none';
     if (adminCurrentView === 'quiz' && quizView) {
-      quizView.style.display = 'block';
+      quizView.style.display = 'flex';
+      if (navQuiz) navQuiz.style.display = 'flex';
       if (analysesView) analysesView.style.display = 'none';
+      if (navAnalyses) navAnalyses.style.display = 'none';
+      // Обновляем видимость кнопки "Сохранить" для опросника
+      updateAdminSaveButton();
     } else if (adminCurrentView === 'analyses' && analysesView) {
-      analysesView.style.display = 'block';
+      analysesView.style.display = 'flex';
+      if (navAnalyses) navAnalyses.style.display = 'flex';
       if (quizView) quizView.style.display = 'none';
+      if (navQuiz) navQuiz.style.display = 'none';
+      // Обновляем видимость кнопки "Сохранить" для анализов
+      updateAdminSaveButton();
     }
   } else {
     if (content) content.style.display = 'block';
     if (quizView) quizView.style.display = 'none';
     if (analysesView) analysesView.style.display = 'none';
+    if (navQuiz) navQuiz.style.display = 'none';
+    if (navAnalyses) navAnalyses.style.display = 'none';
   }
 }
 
 // Обновление кнопки Сохранить
 function updateAdminSaveButton() {
-  const saveBtn = document.getElementById('adminSaveBtn');
-  if (!saveBtn) return;
-
-  const hasChanges = adminPendingChanges.quiz.length > 0 || 
-                     adminPendingChanges.analyses.length > 0;
-  saveBtn.style.display = hasChanges ? 'flex' : 'none';
+  const saveBtnQuiz = document.getElementById('adminSaveBtnQuiz');
+  const saveBtnAnalyses = document.getElementById('adminSaveBtnAnalyses');
+  
+  const hasQuizChanges = adminPendingChanges.quiz.length > 0;
+  const hasAnalysesChanges = adminPendingChanges.analyses.length > 0;
+  
+  if (saveBtnQuiz) {
+    saveBtnQuiz.style.display = hasQuizChanges ? 'flex' : 'none';
+  }
+  if (saveBtnAnalyses) {
+    saveBtnAnalyses.style.display = hasAnalysesChanges ? 'flex' : 'none';
+  }
 }
 
 // Сохранение изменений
 async function saveAdminChanges() {
   if (!adminCurrentUserId) return;
 
-  const saveBtn = document.getElementById('adminSaveBtn');
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Сохранение...';
+  const saveBtnQuiz = document.getElementById('adminSaveBtnQuiz');
+  const saveBtnAnalyses = document.getElementById('adminSaveBtnAnalyses');
+  const currentView = adminCurrentView; // Сохраняем текущий view
+  const saveBtn = currentView === 'quiz' ? saveBtnQuiz : saveBtnAnalyses;
+  
+  // Отключаем обе кнопки на время сохранения
+  if (saveBtnQuiz) {
+    saveBtnQuiz.disabled = true;
+    if (currentView === 'quiz') saveBtnQuiz.textContent = 'Сохранение...';
+  }
+  if (saveBtnAnalyses) {
+    saveBtnAnalyses.disabled = true;
+    if (currentView === 'analyses') saveBtnAnalyses.textContent = 'Сохранение...';
   }
 
   try {
@@ -6211,6 +6234,11 @@ async function saveAdminChanges() {
       }
     }
 
+    // Показываем сообщение об успешном сохранении перед сбросом состояния
+    if (saveBtn) {
+      saveBtn.textContent = 'Сохранено!';
+    }
+
     // Сбрасываем изменения и возвращаемся к списку
     adminPendingChanges = { quiz: [], analyses: [] };
     adminCurrentView = 'users';
@@ -6220,32 +6248,41 @@ async function saveAdminChanges() {
     // Перезагружаем список пользователей для отображения актуальных данных
     await loadAdminUsers();
     
-    // Показываем сообщение об успешном сохранении
-    const saveBtn = document.getElementById('adminSaveBtn');
-    if (saveBtn) {
-      saveBtn.textContent = 'Сохранено!';
-      setTimeout(() => {
+    // Возвращаем текст кнопки через 2 секунды
+    setTimeout(() => {
+      if (saveBtn) {
         saveBtn.textContent = 'Сохранить';
-      }, 2000);
-    }
+      }
+    }, 2000);
   } catch (error) {
     console.error('Error saving admin changes:', error);
     alert('Ошибка сохранения изменений');
   } finally {
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Сохранить';
+    // Восстанавливаем состояние кнопок
+    if (saveBtnQuiz) {
+      saveBtnQuiz.disabled = false;
+      if (saveBtnQuiz.textContent === 'Сохранение...') {
+        saveBtnQuiz.textContent = 'Сохранить';
+      }
+    }
+    if (saveBtnAnalyses) {
+      saveBtnAnalyses.disabled = false;
+      if (saveBtnAnalyses.textContent === 'Сохранение...') {
+        saveBtnAnalyses.textContent = 'Сохранить';
+      }
     }
   }
 }
 
 // Обработчики админской панели
 document.addEventListener('DOMContentLoaded', () => {
-  const adminBackBtn = document.getElementById('adminBackBtn');
-  const adminSaveBtn = document.getElementById('adminSaveBtn');
+  const adminBackBtnQuiz = document.getElementById('adminBackBtnQuiz');
+  const adminSaveBtnQuiz = document.getElementById('adminSaveBtnQuiz');
+  const adminBackBtnAnalyses = document.getElementById('adminBackBtnAnalyses');
+  const adminSaveBtnAnalyses = document.getElementById('adminSaveBtnAnalyses');
 
-  if (adminBackBtn) {
-    adminBackBtn.addEventListener('click', () => {
+  if (adminBackBtnQuiz) {
+    adminBackBtnQuiz.addEventListener('click', () => {
       adminCurrentView = 'users';
       adminCurrentUserId = null;
       adminPendingChanges = { quiz: [], analyses: [] };
@@ -6254,8 +6291,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (adminSaveBtn) {
-    adminSaveBtn.addEventListener('click', saveAdminChanges);
+  if (adminSaveBtnQuiz) {
+    adminSaveBtnQuiz.addEventListener('click', saveAdminChanges);
+  }
+
+  if (adminBackBtnAnalyses) {
+    adminBackBtnAnalyses.addEventListener('click', () => {
+      adminCurrentView = 'users';
+      adminCurrentUserId = null;
+      adminPendingChanges = { quiz: [], analyses: [] };
+      showAdminNavigation(false);
+      loadAdminUsers();
+    });
+  }
+
+  if (adminSaveBtnAnalyses) {
+    adminSaveBtnAnalyses.addEventListener('click', saveAdminChanges);
   }
   
   // Обработчик клика на кнопку админа (делегирование событий)
