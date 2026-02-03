@@ -5599,10 +5599,14 @@ document.addEventListener('DOMContentLoaded', async function() {
       console.error('❌ Ошибка при инициализации приложения:', error);
       // Показываем приложение даже при ошибке
       if (mainApp) {
-        mainApp.style.display = 'block';
+        mainApp.classList.add('active');
+        mainApp.style.display = 'flex';
       }
       if (splashScreen) {
-        splashScreen.classList.add('hidden');
+        splashScreen.classList.add('fade-out');
+        setTimeout(() => {
+          splashScreen.classList.add('hidden');
+        }, 800);
       }
     }
   }
@@ -5615,7 +5619,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Если нет splash screen - сразу показываем приложение
     console.log('ℹ️ Splash screen не найден, показываем приложение сразу');
     if (mainApp) {
-      mainApp.style.display = 'block';
+      mainApp.classList.add('active');
+      mainApp.style.display = 'flex';
     }
     showApp();
   }

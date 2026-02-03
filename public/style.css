@@ -149,12 +149,15 @@ body.chat-overlay-visible {
   min-height: 100vh;
   height: 100vh;
   height: 100dvh;
-  overflow: hidden; /* Контейнер не скроллится, скроллится только .main-content */
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden !important; /* Контейнер не скроллится, скроллится только .main-content */
   display: none; /* Скрыто по умолчанию, показывается через класс active */
   flex-direction: column;
   justify-content: flex-start;
   /* ОТСТУП СВЕРХУ как на других страницах - calc(env(safe-area-inset-top, 44px) + 28px) */
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px) !important;
+  padding-bottom: 0;
   box-sizing: border-box;
   position: relative !important;
 }
@@ -405,11 +408,15 @@ body.chat-overlay-visible .search-container {
 .main-content {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  max-height: 100%;
+  overflow-y: auto !important;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   -webkit-overflow-scrolling: touch;
+  /* Обеспечиваем скролл */
+  position: relative;
+  width: 100%;
 }
 
 /* Синяя секция быстрых запросов — с отступами от краёв экрана */
@@ -4848,8 +4855,6 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   justify-content: center;
   z-index: 999999;
-  opacity: 1;
-  transition: opacity 0.8s ease-out;
   cursor: pointer;
   /* ПОЛНАЯ ИЗОЛЯЦИЯ */
   pointer-events: all;
