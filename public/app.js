@@ -9,7 +9,7 @@ const tg = window.Telegram?.WebApp || {
   initDataUnsafe: { user: { first_name: 'Тест', last_name: 'Пользователь' } }
 };
 
-// НЕ вызываем ready() здесь - это будет сделано в expandToFullscreen()
+tg.ready();
 
 // ========================================
 // STATE ДЛЯ ДИАГНОСТИКИ
@@ -1146,69 +1146,34 @@ async function initializeUser() {
 // Вызываем инициализацию сразу после готовности Telegram Web App
 initializeUser();
 
-// Флаг для отслеживания инициализации обработчиков
-let fullscreenHandlersInitialized = false;
-
-// Функция для разворачивания в полноэкранный режим
-function expandToFullscreen() {
-  if (!window.Telegram?.WebApp) {
-    console.log('⚠️ Telegram WebApp not available');
-    return;
-  }
-  
-  const tg = window.Telegram.WebApp;
-  
-  console.log('🔄 Expanding to fullscreen...');
-  
-  // Сначала вызываем ready() - ОБЯЗАТЕЛЬНО
-  try {
-    if (typeof tg.ready === 'function') {
-      tg.ready();
-      console.log('✅ Telegram WebApp.ready() called');
-    } else {
-      console.warn('⚠️ tg.ready is not a function');
-    }
-  } catch (e) {
-    console.warn('⚠️ tg.ready() error:', e);
-  }
-  
-  // Затем разворачиваем - НЕМЕДЛЕННО
-  try {
-    if (typeof tg.expand === 'function') {
-      tg.expand();
-      console.log('✅ Telegram WebApp.expand() called');
-    } else {
-      console.warn('⚠️ tg.expand is not a function');
-    }
-  } catch (e) {
-    console.warn('⚠️ tg.expand() error:', e);
-  }
+// ПРАВИЛЬНЫЙ полноэкранный режим для Telegram Mini App
+if (window.Telegram?.WebApp) {
+  // НЕМЕДЛЕННОЕ разворачивание в полноэкранный режим
+  tg.expand();
   
   // ПРИНУДИТЕЛЬНОЕ включение полноэкранного режима
   try {
     // Используем новые методы Telegram WebApp 6.0+
     if (tg.requestFullscreen) {
       tg.requestFullscreen();
-      console.log('✅ requestFullscreen() called');
     }
     
     // Скрываем элементы интерфейса Telegram
     if (tg.setHeaderColor) {
-      tg.setHeaderColor('#3C805B');
+      tg.setHeaderColor('#3C805B'); // Устанавливаем цвет заголовка
     }
     
     if (tg.setBackgroundColor) {
-      tg.setBackgroundColor('#3C805B');
+      tg.setBackgroundColor('#3C805B'); // Устанавливаем цвет фона
     }
     
     // Включаем полноэкранный режим
     if (tg.enableFullscreen) {
       tg.enableFullscreen();
-      console.log('✅ enableFullscreen() called');
     }
     
   } catch (e) {
-    console.log('⚠️ Fullscreen methods error:', e.message);
+    console.log('Новые методы полноэкранного режима не поддерживаются:', e.message);
   }
 
   // Скрываем кнопки Telegram
@@ -1216,7 +1181,7 @@ function expandToFullscreen() {
     try {
       tg.BackButton.hide();
     } catch (e) {
-      console.log('⚠️ BackButton.hide error:', e.message);
+      console.log('BackButton.hide не поддерживается:', e.message);
     }
   }
   
@@ -1224,16 +1189,17 @@ function expandToFullscreen() {
     try {
       tg.MainButton.hide();
     } catch (e) {
-      console.log('⚠️ MainButton.hide error:', e.message);
+      console.log('MainButton.hide не поддерживается:', e.message);
     }
   }
 
-  // АГРЕССИВНЫЕ попытки разворачивания с задержками
+  // АГРЕССИВНЫЕ попытки разворачивания
   const expandAttempts = [50, 100, 200, 300, 500, 1000, 2000, 3000];
   expandAttempts.forEach(delay => {
     setTimeout(() => {
+      tg.expand();
+      // Дополнительные попытки полноэкранного режима
       try {
-        tg.expand();
         if (tg.requestFullscreen) tg.requestFullscreen();
         if (tg.enableFullscreen) tg.enableFullscreen();
       } catch (e) {
@@ -1242,66 +1208,68 @@ function expandToFullscreen() {
     }, delay);
   });
 
-  // Инициализируем обработчики событий только один раз
-  if (!fullscreenHandlersInitialized) {
-    fullscreenHandlersInitialized = true;
-    
-    // Обработчики событий для поддержания полноэкранного режима
-    try {
-      tg.onEvent('viewportChanged', () => {
-        setTimeout(() => {
-          try {
-            tg.expand();
-            if (tg.requestFullscreen) tg.requestFullscreen();
-          } catch (e) {}
-        }, 10);
-      });
-    } catch (e) {
-      console.log('⚠️ onEvent not supported:', e.message);
-    }
-
-    // Обработчики окна браузера
-    window.addEventListener('resize', () => {
+  // Обработчики событий для поддержания полноэкранного режима
+  try {
+    tg.onEvent('viewportChanged', () => {
       setTimeout(() => {
-        try {
-          tg.expand();
-          if (tg.requestFullscreen) tg.requestFullscreen();
-        } catch (e) {}
-      }, 50);
+        tg.expand();
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      }, 10);
     });
+  } catch (e) {
+    console.log('onEvent не поддерживается:', e.message);
+  }
 
-    window.addEventListener('load', () => {
+  // Обработчики окна браузера
+  window.addEventListener('resize', () => {
+    setTimeout(() => {
+      tg.expand();
+      try {
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      } catch (e) {}
+    }, 50);
+  });
+
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      tg.expand();
+      try {
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      } catch (e) {}
+    }, 100);
+  });
+
+  // Дополнительные обработчики
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
       setTimeout(() => {
+        tg.expand();
         try {
-          tg.expand();
           if (tg.requestFullscreen) tg.requestFullscreen();
         } catch (e) {}
       }, 100);
-    });
-  }
-}
+    }
+  });
 
-// Вызываем разворачивание сразу при загрузке скрипта (если DOM уже готов)
-// Это важно для случаев, когда скрипт загружается после того, как DOM уже готов
-if (window.Telegram?.WebApp) {
-  // Если DOM уже загружен - вызываем сразу
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    console.log('🔄 DOM already loaded, calling expandToFullscreen immediately');
-    // Используем requestAnimationFrame для гарантии, что DOM готов
-    requestAnimationFrame(() => {
-      expandToFullscreen();
-    });
-  }
-  
-  // Также вызываем после полной загрузки страницы
-  if (window.addEventListener) {
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        console.log('🔄 Window loaded, calling expandToFullscreen');
-        expandToFullscreen();
-      }, 50);
-    });
-  }
+  window.addEventListener('focus', () => {
+    setTimeout(() => {
+      tg.expand();
+      try {
+        if (tg.requestFullscreen) tg.requestFullscreen();
+      } catch (e) {}
+    }, 100);
+  });
+
+  // Периодическое поддержание полноэкранного режима
+  setInterval(() => {
+    tg.expand();
+    try {
+      if (tg.requestFullscreen) tg.requestFullscreen();
+    } catch (e) {}
+  }, 5000);
+
+} else {
+  console.log('Локальное тестирование - Telegram WebApp недоступен');
 }
 
 // ========================================
@@ -1502,21 +1470,10 @@ function showPage(pageName) {
       if (!adminPage) {
         console.error('❌ Admin page element not found in DOM!');
         alert('Админская панель не найдена. Обновите страницу.');
-        return;
+        break; // Используем break вместо return
       }
       
       console.log('✅ Admin page found, showing it');
-      // Скрываем все остальные страницы сначала
-      mainApp.style.display = 'none';
-      knowledgeBase.classList.remove('active');
-      diagnosticsPage.classList.remove('active');
-      chatOverlay.classList.remove('active');
-      recommendedTestsPage.classList.remove('active');
-      const healthPage = document.getElementById('healthPage');
-      if (healthPage) healthPage.classList.remove('active');
-      const diaryPage = document.getElementById('diaryPage');
-      if (diaryPage) diaryPage.classList.remove('active');
-      
       // Показываем админскую страницу
       adminPage.classList.add('active');
       adminPage.style.display = 'flex';
@@ -2979,10 +2936,10 @@ async function loadAppData() {
   console.log('🚀 Загрузка данных приложения...');
   const startTime = Date.now();
   
-  // Telegram WebApp уже инициализирован в DOMContentLoaded
-  // Здесь просто логируем
+  // Ждём инициализации Telegram WebApp
   if (window.Telegram?.WebApp) {
-    console.log('📱 Telegram WebApp available');
+    window.Telegram.WebApp.ready();
+    console.log('📱 Telegram WebApp ready');
   }
   
   // Запускаем ВСЕ загрузки ПАРАЛЛЕЛЬНО
@@ -3041,90 +2998,20 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// Инициализация при загрузке - ОБЪЕДИНЕННЫЙ обработчик
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('🚀 DOM loaded - initializing app');
+// Инициализация Telegram WebApp (выполняется сразу, не ждёт DOMContentLoaded)
+if (window.Telegram?.WebApp) {
+  console.log('Telegram WebApp detected');
   
-  // ПЕРВОЕ ДЕЛО - разворачиваем в полноэкранный режим ДО всего остального
-  if (window.Telegram?.WebApp) {
-    console.log('📱 Telegram WebApp detected - expanding immediately');
-    
-    // НЕМЕДЛЕННО разворачиваем в полноэкранный режим
-    try {
-      expandToFullscreen();
-    } catch (e) {
-      console.error('❌ Error calling expandToFullscreen:', e);
-    }
-    
-    // Устанавливаем тему
-    if (window.Telegram.WebApp.colorScheme) {
-      document.body.setAttribute('data-theme', window.Telegram.WebApp.colorScheme);
-    }
-  } else {
-    console.log('⚠️ Local mode - no Telegram WebApp');
+  // Устанавливаем тему
+  if (window.Telegram.WebApp.colorScheme) {
+    document.body.setAttribute('data-theme', window.Telegram.WebApp.colorScheme);
   }
-  
-  // Работаем со splash screen
-  const splashScreen = document.getElementById('splashScreen');
-  const mainApp = document.getElementById('mainApp');
+} else {
+  console.log('Local mode - no Telegram WebApp');
+}
 
-  if (splashScreen) {
-    console.log('✅ Splash screen found');
-    
-    // Функция для показа приложения
-    async function showApp() {
-      try {
-        // Загружаем данные БЕЗ блокировки (не ждём завершения)
-        loadAppData().catch(e => console.error('Load app data error:', e));
-        
-        // Показываем главную страницу СРАЗУ
-        showPage('main');
-        
-        // Показываем приложение СРАЗУ
-        if (mainApp) {
-          mainApp.classList.add('active');
-        }
-        
-        // Скрываем splash screen через небольшую задержку
-        setTimeout(() => {
-          splashScreen.classList.add('fade-out');
-          setTimeout(() => {
-            splashScreen.classList.add('hidden');
-            console.log('✅ App ready');
-          }, 500);
-        }, 300);
-      } catch (e) {
-        console.error('Error in showApp:', e);
-        // В случае ошибки всё равно показываем приложение
-        if (mainApp) {
-          mainApp.classList.add('active');
-        }
-        splashScreen.classList.add('hidden');
-      }
-    }
-    
-    // Автоматический переход (не блокируем на загрузке данных)
-    showApp();
-    
-  } else {
-    // Если нет splash screen - сразу показываем приложение
-    console.log('⚠️ No splash screen, showing app directly');
-    if (mainApp) {
-      mainApp.classList.add('active');
-    }
-    
-    // Начинаем загрузку данных (не блокируем)
-    loadAppData().then(() => {
-      showPage('main');
-    }).catch(e => {
-      console.error('Load app data error:', e);
-      showPage('main'); // Показываем страницу даже при ошибке
-    });
-  }
-  
-  // Периодическая проверка на зависание (каждые 10 секунд)
-  setInterval(checkAndRecoverAiState, 10000);
-});
+// Периодическая проверка на зависание (каждые 10 секунд)
+setInterval(checkAndRecoverAiState, 10000);
 
 async function openChatWithMessage(message) {
   console.log('🚀 openChatWithMessage called with:', message);
@@ -5672,7 +5559,62 @@ function deleteEntry(entryId) {
 // ПРИВЕТСТВЕННЫЙ ЭКРАН С АВТОМАТИЧЕСКИМ ПЕРЕХОДОМ
 // ========================================
 
-// Этот обработчик удален - логика перенесена в основной DOMContentLoaded выше
+// ЕДИНСТВЕННЫЙ обработчик DOMContentLoaded - объединяет всю инициализацию
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('🚀 DOM loaded - starting initialization');
+  
+  const splashScreen = document.getElementById('splashScreen');
+  const mainApp = document.getElementById('mainApp');
+
+  // Функция для показа приложения
+  async function showApp() {
+    try {
+      // Ждём загрузки данных
+      await loadAppData();
+      
+      // Показываем главную страницу
+      showPage('main');
+      
+      // Показываем приложение
+      if (mainApp) {
+        mainApp.style.display = 'block';
+      }
+      
+      // Скрываем splash screen если есть
+      if (splashScreen) {
+        splashScreen.classList.add('fade-out');
+        setTimeout(() => {
+          splashScreen.classList.add('hidden');
+          console.log('✅ Приложение готово');
+        }, 500);
+      } else {
+        console.log('✅ Приложение готово (без splash screen)');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка при инициализации приложения:', error);
+      // Показываем приложение даже при ошибке
+      if (mainApp) {
+        mainApp.style.display = 'block';
+      }
+      if (splashScreen) {
+        splashScreen.classList.add('hidden');
+      }
+    }
+  }
+  
+  // Запускаем инициализацию
+  if (splashScreen) {
+    console.log('✅ Приветственный экран найден');
+    showApp();
+  } else {
+    // Если нет splash screen - сразу показываем приложение
+    console.log('ℹ️ Splash screen не найден, показываем приложение сразу');
+    if (mainApp) {
+      mainApp.style.display = 'block';
+    }
+    showApp();
+  }
+});
 
 // ========================================
 // АДМИНСКАЯ ПАНЕЛЬ
