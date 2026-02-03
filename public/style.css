@@ -5340,7 +5340,7 @@ body.chat-overlay-visible .search-container {
 
 .admin-nav-buttons {
   position: fixed;
-  bottom: 80px; /* Выше нижней навигации (которая на 12px + высота ~60px = ~72px) */
+  bottom: 100px; /* Отступ от нижней навигации (которая на 12px + высота ~70px = ~82px, добавляем зазор 18px) */
   left: 12px;
   right: 12px;
   display: flex;
@@ -5366,13 +5366,13 @@ body.chat-overlay-visible .search-container {
 .admin-analyses-view {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 200px; /* Отступ для кнопок навигации (80px от низа + высота кнопок ~60px + запас 60px) */
+  padding-bottom: 240px; /* Отступ для кнопок навигации (120px от низа + высота кнопок ~48px + запас 72px) */
 }
 
 .admin-quiz-answers,
 .admin-analyses-list {
   padding: 20px;
-  padding-bottom: 60px; /* Дополнительный отступ снизу для последнего элемента */
+  padding-bottom: 80px; /* Дополнительный отступ снизу для последнего элемента */
 }
 
 .admin-nav-btn {
