@@ -5848,7 +5848,8 @@ async function viewUserQuiz(userId) {
     const answersContainer = document.getElementById('adminQuizAnswers');
     if (!quizView || !answersContainer) return;
 
-    if (!data.quiz_completed || !data.answers || data.answers.length === 0) {
+    // Проверяем, пройдена ли диагностика
+    if (!data.quiz_completed) {
       answersContainer.innerHTML = '<div class="admin-message">У пользователя не пройдена диагностика</div>';
       showAdminNavigation(true);
       return;
@@ -5857,22 +5858,31 @@ async function viewUserQuiz(userId) {
     // Загружаем вопросы из surveyQuestions
     const questions = surveyQuestions || [];
     
+    // Создаем мапу ответов для быстрого поиска
+    const answersMap = new Map();
+    if (data.answers && data.answers.length > 0) {
+      data.answers.forEach(answer => {
+        answersMap.set(answer.question_id, answer.answer_text || '');
+      });
+    }
+    
     answersContainer.innerHTML = '';
     
-    data.answers.forEach((answer, idx) => {
-      const question = questions.find(q => q.id === answer.question_id) || { text: `Вопрос ${answer.question_id}` };
+    // Отображаем ВСЕ 25 вопросов из surveyQuestions (даже если ответа нет)
+    questions.forEach((question, idx) => {
+      const answerText = answersMap.get(question.id) || '';
       
       const answerItem = document.createElement('div');
       answerItem.className = 'admin-quiz-item';
       answerItem.innerHTML = `
         <div class="admin-quiz-question">
-          <strong>Вопрос:</strong> ${question.text || question.question || 'Неизвестный вопрос'}
+          <strong>Вопрос ${idx + 1}:</strong> ${question.question || 'Неизвестный вопрос'}
         </div>
         <div class="admin-quiz-answer">
           <strong>Ответ:</strong> 
           <input type="text" class="admin-quiz-input" 
-                 data-question-id="${answer.question_id}" 
-                 value="${(answer.answer_text || '').replace(/"/g, '&quot;')}" 
+                 data-question-id="${question.id}" 
+                 value="${answerText.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" 
                  placeholder="Введите ответ">
         </div>
       `;
@@ -5943,11 +5953,17 @@ async function viewUserAnalyses(userId) {
       analysisItem.className = 'admin-analysis-item';
       analysisItem.setAttribute('data-analysis-id', analysis.id);
 
-      const currentCategory = analysis.category || 'Другое';
+      // Используем analysis_group вместо category
+      const currentCategory = analysis.analysis_group || analysis.category || 'Другое';
+      const photoName = analysis.photo_name || 'Анализ';
+      const photoUrl = analysis.photo_url || '';
       
       analysisItem.innerHTML = `
-        <div class="admin-analysis-image">
-          <img src="${analysis.photo_url}" alt="Анализ" onerror="this.style.display='none'">
+        <div class="admin-analysis-image" style="cursor: pointer;" data-photo-url="${photoUrl}" data-photo-name="${photoName}">
+          <img src="${photoUrl}" alt="${photoName}" onerror="this.style.display='none'">
+        </div>
+        <div class="admin-analysis-info">
+          <div class="admin-analysis-name">${photoName}</div>
         </div>
         <div class="admin-analysis-controls">
           <select class="admin-analysis-category" data-analysis-id="${analysis.id}">
@@ -5961,16 +5977,24 @@ async function viewUserAnalyses(userId) {
         </div>
       `;
 
+      // Обработчик клика на изображение для просмотра
+      const imageDiv = analysisItem.querySelector('.admin-analysis-image');
+      if (imageDiv && photoUrl) {
+        imageDiv.addEventListener('click', () => {
+          showImageModal(photoUrl, photoName);
+        });
+      }
+
       const select = analysisItem.querySelector('.admin-analysis-category');
       select.addEventListener('change', () => {
         const analysisId = select.dataset.analysisId;
         const existing = adminPendingChanges.analyses.findIndex(c => c.id === analysisId);
         if (existing >= 0) {
-          adminPendingChanges.analyses[existing].category = select.value;
+          adminPendingChanges.analyses[existing].analysis_group = select.value;
         } else {
           adminPendingChanges.analyses.push({
             id: analysisId,
-            category: select.value,
+            analysis_group: select.value,
             action: 'update'
           });
         }
@@ -6080,10 +6104,12 @@ async function saveAdminChanges() {
         });
         if (!response.ok) throw new Error('Failed to delete analysis');
       } else if (change.action === 'update') {
+        // API ожидает category, но в БД сохраняется в analysis_group
+        const categoryValue = change.analysis_group || change.category;
         const response = await fetch(`/api/admin?action=analyses&userId=${adminCurrentUserId}&analysisId=${change.id}`, {
           method: 'PUT',
           headers,
-          body: JSON.stringify({ category: change.category })
+          body: JSON.stringify({ category: categoryValue })
         });
         if (!response.ok) throw new Error('Failed to update analysis');
       }
@@ -6094,7 +6120,18 @@ async function saveAdminChanges() {
     adminCurrentView = 'users';
     adminCurrentUserId = null;
     showAdminNavigation(false);
+    
+    // Перезагружаем список пользователей для отображения актуальных данных
     await loadAdminUsers();
+    
+    // Показываем сообщение об успешном сохранении
+    const saveBtn = document.getElementById('adminSaveBtn');
+    if (saveBtn) {
+      saveBtn.textContent = 'Сохранено!';
+      setTimeout(() => {
+        saveBtn.textContent = 'Сохранить';
+      }, 2000);
+    }
   } catch (error) {
     console.error('Error saving admin changes:', error);
     alert('Ошибка сохранения изменений');

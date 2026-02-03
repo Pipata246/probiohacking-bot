@@ -138,19 +138,23 @@ module.exports = async function handler(req, res) {
 
     // Получение анализов пользователя
     if (action === 'analyses' && userId && req.method === 'GET') {
+      // Сначала получаем telegram_id пользователя
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id, analyses_uploaded')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
+      // Получаем анализы по telegram_id
       const { data: analyses, error } = await supabase
         .from('user_analysis_photos')
         .select('*')
-        .eq('user_id', userId)
+        .eq('telegram_id', userData.telegram_id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('analyses_uploaded')
-        .eq('id', userId)
-        .single();
 
       return res.json({ 
         success: true, 
@@ -167,11 +171,21 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ success: false, error: 'Category required' });
       }
 
+      // Получаем telegram_id пользователя для проверки
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
+      // Используем analysis_group вместо category (правильное поле в БД)
       const { error } = await supabase
         .from('user_analysis_photos')
-        .update({ category, updated_at: new Date().toISOString() })
+        .update({ analysis_group: category, updated_at: new Date().toISOString() })
         .eq('id', analysisId)
-        .eq('user_id', userId);
+        .eq('telegram_id', userData.telegram_id);
 
       if (error) throw error;
 
@@ -180,11 +194,20 @@ module.exports = async function handler(req, res) {
 
     // Удаление анализа
     if (action === 'analyses' && userId && analysisId && req.method === 'DELETE') {
+      // Получаем telegram_id пользователя для проверки
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
       const { error } = await supabase
         .from('user_analysis_photos')
         .delete()
         .eq('id', analysisId)
-        .eq('user_id', userId);
+        .eq('telegram_id', userData.telegram_id);
 
       if (error) throw error;
 
@@ -192,7 +215,7 @@ module.exports = async function handler(req, res) {
       const { data: remaining } = await supabase
         .from('user_analysis_photos')
         .select('id')
-        .eq('user_id', userId)
+        .eq('telegram_id', userData.telegram_id)
         .limit(1);
 
       // Если анализов не осталось - сбрасываем статус

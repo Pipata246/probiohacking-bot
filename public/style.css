@@ -5249,12 +5249,29 @@ body.chat-overlay-visible .search-container {
   margin-bottom: 12px;
   border-radius: 12px;
   overflow: hidden;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.admin-analysis-image:hover {
+  opacity: 0.9;
 }
 
 .admin-analysis-image img {
   width: 100%;
   height: auto;
   display: block;
+}
+
+.admin-analysis-info {
+  margin-bottom: 12px;
+}
+
+.admin-analysis-name {
+  color: #FEF7EC;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
 }
 
 .admin-analysis-controls {
