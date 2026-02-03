@@ -64,7 +64,7 @@ module.exports = async function handler(req, res) {
       console.log('📥 Fetching users list...');
       const { data: users, error } = await supabase
         .from('users')
-        .select('id, telegram_id, first_name, last_name, username, quiz_completed, analyses_uploaded, created_at')
+        .select('id, telegram_id, first_name, last_name, username, quiz_completed, analyses_uploaded, admin, created_at')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -276,6 +276,31 @@ module.exports = async function handler(req, res) {
       }
 
       return res.json({ success: true });
+    }
+
+    // Установка админского статуса пользователя
+    if (action === 'setAdmin' && userId && req.method === 'PUT') {
+      const { isAdmin } = req.body;
+
+      if (typeof isAdmin !== 'boolean') {
+        return res.status(400).json({ success: false, error: 'isAdmin must be a boolean' });
+      }
+
+      console.log(`🔧 Setting admin status for user ${userId} to ${isAdmin}`);
+
+      const { data, error } = await supabase
+        .from('users')
+        .update({ admin: isAdmin, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+        .select();
+
+      if (error) {
+        console.error('❌ Error updating admin status:', error);
+        throw error;
+      }
+
+      console.log('✅ Admin status updated successfully:', data);
+      return res.json({ success: true, data });
     }
 
     return res.status(400).json({ success: false, error: 'Invalid action' });
