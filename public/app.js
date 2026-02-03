@@ -5868,7 +5868,54 @@ async function viewUserQuiz(userId) {
     
     answersContainer.innerHTML = '';
     
-    // Отображаем ВСЕ 25 вопросов из surveyQuestions (даже если ответа нет)
+    // Сначала отображаем персональные данные (8 полей)
+    const personalDataFields = [
+      { id: 'fullName', label: 'ФИО:' },
+      { id: 'birthDate', label: 'Дата рождения:' },
+      { id: 'profession', label: 'Профессия:' },
+      { id: 'city', label: 'Город:' },
+      { id: 'weight', label: 'Вес (кг):' },
+      { id: 'height', label: 'Рост (см):' },
+      { id: 'sport', label: 'Спорт/активность:' },
+      { id: 'gender', label: 'Пол:' }
+    ];
+
+    personalDataFields.forEach((field, idx) => {
+      const answerText = answersMap.get(field.id) || '';
+      
+      const answerItem = document.createElement('div');
+      answerItem.className = 'admin-quiz-item';
+      answerItem.innerHTML = `
+        <div class="admin-quiz-question">
+          <strong>${field.label}</strong>
+        </div>
+        <div class="admin-quiz-answer">
+          <input type="text" class="admin-quiz-input" 
+                 data-question-id="${field.id}" 
+                 value="${answerText.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" 
+                 placeholder="Введите значение">
+        </div>
+      `;
+
+      const input = answerItem.querySelector('.admin-quiz-input');
+      input.addEventListener('input', () => {
+        const questionId = input.dataset.questionId;
+        const existing = adminPendingChanges.quiz.findIndex(c => c.question_id === questionId);
+        if (existing >= 0) {
+          adminPendingChanges.quiz[existing].answer_text = input.value;
+        } else {
+          adminPendingChanges.quiz.push({
+            question_id: questionId,
+            answer_text: input.value
+          });
+        }
+        updateAdminSaveButton();
+      });
+
+      answersContainer.appendChild(answerItem);
+    });
+    
+    // Затем отображаем ВСЕ вопросы из surveyQuestions (17 вопросов)
     questions.forEach((question, idx) => {
       const answerText = answersMap.get(question.id) || '';
       
@@ -5876,7 +5923,7 @@ async function viewUserQuiz(userId) {
       answerItem.className = 'admin-quiz-item';
       answerItem.innerHTML = `
         <div class="admin-quiz-question">
-          <strong>Вопрос ${idx + 1}:</strong> ${question.question || 'Неизвестный вопрос'}
+          <strong>Вопрос ${personalDataFields.length + idx + 1}:</strong> ${question.question || 'Неизвестный вопрос'}
         </div>
         <div class="admin-quiz-answer">
           <strong>Ответ:</strong> 
@@ -5919,7 +5966,7 @@ async function viewUserQuiz(userId) {
       answerItem.className = 'admin-quiz-item';
       answerItem.innerHTML = `
         <div class="admin-quiz-question">
-          <strong>Вопрос ${questions.length + idx + 1}:</strong> ${question.text}
+          <strong>Вопрос ${personalDataFields.length + questions.length + idx + 1}:</strong> ${question.text}
         </div>
         <div class="admin-quiz-answer">
           <strong>Ответ:</strong> 

@@ -116,12 +116,45 @@ module.exports = async function handler(req, res) {
 
       if (userError || !userData) throw userError || new Error('User not found');
 
-      // Обновляем каждый ответ
+      // Карта текстов вопросов для обновления question_text
+      const questionTexts = {
+        fullName: 'ФИО:',
+        birthDate: 'Дата рождения:',
+        profession: 'Профессия:',
+        city: 'Город:',
+        weight: 'Вес (кг):',
+        height: 'Рост (см):',
+        sport: 'Спорт/активность:',
+        gender: 'Пол:',
+        V17: '[Нервная система] Как вы справляетесь со стрессом и умственной нагрузкой?',
+        V18: '[Сердечно-сосудистая система] Как вы ощущаете своё сердце и кровообращение?',
+        V19: '[Дыхательная система] Как ваше дыхание в покое и при нагрузке?',
+        V20: '[Пищеварительная система] Как вы оцениваете своё пищеварение?',
+        V21: '[Иммунная система] Как часто вы болеете и как восстанавливаетесь?',
+        V22: '[Эндокринная система] Как вы ощущаете свой гормональный баланс?',
+        V23: '[Опорно-двигательная система] Как вы чувствуете свои мышцы, суставы и кости?',
+        V24: '[Мочевыделительная система] Как работает ваша мочевыделительная система?',
+        V25: '[Репродуктивная система] Как вы оцениваете своё репродуктивное здоровье?',
+        V26: '[Покровная система] Как выглядит и чувствуется ваша кожа?',
+        V27: '[Лимфатическая система] Есть ли признаки застоя лимфы?',
+        V28: '[Сенсорная система] Как вы воспринимаете мир через органы чувств?',
+        V29: '[Состояние] Как выглядит ваш язык по утрам?',
+        V30: '[Цель] Какую главную цель в здоровье вы ставите?',
+        discomfort: 'Что вас беспокоит?:',
+        diagnosis: 'Поставленные диагнозы:',
+        treatment: 'Принимаемые лекарства/БАДы:'
+      };
+
+      // Обновляем каждый ответ (обновляем ОБА поля: answer_text и answer_value)
       for (const answer of answers) {
+        const questionText = questionTexts[answer.question_id] || answer.question_id;
+        
         const { error } = await supabase
           .from('quiz_answers')
           .update({ 
             answer_text: answer.answer_text,
+            answer_value: answer.answer_text, // Обновляем оба поля одновременно
+            question_text: questionText, // Обновляем текст вопроса
             updated_at: new Date().toISOString()
           })
           .eq('telegram_id', userData.telegram_id)
@@ -135,9 +168,9 @@ module.exports = async function handler(req, res) {
             .insert({
               telegram_id: userData.telegram_id,
               question_id: answer.question_id,
-              question_text: answer.question_id, // Будет обновлено при следующем сохранении
+              question_text: questionText,
               answer_text: answer.answer_text,
-              answer_value: answer.answer_text,
+              answer_value: answer.answer_text, // Оба поля одинаковые при создании
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
