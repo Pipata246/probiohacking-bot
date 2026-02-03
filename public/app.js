@@ -5583,13 +5583,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         mainApp.style.display = 'flex';
       }
       
-      // Скрываем splash screen если есть
+      // Плавно скрываем splash screen если есть
       if (splashScreen) {
+        // Добавляем класс fade-out для плавной анимации
         splashScreen.classList.add('fade-out');
+        // Ждём завершения анимации перед полным скрытием
         setTimeout(() => {
           splashScreen.classList.add('hidden');
           console.log('✅ Приложение готово');
-        }, 500);
+        }, 800); // Увеличено время для плавной анимации
       } else {
         console.log('✅ Приложение готово (без splash screen)');
       }

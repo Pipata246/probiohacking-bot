@@ -149,7 +149,7 @@ body.chat-overlay-visible {
   min-height: 100vh;
   height: 100vh;
   height: 100dvh;
-  overflow: hidden;
+  overflow: hidden; /* Контейнер не скроллится, скроллится только .main-content */
   display: none; /* Скрыто по умолчанию, показывается через класс active */
   flex-direction: column;
   justify-content: flex-start;
@@ -4848,18 +4848,21 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   justify-content: center;
   z-index: 999999;
+  opacity: 1;
+  transition: opacity 0.8s ease-out;
   cursor: pointer;
   /* ПОЛНАЯ ИЗОЛЯЦИЯ */
   pointer-events: all;
   user-select: none;
-  /* АНИМАЦИЯ */
+  /* АНИМАЦИЯ ПЛАВНОГО ИСЧЕЗНОВЕНИЯ */
   opacity: 1;
-  transition: opacity 1.5s ease-out;
+  transition: opacity 0.8s ease-out;
 }
 
 .splash-screen.fade-out {
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.8s ease-out;
 }
 
 .splash-screen.hidden {
