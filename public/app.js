@@ -1160,18 +1160,26 @@ function expandToFullscreen() {
   
   console.log('🔄 Expanding to fullscreen...');
   
-  // Сначала вызываем ready()
+  // Сначала вызываем ready() - ОБЯЗАТЕЛЬНО
   try {
-    tg.ready();
-    console.log('✅ Telegram WebApp.ready() called');
+    if (typeof tg.ready === 'function') {
+      tg.ready();
+      console.log('✅ Telegram WebApp.ready() called');
+    } else {
+      console.warn('⚠️ tg.ready is not a function');
+    }
   } catch (e) {
     console.warn('⚠️ tg.ready() error:', e);
   }
   
   // Затем разворачиваем - НЕМЕДЛЕННО
   try {
-    tg.expand();
-    console.log('✅ Telegram WebApp.expand() called');
+    if (typeof tg.expand === 'function') {
+      tg.expand();
+      console.log('✅ Telegram WebApp.expand() called');
+    } else {
+      console.warn('⚠️ tg.expand is not a function');
+    }
   } catch (e) {
     console.warn('⚠️ tg.expand() error:', e);
   }
@@ -1273,6 +1281,28 @@ function expandToFullscreen() {
   }
 }
 
+// Вызываем разворачивание сразу при загрузке скрипта (если DOM уже готов)
+// Это важно для случаев, когда скрипт загружается после того, как DOM уже готов
+if (window.Telegram?.WebApp) {
+  // Если DOM уже загружен - вызываем сразу
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    console.log('🔄 DOM already loaded, calling expandToFullscreen immediately');
+    // Используем requestAnimationFrame для гарантии, что DOM готов
+    requestAnimationFrame(() => {
+      expandToFullscreen();
+    });
+  }
+  
+  // Также вызываем после полной загрузки страницы
+  if (window.addEventListener) {
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        console.log('🔄 Window loaded, calling expandToFullscreen');
+        expandToFullscreen();
+      }, 50);
+    });
+  }
+}
 
 // ========================================
 // ФУНКЦИИ СБРОСА ДАННЫХ ДИАГНОСТИКИ
@@ -3020,7 +3050,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('📱 Telegram WebApp detected - expanding immediately');
     
     // НЕМЕДЛЕННО разворачиваем в полноэкранный режим
-    expandToFullscreen();
+    try {
+      expandToFullscreen();
+    } catch (e) {
+      console.error('❌ Error calling expandToFullscreen:', e);
+    }
     
     // Устанавливаем тему
     if (window.Telegram.WebApp.colorScheme) {
@@ -3039,27 +3073,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Функция для показа приложения
     async function showApp() {
-      // Ждём загрузки данных
-      await loadAppData();
-      
-      // Показываем главную страницу
-      showPage('main');
-      
-      // Показываем приложение
-      if (mainApp) {
-        mainApp.classList.add('active');
-      }
-      
-      // Скрываем splash screen
-      splashScreen.classList.add('fade-out');
-      
-      setTimeout(() => {
+      try {
+        // Загружаем данные БЕЗ блокировки (не ждём завершения)
+        loadAppData().catch(e => console.error('Load app data error:', e));
+        
+        // Показываем главную страницу СРАЗУ
+        showPage('main');
+        
+        // Показываем приложение СРАЗУ
+        if (mainApp) {
+          mainApp.classList.add('active');
+        }
+        
+        // Скрываем splash screen через небольшую задержку
+        setTimeout(() => {
+          splashScreen.classList.add('fade-out');
+          setTimeout(() => {
+            splashScreen.classList.add('hidden');
+            console.log('✅ App ready');
+          }, 500);
+        }, 300);
+      } catch (e) {
+        console.error('Error in showApp:', e);
+        // В случае ошибки всё равно показываем приложение
+        if (mainApp) {
+          mainApp.classList.add('active');
+        }
         splashScreen.classList.add('hidden');
-        console.log('✅ App ready');
-      }, 500);
+      }
     }
     
-    // Автоматический переход после загрузки данных
+    // Автоматический переход (не блокируем на загрузке данных)
     showApp();
     
   } else {
@@ -3069,9 +3113,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       mainApp.classList.add('active');
     }
     
-    // Начинаем загрузку данных
+    // Начинаем загрузку данных (не блокируем)
     loadAppData().then(() => {
       showPage('main');
+    }).catch(e => {
+      console.error('Load app data error:', e);
+      showPage('main'); // Показываем страницу даже при ошибке
     });
   }
   
