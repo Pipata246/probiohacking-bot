@@ -5001,12 +5001,17 @@ body.chat-overlay-visible .search-container {
   display: none !important;
   flex-direction: column;
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
   position: relative;
   z-index: 1000;
   width: 100%;
+  overflow: hidden;
 }
 
 .admin-page.active {
@@ -5016,7 +5021,12 @@ body.chat-overlay-visible .search-container {
 .admin-content {
   flex: 1;
   padding: 20px;
-  overflow-y: auto;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+  /* Безопасный отступ снизу для навигации */
+  padding-bottom: 120px;
 }
 
 .admin-loading {
@@ -5065,9 +5075,14 @@ body.chat-overlay-visible .search-container {
   border-radius: 16px;
   padding: 16px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
   border: 1px solid rgba(254, 247, 236, 0.2);
+  transition: background-color 0.2s ease;
+}
+
+.admin-user-item:hover {
+  background: rgba(254, 247, 236, 0.15);
 }
 
 .admin-user-info {
@@ -5098,20 +5113,40 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
   color: #FEF7EC;
+  position: relative;
+}
+
+.admin-expand-btn:hover {
+  background: rgba(254, 247, 236, 0.25);
 }
 
 .admin-expand-btn:active {
+  background: rgba(254, 247, 236, 0.3);
+}
+
+.admin-expand-btn svg {
+  position: absolute;
+  transition: opacity 0.2s ease;
+}
+
+.admin-user-item.expanded .admin-expand-btn {
   background: rgba(254, 247, 236, 0.25);
 }
 
 .admin-user-submenu {
   width: 100%;
-  margin-top: 8px;
-  display: flex;
+  margin-top: 0;
+  display: none;
   flex-direction: column;
   gap: 8px;
+  padding-top: 12px;
+}
+
+.admin-user-item.expanded .admin-user-submenu {
+  display: flex;
 }
 
 .admin-submenu-item {

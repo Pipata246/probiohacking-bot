@@ -5728,7 +5728,10 @@ function renderAdminUsers(users) {
 
     const name = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || `ID: ${user.telegram_id}`;
     
-    userItem.innerHTML = `
+    // Заголовок с именем и кнопкой раскрытия
+    const header = document.createElement('div');
+    header.className = 'admin-user-header';
+    header.innerHTML = `
       <div class="admin-user-info">
         <span class="admin-user-name">${name}</span>
         <span class="admin-user-status">
@@ -5737,23 +5740,34 @@ function renderAdminUsers(users) {
         </span>
       </div>
       <button class="admin-expand-btn" data-user-id="${user.id}">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <svg class="expand-icon-plus" width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <svg class="expand-icon-minus" width="20" height="20" viewBox="0 0 20 20" fill="none" style="display: none;">
+          <path d="M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
     `;
 
-    const expandBtn = userItem.querySelector('.admin-expand-btn');
+    // Обработчик клика на заголовок
+    header.addEventListener('click', (e) => {
+      if (!e.target.closest('.admin-expand-btn')) {
+        toggleUserExpanded(user.id);
+      }
+    });
+
+    const expandBtn = header.querySelector('.admin-expand-btn');
     expandBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       toggleUserExpanded(user.id);
     });
 
+    userItem.appendChild(header);
+
     // Подменю (скрыто по умолчанию)
     const submenu = document.createElement('div');
     submenu.className = 'admin-user-submenu';
     submenu.id = `adminSubmenu_${user.id}`;
-    submenu.style.display = 'none';
     
     submenu.innerHTML = `
       <button class="admin-submenu-item" data-action="quiz" data-user-id="${user.id}">
@@ -5789,15 +5803,25 @@ function renderAdminUsers(users) {
 
 // Переключение раскрытия подменю пользователя
 function toggleUserExpanded(userId) {
-  const submenu = document.getElementById(`adminSubmenu_${userId}`);
-  if (!submenu) return;
+  const userItem = document.querySelector(`.admin-user-item[data-user-id="${userId}"]`);
+  if (!userItem) return;
 
-  const isExpanded = submenu.style.display !== 'none';
-  submenu.style.display = isExpanded ? 'none' : 'block';
+  const isExpanded = userItem.classList.contains('expanded');
   
-  const btn = document.querySelector(`[data-user-id="${userId}"] .admin-expand-btn`);
-  if (btn) {
-    btn.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(45deg)';
+  if (isExpanded) {
+    // Сворачиваем
+    userItem.classList.remove('expanded');
+    const plusIcon = userItem.querySelector('.expand-icon-plus');
+    const minusIcon = userItem.querySelector('.expand-icon-minus');
+    if (plusIcon) plusIcon.style.display = 'block';
+    if (minusIcon) minusIcon.style.display = 'none';
+  } else {
+    // Раскрываем
+    userItem.classList.add('expanded');
+    const plusIcon = userItem.querySelector('.expand-icon-plus');
+    const minusIcon = userItem.querySelector('.expand-icon-minus');
+    if (plusIcon) plusIcon.style.display = 'none';
+    if (minusIcon) minusIcon.style.display = 'block';
   }
 }
 
