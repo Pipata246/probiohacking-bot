@@ -229,13 +229,7 @@ function getSystemPrompt() {
     year: 'numeric' 
   });
   
-  return `Ты — PROBIOHACKING AI "Профи": специалист по функциональной медицине.
-
-📅 ${dateStr} (год ${today.getFullYear()})
-
-МЕТОД: Синдромальный анализ → блоки проблем → рекомендации с механизмами.
-ФОРМАТ: Эмодзи, списки, отступы. Без ** и [BUTTON:...].
-ОГРАНИЧЕНИЯ: Не заменяешь врача. Не рецептурные препараты.`;
+  return `Ты — PROBIOHACKING AI "Профи": специалист по функциональной медицине. 📅 ${dateStr}. МЕТОД: Синдромальный анализ → блоки проблем → рекомендации с механизмами. ФОРМАТ: Эмодзи, списки, отступы. Без ** и [BUTTON:...]. ОГРАНИЧЕНИЯ: Не заменяешь врача. Не рецептурные препараты.`;
 }
 
 module.exports = async (req, res) => {
@@ -298,7 +292,7 @@ module.exports = async (req, res) => {
             if (!subscriptionActive && freeRequestsCount >= 3) {
               return res.status(200).json({
                 success: true,
-                response: 'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте: https://t.me/Probiohackingbot',
+                response: 'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.',
                 subscriptionRequired: true,
                 freeRequestsCount: freeRequestsCount,
                 chatId: null,
@@ -486,9 +480,9 @@ module.exports = async (req, res) => {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message }
       ],
-      temperature: 0.85, // Оптимальный баланс скорости и качества
-      max_tokens: 1200, // Уменьшено для ускорения (достаточно для качественных ответов)
-      top_p: 0.95 // Увеличено для ускорения генерации
+      temperature: 0.9, // Увеличено для более быстрой генерации
+      max_tokens: 1000, // Уменьшено для ускорения
+      top_p: 0.98 // Увеличено для ускорения генерации
     };
 
     const response = await doRequest(DEEPSEEK_API_URL, {

@@ -265,15 +265,12 @@ function closeSubscriptionModal() {
 function goToBot() {
   if (window.Telegram?.WebApp) {
     // Используем Telegram WebApp API для открытия бота
-    // Замените 'your_bot_username' на реальное имя вашего бота
-    const botUsername = 'Probiohackingbot'; // TODO: Замените на реальное имя бота
-    window.Telegram.WebApp.openTelegramLink(`https://t.me/${botUsername}`);
+    window.Telegram.WebApp.openTelegramLink('https://t.me/Probiohackingbot');
     // Закрываем мини-апп
     window.Telegram.WebApp.close();
   } else {
     // Fallback для тестирования
-    console.log('Would open bot link');
-    alert('Переход в бота доступен только из Telegram');
+    window.open('https://t.me/Probiohackingbot', '_blank');
   }
   closeSubscriptionModal();
 }
@@ -287,6 +284,30 @@ function checkSubscriptionBeforeAction(actionName, actionFunction, modalTitle, m
     // У пользователя нет подписки - показываем модальное окно
     showSubscriptionModal(modalTitle, modalDescription);
   }
+}
+
+// Функция обновления баннера бесплатного режима
+function updateFreeModeBanner() {
+  const banners = [
+    document.getElementById('freeModeBanner'),
+    document.getElementById('freeModeBannerDiagnostics'),
+    document.getElementById('freeModeBannerHealth'),
+    document.getElementById('freeModeBannerChat'),
+    document.getElementById('freeModeBannerKnowledge'),
+    document.getElementById('freeModeBannerDiary'),
+    document.getElementById('freeModeBannerRecommendedTests')
+  ];
+  
+  banners.forEach(banner => {
+    if (!banner) return;
+    
+    // Показываем баннер только если подписка неактивна
+    if (!subscriptionActive) {
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  });
 }
 
 // Проверка статуса квиза
@@ -321,6 +342,9 @@ async function checkQuizStatus() {
       updateAllNavigations();
       // Обновляем баннер бесплатного режима
       updateFreeModeBanner();
+      
+      // Логируем для отладки
+      console.log('📊 Subscription status:', { subscriptionActive, freeRequestsCount });
       
       return quizCompleted;
     } else {
@@ -697,8 +721,11 @@ function sendChatMessage(message) {
   
   // Проверяем лимит запросов для бесплатных пользователей
   if (!subscriptionActive && freeRequestsCount >= 3) {
-    const subscriptionMessage = `Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте: https://t.me/Probiohackingbot`;
-    addBotMessage(subscriptionMessage);
+    addBotMessageWithButton(
+      'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.',
+      'Оформить подписку',
+      'goToBot()'
+    );
     return;
   }
   
@@ -2769,7 +2796,7 @@ function addSubscriptionRecommendation(remainingRequests) {
     html += `
       <div class="subscription-recommendation">
         <div class="subscription-recommendation-text">
-          У вас осталось ${remaining} ${remaining === 1 ? 'бесплатный запрос' : remaining < 5 ? 'бесплатных запроса' : 'бесплатных запросов'}. Для неограниченного доступа оформите подписку: <a href="https://t.me/Probiohackingbot" target="_blank" style="color: #4A8B6C; font-weight: 600;">https://t.me/Probiohackingbot</a>
+          У вас осталось ${remaining} ${remaining === 1 ? 'бесплатный запрос' : remaining < 5 ? 'бесплатных запроса' : 'бесплатных запросов'}. Для неограниченного доступа оформите подписку.
         </div>
         <button class="subscription-recommendation-btn" onclick="goToBot()">Оформить подписку</button>
       </div>
@@ -2778,7 +2805,7 @@ function addSubscriptionRecommendation(remainingRequests) {
     html += `
       <div class="subscription-recommendation">
         <div class="subscription-recommendation-text">
-          Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте: <a href="https://t.me/Probiohackingbot" target="_blank" style="color: #4A8B6C; font-weight: 600;">https://t.me/Probiohackingbot</a>
+          Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.
         </div>
         <button class="subscription-recommendation-btn" onclick="goToBot()">Оформить подписку</button>
       </div>
@@ -3005,7 +3032,13 @@ async function sendMessageToAI(message) {
     // Проверяем требование подписки (API теперь возвращает success: true с сообщением)
     if (data?.subscriptionRequired && data?.response) {
       finalizeTypingBubble({ appendActions: false });
-      addBotMessage(data.response);
+      // Убираем ссылку из текста и добавляем кнопку
+      const messageText = data.response.replace(/https:\/\/t\.me\/Probiohackingbot/g, '').trim();
+      addBotMessageWithButton(
+        messageText || 'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.',
+        'Оформить подписку',
+        'goToBot()'
+      );
       resetAiState();
       aiAbortController = null;
       processAiQueue();
@@ -3134,12 +3167,14 @@ async function loadAppData() {
   appDataPromise = Promise.all([
     loadPhotosFromSupabase().catch(e => console.warn('Photos load error:', e)),
     checkQuizStatus().catch(e => console.warn('Quiz status error:', e)),
-    loadActiveChat().catch(e => console.warn('Chat load error:', e)),
-    // Предзагрузка истории чатов (без показа спиннера)
-    loadChatsFromAPI(false).catch(e => console.warn('Chats history load error:', e))
+    loadActiveChat().catch(e => console.warn('Chat load error:', e))
+    // Убрана предзагрузка истории чатов для ускорения
   ]);
   
   await appDataPromise;
+  
+  // Обновляем баннер после загрузки данных
+  updateFreeModeBanner();
   
   // После загрузки статуса квиза, предзагружаем данные дневника если квиз пройден
   if (quizCompleted) {
