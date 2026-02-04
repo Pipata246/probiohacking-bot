@@ -162,8 +162,17 @@ body.chat-overlay-visible {
   position: relative !important;
 }
 
+.app {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
 .app.active {
   display: flex !important;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* УБИРАЕМ мобильную версию - везде одинаково */
@@ -1292,13 +1301,14 @@ body.chat-overlay-visible .search-container {
 .sidebar {
   position: fixed;
   top: 0;
-  left: -100%;
+  left: 0;
   width: 80%;
   max-width: 360px;
   height: 100vh;
   background: #FAF8F3;
   z-index: 9999;
-  transition: left 0.2s ease; /* Ускоренная анимация */
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   will-change: transform; /* Оптимизация для GPU */
@@ -1307,7 +1317,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .sidebar.active {
-  left: 0;
+  transform: translateX(0);
 }
 
 .sidebar-header {
@@ -1461,7 +1471,7 @@ body.chat-overlay-visible .search-container {
   z-index: 9998;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease; /* Ускоренная анимация */
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: opacity; /* Оптимизация для GPU */
 }
 
@@ -1488,10 +1498,16 @@ body.chat-overlay-visible .search-container {
   box-sizing: border-box;
   /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px) !important;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
 }
 
 .recommended-tests-page.active {
   display: flex;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .recommended-tests-header {
@@ -1743,8 +1759,17 @@ body.chat-overlay-visible .search-container {
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px) !important;
 }
 
+.knowledge-base {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
 .knowledge-base.active {
   display: flex;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* Чат как оверлей на главной странице */
@@ -1761,10 +1786,16 @@ body.chat-overlay-visible .search-container {
   overflow: hidden; /* Убираем скролл у контейнера */
   /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px) !important;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
 }
 
 .chat-overlay.active {
   display: flex;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 
@@ -2225,10 +2256,16 @@ body.chat-overlay-visible .search-container {
   box-sizing: border-box;
   /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px) !important;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
 }
 
 .diagnostics-page.active {
   display: flex;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .diagnostics-content {
@@ -3831,10 +3868,16 @@ body.chat-overlay-visible .search-container {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px) !important;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
 }
 
 .health-page.active {
   display: flex;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .health-content {
@@ -4142,10 +4185,16 @@ body.chat-overlay-visible .search-container {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   /* ПРЕЖНИЙ ОТСТУП СВЕРХУ для кнопок Telegram (Close, стрелка, три точки) */
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px) !important;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
 }
 
 .diary-page.active {
   display: flex;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 /* Калитка Дневника: показывается, если quiz_completed === false */
@@ -4993,10 +5042,16 @@ body.chat-overlay-visible .search-container {
   z-index: 1000;
   width: 100%;
   overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
 }
 
 .admin-page.active {
   display: flex !important;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .admin-content {

@@ -1337,17 +1337,45 @@ function showPage(pageName) {
     isDiagnosticFormMode = false;
   }
   
-  // СНАЧАЛА показываем нужную страницу, ПОТОМ скрываем остальные
-  switch(pageName) {
+  // СНАЧАЛА скрываем все страницы с анимацией
+  const allPages = [mainApp, knowledgeBase, diagnosticsPage, chatOverlay, recommendedTestsPage];
+  const healthPage = document.getElementById('healthPage');
+  const diaryPage = document.getElementById('diaryPage');
+  const adminPage = document.getElementById('adminPage');
+  
+  if (healthPage) allPages.push(healthPage);
+  if (diaryPage) allPages.push(diaryPage);
+  if (adminPage) allPages.push(adminPage);
+  
+  allPages.forEach(page => {
+    if (page && page.classList.contains('active')) {
+      page.classList.remove('active');
+      // Небольшая задержка для плавного перехода
+      setTimeout(() => {
+        if (!page.classList.contains('active')) {
+          page.style.display = 'none';
+        }
+      }, 250);
+    }
+  });
+  
+  // Показываем нужную страницу с анимацией
+  setTimeout(() => {
+    switch(pageName) {
     case 'main':
-      mainApp.classList.add('active');
       mainApp.style.display = 'flex';
+      requestAnimationFrame(() => {
+        mainApp.classList.add('active');
+      });
       currentPage = 'main';
       isChatMode = false;
       isInRecommendedTests = false;
       break;
     case 'diagnostics':
-      diagnosticsPage.classList.add('active');
+      diagnosticsPage.style.display = 'flex';
+      requestAnimationFrame(() => {
+        diagnosticsPage.classList.add('active');
+      });
       currentPage = 'diagnostics';
       isChatMode = false;
       isInRecommendedTests = false;
@@ -1355,7 +1383,10 @@ function showPage(pageName) {
       updateDiagnosticsUI();
       break;
     case 'knowledge':
-      knowledgeBase.classList.add('active');
+      knowledgeBase.style.display = 'flex';
+      requestAnimationFrame(() => {
+        knowledgeBase.classList.add('active');
+      });
       currentPage = 'knowledge';
       isChatMode = false;
       isInRecommendedTests = false;
@@ -1366,7 +1397,10 @@ function showPage(pageName) {
       const healthPage = document.getElementById('healthPage');
       if (healthPage) {
         console.log('✅ Элемент healthPage найден, добавляем класс active');
-        healthPage.classList.add('active');
+        healthPage.style.display = 'flex';
+        requestAnimationFrame(() => {
+          healthPage.classList.add('active');
+        });
       } else {
         console.error('❌ Элемент healthPage НЕ НАЙДЕН!');
       }
@@ -1381,7 +1415,12 @@ function showPage(pageName) {
       const diaryPage = document.getElementById('diaryPage');
       const diaryGate = document.getElementById('diaryGate');
       const diaryContentBlock = document.getElementById('diaryContentBlock');
-      diaryPage.classList.add('active');
+      if (diaryPage) {
+        diaryPage.style.display = 'flex';
+        requestAnimationFrame(() => {
+          diaryPage.classList.add('active');
+        });
+      }
       currentPage = 'diary';
       isChatMode = false;
       isInRecommendedTests = false;
@@ -1400,8 +1439,11 @@ function showPage(pageName) {
       break;
     }
     case 'chat':
-      chatOverlay.classList.add('active');
+      chatOverlay.style.display = 'flex';
       document.body.classList.add('chat-overlay-visible');
+      requestAnimationFrame(() => {
+        chatOverlay.classList.add('active');
+      });
       isChatMode = true;
       currentPage = 'main'; // Чат это часть главной
       isInRecommendedTests = false;
@@ -1431,7 +1473,10 @@ function showPage(pageName) {
       }
       break;
     case 'recommendedTests':
-      recommendedTestsPage.classList.add('active');
+      recommendedTestsPage.style.display = 'flex';
+      requestAnimationFrame(() => {
+        recommendedTestsPage.classList.add('active');
+      });
       currentPage = 'recommendedTests';
       isChatMode = false;
       isInRecommendedTests = true;
@@ -1447,8 +1492,10 @@ function showPage(pageName) {
       
       console.log('✅ Admin page found, showing it');
       // Показываем админскую страницу
-      adminPage.classList.add('active');
       adminPage.style.display = 'flex';
+      requestAnimationFrame(() => {
+        adminPage.classList.add('active');
+      });
       currentPage = 'admin';
       isChatMode = false;
       isInRecommendedTests = false;
@@ -1479,32 +1526,16 @@ function showPage(pageName) {
         }
       });
       break;
-  }
-  
-  // ТЕПЕРЬ скрываем все остальные страницы
-  if (pageName !== 'main') {
-    mainApp.classList.remove('active');
-    mainApp.style.display = 'none';
-  }
-  if (pageName !== 'knowledge') {
-    knowledgeBase.classList.remove('active');
-  }
-  if (pageName !== 'diagnostics') {
-    diagnosticsPage.classList.remove('active');
-  }
-  if (pageName !== 'chat') {
-    chatOverlay.classList.remove('active');
-  }
-  if (pageName !== 'recommendedTests') {
-    recommendedTestsPage.classList.remove('active');
-  }
-  if (pageName !== 'admin') {
-    const adminPage = document.getElementById('adminPage');
-    if (adminPage) {
-      adminPage.classList.remove('active');
-      adminPage.style.display = 'none';
     }
-  }
+    
+    // Убираем классы скролла если не чат
+    if (pageName !== 'chat') {
+      document.body.classList.remove('chat-overlay-visible');
+    }
+    
+    // Обновляем все навигации
+    updateAllNavigations();
+  }, 50); // Небольшая задержка для плавного перехода
   
   // Закрываем диагностическую форму и "Мои анализы" если открываем админку
   if (pageName === 'admin') {
@@ -1540,30 +1571,6 @@ function showPage(pageName) {
       }
     }, 100);
   }
-  
-  // Скрываем страницу здоровье если не она выбрана
-  if (pageName !== 'health') {
-    const healthPage = document.getElementById('healthPage');
-    if (healthPage) {
-      healthPage.classList.remove('active');
-    }
-  }
-  
-  // Скрываем страницу дневник если не она выбрана
-  if (pageName !== 'diary') {
-    const diaryPage = document.getElementById('diaryPage');
-    if (diaryPage) {
-      diaryPage.classList.remove('active');
-    }
-  }
-  
-  // Убираем классы скролла если не чат
-  if (pageName !== 'chat') {
-    document.body.classList.remove('chat-overlay-visible');
-  }
-  
-  // Обновляем все навигации
-  updateAllNavigations();
 }
 
 function updateAllNavigations() {
