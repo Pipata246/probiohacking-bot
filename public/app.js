@@ -2395,23 +2395,43 @@ function addBotTypingIndicator() {
       </svg>
     </div>
     <div class="message-bubble">
-      <div class="typing-dots">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
+      <div class="typing-text" id="typingTextAnimated">Анализируем ваши данные.</div>
       <div class="message-text" id="typingText" style="display:none;"></div>
       <div class="ai-actions" id="typingActions" style="display:none;"></div>
     </div>
   `;
   container.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  
+  // Анимация точек в тексте
+  let dotCount = 0;
+  const typingTextEl = messageDiv.querySelector('#typingTextAnimated');
+  const typingInterval = setInterval(() => {
+    if (!typingTextEl || !document.getElementById('typingIndicator')) {
+      clearInterval(typingInterval);
+      return;
+    }
+    dotCount = (dotCount + 1) % 4; // 0, 1, 2, 3 точки
+    const dots = '.'.repeat(dotCount);
+    typingTextEl.textContent = `Анализируем ваши данные${dots}`;
+  }, 500);
+  
+  // Сохраняем interval ID для очистки при удалении
+  messageDiv.dataset.typingInterval = typingInterval;
+  
   return true;
 }
 
 function removeTypingIndicator() {
   const typingIndicator = document.getElementById('typingIndicator');
-  if (typingIndicator) safeRemove(typingIndicator);
+  if (typingIndicator) {
+    // Останавливаем анимацию точек
+    const intervalId = typingIndicator.dataset.typingInterval;
+    if (intervalId) {
+      clearInterval(parseInt(intervalId));
+    }
+    safeRemove(typingIndicator);
+  }
 }
 
 function chatMessagesScrollToBottom() {

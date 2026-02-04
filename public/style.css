@@ -1909,32 +1909,13 @@ body.chat-overlay-visible .search-container {
   transform: scale(0.98);
 }
 
- .typing-dots {
-   display: flex;
-   gap: 6px;
-   align-items: center;
+ .typing-text {
+   color: rgba(245, 241, 232, 0.9);
+   font-size: 15px;
    padding: 6px 2px;
- }
- 
- .typing-dots span {
-   width: 6px;
-   height: 6px;
-   border-radius: 50%;
-   background: rgba(245, 241, 232, 0.85);
-   animation: typingDot 1.2s infinite ease-in-out;
- }
- 
- .typing-dots span:nth-child(2) {
-   animation-delay: 0.15s;
- }
- 
- .typing-dots span:nth-child(3) {
-   animation-delay: 0.3s;
- }
- 
- @keyframes typingDot {
-   0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-   40% { transform: translateY(-4px); opacity: 1; }
+   min-height: 24px;
+   display: flex;
+   align-items: center;
  }
 
  .ai-actions {
