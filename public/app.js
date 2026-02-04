@@ -286,13 +286,13 @@ function checkSubscriptionBeforeAction(actionName, actionFunction, modalTitle, m
   }
 }
 
-// Функция обновления баннера бесплатного режима
+// Функция обновления баннера тестового режима
 function updateFreeModeBanner() {
+  // Баннеры на всех страницах кроме чата
   const banners = [
     document.getElementById('freeModeBanner'),
     document.getElementById('freeModeBannerDiagnostics'),
     document.getElementById('freeModeBannerHealth'),
-    document.getElementById('freeModeBannerChat'),
     document.getElementById('freeModeBannerKnowledge'),
     document.getElementById('freeModeBannerDiary'),
     document.getElementById('freeModeBannerRecommendedTests')

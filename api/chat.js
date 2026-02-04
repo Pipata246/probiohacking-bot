@@ -287,21 +287,6 @@ module.exports = async (req, res) => {
             subscriptionActive = userData.subscription_active === true;
             freeRequestsCount = userData.free_requests_count ?? 0;
             console.log('Subscription status:', { subscriptionActive, freeRequestsCount });
-            
-            // Проверяем лимит для бесплатных пользователей
-            if (!subscriptionActive && freeRequestsCount >= 3) {
-              return res.status(200).json({
-                success: true,
-                response: 'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.',
-                subscriptionRequired: true,
-                freeRequestsCount: freeRequestsCount,
-                chatId: null,
-                newChatCreated: false,
-                contextOverflow: false,
-                quizCompleted: false,
-                analysesUploaded: false
-              });
-            }
           }
         }
       } catch (error) {
@@ -342,6 +327,39 @@ module.exports = async (req, res) => {
             contextOverflow: false
           }
         );
+        
+        // Проверяем лимит для бесплатных пользователей ПОСЛЕ сохранения сообщения
+        if (!subscriptionActive && freeRequestsCount >= 3) {
+          const subscriptionMessage = 'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.';
+          
+          // Сохраняем ответ о подписке в БД (это НЕ заглушка, а полноценный ответ ИИ)
+          if (requestId) {
+            try {
+              await requestService.setChatResponse(requestId, subscriptionMessage);
+              console.log('✅ Subscription message saved to DB');
+            } catch (error) {
+              console.error('Error saving subscription response:', error);
+            }
+          }
+          
+          // Загружаем диагностические данные для ответа
+          let diagnosticDataForLimit = null;
+          if (userInfo && userInfo.telegramId) {
+            diagnosticDataForLimit = await getUserDiagnosticData(userInfo.telegramId);
+          }
+          
+          return res.status(200).json({
+            success: true,
+            response: subscriptionMessage,
+            subscriptionRequired: true,
+            freeRequestsCount: freeRequestsCount,
+            chatId: currentChatId,
+            newChatCreated: false,
+            contextOverflow: false,
+            quizCompleted: diagnosticDataForLimit?.quiz_completed || false,
+            analysesUploaded: diagnosticDataForLimit?.analyses_uploaded || false
+          });
+        }
       } catch (error) {
         console.error('Error managing chat:', error);
       }
