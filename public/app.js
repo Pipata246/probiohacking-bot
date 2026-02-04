@@ -266,7 +266,7 @@ function goToBot() {
   if (window.Telegram?.WebApp) {
     // Используем Telegram WebApp API для открытия бота
     // Замените 'your_bot_username' на реальное имя вашего бота
-    const botUsername = 'your_bot_username'; // TODO: Замените на реальное имя бота
+    const botUsername = 'Probiohackingbot'; // TODO: Замените на реальное имя бота
     window.Telegram.WebApp.openTelegramLink(`https://t.me/${botUsername}`);
     // Закрываем мини-апп
     window.Telegram.WebApp.close();
@@ -319,6 +319,8 @@ async function checkQuizStatus() {
       updateAdminPanelVisibility();
       // Обновляем навигацию чтобы добавить/убрать кнопку админа
       updateAllNavigations();
+      // Обновляем баннер бесплатного режима
+      updateFreeModeBanner();
       
       return quizCompleted;
     } else {
@@ -695,7 +697,8 @@ function sendChatMessage(message) {
   
   // Проверяем лимит запросов для бесплатных пользователей
   if (!subscriptionActive && freeRequestsCount >= 3) {
-    addBotMessage('Для дальнейшей работы оплатите подписку. Перейдите в бота и оформите подписку для продолжения использования всех функций.');
+    const subscriptionMessage = `Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте: https://t.me/Probiohackingbot`;
+    addBotMessage(subscriptionMessage);
     return;
   }
   
@@ -1594,6 +1597,8 @@ function showPage(pageName) {
     
     // Обновляем все навигации
     updateAllNavigations();
+    // Обновляем баннер бесплатного режима
+    updateFreeModeBanner();
   }, 50); // Небольшая задержка для плавного перехода
   
   // Закрываем диагностическую форму и "Мои анализы" если открываем админку
@@ -2558,6 +2563,17 @@ function finalizeTypingBubble({ appendActions } = { appendActions: false }) {
   const typingIndicator = document.getElementById('typingIndicator');
   if (!typingIndicator) return;
 
+  // Скрываем "Анализируем ваши данные" когда начинается печать
+  const typingTextAnimated = typingIndicator.querySelector('#typingTextAnimated');
+  if (typingTextAnimated) {
+    typingTextAnimated.style.display = 'none';
+    // Останавливаем анимацию точек
+    const intervalId = typingIndicator.dataset.typingInterval;
+    if (intervalId) {
+      clearInterval(parseInt(intervalId));
+    }
+  }
+
   typingIndicator.classList.remove('typing-indicator');
   typingIndicator.removeAttribute('id');
 
@@ -2597,6 +2613,17 @@ function typeMessage(text, callback) {
   const typingIndicator = document.getElementById('typingIndicator');
   const typingDots = typingIndicator?.querySelector('.typing-dots');
   const typingText = document.getElementById('typingText');
+  const typingTextAnimated = typingIndicator?.querySelector('#typingTextAnimated');
+  
+  // Скрываем "Анализируем ваши данные" когда начинается печать
+  if (typingTextAnimated) {
+    typingTextAnimated.style.display = 'none';
+    // Останавливаем анимацию точек
+    const intervalId = typingIndicator?.dataset?.typingInterval;
+    if (intervalId) {
+      clearInterval(parseInt(intervalId));
+    }
+  }
   
   if (!typingIndicator || !typingText) {
     console.error('❌ typeMessage: typingIndicator or typingText not found');
@@ -2616,7 +2643,7 @@ function typeMessage(text, callback) {
   
   // Удаляем теги кнопок из текста
   const cleanText = text.replace(buttonRegex, '').trim();
-
+  
   if (typingDots) typingDots.style.display = 'none';
   typingText.style.display = 'block';
   typingText.innerHTML = '';
@@ -2742,7 +2769,7 @@ function addSubscriptionRecommendation(remainingRequests) {
     html += `
       <div class="subscription-recommendation">
         <div class="subscription-recommendation-text">
-          У вас осталось ${remaining} ${remaining === 1 ? 'бесплатный запрос' : remaining < 5 ? 'бесплатных запроса' : 'бесплатных запросов'}. Для неограниченного доступа оформите подписку.
+          У вас осталось ${remaining} ${remaining === 1 ? 'бесплатный запрос' : remaining < 5 ? 'бесплатных запроса' : 'бесплатных запросов'}. Для неограниченного доступа оформите подписку: <a href="https://t.me/Probiohackingbot" target="_blank" style="color: #4A8B6C; font-weight: 600;">https://t.me/Probiohackingbot</a>
         </div>
         <button class="subscription-recommendation-btn" onclick="goToBot()">Оформить подписку</button>
       </div>
@@ -2751,7 +2778,7 @@ function addSubscriptionRecommendation(remainingRequests) {
     html += `
       <div class="subscription-recommendation">
         <div class="subscription-recommendation-text">
-          Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.
+          Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте: <a href="https://t.me/Probiohackingbot" target="_blank" style="color: #4A8B6C; font-weight: 600;">https://t.me/Probiohackingbot</a>
         </div>
         <button class="subscription-recommendation-btn" onclick="goToBot()">Оформить подписку</button>
       </div>
@@ -2975,6 +3002,16 @@ async function sendMessageToAI(message) {
       return;
     }
 
+    // Проверяем требование подписки (API теперь возвращает success: true с сообщением)
+    if (data?.subscriptionRequired && data?.response) {
+      finalizeTypingBubble({ appendActions: false });
+      addBotMessage(data.response);
+      resetAiState();
+      aiAbortController = null;
+      processAiQueue();
+      return;
+    }
+
     if (!data?.success || !data?.response) {
       finalizeTypingBubble({ appendActions: false });
       const serverMsg = data?.error ? `Ошибка сервера: ${String(data.error)}` : 'Извините, произошла ошибка при обработке запроса. Попробуйте позже.';
@@ -2985,6 +3022,14 @@ async function sendMessageToAI(message) {
       return;
     }
 
+    // Обновляем статус подписки и счетчик запросов из ответа
+    if (data.subscriptionActive !== undefined) {
+      subscriptionActive = data.subscriptionActive;
+    }
+    if (data.freeRequestsCount !== undefined && !subscriptionActive) {
+      freeRequestsCount = data.freeRequestsCount;
+    }
+    
     aiAbortController = null;
     typeMessage(data.response, () => {
       chatMessagesScrollToBottom();
@@ -3002,7 +3047,8 @@ async function sendMessageToAI(message) {
         addStatusRecommendations(data.quizCompleted, data.analysesUploaded);
       } else {
         // Для бесплатных пользователей показываем информацию о подписке
-        addSubscriptionRecommendation(data.remainingFreeRequests);
+        const remaining = data.remainingFreeRequests !== undefined ? data.remainingFreeRequests : Math.max(0, 3 - freeRequestsCount);
+        addSubscriptionRecommendation(remaining);
       }
       
       // Обрабатываем переполнение контекста

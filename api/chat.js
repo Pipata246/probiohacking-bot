@@ -17,43 +17,46 @@ const supabase = createClient(
   }
 );
 
-// Функция для получения диагностических данных пользователя
+// Функция для получения диагностических данных пользователя (оптимизированная)
 async function getUserDiagnosticData(userId) {
   try {
-    // Проверяем статус квиза
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('quiz_completed, analyses_uploaded')
-      .eq('telegram_id', userId)
-      .single();
+    // Параллельно получаем данные пользователя и ответы для ускорения
+    const [userResult, answersResult] = await Promise.all([
+      supabase
+        .from('users')
+        .select('quiz_completed, analyses_uploaded')
+        .eq('telegram_id', userId)
+        .single(),
+      supabase
+        .from('quiz_answers')
+        .select('question_id, answer_text, question_text')
+        .eq('telegram_id', userId)
+        .order('created_at', { ascending: true })
+    ]);
+
+    const { data: userData, error: userError } = userResult;
+    const { data: answers, error: answersError } = answersResult;
 
     if (userError || !userData) {
       console.log('User not found or error:', userError);
       return null;
     }
 
-    // Получаем все ответы пользователя
-    const { data: answers, error: answersError } = await supabase
-      .from('quiz_answers')
-      .select('*')
-      .eq('telegram_id', userId)
-      .order('created_at', { ascending: true });
-
     if (answersError) {
       console.error('Error fetching diagnostic answers:', answersError);
       return null;
     }
 
-    // Получаем фотографии анализов если они есть
+    // Получаем фотографии анализов только если они есть (асинхронно, не блокируем)
     let analysisPhotos = [];
     if (userData.analyses_uploaded) {
-      const { data: photos, error: photosError } = await supabase
+      const { data: photos } = await supabase
         .from('user_analysis_photos')
-        .select('*')
+        .select('analysis_group')
         .eq('telegram_id', userId)
-        .order('upload_date', { ascending: false });
+        .limit(20); // Ограничиваем для скорости
 
-      if (!photosError && photos) {
+      if (photos) {
         analysisPhotos = photos;
       }
     }
@@ -294,11 +297,15 @@ module.exports = async (req, res) => {
             // Проверяем лимит для бесплатных пользователей
             if (!subscriptionActive && freeRequestsCount >= 3) {
               return res.status(200).json({
-                success: false,
-                error: 'subscription_required',
-                message: 'Для дальнейшей работы оплатите подписку. Перейдите в бота и оформите подписку для продолжения использования всех функций.',
+                success: true,
+                response: 'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте: https://t.me/Probiohackingbot',
                 subscriptionRequired: true,
-                freeRequestsCount: freeRequestsCount
+                freeRequestsCount: freeRequestsCount,
+                chatId: null,
+                newChatCreated: false,
+                contextOverflow: false,
+                quizCompleted: false,
+                analysesUploaded: false
               });
             }
           }
@@ -346,87 +353,50 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Получаем историю сообщений только из АКТИВНОГО чата
+    // Параллельно получаем историю чата и диагностические данные для ускорения
     let chatHistory = '';
+    let diagnosticData = null;
     
-    if (userInfo && userInfo.id) {
-      try {
-        console.log(`🔍 Looking for active chat for user ${userInfo.id}`);
-        
-        // Получаем ID активного чата через функцию
-        const { data: activeChatId, error: activeChatError } = await supabase.rpc('get_active_chat', {
-          p_user_id: userInfo.id
-        });
-
-        console.log(`📊 Active chat result:`, { 
-          activeChatId: activeChatId, 
-          error: activeChatError?.message,
-          userId: userInfo.id 
-        });
-
-        if (!activeChatError && activeChatId) {
-          // Получаем сообщения только из активного чата (ограничиваем для скорости)
-          const { data: messages, error: messagesError } = await supabase
+    const [chatHistoryResult, diagnosticDataResult] = await Promise.all([
+      // Получаем историю чата
+      (async () => {
+        if (!userInfo || !userInfo.id) return null;
+        try {
+          const { data: activeChatId } = await supabase.rpc('get_active_chat', {
+            p_user_id: userInfo.id
+          });
+          if (!activeChatId) return null;
+          
+          const { data: messages } = await supabase
             .from('user_requests')
-            .select('message_text, response_text, created_at')
+            .select('message_text, response_text')
             .eq('user_id', userInfo.id)
             .eq('chat_id', activeChatId)
             .order('created_at', { ascending: false })
-            .limit(5); // Минимум для контекста, максимум скорости
-
-          console.log(`📊 Messages query result for active chat:`, { 
-            messagesCount: messages?.length || 0, 
-            error: messagesError?.message,
-            activeChatId: activeChatId 
-          });
-
-          if (!messagesError && messages && messages.length > 0) {
-            // Компактный формат истории для ускорения
-            chatHistory = '\n💬 История:\n';
-            
-            // Обратный порядок для правильной последовательности
-            const sortedMessages = messages.reverse();
-            sortedMessages.forEach((msg) => {
-              if (msg.message_text) {
-                chatHistory += `П: ${msg.message_text.substring(0, 80)}${msg.message_text.length > 80 ? '...' : ''}\n`;
-              }
-              if (msg.response_text) {
-                chatHistory += `ИИ: ${msg.response_text.substring(0, 120)}${msg.response_text.length > 120 ? '...' : ''}\n`;
-              }
+            .limit(3); // Уменьшено до 3 для скорости
+          
+          if (messages && messages.length > 0) {
+            let history = '\n💬 История:\n';
+            messages.reverse().forEach((msg) => {
+              if (msg.message_text) history += `П: ${msg.message_text.substring(0, 60)}...\n`;
+              if (msg.response_text) history += `ИИ: ${msg.response_text.substring(0, 80)}...\n`;
             });
-            
-            console.log(`✅ Loaded ${sortedMessages.length} recent messages from active chat ${activeChatId}`);
-          } else {
-            console.log(`⚠️ No messages found in active chat ${activeChatId}`);
-            if (messagesError) {
-              console.error('❌ Messages error:', messagesError);
-            }
+            return history;
           }
-        } else {
-          console.log(`⚠️ No active chat found for user ${userInfo.id}`);
-          if (activeChatError) {
-            console.error('❌ Active chat error:', activeChatError);
-          }
+        } catch (error) {
+          console.error('Error loading chat history:', error);
         }
-      } catch (error) {
-        console.error('❌ Error getting active chat history:', error);
-      }
-    } else {
-      console.log(`⚠️ Cannot get chat history - userInfo: ${!!userInfo}`);
-    }
-
-    // Получаем диагностические данные пользователя
-    let diagnosticData = null;
-    if (userInfo && userInfo.telegramId) {
-      diagnosticData = await getUserDiagnosticData(userInfo.telegramId);
-      console.log('📊 Diagnostic data loaded:', {
-        quiz_completed: diagnosticData?.quiz_completed,
-        analyses_uploaded: diagnosticData?.analyses_uploaded,
-        hasData: !!diagnosticData
-      });
-    } else {
-      console.log('⚠️ No telegramId available for diagnostic data');
-    }
+        return null;
+      })(),
+      // Получаем диагностические данные
+      (async () => {
+        if (!userInfo || !userInfo.telegramId) return null;
+        return await getUserDiagnosticData(userInfo.telegramId);
+      })()
+    ]);
+    
+    chatHistory = chatHistoryResult || '';
+    diagnosticData = diagnosticDataResult || null;
     
     // Формируем системный промпт с учетом диагностических данных и актуальной датой
     let systemPrompt = getSystemPrompt();
@@ -505,6 +475,9 @@ module.exports = async (req, res) => {
 
       systemPrompt += `\n✅ Группируй в блоки, используй целевые значения, рекомендации по категориям с механизмами. Запрещено: [BUTTON:...], просить диагностику.`;
     }
+    
+    // Оптимизация промпта: сокращаем для ускорения (убираем лишние пробелы и переносы)
+    systemPrompt = systemPrompt.replace(/\n{3,}/g, '\n\n').trim();
 
     // DeepSeek не поддерживает vision - используем только текстовый формат
     const payload = {
@@ -513,9 +486,9 @@ module.exports = async (req, res) => {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message }
       ],
-      temperature: 0.7, // Оптимальный баланс между качеством и скоростью
-      max_tokens: 2000, // Достаточно для качественных ответов
-      top_p: 0.9 // Ускоряет генерацию без потери качества
+      temperature: 0.85, // Оптимальный баланс скорости и качества
+      max_tokens: 1200, // Уменьшено для ускорения (достаточно для качественных ответов)
+      top_p: 0.95 // Увеличено для ускорения генерации
     };
 
     const response = await doRequest(DEEPSEEK_API_URL, {

@@ -31,6 +31,17 @@
             <div class="avatar" id="avatar">AM</div>
         </header>
 
+        <!-- Баннер бесплатного режима (показывается только при subscriptionActive = false) -->
+        <div class="free-mode-banner" id="freeModeBanner" style="display: none;">
+            <div class="free-mode-banner-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="free-mode-banner-text">Вы используете бесплатный режим. Оформите подписку для полного доступа ко всем функциям.</span>
+                <button class="free-mode-banner-btn" onclick="goToBot()">Оформить подписку</button>
+            </div>
+        </div>
+
         <!-- Скроллируемый контент главной страницы -->
         <div class="main-content">
         <!-- Приветствие -->
@@ -347,6 +358,16 @@
 
     <!-- Страница диагностики -->
     <div class="diagnostics-page" id="diagnosticsPage">
+        <!-- Баннер бесплатного режима -->
+        <div class="free-mode-banner" id="freeModeBannerDiagnostics" style="display: none;">
+            <div class="free-mode-banner-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="free-mode-banner-text">Вы используете бесплатный режим. Оформите подписку для полного доступа ко всем функциям.</span>
+                <button class="free-mode-banner-btn" onclick="goToBot()">Оформить подписку</button>
+            </div>
+        </div>
         <!-- Хедер -->
         <header class="header">
             <button class="menu-btn">
@@ -548,6 +569,16 @@
 
     <!-- Страница Здоровье -->
     <div class="health-page" id="healthPage">
+        <!-- Баннер бесплатного режима -->
+        <div class="free-mode-banner" id="freeModeBannerHealth" style="display: none;">
+            <div class="free-mode-banner-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="free-mode-banner-text">Вы используете бесплатный режим. Оформите подписку для полного доступа ко всем функциям.</span>
+                <button class="free-mode-banner-btn" onclick="goToBot()">Оформить подписку</button>
+            </div>
+        </div>
         <header class="header">
             <button class="menu-btn">
                 <span></span>
@@ -733,6 +764,16 @@
     </div>
 
     <div class="chat-overlay" id="chatOverlay">
+        <!-- Баннер бесплатного режима -->
+        <div class="free-mode-banner" id="freeModeBannerChat" style="display: none;">
+            <div class="free-mode-banner-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="free-mode-banner-text">Вы используете бесплатный режим. Оформите подписку для полного доступа ко всем функциям.</span>
+                <button class="free-mode-banner-btn" onclick="goToBot()">Оформить подписку</button>
+            </div>
+        </div>
         <header class="chat-overlay-header">
             <span class="chat-overlay-title" id="chatOverlayTitle">Чат</span>
         </header>
@@ -808,6 +849,16 @@
 
     <!-- Страница рекомендуемых анализов -->
     <div class="recommended-tests-page" id="recommendedTestsPage">
+        <!-- Баннер бесплатного режима -->
+        <div class="free-mode-banner" id="freeModeBannerRecommendedTests" style="display: none;">
+            <div class="free-mode-banner-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="free-mode-banner-text">Вы используете бесплатный режим. Оформите подписку для полного доступа ко всем функциям.</span>
+                <button class="free-mode-banner-btn" onclick="goToBot()">Оформить подписку</button>
+            </div>
+        </div>
         <!-- Хедер -->
         <header class="header">
             <button class="menu-btn">
@@ -1944,6 +1995,16 @@
 
     <!-- Страница Дневник -->
     <div class="diary-page" id="diaryPage">
+        <!-- Баннер бесплатного режима -->
+        <div class="free-mode-banner" id="freeModeBannerDiary" style="display: none;">
+            <div class="free-mode-banner-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="free-mode-banner-text">Вы используете бесплатный режим. Оформите подписку для полного доступа ко всем функциям.</span>
+                <button class="free-mode-banner-btn" onclick="goToBot()">Оформить подписку</button>
+            </div>
+        </div>
         <header class="header">
             <button class="menu-btn">
                 <span></span>

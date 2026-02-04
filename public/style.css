@@ -187,6 +187,59 @@ body.chat-overlay-visible {
   position: static !important; /* Убираем любое позиционирование - остается в потоке документа */
 }
 
+/* Баннер бесплатного режима */
+.free-mode-banner {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  padding: 12px 20px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.free-mode-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.free-mode-banner-content svg {
+  flex-shrink: 0;
+  color: #FFFFFF;
+  width: 20px;
+  height: 20px;
+}
+
+.free-mode-banner-text {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #FFFFFF;
+  line-height: 1.4;
+}
+
+.free-mode-banner-btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.free-mode-banner-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.free-mode-banner-btn:active {
+  transform: translateY(0);
+}
+
 /* Хедер в базе знаний - аватар всегда справа */
 .knowledge-base .header {
   justify-content: space-between;
