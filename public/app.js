@@ -237,6 +237,57 @@ let quizCompleted = false;
 let quizCompletionDate = null;
 let isAdmin = false;
 let diaryInitialized = false; // Флаг инициализации дневника
+let subscriptionActive = false; // Статус подписки
+let freeRequestsCount = 0; // Количество запросов бесплатного пользователя
+
+// Функция показа модального окна подписки
+function showSubscriptionModal(title, description) {
+  const modal = document.getElementById('subscriptionModal');
+  const titleEl = document.getElementById('subscriptionModalTitle');
+  const textEl = document.getElementById('subscriptionModalText');
+  
+  if (modal && titleEl && textEl) {
+    titleEl.textContent = title || 'Требуется подписка';
+    textEl.textContent = description || 'Для использования этой функции требуется активная подписка.';
+    modal.classList.add('active');
+  }
+}
+
+// Функция закрытия модального окна подписки
+function closeSubscriptionModal() {
+  const modal = document.getElementById('subscriptionModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+// Функция перехода в бота (закрывает мини-апп и открывает бота)
+function goToBot() {
+  if (window.Telegram?.WebApp) {
+    // Используем Telegram WebApp API для открытия бота
+    // Замените 'your_bot_username' на реальное имя вашего бота
+    const botUsername = 'your_bot_username'; // TODO: Замените на реальное имя бота
+    window.Telegram.WebApp.openTelegramLink(`https://t.me/${botUsername}`);
+    // Закрываем мини-апп
+    window.Telegram.WebApp.close();
+  } else {
+    // Fallback для тестирования
+    console.log('Would open bot link');
+    alert('Переход в бота доступен только из Telegram');
+  }
+  closeSubscriptionModal();
+}
+
+// Функция проверки подписки перед открытием функции
+function checkSubscriptionBeforeAction(actionName, actionFunction, modalTitle, modalDescription) {
+  if (subscriptionActive) {
+    // У пользователя есть подписка - выполняем действие
+    actionFunction();
+  } else {
+    // У пользователя нет подписки - показываем модальное окно
+    showSubscriptionModal(modalTitle, modalDescription);
+  }
+}
 
 // Проверка статуса квиза
 async function checkQuizStatus() {
@@ -259,7 +310,9 @@ async function checkQuizStatus() {
       quizCompleted = data.quiz_completed ?? data.quizCompleted ?? false;
       quizCompletionDate = data.quiz_completion_date || null;
       isAdmin = data.admin === true;
-      console.log('📋 Quiz status SET:', quizCompleted, 'Date:', quizCompletionDate, 'Admin:', isAdmin);
+      subscriptionActive = data.subscription_active === true;
+      freeRequestsCount = data.free_requests_count ?? 0;
+      console.log('📋 Quiz status SET:', quizCompleted, 'Date:', quizCompletionDate, 'Admin:', isAdmin, 'Subscription:', subscriptionActive, 'Free requests:', freeRequestsCount);
       
       // Обновляем UI диагностики и админской панели
       updateDiagnosticsUI();
@@ -639,6 +692,12 @@ function sendChatMessage(message) {
   if (viewingInactiveChatId) return; // В режиме просмотра неактивного чата отправка недоступна
   const trimmed = (message || '').trim();
   if (!trimmed) return;
+  
+  // Проверяем лимит запросов для бесплатных пользователей
+  if (!subscriptionActive && freeRequestsCount >= 3) {
+    addBotMessage('Для дальнейшей работы оплатите подписку. Перейдите в бота и оформите подписку для продолжения использования всех функций.');
+    return;
+  }
   
   console.log('🔍 sendChatMessage called. currentChatId:', currentChatId);
   
@@ -1839,11 +1898,25 @@ document.addEventListener('click', (e) => {
         }
         break;
       case 2: // Здоровье
-        showPage('health');
+        if (!subscriptionActive) {
+          showSubscriptionModal(
+            'Здоровье',
+            'В разделе "Здоровье" вы можете просматривать свою персональную программу здоровья, созданную на основе диагностики и анализов.'
+          );
+        } else {
+          showPage('health');
+        }
         break;
       case 3: // Дневник — данные уже предзагружены, просто показываем страницу
-        // Статус уже загружен при запуске, просто показываем страницу
-        showPage('diary');
+        if (!subscriptionActive) {
+          showSubscriptionModal(
+            'Дневник',
+            'Дневник позволяет отслеживать ваше самочувствие, симптомы и изменения в состоянии здоровья для более точного анализа динамики.'
+          );
+        } else {
+          // Статус уже загружен при запуске, просто показываем страницу
+          showPage('diary');
+        }
         break;
       case 4: // База знаний
         showPage('knowledge');
@@ -1891,6 +1964,24 @@ document.addEventListener('click', (e) => {
   // Отмена модального окна повторного прохождения
   if (e.target.closest('#retakeQuizCancelBtn')) {
     hideRetakeQuizModal();
+    return;
+  }
+  
+  // Кнопка перехода в бота из модального окна подписки
+  if (e.target.closest('#subscriptionModalGoToBot')) {
+    goToBot();
+    return;
+  }
+  
+  // Отмена модального окна подписки
+  if (e.target.closest('#subscriptionModalCancel')) {
+    closeSubscriptionModal();
+    return;
+  }
+  
+  // Закрытие модального окна подписки по клику на overlay
+  if (e.target.closest('#subscriptionModal') && !e.target.closest('.subscription-modal')) {
+    closeSubscriptionModal();
     return;
   }
   
@@ -2628,6 +2719,48 @@ function typeMessage(text, callback) {
 }
 
 // Добавление рекомендаций под последним сообщением на основе статусов
+// Функция добавления рекомендации о подписке для бесплатных пользователей
+function addSubscriptionRecommendation(remainingRequests) {
+  const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages?.querySelector('.chat-messages-container');
+  if (!container) return;
+  
+  // Находим последнее сообщение бота
+  const lastBotMessage = container.querySelector('.bot-message:last-of-type');
+  if (!lastBotMessage) return;
+  
+  const bubble = lastBotMessage.querySelector('.message-bubble');
+  if (!bubble) return;
+  
+  // Проверяем, не добавлена ли уже рекомендация
+  if (bubble.querySelector('.subscription-recommendation')) return;
+  
+  let html = '';
+  const remaining = remainingRequests !== undefined ? remainingRequests : Math.max(0, 3 - freeRequestsCount);
+  
+  if (remaining > 0) {
+    html += `
+      <div class="subscription-recommendation">
+        <div class="subscription-recommendation-text">
+          У вас осталось ${remaining} ${remaining === 1 ? 'бесплатный запрос' : remaining < 5 ? 'бесплатных запроса' : 'бесплатных запросов'}. Для неограниченного доступа оформите подписку.
+        </div>
+        <button class="subscription-recommendation-btn" onclick="goToBot()">Оформить подписку</button>
+      </div>
+    `;
+  } else {
+    html += `
+      <div class="subscription-recommendation">
+        <div class="subscription-recommendation-text">
+          Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.
+        </div>
+        <button class="subscription-recommendation-btn" onclick="goToBot()">Оформить подписку</button>
+      </div>
+    `;
+  }
+  
+  bubble.insertAdjacentHTML('beforeend', html);
+}
+
 function addStatusRecommendations(quizCompleted, analysesUploaded) {
   // Если оба статуса TRUE - ничего не добавляем
   if (quizCompleted && analysesUploaded) return;
@@ -2864,8 +2997,13 @@ async function sendMessageToAI(message) {
         console.log('Updated quiz status from API:', quizCompleted);
       }
       
-      // Добавляем рекомендации под сообщением если нужно
-      addStatusRecommendations(data.quizCompleted, data.analysesUploaded);
+      // Добавляем рекомендации под сообщением если нужно (только для пользователей с подпиской)
+      if (subscriptionActive) {
+        addStatusRecommendations(data.quizCompleted, data.analysesUploaded);
+      } else {
+        // Для бесплатных пользователей показываем информацию о подписке
+        addSubscriptionRecommendation(data.remainingFreeRequests);
+      }
       
       // Обрабатываем переполнение контекста
       if (false && (data.newChatCreated || data.contextOverflow)) {
@@ -3168,6 +3306,15 @@ function resetViewportOnQuestionChange() {
 // ========================================
 
 function showDiagnosticForm() {
+  // Проверяем подписку
+  if (!subscriptionActive) {
+    showSubscriptionModal(
+      'Заполнить анкету',
+      'Персональная диагностика позволяет получить детальную оценку состояния систем вашего организма с учётом подходов фитотерапии, аюрведы, ТКМ и тибетской медицины.'
+    );
+    return;
+  }
+  
   // Если диагностика уже пройдена - перенаправляем на вкладку Здоровье
   if (quizCompleted) {
     showPage('health');
@@ -3746,6 +3893,15 @@ function createDiagnosticFormUI() {
 // ========================================
 
 function showMyTestsPage() {
+  // Проверяем подписку
+  if (!subscriptionActive) {
+    showSubscriptionModal(
+      'Мои анализы',
+      'Загрузка анализов позволяет ИИ учитывать ваши реальные показатели крови, гормонов, витаминов и других анализов для более точных персональных рекомендаций.'
+    );
+    return;
+  }
+  
   isDiagnosticFormMode = true; // Устанавливаем флаг что мы в специальном режиме
   isInRecommendedTests = false; // Сбрасываем флаг рекомендуемых анализов
   

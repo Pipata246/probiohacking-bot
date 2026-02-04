@@ -2303,6 +2303,24 @@
         </div>
     </div>
 
+    <!-- Модальное окно для блокированных функций (требуется подписка) -->
+    <div class="subscription-modal-overlay" id="subscriptionModal">
+        <div class="subscription-modal">
+            <div class="subscription-modal-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <h3 class="subscription-modal-title" id="subscriptionModalTitle">Требуется подписка</h3>
+            <p class="subscription-modal-text" id="subscriptionModalText">Для использования этой функции требуется активная подписка.</p>
+            <p class="subscription-modal-footer-text">Для того чтобы воспользоваться этими функциями перейдите в бот и оплатите подписку.</p>
+            <div class="subscription-modal-buttons">
+                <button class="subscription-modal-btn subscription-modal-btn-primary" id="subscriptionModalGoToBot">Перейти в бота</button>
+                <button class="subscription-modal-btn subscription-modal-btn-cancel" id="subscriptionModalCancel">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

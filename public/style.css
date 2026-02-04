@@ -505,6 +505,48 @@ body.chat-overlay-visible .search-container {
   transform: translateY(0);
 }
 
+/* Рекомендация подписки для бесплатных пользователей */
+.subscription-recommendation {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(245, 241, 232, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subscription-recommendation-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(254, 247, 236, 0.9);
+  line-height: 1.4;
+}
+
+.subscription-recommendation-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background: #4A8B6C;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: fit-content;
+}
+
+.subscription-recommendation-btn:hover {
+  background: #3d7a5c;
+  transform: translateY(-1px);
+}
+
+.subscription-recommendation-btn:active {
+  transform: translateY(0);
+}
+
 /* Additional bottom padding for "Мои анализы" and "Диагностика" pages */
 #myTestsStep,
 .my-tests-content,
@@ -2503,6 +2545,112 @@ body.chat-overlay-visible .search-container {
 
 .retake-quiz-cancel-btn:hover {
   background: rgba(0, 0, 0, 0.05);
+}
+
+/* Модальное окно для блокированных функций (требуется подписка) */
+.subscription-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  padding: 20px;
+}
+
+.subscription-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.subscription-modal {
+  background: #FEF7EC;
+  border-radius: 20px;
+  padding: 28px 24px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.subscription-modal-overlay.active .subscription-modal {
+  transform: scale(1);
+}
+
+.subscription-modal-icon {
+  margin-bottom: 16px;
+}
+
+.subscription-modal-icon svg {
+  color: #F59E0B;
+}
+
+.subscription-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2A3F5F;
+  margin-bottom: 12px;
+}
+
+.subscription-modal-text {
+  font-size: 14px;
+  color: #5A6B7D;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.subscription-modal-footer-text {
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.5;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.subscription-modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.subscription-modal-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subscription-modal-btn-primary {
+  background: #4A8B6C;
+  color: #FFFFFF;
+}
+
+.subscription-modal-btn-primary:hover {
+  background: #3D7A5D;
+  transform: translateY(-1px);
+}
+
+.subscription-modal-btn-cancel {
+  background: transparent;
+  color: #4A8B6C;
+  border: 2px solid #4A8B6C;
+}
+
+.subscription-modal-btn-cancel:hover {
+  background: rgba(74, 139, 108, 0.1);
 }
 
 .diagnostics-features {

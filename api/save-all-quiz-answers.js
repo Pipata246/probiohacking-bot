@@ -37,10 +37,10 @@ module.exports = async function handler(req, res) {
 
       const user = JSON.parse(params.user);
       
-      // Получаем статус квиза и админский статус
+      // Получаем статус квиза, админский статус и статус подписки
       const { data, error } = await supabase
         .from('users')
-        .select('quiz_completed, quiz_completion_date, admin')
+        .select('quiz_completed, quiz_completion_date, admin, subscription_active, free_requests_count')
         .eq('telegram_id', user.id)
         .single();
 
@@ -76,7 +76,9 @@ module.exports = async function handler(req, res) {
         quizCompleted: quizCompleted,
         quiz_completed: quizCompleted,
         quiz_completion_date: quizCompleted ? (data?.quiz_completion_date || null) : null,
-        admin: data?.admin === true
+        admin: data?.admin === true,
+        subscription_active: data?.subscription_active === true,
+        free_requests_count: data?.free_requests_count ?? 0
       });
     } catch (error) {
       console.error('Quiz status API error:', error);

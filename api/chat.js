@@ -264,6 +264,9 @@ module.exports = async (req, res) => {
 
     // Initialize user first
     let userInfo = null;
+    let subscriptionActive = false;
+    let freeRequestsCount = 0;
+    
     if (telegramUser && telegramUser.id) {
       try {
         // Получаем initData из Telegram WebApp
@@ -274,6 +277,32 @@ module.exports = async (req, res) => {
         userInfo = await initUserFromWebApp(req);
         console.log('User info:', userInfo ? `${userInfo.telegramId} (${userInfo.firstName})` : 'Not created');
         console.log('Has WebApp data:', !!telegramWebAppData);
+        
+        // Проверяем статус подписки
+        if (userInfo && userInfo.id) {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('subscription_active, free_requests_count')
+            .eq('id', userInfo.id)
+            .single();
+          
+          if (!userError && userData) {
+            subscriptionActive = userData.subscription_active === true;
+            freeRequestsCount = userData.free_requests_count ?? 0;
+            console.log('Subscription status:', { subscriptionActive, freeRequestsCount });
+            
+            // Проверяем лимит для бесплатных пользователей
+            if (!subscriptionActive && freeRequestsCount >= 3) {
+              return res.status(200).json({
+                success: false,
+                error: 'subscription_required',
+                message: 'Для дальнейшей работы оплатите подписку. Перейдите в бота и оформите подписку для продолжения использования всех функций.',
+                subscriptionRequired: true,
+                freeRequestsCount: freeRequestsCount
+              });
+            }
+          }
+        }
       } catch (error) {
         console.error('Error initializing user:', error);
         // Продолжаем без пользователя, но логируем ошибку
@@ -510,6 +539,20 @@ module.exports = async (req, res) => {
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content || '';
 
+    // Увеличиваем счетчик запросов для бесплатных пользователей
+    if (userInfo && userInfo.id && !subscriptionActive) {
+      try {
+        const newCount = freeRequestsCount + 1;
+        await supabase
+          .from('users')
+          .update({ free_requests_count: newCount })
+          .eq('id', userInfo.id);
+        console.log(`Updated free requests count: ${freeRequestsCount} -> ${newCount}`);
+      } catch (error) {
+        console.error('Failed to update free requests count:', error);
+      }
+    }
+    
     // Сохраняем ответ ИИ в уже созданную запись (быстро и без повторного insert)
     if (requestId) {
       try {
@@ -543,6 +586,17 @@ module.exports = async (req, res) => {
       }
     }
 
+    // Формируем ответ с учетом подписки
+    // Для бесплатных пользователей не показываем рекомендации по диагностике и анализам
+    let quizRecommendation = null;
+    let analysesRecommendation = null;
+    
+    if (subscriptionActive) {
+      // Только для пользователей с подпиской показываем рекомендации
+      quizRecommendation = !diagnosticData?.quiz_completed ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null;
+      analysesRecommendation = !diagnosticData?.analyses_uploaded ? 'Рекомендуем загрузить анализы для получения более точных рекомендаций' : null;
+    }
+    
     // Return response with chat info and quiz status
     const responsePayload = {
       success: true,
@@ -552,8 +606,11 @@ module.exports = async (req, res) => {
       contextOverflow: false,
       quizCompleted: diagnosticData?.quiz_completed || false,
       analysesUploaded: diagnosticData?.analyses_uploaded || false,
-      quizRecommendation: !diagnosticData?.quiz_completed ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null,
-      analysesRecommendation: !diagnosticData?.analyses_uploaded ? 'Рекомендуем загрузить анализы для получения более точных рекомендаций' : null
+      quizRecommendation: quizRecommendation,
+      analysesRecommendation: analysesRecommendation,
+      subscriptionActive: subscriptionActive,
+      freeRequestsCount: !subscriptionActive ? (freeRequestsCount + 1) : null,
+      remainingFreeRequests: !subscriptionActive ? Math.max(0, 3 - (freeRequestsCount + 1)) : null
     };
 
     return res.status(200).json(responsePayload);
