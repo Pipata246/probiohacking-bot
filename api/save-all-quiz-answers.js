@@ -7,11 +7,81 @@ const supabase = createClient(
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Telegram-WebApp-Data');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Проверка статуса квиза (GET запрос)
+  if (req.method === 'GET' && req.query.action === 'status') {
+    try {
+      const telegramData = req.headers['x-telegram-webapp-data'];
+      if (!telegramData) {
+        return res.status(401).json({ success: false, error: 'No Telegram data' });
+      }
+
+      // Парсим Telegram данные
+      const params = {};
+      telegramData.split('&').forEach(param => {
+        const [key, value] = param.split('=');
+        if (key && value) {
+          try {
+            params[key] = decodeURIComponent(value.replace(/\+/g, ' '));
+          } catch (e) {
+            params[key] = value;
+          }
+        }
+      });
+
+      const user = JSON.parse(params.user);
+      
+      // Получаем статус квиза и админский статус
+      const { data, error } = await supabase
+        .from('users')
+        .select('quiz_completed, quiz_completion_date, admin')
+        .eq('telegram_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching quiz status:', error);
+        return res.status(500).json({ success: false, error: error.message });
+      }
+
+      // Проверяем прошёл ли месяц с момента прохождения
+      let quizCompleted = data?.quiz_completed ?? false;
+      const completionDate = data?.quiz_completion_date;
+      
+      if (quizCompleted && completionDate) {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const quizDate = new Date(completionDate);
+        
+        // Если прошёл месяц - сбрасываем статус
+        if (quizDate < oneMonthAgo) {
+          console.log('Quiz expired! Resetting status to FALSE');
+          
+          await supabase
+            .from('users')
+            .update({ quiz_completed: false })
+            .eq('telegram_id', user.id);
+          
+          quizCompleted = false;
+        }
+      }
+
+      return res.json({ 
+        success: true, 
+        quizCompleted: quizCompleted,
+        quiz_completed: quizCompleted,
+        quiz_completion_date: quizCompleted ? (data?.quiz_completion_date || null) : null,
+        admin: data?.admin === true
+      });
+    } catch (error) {
+      console.error('Quiz status API error:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
   }
 
   if (req.method !== 'POST') {

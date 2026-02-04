@@ -63,8 +63,8 @@ function getFilledAnswersCount() {
 let cachedChats = [];
 
 // Supabase конфигурация
-const SUPABASE_URL = 'https://bqjxjzqzjpywxwztzsup.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxanhqenF6anB5d3h3enR6c3VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1ODk4MTcsImV4cCI6MjA1MzE2NTgxN30.Mg4UKokQRWkzZQK1L5YAw0yfTBw7A6bLo3YjKb_Jn4';
+const SUPABASE_URL = 'https://aeqxpjvtptpsmnctotsf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlcXhwanZ0cHRwc21uY3RvdHNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNjgxMDksImV4cCI6MjA4NTc0NDEwOX0.qIlYU8K0lBNFXi00mhmJ_j0yOzSuqYVEMNvOCsp_Iaw';
 
 // Supabase клиент и Realtime переменные
 let supabase = null;
@@ -244,7 +244,7 @@ async function checkQuizStatus() {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     console.log('📋 Checking quiz status... TelegramData:', !!telegramWebAppData);
     
-    const response = await fetch('/api/quiz?action=status', {
+    const response = await fetch('/api/save-all-quiz-answers?action=status', {
       headers: {
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
@@ -363,30 +363,9 @@ function openDiagnosticFormDirectly() {
   createDiagnosticFormUI();
 }
 
-// Сохранение результатов квиза
+// Сохранение результатов квиза (устаревшая функция, используйте saveAllQuizAnswers)
 async function saveQuizResults(quizData) {
-  try {
-    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    const response = await fetch('/api/quiz?action=save', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
-      },
-      body: JSON.stringify(quizData)
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        quizCompleted = true;
-        console.log('Quiz results saved successfully');
-        return true;
-      }
-    }
-  } catch (error) {
-    console.error('Error saving quiz results:', error);
-  }
+  console.warn('saveQuizResults is deprecated, use saveAllQuizAnswers instead');
   return false;
 }
 
@@ -420,32 +399,9 @@ async function saveQuizAnswer(telegramId, questionId, questionText, answerText, 
   return false;
 }
 
-// Завершение квиза
+// Завершение квиза (устаревшая функция, статус обновляется автоматически при сохранении ответов)
 async function completeQuiz(telegramId) {
-  try {
-    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    const response = await fetch('/api/complete-quiz', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
-      },
-      body: JSON.stringify({
-        telegramId: telegramId
-      })
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Quiz completed:', data);
-      if (data.success) {
-        quizCompleted = true;
-        return true;
-      }
-    }
-  } catch (error) {
-    console.error('Error completing quiz:', error);
-  }
+  console.warn('completeQuiz is deprecated, quiz status is updated automatically when saving answers');
   return false;
 }
 
