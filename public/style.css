@@ -189,15 +189,15 @@ body.chat-overlay-visible {
 
 /* Баннер тестового режима */
 .free-mode-banner {
-  padding: 10px 20px;
+  padding: 12px 20px;
   flex-shrink: 0;
   text-align: center;
 }
 
 .free-mode-banner-text {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
-  color: #3C805B;
+  color: #FEF7EC;
   line-height: 1.4;
 }
 
