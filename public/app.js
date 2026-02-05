@@ -1365,32 +1365,67 @@ function closeSidebar() {
 
 async function initializeUser() {
   const telegramUser = tg.initDataUnsafe?.user;
+  const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
   
   if (telegramUser && telegramUser.id) {
     try {
+      console.log('🔐 Initializing user with Telegram data:', {
+        hasUser: !!telegramUser,
+        hasInitData: !!telegramWebAppData,
+        userId: telegramUser.id
+      });
+      
       const response = await fetch('/api/init-user', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+        },
         body: JSON.stringify({ telegramUser })
       });
       
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          console.log('User initialized:', data.user);
+          console.log('✅ User initialized:', data.user);
           // Сохраняем ID пользователя для дальнейшего использования
           window.currentUserId = data.user.id;
           window.currentTelegramId = data.user.telegramId;
         }
+      } else {
+        const errorText = await response.text();
+        console.error('❌ Failed to initialize user:', response.status, errorText);
       }
     } catch (error) {
-      console.error('Failed to initialize user:', error);
+      console.error('❌ Failed to initialize user:', error);
     }
+  } else {
+    console.warn('⚠️ Cannot initialize user: missing Telegram user data or initData');
   }
 }
 
-// Вызываем инициализацию сразу после готовности Telegram Web App
-initializeUser();
+// Вызываем инициализацию после готовности Telegram Web App
+// Пытаемся инициализировать сразу, если initData доступен
+if (window.Telegram?.WebApp?.initData) {
+  initializeUser();
+} else {
+  // Если initData недоступен сразу, ждем и пытаемся снова
+  let attempts = 0;
+  const maxAttempts = 10;
+  const checkInterval = setInterval(() => {
+    attempts++;
+    if (window.Telegram?.WebApp?.initData || attempts >= maxAttempts) {
+      clearInterval(checkInterval);
+      if (window.Telegram?.WebApp?.initData) {
+        console.log('✅ InitData available, initializing user...');
+        initializeUser();
+      } else {
+        console.warn('⚠️ InitData not available after waiting, initializing anyway...');
+        initializeUser(); // Пытаемся инициализировать даже без initData
+      }
+    }
+  }, 200);
+}
 
 // ПРАВИЛЬНЫЙ полноэкранный режим для Telegram Mini App
 if (isTelegramWebApp && tg && window.Telegram?.WebApp) {
