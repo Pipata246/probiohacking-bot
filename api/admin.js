@@ -10,6 +10,17 @@ const supabase = createClient(
   }
 );
 
+// Supabase admin client для админских операций (обновление данных, RPC)
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY,
+  {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+);
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -149,7 +160,7 @@ module.exports = async function handler(req, res) {
       for (const answer of answers) {
         const questionText = questionTexts[answer.question_id] || answer.question_id;
         
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('quiz_answers')
           .update({ 
             answer_text: answer.answer_text,
@@ -163,7 +174,7 @@ module.exports = async function handler(req, res) {
         if (error) {
           console.error('Error updating answer:', error);
           // Если записи нет - создаём
-          const { error: insertError } = await supabase
+          const { error: insertError } = await supabaseAdmin
             .from('quiz_answers')
             .insert({
               telegram_id: userData.telegram_id,
@@ -252,7 +263,7 @@ module.exports = async function handler(req, res) {
 
       if (userError || !userData) throw userError || new Error('User not found');
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('user_analysis_photos')
         .delete()
         .eq('id', analysisId)
@@ -261,7 +272,7 @@ module.exports = async function handler(req, res) {
       if (error) throw error;
 
       // Проверяем остались ли анализы
-      const { data: remaining } = await supabase
+      const { data: remaining } = await supabaseAdmin
         .from('user_analysis_photos')
         .select('id')
         .eq('telegram_id', userData.telegram_id)
@@ -269,7 +280,7 @@ module.exports = async function handler(req, res) {
 
       // Если анализов не осталось - сбрасываем статус
       if (!remaining || remaining.length === 0) {
-        await supabase
+        await supabaseAdmin
           .from('users')
           .update({ analyses_uploaded: false })
           .eq('id', userId);
@@ -335,10 +346,15 @@ module.exports = async function handler(req, res) {
         // updateData.subscription_end_date = null;
       }
 
-      // Вызываем функцию проверки подписок перед обновлением
-      await supabase.rpc('check_and_update_expired_subscriptions');
+      // Вызываем функцию проверки подписок перед обновлением (опционально, не блокируем если ошибка)
+      try {
+        await supabaseAdmin.rpc('check_and_update_expired_subscriptions');
+      } catch (rpcError) {
+        console.warn('⚠️ RPC check_and_update_expired_subscriptions failed (non-blocking):', rpcError.message);
+      }
 
-      const { data, error } = await supabase
+      // Используем admin клиент для обновления данных
+      const { data, error } = await supabaseAdmin
         .from('users')
         .update(updateData)
         .eq('id', userId)
@@ -362,7 +378,7 @@ module.exports = async function handler(req, res) {
 
       console.log(`🔧 Setting admin status for user ${userId} to ${isAdmin}`);
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('users')
         .update({ admin: isAdmin, updated_at: new Date().toISOString() })
         .eq('id', userId)
