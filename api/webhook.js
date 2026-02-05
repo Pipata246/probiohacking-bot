@@ -33,11 +33,24 @@ function getMainKeyboard() {
           { text: '👤 Профиль' }
         ],
         [
-          { text: '🚀 Открыть мини ап', web_app: { url: miniAppUrl } }
+          { text: '🚀 Открыть мини ап' }
         ]
       ],
       resize_keyboard: true,
       persistent: true
+    }
+  };
+}
+
+// Функция для создания inline клавиатуры с кнопкой открытия мини-аппа
+function getMiniAppInlineKeyboard() {
+  return {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '🚀 Открыть мини ап', web_app: { url: miniAppUrl } }
+        ]
+      ]
     }
   };
 }
@@ -216,7 +229,13 @@ module.exports = async (req, res) => {
           return res.status(200).json({ ok: true });
         }
 
-        // Кнопка "Открыть мини ап" обрабатывается автоматически через web_app
+        // Кнопка "Открыть мини ап" - отправляем сообщение с inline кнопкой
+        if (text === '🚀 Открыть мини ап') {
+          const miniAppMessage = '🚀 Откройте мини-апп для доступа к персональной диагностике и рекомендациям:';
+          
+          await bot.sendMessage(chatId, miniAppMessage, getMiniAppInlineKeyboard());
+          return res.status(200).json({ ok: true });
+        }
 
         // Для всех остальных сообщений показываем главное меню
         await bot.sendMessage(chatId, 'Выберите действие:', getMainKeyboard());
