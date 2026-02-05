@@ -76,6 +76,73 @@ async function getUserSubscriptionData(telegramId) {
   }
 }
 
+// Функция для обновления статуса подписки после оплаты
+async function updateSubscriptionAfterPayment(telegramId, months) {
+  try {
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + months);
+
+    const { data, error } = await supabase
+      .from('users')
+      .update({
+        subscription_active: true,
+        subscription_start_date: startDate.toISOString(),
+        subscription_end_date: endDate.toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('telegram_id', telegramId)
+      .select();
+
+    if (error) {
+      console.error('Error updating subscription:', error);
+      return false;
+    }
+
+    console.log('✅ Subscription updated successfully:', data);
+    return true;
+  } catch (error) {
+    console.error('Exception in updateSubscriptionAfterPayment:', error);
+    return false;
+  }
+}
+
+// Функция для создания invoice (счета на оплату)
+async function createInvoice(chatId, months, price) {
+  const periodText = months === 1 ? '1 месяц' : months === 3 ? '3 месяца' : '1 год';
+  const title = `Подписка PROBIOHACKING на ${periodText}`;
+  const description = `Активация подписки на ${periodText}. Доступ ко всем функциям приложения.`;
+
+  try {
+    await bot.sendInvoice(chatId, {
+      title: title,
+      description: description,
+      payload: `subscription_${months}_months`,
+      provider_token: process.env.PAYMENT_PROVIDER_TOKEN || 'TEST_PROVIDER_TOKEN',
+      currency: 'RUB',
+      prices: [
+        {
+          label: `Подписка на ${periodText}`,
+          amount: price * 100 // Цена в копейках
+        }
+      ],
+      start_parameter: `subscription_${months}`,
+      photo_url: 'https://probiohacking-bot.vercel.app/logo.png',
+      need_name: false,
+      need_phone_number: false,
+      need_email: false,
+      need_shipping_address: false,
+      send_phone_number_to_provider: false,
+      send_email_to_provider: false,
+      is_flexible: false
+    });
+    return true;
+  } catch (error) {
+    console.error('Error creating invoice:', error);
+    return false;
+  }
+}
+
 // Функция для форматирования информации о подписке
 function formatSubscriptionInfo(subData) {
   if (!subData) {
@@ -129,7 +196,69 @@ function getPaymentOptionsKeyboard() {
 module.exports = async (req, res) => {
   if (req.method === 'POST') {
     try {
-      const { message, callback_query } = req.body;
+      const { message, callback_query, pre_checkout_query, successful_payment } = req.body;
+
+      // Обработка pre_checkout_query (подтверждение перед оплатой)
+      if (pre_checkout_query) {
+        const queryId = pre_checkout_query.id;
+        const payload = pre_checkout_query.invoice_payload;
+        
+        console.log('Pre-checkout query received:', { queryId, payload });
+        
+        // Автоматически подтверждаем платеж
+        try {
+          await bot.answerPreCheckoutQuery(queryId, true);
+          console.log('✅ Pre-checkout query approved');
+        } catch (error) {
+          console.error('Error answering pre-checkout query:', error);
+          await bot.answerPreCheckoutQuery(queryId, false, {
+            error_message: 'Произошла ошибка при обработке платежа'
+          });
+        }
+        
+        return res.status(200).json({ ok: true });
+      }
+
+      // Обработка successful_payment (успешная оплата)
+      if (successful_payment && message) {
+        const chatId = message.chat.id;
+        const telegramId = message.from.id;
+        const payload = successful_payment.invoice_payload;
+        
+        console.log('Successful payment received:', { telegramId, payload });
+        
+        // Извлекаем количество месяцев из payload (формат: subscription_1_months)
+        const monthsMatch = payload.match(/subscription_(\d+)_months/);
+        if (monthsMatch) {
+          const months = parseInt(monthsMatch[1]);
+          
+          // Обновляем подписку в БД
+          const success = await updateSubscriptionAfterPayment(telegramId, months);
+          
+          if (success) {
+            const periodText = months === 1 ? '1 месяц' : months === 3 ? '3 месяца' : '1 год';
+            await bot.sendMessage(chatId, 
+              `✅ Оплата успешно обработана!\n\n` +
+              `Ваша подписка активирована на ${periodText}.\n` +
+              `Теперь у вас есть доступ ко всем функциям приложения.`,
+              getMainKeyboard()
+            );
+          } else {
+            await bot.sendMessage(chatId, 
+              '❌ Произошла ошибка при активации подписки. Пожалуйста, обратитесь в поддержку.',
+              getMainKeyboard()
+            );
+          }
+        } else {
+          console.error('Invalid payload format:', payload);
+          await bot.sendMessage(chatId, 
+            '❌ Произошла ошибка при обработке платежа. Пожалуйста, обратитесь в поддержку.',
+            getMainKeyboard()
+          );
+        }
+        
+        return res.status(200).json({ ok: true });
+      }
 
       // Обработка callback_query (нажатия на inline кнопки)
       if (callback_query) {
@@ -151,15 +280,32 @@ module.exports = async (req, res) => {
         }
 
         if (data.startsWith('payment_')) {
-          const period = data.split('_')[1];
-          const periodText = period === '1' ? '1 месяц' : period === '3' ? '3 месяца' : '1 год';
+          const period = parseInt(data.split('_')[1]);
+          const periodText = period === 1 ? '1 месяц' : period === 3 ? '3 месяца' : '1 год';
           
-          await bot.answerCallbackQuery(callback_query.id, {
-            text: `Выбран период: ${periodText}. Интеграция с платежной системой будет добавлена позже.`
-          });
+          // Цены в рублях (можно настроить)
+          const prices = {
+            1: 990,   // 990 рублей за месяц
+            3: 2490,  // 2490 рублей за 3 месяца
+            12: 8990  // 8990 рублей за год
+          };
           
-          // Здесь будет логика обработки оплаты
-          // Пока просто подтверждаем выбор
+          const price = prices[period] || 990;
+          
+          // Создаем invoice (счет на оплату)
+          const invoiceCreated = await createInvoice(chatId, period, price);
+          
+          if (invoiceCreated) {
+            await bot.answerCallbackQuery(callback_query.id, {
+              text: `Открыто окно оплаты для подписки на ${periodText}`
+            });
+          } else {
+            await bot.answerCallbackQuery(callback_query.id, {
+              text: 'Ошибка при создании счета на оплату. Попробуйте позже.',
+              show_alert: true
+            });
+          }
+          
           return res.status(200).json({ ok: true });
         }
 
