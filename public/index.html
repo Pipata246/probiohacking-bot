@@ -9,6 +9,40 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Ждем полной загрузки Telegram WebApp API перед запуском приложения
+        (function() {
+            function waitForTelegramWebApp() {
+                if (window.Telegram && window.Telegram.WebApp) {
+                    console.log('✅ Telegram WebApp API загружен');
+                    // Убеждаемся, что initData доступен
+                    if (window.Telegram.WebApp.initData) {
+                        console.log('✅ InitData доступен');
+                    } else {
+                        console.warn('⚠️ InitData недоступен');
+                    }
+                    return true;
+                }
+                return false;
+            }
+            
+            // Проверяем сразу
+            if (!waitForTelegramWebApp()) {
+                // Если не загружен, ждем
+                let attempts = 0;
+                const maxAttempts = 50; // 5 секунд максимум
+                const interval = setInterval(() => {
+                    attempts++;
+                    if (waitForTelegramWebApp() || attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        if (attempts >= maxAttempts) {
+                            console.warn('⚠️ Telegram WebApp API не загружен после ожидания');
+                        }
+                    }
+                }, 100);
+            }
+        })();
+    </script>
 </head>
 <body>
     <!-- НОВЫЙ ПРИВЕТСТВЕННЫЙ ЭКРАН - ПОЛНОСТЬЮ ОТДЕЛЬНЫЙ -->
