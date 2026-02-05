@@ -6068,6 +6068,12 @@ function renderAdminUsers(users) {
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+      <button class="admin-submenu-item" data-action="subscription" data-user-id="${user.id}">
+        <span>Подписка пользователя</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       <button class="admin-submenu-item admin-submenu-item-no-arrow" data-action="grant-admin" data-user-id="${user.id}">
         <span>Выдать админские права</span>
       </button>
