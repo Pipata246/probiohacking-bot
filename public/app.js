@@ -1,15 +1,60 @@
 // Инициализация Telegram Web App
-const tg = window.Telegram?.WebApp || {
-  // Заглушки для локального тестирования - ТОЛЬКО ПОДДЕРЖИВАЕМЫЕ МЕТОДЫ
-  ready: () => console.log('TG: ready (заглушка)'),
-  expand: () => console.log('TG: expand (заглушка)'),
-  BackButton: { hide: () => console.log('TG: BackButton.hide (заглушка)') },
-  MainButton: { hide: () => console.log('TG: MainButton.hide (заглушка)') },
-  onEvent: (event, callback) => console.log('TG: onEvent', event, '(заглушка)'),
-  initDataUnsafe: { user: { first_name: 'Тест', last_name: 'Пользователь' } }
-};
+// Ждем загрузки Telegram WebApp API
+let tg = null;
 
-tg.ready();
+function initTelegramWebApp() {
+  // Проверяем наличие Telegram WebApp API
+  if (window.Telegram && window.Telegram.WebApp) {
+    tg = window.Telegram.WebApp;
+    console.log('✅ Telegram WebApp API загружен');
+    console.log('📱 InitData:', tg.initData ? 'есть (' + tg.initData.substring(0, 50) + '...)' : 'нет');
+    console.log('👤 User:', tg.initDataUnsafe?.user ? JSON.stringify(tg.initDataUnsafe.user) : 'нет');
+    console.log('🌐 Platform:', tg.platform || 'неизвестно');
+    console.log('📱 Version:', tg.version || 'неизвестно');
+    
+    // Проверяем, что это реальный Telegram WebApp, а не тестовая версия
+    if (!tg.initData && !tg.initDataUnsafe?.user) {
+      console.warn('⚠️ Telegram WebApp API найден, но initData отсутствует - возможно тестовая версия');
+    }
+    
+    // Инициализируем Telegram WebApp
+    tg.ready();
+    return true;
+  } else {
+    // Заглушки для локального тестирования - ТОЛЬКО ПОДДЕРЖИВАЕМЫЕ МЕТОДЫ
+    console.warn('⚠️ Telegram WebApp API не найден, используем заглушки');
+    console.warn('⚠️ window.Telegram:', window.Telegram ? 'есть' : 'нет');
+    tg = {
+      ready: () => console.log('TG: ready (заглушка)'),
+      expand: () => console.log('TG: expand (заглушка)'),
+      BackButton: { hide: () => console.log('TG: BackButton.hide (заглушка)') },
+      MainButton: { hide: () => console.log('TG: MainButton.hide (заглушка)') },
+      onEvent: (event, callback) => console.log('TG: onEvent', event, '(заглушка)'),
+      initDataUnsafe: { user: { first_name: 'Тест', last_name: 'Пользователь' } }
+    };
+    tg.ready();
+    return false;
+  }
+}
+
+// Пытаемся инициализировать сразу
+let isTelegramWebApp = initTelegramWebApp();
+
+// Если не получилось, ждем загрузки скрипта
+if (!isTelegramWebApp) {
+  // Ждем загрузки DOM и скрипта Telegram
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        isTelegramWebApp = initTelegramWebApp();
+      }, 100);
+    });
+  } else {
+    setTimeout(() => {
+      isTelegramWebApp = initTelegramWebApp();
+    }, 100);
+  }
+}
 
 // ========================================
 // STATE ДЛЯ ДИАГНОСТИКИ
@@ -1348,7 +1393,7 @@ async function initializeUser() {
 initializeUser();
 
 // ПРАВИЛЬНЫЙ полноэкранный режим для Telegram Mini App
-if (window.Telegram?.WebApp) {
+if (isTelegramWebApp && tg && window.Telegram?.WebApp) {
   // НЕМЕДЛЕННОЕ разворачивание в полноэкранный режим
   tg.expand();
   
@@ -1470,7 +1515,11 @@ if (window.Telegram?.WebApp) {
   }, 5000);
 
 } else {
-  console.log('Локальное тестирование - Telegram WebApp недоступен');
+  if (!isTelegramWebApp) {
+    console.log('Локальное тестирование - Telegram WebApp недоступен');
+  } else {
+    console.log('Telegram WebApp доступен, но некоторые функции не поддерживаются');
+  }
 }
 
 // ========================================
