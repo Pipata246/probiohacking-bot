@@ -1591,7 +1591,7 @@ function showPage(pageName) {
       
       // Если мы возвращаемся к списку пользователей, сбрасываем изменения
       if (adminCurrentView === 'users') {
-        adminPendingChanges = { quiz: [], analyses: [], adminStatus: null };
+        adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
         updateAdminSaveButton();
       }
       
@@ -5881,12 +5881,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 // АДМИНСКАЯ ПАНЕЛЬ
 // ========================================
 
-let adminCurrentView = 'users'; // 'users' | 'quiz' | 'analyses'
+let adminCurrentView = 'users'; // 'users' | 'quiz' | 'analyses' | 'subscription'
 let adminCurrentUserId = null;
 let adminPendingChanges = {
   quiz: [],
   analyses: [],
-  adminStatus: null // { userId: number, isAdmin: boolean }
+  adminStatus: null, // { userId: number, isAdmin: boolean }
+  subscription: null // { userId: string, subscriptionActive: boolean, subscriptionEndDate: string }
 };
 
 // Загрузка списка пользователей
@@ -6022,6 +6023,8 @@ function renderAdminUsers(users) {
           viewUserQuiz(userId);
         } else if (action === 'analyses') {
           viewUserAnalyses(userId);
+        } else if (action === 'subscription') {
+          viewUserSubscription(userId);
         } else if (action === 'grant-admin') {
           showGrantAdminModal(userId);
         }
@@ -6351,6 +6354,103 @@ async function viewUserAnalyses(userId) {
   }
 }
 
+// Просмотр и редактирование подписки пользователя
+async function viewUserSubscription(userId) {
+  try {
+    adminCurrentView = 'subscription';
+    adminCurrentUserId = userId;
+    adminPendingChanges.subscription = null;
+
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch(`/api/admin?action=subscription&userId=${userId}`, {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    if (!data.success) throw new Error('API error');
+
+    const subscriptionView = document.getElementById('adminSubscriptionView');
+    const subscriptionContent = document.getElementById('adminSubscriptionContent');
+    if (!subscriptionView || !subscriptionContent) return;
+
+    const subscriptionActive = data.subscription_active === true;
+    const subscriptionStartDate = data.subscription_start_date || '';
+    const subscriptionEndDate = data.subscription_end_date || '';
+
+    subscriptionContent.innerHTML = `
+      <div class="admin-subscription-form">
+        <div class="admin-subscription-field">
+          <label class="admin-subscription-label">Статус подписки</label>
+          <select class="admin-subscription-select" id="adminSubscriptionStatus">
+            <option value="false" ${!subscriptionActive ? 'selected' : ''}>Неактивная</option>
+            <option value="true" ${subscriptionActive ? 'selected' : ''}>Активная</option>
+          </select>
+        </div>
+        
+        <div class="admin-subscription-field" id="adminSubscriptionDateField" style="display: ${subscriptionActive ? 'block' : 'none'};">
+          <label class="admin-subscription-label">Дата окончания подписки</label>
+          <input 
+            type="date" 
+            class="admin-subscription-date-input" 
+            id="adminSubscriptionEndDate"
+            value="${subscriptionEndDate ? new Date(subscriptionEndDate).toISOString().split('T')[0] : ''}"
+            min="${new Date().toISOString().split('T')[0]}"
+          />
+        </div>
+        
+        ${subscriptionStartDate ? `
+          <div class="admin-subscription-info">
+            <span class="admin-subscription-info-label">Дата начала подписки:</span>
+            <span class="admin-subscription-info-value">${new Date(subscriptionStartDate).toLocaleDateString('ru-RU')}</span>
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    // Обработчик изменения статуса подписки
+    const statusSelect = document.getElementById('adminSubscriptionStatus');
+    const dateField = document.getElementById('adminSubscriptionDateField');
+    
+    statusSelect.addEventListener('change', () => {
+      const isActive = statusSelect.value === 'true';
+      dateField.style.display = isActive ? 'block' : 'none';
+      
+      // Сохраняем изменения в pending
+      adminPendingChanges.subscription = {
+        userId: userId,
+        subscriptionActive: isActive,
+        subscriptionEndDate: isActive ? document.getElementById('adminSubscriptionEndDate').value : null
+      };
+      updateAdminSaveButton();
+    });
+
+    // Обработчик изменения даты окончания
+    const endDateInput = document.getElementById('adminSubscriptionEndDate');
+    endDateInput.addEventListener('change', () => {
+      if (statusSelect.value === 'true') {
+        adminPendingChanges.subscription = {
+          userId: userId,
+          subscriptionActive: true,
+          subscriptionEndDate: endDateInput.value || null
+        };
+        updateAdminSaveButton();
+      }
+    });
+
+    showAdminNavigation(true);
+  } catch (error) {
+    console.error('Error loading user subscription:', error);
+    const subscriptionContent = document.getElementById('adminSubscriptionContent');
+    if (subscriptionContent) {
+      subscriptionContent.innerHTML = '<div class="admin-error">Ошибка загрузки данных подписки</div>';
+    }
+  }
+}
+
 // Показать модальное окно для выдачи админских прав
 function showGrantAdminModal(userId) {
   const modal = document.getElementById('adminGrantModal');
@@ -6435,11 +6535,13 @@ function showGrantAdminModal(userId) {
 function showAdminNavigation(show) {
   const navQuiz = document.getElementById('adminNavButtonsQuiz');
   const navAnalyses = document.getElementById('adminNavButtonsAnalyses');
+  const navSubscription = document.getElementById('adminNavButtonsSubscription');
   
   // Скрываем/показываем основной контент и view
   const content = document.getElementById('adminContent');
   const quizView = document.getElementById('adminQuizView');
   const analysesView = document.getElementById('adminAnalysesView');
+  const subscriptionView = document.getElementById('adminSubscriptionView');
   
   if (show) {
     if (content) content.style.display = 'none';
@@ -6447,23 +6549,38 @@ function showAdminNavigation(show) {
       quizView.style.display = 'flex';
       if (navQuiz) navQuiz.style.display = 'flex';
       if (analysesView) analysesView.style.display = 'none';
+      if (subscriptionView) subscriptionView.style.display = 'none';
       if (navAnalyses) navAnalyses.style.display = 'none';
+      if (navSubscription) navSubscription.style.display = 'none';
       // Обновляем видимость кнопки "Сохранить" для опросника
       updateAdminSaveButton();
     } else if (adminCurrentView === 'analyses' && analysesView) {
       analysesView.style.display = 'flex';
       if (navAnalyses) navAnalyses.style.display = 'flex';
       if (quizView) quizView.style.display = 'none';
+      if (subscriptionView) subscriptionView.style.display = 'none';
       if (navQuiz) navQuiz.style.display = 'none';
+      if (navSubscription) navSubscription.style.display = 'none';
       // Обновляем видимость кнопки "Сохранить" для анализов
+      updateAdminSaveButton();
+    } else if (adminCurrentView === 'subscription' && subscriptionView) {
+      subscriptionView.style.display = 'flex';
+      if (navSubscription) navSubscription.style.display = 'flex';
+      if (quizView) quizView.style.display = 'none';
+      if (analysesView) analysesView.style.display = 'none';
+      if (navQuiz) navQuiz.style.display = 'none';
+      if (navAnalyses) navAnalyses.style.display = 'none';
+      // Обновляем видимость кнопки "Сохранить" для подписки
       updateAdminSaveButton();
     }
   } else {
     if (content) content.style.display = 'block';
     if (quizView) quizView.style.display = 'none';
     if (analysesView) analysesView.style.display = 'none';
+    if (subscriptionView) subscriptionView.style.display = 'none';
     if (navQuiz) navQuiz.style.display = 'none';
     if (navAnalyses) navAnalyses.style.display = 'none';
+    if (navSubscription) navSubscription.style.display = 'none';
   }
 }
 
@@ -6562,10 +6679,11 @@ async function saveAdminChanges() {
 
   const saveBtnQuiz = document.getElementById('adminSaveBtnQuiz');
   const saveBtnAnalyses = document.getElementById('adminSaveBtnAnalyses');
+  const saveBtnSubscription = document.getElementById('adminSaveBtnSubscription');
   const currentView = adminCurrentView; // Сохраняем текущий view
-  const saveBtn = currentView === 'quiz' ? saveBtnQuiz : saveBtnAnalyses;
+  const saveBtn = currentView === 'quiz' ? saveBtnQuiz : (currentView === 'analyses' ? saveBtnAnalyses : saveBtnSubscription);
   
-  // Отключаем обе кнопки на время сохранения
+  // Отключаем все кнопки на время сохранения
   if (saveBtnQuiz) {
     saveBtnQuiz.disabled = true;
     if (currentView === 'quiz') saveBtnQuiz.textContent = 'Сохранение...';
@@ -6573,6 +6691,10 @@ async function saveAdminChanges() {
   if (saveBtnAnalyses) {
     saveBtnAnalyses.disabled = true;
     if (currentView === 'analyses') saveBtnAnalyses.textContent = 'Сохранение...';
+  }
+  if (saveBtnSubscription) {
+    saveBtnSubscription.disabled = true;
+    if (currentView === 'subscription') saveBtnSubscription.textContent = 'Сохранение...';
   }
 
   try {
@@ -6619,13 +6741,33 @@ async function saveAdminChanges() {
       }
     }
 
+    // Сохраняем подписку
+    if (adminPendingChanges.subscription) {
+      console.log('💾 Saving subscription changes:', adminPendingChanges.subscription);
+      const response = await fetch(`/api/admin?action=subscription&userId=${adminCurrentUserId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          subscriptionActive: adminPendingChanges.subscription.subscriptionActive,
+          subscriptionEndDate: adminPendingChanges.subscription.subscriptionEndDate || null
+        })
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Failed to save subscription:', errorText);
+        throw new Error('Failed to save subscription: ' + errorText);
+      }
+      const result = await response.json();
+      console.log('✅ Subscription saved successfully:', result);
+    }
+
     // Показываем сообщение об успешном сохранении перед сбросом состояния
     if (saveBtn) {
       saveBtn.textContent = 'Сохранено!';
     }
 
     // Сбрасываем изменения и возвращаемся к списку
-    adminPendingChanges = { quiz: [], analyses: [], adminStatus: null };
+    adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
     adminCurrentView = 'users';
     adminCurrentUserId = null;
     showAdminNavigation(false);
@@ -6656,6 +6798,12 @@ async function saveAdminChanges() {
         saveBtnAnalyses.textContent = 'Сохранить';
       }
     }
+    if (saveBtnSubscription) {
+      saveBtnSubscription.disabled = false;
+      if (saveBtnSubscription.textContent === 'Сохранение...' || saveBtnSubscription.textContent === 'Сохранено!') {
+        saveBtnSubscription.textContent = 'Сохранить';
+      }
+    }
   }
 }
 
@@ -6671,7 +6819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminBackBtnQuiz.addEventListener('click', () => {
       adminCurrentView = 'users';
       adminCurrentUserId = null;
-      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null };
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
       showAdminNavigation(false);
       loadAdminUsers();
     });
@@ -6685,7 +6833,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminBackBtnAnalyses.addEventListener('click', () => {
       adminCurrentView = 'users';
       adminCurrentUserId = null;
-      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null };
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
       showAdminNavigation(false);
       loadAdminUsers();
     });
@@ -6693,6 +6841,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (adminSaveBtnAnalyses) {
     adminSaveBtnAnalyses.addEventListener('click', saveAdminChanges);
+  }
+
+  const adminBackBtnSubscription = document.getElementById('adminBackBtnSubscription');
+  const adminSaveBtnSubscription = document.getElementById('adminSaveBtnSubscription');
+
+  if (adminBackBtnSubscription) {
+    adminBackBtnSubscription.addEventListener('click', () => {
+      adminCurrentView = 'users';
+      adminCurrentUserId = null;
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
+      showAdminNavigation(false);
+      loadAdminUsers();
+    });
+  }
+
+  if (adminSaveBtnSubscription) {
+    adminSaveBtnSubscription.addEventListener('click', saveAdminChanges);
   }
 
   if (adminContentSaveBtn) {

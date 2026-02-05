@@ -278,6 +278,80 @@ module.exports = async function handler(req, res) {
       return res.json({ success: true });
     }
 
+    // Получение данных подписки пользователя
+    if (action === 'subscription' && userId && req.method === 'GET') {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('subscription_active, subscription_start_date, subscription_end_date')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ 
+        success: true, 
+        subscription_active: userData?.subscription_active || false,
+        subscription_start_date: userData?.subscription_start_date || null,
+        subscription_end_date: userData?.subscription_end_date || null
+      });
+    }
+
+    // Обновление подписки пользователя
+    if (action === 'subscription' && userId && req.method === 'PUT') {
+      const { subscriptionActive, subscriptionEndDate } = req.body;
+
+      if (typeof subscriptionActive !== 'boolean') {
+        return res.status(400).json({ success: false, error: 'subscriptionActive must be a boolean' });
+      }
+
+      console.log(`🔧 Updating subscription for user ${userId}: active=${subscriptionActive}, endDate=${subscriptionEndDate}`);
+
+      // Формируем объект обновления
+      const updateData = {
+        subscription_active: subscriptionActive,
+        updated_at: new Date().toISOString()
+      };
+
+      // Если подписка активируется, устанавливаем даты
+      if (subscriptionActive) {
+        // Если указана дата окончания, используем её
+        if (subscriptionEndDate) {
+          updateData.subscription_end_date = new Date(subscriptionEndDate).toISOString();
+        }
+        
+        // Если дата начала не установлена, устанавливаем текущую дату
+        const { data: currentUser } = await supabase
+          .from('users')
+          .select('subscription_start_date')
+          .eq('id', userId)
+          .single();
+        
+        if (!currentUser?.subscription_start_date) {
+          updateData.subscription_start_date = new Date().toISOString();
+        }
+      } else {
+        // Если подписка деактивируется, очищаем даты (опционально, можно оставить для истории)
+        // updateData.subscription_start_date = null;
+        // updateData.subscription_end_date = null;
+      }
+
+      // Вызываем функцию проверки подписок перед обновлением
+      await supabase.rpc('check_and_update_expired_subscriptions');
+
+      const { data, error } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', userId)
+        .select();
+
+      if (error) {
+        console.error('❌ Error updating subscription:', error);
+        throw error;
+      }
+
+      return res.json({ success: true, user: data[0] });
+    }
+
     // Установка админского статуса пользователя
     if (action === 'setAdmin' && userId && req.method === 'PUT') {
       const { isAdmin } = req.body;

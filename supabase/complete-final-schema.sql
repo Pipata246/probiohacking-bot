@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   admin boolean NOT NULL DEFAULT false,
   subscription_active boolean NOT NULL DEFAULT false,
   free_requests_count integer NOT NULL DEFAULT 0,
+  subscription_start_date timestamp with time zone,
+  subscription_end_date timestamp with time zone,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
@@ -69,16 +71,38 @@ BEGIN
     RAISE NOTICE 'Добавлена колонка subscription_active';
   END IF;
   
-  -- Добавляем free_requests_count если её нет
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_schema = 'public' 
-    AND table_name = 'users' 
-    AND column_name = 'free_requests_count'
-  ) THEN
-    ALTER TABLE public.users ADD COLUMN free_requests_count integer NOT NULL DEFAULT 0;
-    RAISE NOTICE 'Добавлена колонка free_requests_count';
-  END IF;
+     -- Добавляем free_requests_count если её нет
+     IF NOT EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public'
+       AND table_name = 'users'
+       AND column_name = 'free_requests_count'
+     ) THEN
+       ALTER TABLE public.users ADD COLUMN free_requests_count integer NOT NULL DEFAULT 0;
+       RAISE NOTICE 'Добавлена колонка free_requests_count';
+     END IF;
+     
+     -- Добавляем subscription_start_date если её нет
+     IF NOT EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public'
+       AND table_name = 'users'
+       AND column_name = 'subscription_start_date'
+     ) THEN
+       ALTER TABLE public.users ADD COLUMN subscription_start_date timestamp with time zone;
+       RAISE NOTICE 'Добавлена колонка subscription_start_date';
+     END IF;
+     
+     -- Добавляем subscription_end_date если её нет
+     IF NOT EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public'
+       AND table_name = 'users'
+       AND column_name = 'subscription_end_date'
+     ) THEN
+       ALTER TABLE public.users ADD COLUMN subscription_end_date timestamp with time zone;
+       RAISE NOTICE 'Добавлена колонка subscription_end_date';
+     END IF;
 EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'Ошибка при добавлении колонок подписки: %', SQLERRM;
 END $$;
@@ -377,6 +401,50 @@ ON storage.objects
 FOR DELETE
 TO anon
 USING (bucket_id = 'analysis-photos');
+
+-- ============================================
+-- ФУНКЦИЯ ДЛЯ АВТОМАТИЧЕСКОЙ ПРОВЕРКИ И ОБНОВЛЕНИЯ СТАТУСА ПОДПИСКИ
+-- ============================================
+
+-- Функция для проверки и обновления истекших подписок
+CREATE OR REPLACE FUNCTION public.check_and_update_expired_subscriptions()
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Обновляем статус подписки на false для пользователей с истекшей подпиской
+  UPDATE public.users
+  SET 
+    subscription_active = false,
+    updated_at = now()
+  WHERE 
+    subscription_active = true
+    AND subscription_end_date IS NOT NULL
+    AND subscription_end_date < now();
+    
+  RAISE NOTICE 'Проверка истекших подписок выполнена';
+END;
+$$;
+
+-- Создаем триггер для автоматической проверки при каждом обновлении
+-- (опционально, можно вызывать через cron или при каждом запросе)
+CREATE OR REPLACE FUNCTION public.trigger_check_subscriptions()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  -- Вызываем функцию проверки подписок
+  PERFORM public.check_and_update_expired_subscriptions();
+  RETURN NEW;
+END;
+$$;
+
+-- Триггер на обновление таблицы users (будет вызывать проверку подписок)
+DROP TRIGGER IF EXISTS check_subscriptions_trigger ON public.users;
+CREATE TRIGGER check_subscriptions_trigger
+  AFTER UPDATE ON public.users
+  FOR EACH STATEMENT
+  EXECUTE FUNCTION public.trigger_check_subscriptions();
 
 -- ============================================
 -- КОНЕЦ СКРИПТА
