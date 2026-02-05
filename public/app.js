@@ -61,6 +61,8 @@ function getFilledAnswersCount() {
 
 // Глобальные переменные для чатов (временно)
 let cachedChats = [];
+let isLoadingActiveChat = false;
+let isCreatingNewChat = false;
 
 // Supabase конфигурация
 const SUPABASE_URL = 'https://aeqxpjvtptpsmnctotsf.supabase.co';
@@ -680,6 +682,14 @@ function showNotificationMessage(text) {
 
 // Загрузка активного чата при старте
 async function loadActiveChat() {
+  // Защита от повторных вызовов
+  if (isLoadingActiveChat || isCreatingNewChat) {
+    console.log('⏸️ loadActiveChat уже выполняется, пропускаем');
+    return;
+  }
+  
+  isLoadingActiveChat = true;
+  
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/chats?action=active', {
@@ -704,12 +714,18 @@ async function loadActiveChat() {
     } else {
       // Если нет активного чата, создаем первый
       console.log('No active chat, creating first one...');
+      isLoadingActiveChat = false; // Сбрасываем флаг перед созданием нового чата
       await createNewChat();
+      return; // Выходим, так как createNewChat сам управляет состоянием
     }
   } catch (error) {
     console.error('Error loading active chat:', error);
     // При ошибке создаем новый чат
+    isLoadingActiveChat = false; // Сбрасываем флаг перед созданием нового чата
     await createNewChat();
+    return; // Выходим, так как createNewChat сам управляет состоянием
+  } finally {
+    isLoadingActiveChat = false;
   }
 }
 
@@ -751,16 +767,37 @@ function sendChatMessage(message) {
 
 // Создание нового чата (становится активным)
 async function createNewChat() {
+  // Защита от повторных вызовов
+  if (isCreatingNewChat || isLoadingActiveChat) {
+    console.log('⏸️ createNewChat уже выполняется, пропускаем');
+    return;
+  }
+  
+  isCreatingNewChat = true;
   console.log('Creating new active chat...');
+  viewingInactiveChatId = null;
   
   try {
-    // Закрываем сайдбар и показываем страницу чата
+    // Закрываем сайдбар
     closeSidebar();
-    showPage('chat');
+    
+    // Показываем страницу чата БЕЗ вызова loadActiveChat (так как currentChatId еще не установлен)
+    chatOverlay.style.display = 'flex';
+    document.body.classList.add('chat-overlay-visible');
+    requestAnimationFrame(() => {
+      chatOverlay.classList.add('active');
+    });
+    isChatMode = true;
+    
+    // Показываем поле ввода
+    const chatInput = document.querySelector('.chat-input');
+    const sendButton = document.querySelector('.chat-send-btn');
+    if (chatInput) chatInput.style.display = 'flex';
+    if (sendButton) sendButton.style.display = 'flex';
     
     // Показываем анимацию загрузки
     const chatMessages = document.getElementById('chatMessages');
-    const container = chatMessages.querySelector('.chat-messages-container');
+    const container = chatMessages?.querySelector('.chat-messages-container');
     if (container) {
       container.innerHTML = `
         <div class="chat-loading-animation">
@@ -811,10 +848,12 @@ async function createNewChat() {
     
     // Показываем ошибку
     const chatMessages = document.getElementById('chatMessages');
-    const container = chatMessages.querySelector('.chat-messages-container');
+    const container = chatMessages?.querySelector('.chat-messages-container');
     if (container) {
       container.innerHTML = '<div class="error-message">Не удалось создать чат. Попробуйте еще раз.</div>';
     }
+  } finally {
+    isCreatingNewChat = false;
   }
 }
 
@@ -1064,13 +1103,21 @@ async function loadChatMessages(chatId, isReadOnly = false) {
 
 // Создание нового чата (становится активным)
 async function createNewChat() {
+  // Защита от повторных вызовов
+  if (isCreatingNewChat || isLoadingActiveChat) {
+    console.log('⏸️ createNewChat уже выполняется, пропускаем');
+    return;
+  }
+  
+  isCreatingNewChat = true;
   console.log('Creating new active chat...');
   viewingInactiveChatId = null;
   
   try {
     // СРАЗУ закрываем сайдбар и показываем страницу чата
     closeSidebar();
-    showPage('chat');
+    // НЕ вызываем showPage('chat') здесь, чтобы избежать повторного вызова loadActiveChat
+    // showPage('chat') будет вызван позже, когда currentChatId будет установлен
     
     // Показываем поле ввода (скрыто если был старый чат)
     const chatInput = document.querySelector('.chat-input');
@@ -1115,8 +1162,16 @@ async function createNewChat() {
     if (chatId) {
       currentChatId = chatId;
       
+      // Теперь показываем страницу чата, так как currentChatId установлен
+      chatOverlay.style.display = 'flex';
+      document.body.classList.add('chat-overlay-visible');
+      requestAnimationFrame(() => {
+        chatOverlay.classList.add('active');
+      });
+      isChatMode = true;
+      
       // Загружаем сообщения нового чата
-      await loadChatMessages(chatId);
+      await loadChatMessages(chatId, false);
       
       // Обновляем список чатов в фоне
       loadChatsFromAPI();
@@ -1132,10 +1187,12 @@ async function createNewChat() {
     
     // Показываем ошибку
     const chatMessages = document.getElementById('chatMessages');
-    const container = chatMessages.querySelector('.chat-messages-container');
+    const container = chatMessages?.querySelector('.chat-messages-container');
     if (container) {
       container.innerHTML = '<div class="error-message">Не удалось создать чат. Попробуйте еще раз.</div>';
     }
+  } finally {
+    isCreatingNewChat = false;
   }
 }
 
@@ -1556,7 +1613,8 @@ function showPage(pageName) {
         }
         if (currentChatId) {
           loadChatMessages(currentChatId, false);
-        } else {
+        } else if (!isLoadingActiveChat && !isCreatingNewChat) {
+          // Вызываем loadActiveChat только если он не выполняется
           loadActiveChat();
         }
       }
