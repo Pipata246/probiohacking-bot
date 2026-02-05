@@ -307,13 +307,12 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ success: false, error: 'subscriptionActive must be a boolean' });
       }
 
-      // Преобразуем userId в число, если нужно
-      const userIdNum = parseInt(userId, 10);
-      if (isNaN(userIdNum)) {
+      // userId - это UUID, используем его напрямую
+      if (!userId || typeof userId !== 'string') {
         return res.status(400).json({ success: false, error: 'Invalid userId' });
       }
 
-      console.log(`🔧 Updating subscription for user ${userIdNum}: active=${subscriptionActive}, endDate=${subscriptionEndDate}`);
+      console.log(`🔧 Updating subscription for user ${userId}: active=${subscriptionActive}, endDate=${subscriptionEndDate}`);
 
       // ВАЛИДАЦИЯ: При активации подписки через админку дата окончания ОБЯЗАТЕЛЬНА
       if (subscriptionActive && !subscriptionEndDate) {
@@ -338,7 +337,7 @@ module.exports = async function handler(req, res) {
         const { data: currentUser, error: fetchError } = await supabase
           .from('users')
           .select('subscription_start_date')
-          .eq('id', userIdNum)
+          .eq('id', userId)
           .single();
         
         if (fetchError) {
@@ -358,7 +357,7 @@ module.exports = async function handler(req, res) {
       const { data, error } = await supabase
         .from('users')
         .update(updateData)
-        .eq('id', userIdNum)
+        .eq('id', userId)
         .select();
 
       if (error) {
