@@ -10,16 +10,8 @@ const supabase = createClient(
   }
 );
 
-// Supabase admin client для админских операций (обновление данных, RPC)
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY,
-  {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false
-  }
-);
+// Используем тот же клиент для всех операций (ANON_KEY)
+// Все операции работают через RLS политики
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -160,7 +152,7 @@ module.exports = async function handler(req, res) {
       for (const answer of answers) {
         const questionText = questionTexts[answer.question_id] || answer.question_id;
         
-        const { error } = await supabaseAdmin
+        const { error } = await supabase
           .from('quiz_answers')
           .update({ 
             answer_text: answer.answer_text,
@@ -174,7 +166,7 @@ module.exports = async function handler(req, res) {
         if (error) {
           console.error('Error updating answer:', error);
           // Если записи нет - создаём
-          const { error: insertError } = await supabaseAdmin
+          const { error: insertError } = await supabase
             .from('quiz_answers')
             .insert({
               telegram_id: userData.telegram_id,
@@ -263,7 +255,7 @@ module.exports = async function handler(req, res) {
 
       if (userError || !userData) throw userError || new Error('User not found');
 
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('user_analysis_photos')
         .delete()
         .eq('id', analysisId)
@@ -272,7 +264,7 @@ module.exports = async function handler(req, res) {
       if (error) throw error;
 
       // Проверяем остались ли анализы
-      const { data: remaining } = await supabaseAdmin
+      const { data: remaining } = await supabase
         .from('user_analysis_photos')
         .select('id')
         .eq('telegram_id', userData.telegram_id)
@@ -280,7 +272,7 @@ module.exports = async function handler(req, res) {
 
       // Если анализов не осталось - сбрасываем статус
       if (!remaining || remaining.length === 0) {
-        await supabaseAdmin
+        await supabase
           .from('users')
           .update({ analyses_uploaded: false })
           .eq('id', userId);
@@ -315,7 +307,13 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ success: false, error: 'subscriptionActive must be a boolean' });
       }
 
-      console.log(`🔧 Updating subscription for user ${userId}: active=${subscriptionActive}, endDate=${subscriptionEndDate}`);
+      // Преобразуем userId в число, если нужно
+      const userIdNum = parseInt(userId, 10);
+      if (isNaN(userIdNum)) {
+        return res.status(400).json({ success: false, error: 'Invalid userId' });
+      }
+
+      console.log(`🔧 Updating subscription for user ${userIdNum}: active=${subscriptionActive}, endDate=${subscriptionEndDate}`);
 
       // Формируем объект обновления
       const updateData = {
@@ -331,13 +329,17 @@ module.exports = async function handler(req, res) {
         }
         
         // Если дата начала не установлена, устанавливаем текущую дату
-        const { data: currentUser } = await supabase
+        const { data: currentUser, error: fetchError } = await supabase
           .from('users')
           .select('subscription_start_date')
-          .eq('id', userId)
+          .eq('id', userIdNum)
           .single();
         
-        if (!currentUser?.subscription_start_date) {
+        if (fetchError) {
+          console.warn('⚠️ Error fetching current user (non-blocking):', fetchError.message);
+          // Если не удалось получить данные, устанавливаем дату начала
+          updateData.subscription_start_date = new Date().toISOString();
+        } else if (!currentUser?.subscription_start_date) {
           updateData.subscription_start_date = new Date().toISOString();
         }
       } else {
@@ -348,13 +350,19 @@ module.exports = async function handler(req, res) {
 
       // Вызываем функцию проверки подписок перед обновлением (опционально, не блокируем если ошибка)
       try {
-        await supabaseAdmin.rpc('check_and_update_expired_subscriptions');
+        const { error: rpcError } = await supabase.rpc('check_and_update_expired_subscriptions');
+        if (rpcError) {
+          console.warn('⚠️ RPC check_and_update_expired_subscriptions returned error (non-blocking):', rpcError.message);
+        } else {
+          console.log('✅ RPC check_and_update_expired_subscriptions executed successfully');
+        }
       } catch (rpcError) {
         console.warn('⚠️ RPC check_and_update_expired_subscriptions failed (non-blocking):', rpcError.message);
       }
 
-      // Используем admin клиент для обновления данных
-      const { data, error } = await supabaseAdmin
+      // Обновляем данные подписки
+      console.log('📝 Update data:', JSON.stringify(updateData, null, 2));
+      const { data, error } = await supabase
         .from('users')
         .update(updateData)
         .eq('id', userId)
@@ -362,9 +370,21 @@ module.exports = async function handler(req, res) {
 
       if (error) {
         console.error('❌ Error updating subscription:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
 
+      if (!data || data.length === 0) {
+        console.error('❌ No data returned after update');
+        throw new Error('No data returned after update');
+      }
+
+      console.log('✅ Subscription updated successfully:', data[0]);
       return res.json({ success: true, user: data[0] });
     }
 
@@ -378,7 +398,7 @@ module.exports = async function handler(req, res) {
 
       console.log(`🔧 Setting admin status for user ${userId} to ${isAdmin}`);
 
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await supabase
         .from('users')
         .update({ admin: isAdmin, updated_at: new Date().toISOString() })
         .eq('id', userId)
@@ -395,7 +415,19 @@ module.exports = async function handler(req, res) {
 
     return res.status(400).json({ success: false, error: 'Invalid action' });
   } catch (error) {
-    console.error('Admin API error:', error);
-    return res.status(500).json({ success: false, error: error.message });
+    console.error('❌ Admin API error:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error details:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Unknown error',
+      details: error.details || null,
+      code: error.code || null
+    });
   }
 };

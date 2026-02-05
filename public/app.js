@@ -6817,11 +6817,22 @@ async function saveAdminChanges() {
         })
       });
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Failed to save subscription:', errorText);
+        let errorText;
+        try {
+          const errorData = await response.json();
+          errorText = errorData.error || errorData.message || JSON.stringify(errorData);
+          console.error('❌ Failed to save subscription - API error:', errorData);
+        } catch (e) {
+          errorText = await response.text();
+          console.error('❌ Failed to save subscription - Response text:', errorText);
+        }
         throw new Error('Failed to save subscription: ' + errorText);
       }
       const result = await response.json();
+      if (!result.success) {
+        console.error('❌ API returned success=false:', result);
+        throw new Error(result.error || 'API returned success=false');
+      }
       console.log('✅ Subscription saved successfully:', result);
     }
 
@@ -6846,8 +6857,20 @@ async function saveAdminChanges() {
       }
     }, 2000);
   } catch (error) {
-    console.error('Error saving admin changes:', error);
-    alert('Ошибка сохранения изменений');
+    console.error('❌ Error saving admin changes:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response
+    });
+    
+    // Пытаемся получить более детальную информацию об ошибке
+    let errorMessage = 'Ошибка сохранения изменений';
+    if (error.message) {
+      errorMessage += ': ' + error.message;
+    }
+    
+    alert(errorMessage);
   } finally {
     // Восстанавливаем состояние кнопок
     if (saveBtnQuiz) {
