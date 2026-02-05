@@ -40,7 +40,7 @@ module.exports = async function handler(req, res) {
       // Получаем статус квиза, админский статус и статус подписки
       const { data, error } = await supabase
         .from('users')
-        .select('quiz_completed, quiz_completion_date, admin, subscription_active, free_requests_count')
+        .select('quiz_completed, quiz_completion_date, admin, subscription_active, subscription_start_date, subscription_end_date, free_requests_count')
         .eq('telegram_id', user.id)
         .single();
 
@@ -78,6 +78,8 @@ module.exports = async function handler(req, res) {
         quiz_completion_date: quizCompleted ? (data?.quiz_completion_date || null) : null,
         admin: data?.admin === true,
         subscription_active: data?.subscription_active === true,
+        subscription_start_date: data?.subscription_start_date || null,
+        subscription_end_date: data?.subscription_end_date || null,
         free_requests_count: data?.free_requests_count ?? 0
       });
     } catch (error) {

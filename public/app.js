@@ -364,6 +364,110 @@ function goToBot() {
   closeSubscriptionModal();
 }
 
+// Функция для показа страницы профиля
+async function showProfilePage() {
+  showPage('profile');
+  await loadProfileData();
+}
+
+// Функция для загрузки данных профиля из БД
+async function loadProfileData() {
+  const profileContent = document.getElementById('profileContent');
+  if (!profileContent) return;
+  
+  // Показываем загрузку
+  profileContent.innerHTML = '<div class="profile-loading">Загрузка данных...</div>';
+  
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    // Используем endpoint для получения статуса, который уже есть
+    const response = await fetch('/api/save-all-quiz-answers?action=status', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to load subscription data');
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      const isActive = data.subscription_active === true;
+      const startDate = data.subscription_start_date ? new Date(data.subscription_start_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+      const endDate = data.subscription_end_date ? new Date(data.subscription_end_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Безлимитная';
+      
+      profileContent.innerHTML = `
+        <div class="profile-subscription-info">
+          <div class="profile-info-block">
+            <h3 class="profile-info-title">Статус подписки</h3>
+            <p class="profile-info-value ${isActive ? 'profile-active' : 'profile-inactive'}">
+              ${isActive ? 'Активна' : 'Неактивна'}
+            </p>
+          </div>
+          ${isActive ? `
+            <div class="profile-info-block">
+              <h3 class="profile-info-title">Действует до</h3>
+              <p class="profile-info-value">${endDate}</p>
+            </div>
+          ` : ''}
+          ${startDate !== '—' ? `
+            <div class="profile-info-block">
+              <h3 class="profile-info-title">Дата начала</h3>
+              <p class="profile-info-value">${startDate}</p>
+            </div>
+          ` : ''}
+          ${!isActive ? `
+            <button class="profile-subscribe-btn" id="profileSubscribeBtn">
+              Оплатить подписку
+            </button>
+          ` : ''}
+        </div>
+      `;
+      
+      // Добавляем обработчик для кнопки оплаты
+      const subscribeBtn = document.getElementById('profileSubscribeBtn');
+      if (subscribeBtn) {
+        subscribeBtn.addEventListener('click', showPaymentModal);
+      }
+    } else {
+      profileContent.innerHTML = '<p class="profile-error">Не удалось загрузить информацию о подписке</p>';
+    }
+  } catch (error) {
+    console.error('Error loading profile data:', error);
+    profileContent.innerHTML = '<p class="profile-error">Ошибка загрузки данных</p>';
+  }
+}
+
+// Функция для показа модального окна выбора варианта оплаты
+function showPaymentModal() {
+  const modal = document.getElementById('paymentModal');
+  if (modal) {
+    modal.classList.add('active');
+    // Здесь можно загрузить цены из БД или API
+    // Пока оставляем заглушки
+  }
+}
+
+// Функция для закрытия модального окна оплаты
+function closePaymentModal() {
+  const modal = document.getElementById('paymentModal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+// Обработчик выбора варианта оплаты
+function handlePaymentOption(period) {
+  console.log('Selected payment period:', period);
+  // Здесь будет логика обработки оплаты
+  // Пока просто закрываем модальное окно
+  closePaymentModal();
+  // TODO: Интеграция с платежной системой
+}
+
 // Функция проверки подписки перед открытием функции
 function checkSubscriptionBeforeAction(actionName, actionFunction, modalTitle, modalDescription) {
   if (subscriptionActive) {
@@ -1575,10 +1679,12 @@ function showPage(pageName) {
   const healthPage = document.getElementById('healthPage');
   const diaryPage = document.getElementById('diaryPage');
   const adminPage = document.getElementById('adminPage');
+  const profilePage = document.getElementById('profilePage');
   
   if (healthPage) allPages.push(healthPage);
   if (diaryPage) allPages.push(diaryPage);
   if (adminPage) allPages.push(adminPage);
+  if (profilePage) allPages.push(profilePage);
   
   allPages.forEach(page => {
     if (page && page.classList.contains('active')) {
@@ -1733,6 +1839,21 @@ function showPage(pageName) {
       currentPage = 'admin';
       isChatMode = false;
       isInRecommendedTests = false;
+      break;
+    case 'profile':
+      const profilePage = document.getElementById('profilePage');
+      if (profilePage) {
+        profilePage.style.display = 'flex';
+        requestAnimationFrame(() => {
+          profilePage.classList.add('active');
+        });
+        currentPage = 'profile';
+        isChatMode = false;
+        isInRecommendedTests = false;
+        // Загружаем информацию о подписке
+        loadProfileData();
+      }
+      break;
       
       // Если мы возвращаемся к списку пользователей, сбрасываем изменения
       if (adminCurrentView === 'users') {
@@ -1989,6 +2110,33 @@ document.addEventListener('click', (e) => {
     }
     
     const nav = navItem.closest('.bottom-nav');
+    const action = navItem.getAttribute('data-action');
+    
+    // Если есть data-action, обрабатываем новые кнопки
+    if (action) {
+      closeSidebar();
+      
+      switch(action) {
+        case 'subscribe':
+          // Открываем модальное окно выбора варианта оплаты
+          showPaymentModal();
+          break;
+        case 'profile':
+          // Открываем страницу профиля
+          showProfilePage();
+          break;
+        case 'miniapp':
+          // Открываем мини ап через Telegram API
+          if (window.Telegram?.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.openTelegramLink('https://t.me/Probiohackingbot');
+          }
+          break;
+      }
+      return;
+    }
+    
+    // Старая логика для старых кнопок (если они еще есть)
     const navItems = nav.querySelectorAll('.nav-item:not(.admin-nav-item)');
     const buttonIndex = Array.from(navItems).indexOf(navItem);
     
@@ -2159,6 +2307,32 @@ document.addEventListener('click', (e) => {
   // Закрытие модального окна подписки по клику на overlay
   if (e.target.closest('#subscriptionModal') && !e.target.closest('.subscription-modal')) {
     closeSubscriptionModal();
+    return;
+  }
+  
+  // Кнопка назад на странице профиля
+  if (e.target.closest('#profileBackBtn')) {
+    showPage('main');
+    return;
+  }
+  
+  // Кнопка "Назад" в профиле
+  if (e.target.closest('#profileBackBtn')) {
+    showPage('main');
+    return;
+  }
+  
+  // Закрытие модального окна оплаты
+  if (e.target.closest('#paymentModalClose') || (e.target.closest('#paymentModal') && !e.target.closest('.payment-modal'))) {
+    closePaymentModal();
+    return;
+  }
+  
+  // Выбор варианта оплаты
+  if (e.target.closest('.payment-option-btn')) {
+    const btn = e.target.closest('.payment-option-btn');
+    const period = btn.getAttribute('data-period');
+    handlePaymentOption(period);
     return;
   }
   
