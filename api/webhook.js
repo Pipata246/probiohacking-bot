@@ -4,182 +4,223 @@ const { createClient } = require('@supabase/supabase-js');
 const token = process.env.BOT_TOKEN;
 const miniAppUrl = 'https://probiohacking-bot.vercel.app';
 
-const bot = new TelegramBot(token);
+// Создаем бота с опциями для serverless окружения
+const bot = new TelegramBot(token, { polling: false });
 
 // Инициализация Supabase клиента
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY,
-  {
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase configuration');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
     persistSession: false,
     autoRefreshToken: false,
     detectSessionInUrl: false
   }
-);
+});
 
-// Клавиатура с кнопками меню
-const menuKeyboard = {
-  reply_markup: {
-    keyboard: [
-      [{ text: '💳 Оплатить подписку' }],
-      [{ text: '👤 Профиль' }],
-      [{ text: '🚀 Открыть мини ап' }]
-    ],
-    resize_keyboard: true,
-    persistent: true
-  }
-};
+// Функция для создания постоянной клавиатуры (нижнее меню)
+function getMainKeyboard() {
+  return {
+    reply_markup: {
+      keyboard: [
+        [
+          { text: '💳 Оплатить подписку' },
+          { text: '👤 Профиль' }
+        ],
+        [
+          { text: '🚀 Открыть мини ап', web_app: { url: miniAppUrl } }
+        ]
+      ],
+      resize_keyboard: true,
+      persistent: true
+    }
+  };
+}
 
-// Клавиатура с вариантами оплаты
-const paymentOptionsKeyboard = {
-  reply_markup: {
-    keyboard: [
-      [{ text: '1 месяц' }],
-      [{ text: '3 месяца' }],
-      [{ text: '1 год' }],
-      [{ text: '◀️ Назад' }]
-    ],
-    resize_keyboard: true
-  }
-};
+// Функция для получения данных о подписке пользователя
+async function getUserSubscriptionData(telegramId) {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('subscription_active, subscription_start_date, subscription_end_date')
+      .eq('telegram_id', telegramId)
+      .single();
 
-// Клавиатура "Назад" для профиля
-const backKeyboard = {
-  reply_markup: {
-    keyboard: [
-      [{ text: '◀️ Назад' }]
-    ],
-    resize_keyboard: true
+    if (error) {
+      console.error('Error fetching subscription data:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Exception in getUserSubscriptionData:', error);
+    return null;
   }
-};
+}
+
+// Функция для форматирования информации о подписке
+function formatSubscriptionInfo(subData) {
+  if (!subData) {
+    return '❌ Не удалось загрузить информацию о подписке';
+  }
+
+  const isActive = subData.subscription_active === true;
+  const startDate = subData.subscription_start_date 
+    ? new Date(subData.subscription_start_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : '—';
+  const endDate = subData.subscription_end_date 
+    ? new Date(subData.subscription_end_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : 'Безлимитная';
+
+  let message = '👤 **Профиль**\n\n';
+  message += `**Статус подписки:** ${isActive ? '✅ Активна' : '❌ Неактивна'}\n`;
+  
+  if (isActive) {
+    message += `**Действует до:** ${endDate}\n`;
+  }
+  
+  if (startDate !== '—') {
+    message += `**Дата начала:** ${startDate}\n`;
+  }
+
+  return message;
+}
+
+// Функция для показа вариантов оплаты
+function getPaymentOptionsKeyboard() {
+  return {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '1 месяц', callback_data: 'payment_1' }
+        ],
+        [
+          { text: '3 месяца', callback_data: 'payment_3' }
+        ],
+        [
+          { text: '1 год', callback_data: 'payment_12' }
+        ],
+        [
+          { text: '◀️ Назад', callback_data: 'back_to_main' }
+        ]
+      ]
+    }
+  };
+}
 
 module.exports = async (req, res) => {
   if (req.method === 'POST') {
     try {
-      const { message } = req.body;
+      const { message, callback_query } = req.body;
 
-      if (!message) {
+      // Обработка callback_query (нажатия на inline кнопки)
+      if (callback_query) {
+        const chatId = callback_query.message.chat.id;
+        const data = callback_query.data;
+
+        if (data === 'show_payment_options') {
+          const paymentMessage = '💳 **Выберите период подписки:**';
+          
+          await bot.editMessageText(paymentMessage, {
+            chat_id: chatId,
+            message_id: callback_query.message.message_id,
+            ...getPaymentOptionsKeyboard(),
+            parse_mode: 'Markdown'
+          });
+          
+          await bot.answerCallbackQuery(callback_query.id);
+          return res.status(200).json({ ok: true });
+        }
+
+        if (data.startsWith('payment_')) {
+          const period = data.split('_')[1];
+          const periodText = period === '1' ? '1 месяц' : period === '3' ? '3 месяца' : '1 год';
+          
+          await bot.answerCallbackQuery(callback_query.id, {
+            text: `Выбран период: ${periodText}. Интеграция с платежной системой будет добавлена позже.`
+          });
+          
+          // Здесь будет логика обработки оплаты
+          // Пока просто подтверждаем выбор
+          return res.status(200).json({ ok: true });
+        }
+
+        if (data === 'back_to_main') {
+          await bot.editMessageText('Выберите действие:', {
+            chat_id: chatId,
+            message_id: callback_query.message.message_id,
+            ...getMainKeyboard()
+          });
+          
+          await bot.answerCallbackQuery(callback_query.id);
+          return res.status(200).json({ ok: true });
+        }
+
         return res.status(200).json({ ok: true });
       }
 
-      const chatId = message.chat.id;
-      const text = message.text;
+      // Обработка обычных сообщений
+      if (message) {
+        const chatId = message.chat.id;
+        const text = message.text;
 
-      // Обработка команды /start
-      if (text === '/start') {
-        const welcomeMessage = `🤖 PROBIOHACKING — ваш цифровой наставник по здоровью
+        // Команда /start
+        if (text === '/start') {
+          const welcomeMessage = `🤖 PROBIOHACKING — ваш цифровой наставник по здоровью
 
 Откройте Mini App для персональной диагностики и рекомендаций`;
 
-        await bot.sendMessage(chatId, welcomeMessage, menuKeyboard);
-        return res.status(200).json({ ok: true });
-      }
-
-      // Обработка кнопки "Открыть мини ап"
-      if (text === '🚀 Открыть мини ап') {
-        const keyboard = {
-          inline_keyboard: [
-            [
-              {
-                text: '🚀 Открыть Mini App',
-                web_app: { url: miniAppUrl }
-              }
-            ]
-          ]
-        };
-        await bot.sendMessage(chatId, 'Нажмите на кнопку ниже, чтобы открыть Mini App:', { reply_markup: keyboard });
-        return res.status(200).json({ ok: true });
-      }
-
-      // Обработка кнопки "Профиль"
-      if (text === '👤 Профиль') {
-        try {
-          const telegramId = message.from.id;
-          
-          // Получаем данные о подписке из БД
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('subscription_active, subscription_start_date, subscription_end_date')
-            .eq('telegram_id', telegramId)
-            .single();
-
-          if (userError || !userData) {
-            await bot.sendMessage(chatId, '❌ Не удалось загрузить информацию о подписке', menuKeyboard);
-            return res.status(200).json({ ok: true });
-          }
-
-          const isActive = userData.subscription_active === true;
-          const startDate = userData.subscription_start_date 
-            ? new Date(userData.subscription_start_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
-            : '—';
-          const endDate = userData.subscription_end_date 
-            ? new Date(userData.subscription_end_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
-            : 'Безлимитная';
-
-          let profileMessage = `👤 <b>Профиль</b>\n\n`;
-          profileMessage += `📊 <b>Статус подписки:</b> ${isActive ? '✅ Активна' : '❌ Неактивна'}\n`;
-          
-          if (isActive) {
-            profileMessage += `📅 <b>Действует до:</b> ${endDate}\n`;
-          }
-          
-          if (startDate !== '—') {
-            profileMessage += `📆 <b>Дата начала:</b> ${startDate}\n`;
-          }
-
-          const keyboard = isActive 
-            ? menuKeyboard 
-            : {
-                reply_markup: {
-                  keyboard: [
-                    [{ text: '💳 Оплатить подписку' }],
-                    [{ text: '◀️ Назад в меню' }]
-                  ],
-                  resize_keyboard: true
-                }
-              };
-
-          await bot.sendMessage(chatId, profileMessage, { 
-            parse_mode: 'HTML',
-            reply_markup: keyboard.reply_markup
-          });
-        } catch (error) {
-          console.error('Error loading profile:', error);
-          await bot.sendMessage(chatId, '❌ Ошибка загрузки данных профиля', menuKeyboard);
+          await bot.sendMessage(chatId, welcomeMessage, getMainKeyboard());
+          return res.status(200).json({ ok: true });
         }
-        return res.status(200).json({ ok: true });
+
+        // Кнопка "Профиль"
+        if (text === '👤 Профиль') {
+          const telegramId = message.from.id;
+          const subData = await getUserSubscriptionData(telegramId);
+          const profileMessage = formatSubscriptionInfo(subData);
+
+          const keyboard = {
+            reply_markup: {
+              inline_keyboard: []
+            }
+          };
+
+          // Если подписка неактивна, добавляем кнопку оплаты
+          if (subData && !subData.subscription_active) {
+            keyboard.reply_markup.inline_keyboard.push([
+              { text: '💳 Оплатить подписку', callback_data: 'show_payment_options' }
+            ]);
+          }
+
+          await bot.sendMessage(chatId, profileMessage, {
+            ...keyboard,
+            parse_mode: 'Markdown'
+          });
+          return res.status(200).json({ ok: true });
+        }
+
+        // Кнопка "Оплатить подписку"
+        if (text === '💳 Оплатить подписку') {
+          const paymentMessage = '💳 **Выберите период подписки:**';
+          
+          await bot.sendMessage(chatId, paymentMessage, {
+            ...getPaymentOptionsKeyboard(),
+            parse_mode: 'Markdown'
+          });
+          return res.status(200).json({ ok: true });
+        }
+
+        // Кнопка "Открыть мини ап" обрабатывается автоматически через web_app
+
+        // Для всех остальных сообщений показываем главное меню
+        await bot.sendMessage(chatId, 'Выберите действие:', getMainKeyboard());
       }
-
-      // Обработка кнопки "Оплатить подписку"
-      if (text === '💳 Оплатить подписку') {
-        const paymentMessage = `💳 <b>Выберите период подписки:</b>\n\n`;
-        await bot.sendMessage(chatId, paymentMessage, { 
-          parse_mode: 'HTML',
-          reply_markup: paymentOptionsKeyboard.reply_markup
-        });
-        return res.status(200).json({ ok: true });
-      }
-
-      // Обработка вариантов оплаты
-      if (text === '1 месяц' || text === '3 месяца' || text === '1 год') {
-        // Пока просто подтверждаем выбор (позже здесь будет интеграция с платежной системой)
-        let periodText = '';
-        if (text === '1 месяц') periodText = '1 месяц';
-        else if (text === '3 месяца') periodText = '3 месяца';
-        else if (text === '1 год') periodText = '1 год';
-
-        await bot.sendMessage(chatId, `✅ Вы выбрали подписку на ${periodText}\n\n🔜 Интеграция с платежной системой будет добавлена позже.`, menuKeyboard);
-        return res.status(200).json({ ok: true });
-      }
-
-      // Обработка кнопки "Назад"
-      if (text === '◀️ Назад' || text === '◀️ Назад в меню') {
-        await bot.sendMessage(chatId, 'Главное меню:', menuKeyboard);
-        return res.status(200).json({ ok: true });
-      }
-
-      // Для всех остальных сообщений показываем меню
-      await bot.sendMessage(chatId, 'Используйте кнопки меню для навигации:', menuKeyboard);
 
       res.status(200).json({ ok: true });
     } catch (error) {
