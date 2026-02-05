@@ -71,6 +71,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // Supabase клиент и Realtime переменные
 let supabase = null;
 let chatsSubscription = null;
+let userSubscription = null; // Подписка на изменения пользователя (статус подписки)
 let currentTelegramId = null;
 
 // Инициализация Supabase (вызывается после загрузки приложения)
@@ -187,6 +188,88 @@ function handleRealtimeUpdate(payload) {
   renderChatsList(cachedChats);
 }
 
+// Инициализация Realtime подписки на изменения статуса подписки пользователя
+async function initializeUserSubscriptionRealtime() {
+  // Ждем инициализации Supabase клиента
+  let attempts = 0;
+  while (!initializeSupabaseClient() && attempts < 20) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
+  
+  if (!supabase) {
+    console.error('Supabase client not available for subscription realtime');
+    return false;
+  }
+  
+  // Получаем telegram_id текущего пользователя
+  const user = tg.initDataUnsafe?.user;
+  if (!user || !user.id) {
+    console.warn('No Telegram user data for subscription realtime');
+    return false;
+  }
+  
+  const telegramId = user.id;
+  
+  // Отписываемся от предыдущей подписки
+  if (userSubscription) {
+    userSubscription.unsubscribe();
+  }
+  
+  // Создаем подписку на изменения в таблице users для текущего пользователя
+  userSubscription = supabase
+    .channel(`user_subscription_${telegramId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'users',
+        filter: `telegram_id=eq.${telegramId}`
+      },
+      (payload) => {
+        console.log('🔄 User subscription status updated via Realtime:', payload);
+        handleUserSubscriptionUpdate(payload);
+      }
+    )
+    .subscribe((status) => {
+      console.log('User subscription Realtime status:', status);
+    });
+    
+  return true;
+}
+
+// Обработка обновления статуса подписки пользователя
+function handleUserSubscriptionUpdate(payload) {
+  const { new: newRecord, old: oldRecord } = payload;
+  
+  // Проверяем изменился ли статус подписки или количество запросов
+  const subscriptionChanged = newRecord.subscription_active !== oldRecord.subscription_active;
+  const requestsCountChanged = newRecord.free_requests_count !== oldRecord.free_requests_count;
+  
+  if (subscriptionChanged || requestsCountChanged) {
+    console.log('📊 Subscription status changed:', {
+      old: {
+        subscription_active: oldRecord.subscription_active,
+        free_requests_count: oldRecord.free_requests_count
+      },
+      new: {
+        subscription_active: newRecord.subscription_active,
+        free_requests_count: newRecord.free_requests_count
+      }
+    });
+    
+    // Обновляем локальные переменные
+    subscriptionActive = newRecord.subscription_active === true;
+    freeRequestsCount = newRecord.free_requests_count ?? 0;
+    
+    // Обновляем UI
+    updateFreeModeBanner();
+    
+    console.log('✅ Subscription status updated:', { subscriptionActive, freeRequestsCount });
+  }
+}
+
 // Создание чата через Supabase
 async function createChatViaSupabase(title = 'Новый чат') {
   if (!supabase || !currentTelegramId) return null;
@@ -224,6 +307,10 @@ function cleanupRealtime() {
   if (chatsSubscription) {
     chatsSubscription.unsubscribe();
     chatsSubscription = null;
+  }
+  if (userSubscription) {
+    userSubscription.unsubscribe();
+    userSubscription = null;
   }
   currentTelegramId = null;
 }
@@ -3247,6 +3334,15 @@ async function loadAppData() {
   // Инициализация Realtime (не блокирует)
   initPhotosRealtime();
   
+  // Инициализация Realtime подписки на изменения статуса подписки
+  initializeUserSubscriptionRealtime();
+  
+  // Периодическая проверка статуса подписки (каждые 30 секунд)
+  // Это нужно на случай если Realtime не работает или пользователь долго не возвращался
+  setInterval(() => {
+    checkQuizStatus().catch(e => console.warn('Periodic subscription check error:', e));
+  }, 30000); // Проверяем каждые 30 секунд
+  
   appDataLoaded = true;
   console.log(`✅ Все данные загружены за ${Date.now() - startTime}ms`);
 }
@@ -3288,6 +3384,10 @@ document.addEventListener('visibilitychange', () => {
         activeTypewriter.forceComplete();
       }
     }
+    
+    // Обновляем статус подписки при возврате в приложение
+    // Это нужно чтобы изменения из админки применялись сразу
+    checkQuizStatus().catch(e => console.warn('Subscription status check error:', e));
   }
 });
 
