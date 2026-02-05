@@ -5590,10 +5590,72 @@ body.chat-overlay-visible .search-container {
   flex: 1;
 }
 
+/* Информация о текущей подписке */
+.admin-subscription-current-info {
+  background: rgba(254, 247, 236, 0.1);
+  border: 1px solid rgba(254, 247, 236, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.admin-subscription-current-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #FEF7EC;
+  margin: 0 0 16px 0;
+}
+
+.admin-subscription-current-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-subscription-current-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(254, 247, 236, 0.1);
+}
+
+.admin-subscription-current-row:last-child {
+  border-bottom: none;
+}
+
+.admin-subscription-current-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(254, 247, 236, 0.7);
+}
+
+.admin-subscription-current-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FEF7EC;
+}
+
+.admin-subscription-status-active {
+  color: #4CAF50 !important;
+}
+
+.admin-subscription-status-inactive {
+  color: #ff6b6b !important;
+}
+
+/* Блок изменений подписки */
 .admin-subscription-form {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.admin-subscription-form-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #FEF7EC;
+  margin: 0 0 8px 0;
 }
 
 .admin-subscription-field {

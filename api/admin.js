@@ -315,6 +315,14 @@ module.exports = async function handler(req, res) {
 
       console.log(`🔧 Updating subscription for user ${userIdNum}: active=${subscriptionActive}, endDate=${subscriptionEndDate}`);
 
+      // ВАЛИДАЦИЯ: При активации подписки через админку дата окончания ОБЯЗАТЕЛЬНА
+      if (subscriptionActive && !subscriptionEndDate) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'При активации подписки необходимо указать дату окончания' 
+        });
+      }
+
       // Формируем объект обновления
       const updateData = {
         subscription_active: subscriptionActive,
@@ -323,10 +331,8 @@ module.exports = async function handler(req, res) {
 
       // Если подписка активируется, устанавливаем даты
       if (subscriptionActive) {
-        // Если указана дата окончания, используем её
-        if (subscriptionEndDate) {
-          updateData.subscription_end_date = new Date(subscriptionEndDate).toISOString();
-        }
+        // Дата окончания обязательна (уже проверена выше)
+        updateData.subscription_end_date = new Date(subscriptionEndDate).toISOString();
         
         // Если дата начала не установлена, устанавливаем текущую дату
         const { data: currentUser, error: fetchError } = await supabase
@@ -343,21 +349,8 @@ module.exports = async function handler(req, res) {
           updateData.subscription_start_date = new Date().toISOString();
         }
       } else {
-        // Если подписка деактивируется, очищаем даты (опционально, можно оставить для истории)
-        // updateData.subscription_start_date = null;
-        // updateData.subscription_end_date = null;
-      }
-
-      // Вызываем функцию проверки подписок перед обновлением (опционально, не блокируем если ошибка)
-      try {
-        const { error: rpcError } = await supabase.rpc('check_and_update_expired_subscriptions');
-        if (rpcError) {
-          console.warn('⚠️ RPC check_and_update_expired_subscriptions returned error (non-blocking):', rpcError.message);
-        } else {
-          console.log('✅ RPC check_and_update_expired_subscriptions executed successfully');
-        }
-      } catch (rpcError) {
-        console.warn('⚠️ RPC check_and_update_expired_subscriptions failed (non-blocking):', rpcError.message);
+        // Если подписка деактивируется, даты оставляем для истории (не очищаем)
+        // Это позволяет видеть когда была подписка и когда закончилась
       }
 
       // Обновляем данные подписки
@@ -365,7 +358,7 @@ module.exports = async function handler(req, res) {
       const { data, error } = await supabase
         .from('users')
         .update(updateData)
-        .eq('id', userId)
+        .eq('id', userIdNum)
         .select();
 
       if (error) {
@@ -382,6 +375,19 @@ module.exports = async function handler(req, res) {
       if (!data || data.length === 0) {
         console.error('❌ No data returned after update');
         throw new Error('No data returned after update');
+      }
+
+      // После успешного обновления проверяем истекшие подписки
+      // Это нужно чтобы автоматически деактивировать подписки с прошедшей датой окончания
+      try {
+        const { error: rpcError } = await supabase.rpc('check_and_update_expired_subscriptions');
+        if (rpcError) {
+          console.warn('⚠️ RPC check_and_update_expired_subscriptions returned error (non-blocking):', rpcError.message);
+        } else {
+          console.log('✅ RPC check_and_update_expired_subscriptions executed successfully');
+        }
+      } catch (rpcError) {
+        console.warn('⚠️ RPC check_and_update_expired_subscriptions failed (non-blocking):', rpcError.message);
       }
 
       console.log('✅ Subscription updated successfully:', data[0]);

@@ -403,16 +403,18 @@ TO anon
 USING (bucket_id = 'analysis-photos');
 
 -- ============================================
--- ФУНКЦИЯ ДЛЯ АВТОМАТИЧЕСКОЙ ПРОВЕРКИ И ОБНОВЛЕНИЯ СТАТУСА ПОДПИСКИ
+-- ФУНКЦИЯ ДЛЯ ПРОВЕРКИ И ОБНОВЛЕНИЯ СТАТУСА ПОДПИСКИ
 -- ============================================
 
 -- Функция для проверки и обновления истекших подписок
+-- ВАЖНО: Вызывается вручную через API, НЕ через триггер (чтобы избежать рекурсии)
 CREATE OR REPLACE FUNCTION public.check_and_update_expired_subscriptions()
 RETURNS void
 LANGUAGE plpgsql
 AS $$
 BEGIN
   -- Обновляем статус подписки на false для пользователей с истекшей подпиской
+  -- Используем прямое обновление без вызова других функций, чтобы избежать рекурсии
   UPDATE public.users
   SET 
     subscription_active = false,
@@ -426,25 +428,14 @@ BEGIN
 END;
 $$;
 
--- Создаем триггер для автоматической проверки при каждом обновлении
--- (опционально, можно вызывать через cron или при каждом запросе)
-CREATE OR REPLACE FUNCTION public.trigger_check_subscriptions()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  -- Вызываем функцию проверки подписок
-  PERFORM public.check_and_update_expired_subscriptions();
-  RETURN NEW;
-END;
-$$;
-
--- Триггер на обновление таблицы users (будет вызывать проверку подписок)
+-- УДАЛЯЕМ ТРИГГЕР - он вызывал бесконечную рекурсию
+-- Триггер вызывал функцию при каждом UPDATE на users,
+-- функция делала UPDATE на users, что снова вызывало триггер...
 DROP TRIGGER IF EXISTS check_subscriptions_trigger ON public.users;
-CREATE TRIGGER check_subscriptions_trigger
-  AFTER UPDATE ON public.users
-  FOR EACH STATEMENT
-  EXECUTE FUNCTION public.trigger_check_subscriptions();
+DROP FUNCTION IF EXISTS public.trigger_check_subscriptions();
+
+-- Функция будет вызываться вручную через API при необходимости
+-- (например, при обновлении подписки или по расписанию через cron)
 
 -- ============================================
 -- КОНЕЦ СКРИПТА

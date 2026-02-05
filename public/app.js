@@ -6445,8 +6445,45 @@ async function viewUserSubscription(userId) {
     const subscriptionStartDate = data.subscription_start_date || '';
     const subscriptionEndDate = data.subscription_end_date || '';
 
+    // Формируем информацию о текущей подписке
+    const subscriptionStatusText = subscriptionActive ? 'Активна' : 'Неактивна';
+    const subscriptionStatusClass = subscriptionActive ? 'admin-subscription-status-active' : 'admin-subscription-status-inactive';
+    const endDateText = subscriptionActive 
+      ? (subscriptionEndDate 
+          ? new Date(subscriptionEndDate).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+          : 'Безлимитная')
+      : '—';
+    const startDateText = subscriptionStartDate 
+      ? new Date(subscriptionStartDate).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      : '—';
+
     subscriptionContent.innerHTML = `
+      <!-- Информация о текущей подписке -->
+      <div class="admin-subscription-current-info">
+        <h3 class="admin-subscription-current-title">Текущая подписка</h3>
+        <div class="admin-subscription-current-details">
+          <div class="admin-subscription-current-row">
+            <span class="admin-subscription-current-label">Статус:</span>
+            <span class="admin-subscription-current-value ${subscriptionStatusClass}">${subscriptionStatusText}</span>
+          </div>
+          ${subscriptionActive ? `
+            <div class="admin-subscription-current-row">
+              <span class="admin-subscription-current-label">Действует до:</span>
+              <span class="admin-subscription-current-value">${endDateText}</span>
+            </div>
+          ` : ''}
+          ${subscriptionStartDate ? `
+            <div class="admin-subscription-current-row">
+              <span class="admin-subscription-current-label">Дата начала:</span>
+              <span class="admin-subscription-current-value">${startDateText}</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- Блок изменений подписки -->
       <div class="admin-subscription-form">
+        <h3 class="admin-subscription-form-title">Изменение подписки</h3>
         <div class="admin-subscription-field">
           <label class="admin-subscription-label">Статус подписки</label>
           <select class="admin-subscription-select" id="adminSubscriptionStatus">
@@ -6456,50 +6493,62 @@ async function viewUserSubscription(userId) {
         </div>
         
         <div class="admin-subscription-field" id="adminSubscriptionDateField" style="display: ${subscriptionActive ? 'block' : 'none'};">
-          <label class="admin-subscription-label">Дата окончания подписки</label>
+          <label class="admin-subscription-label">Дата окончания подписки <span style="color: #ff6b6b;">*</span></label>
           <input 
             type="date" 
             class="admin-subscription-date-input" 
             id="adminSubscriptionEndDate"
             value="${subscriptionEndDate ? new Date(subscriptionEndDate).toISOString().split('T')[0] : ''}"
             min="${new Date().toISOString().split('T')[0]}"
+            required
           />
-        </div>
-        
-        ${subscriptionStartDate ? `
-          <div class="admin-subscription-info">
-            <span class="admin-subscription-info-label">Дата начала подписки:</span>
-            <span class="admin-subscription-info-value">${new Date(subscriptionStartDate).toLocaleDateString('ru-RU')}</span>
+          <div class="admin-subscription-hint" style="font-size: 12px; color: rgba(254, 247, 236, 0.7); margin-top: 4px;">
+            Обязательное поле при активации подписки
           </div>
-        ` : ''}
+        </div>
       </div>
     `;
 
     // Обработчик изменения статуса подписки
     const statusSelect = document.getElementById('adminSubscriptionStatus');
     const dateField = document.getElementById('adminSubscriptionDateField');
+    const endDateInput = document.getElementById('adminSubscriptionEndDate');
     
     statusSelect.addEventListener('change', () => {
       const isActive = statusSelect.value === 'true';
       dateField.style.display = isActive ? 'block' : 'none';
       
+      // Если активируем подписку, очищаем дату (чтобы пользователь обязательно ввел новую)
+      if (isActive) {
+        endDateInput.value = '';
+        endDateInput.required = true;
+      } else {
+        endDateInput.required = false;
+      }
+      
       // Сохраняем изменения в pending
       adminPendingChanges.subscription = {
         userId: userId,
         subscriptionActive: isActive,
-        subscriptionEndDate: isActive ? document.getElementById('adminSubscriptionEndDate').value : null
+        subscriptionEndDate: isActive ? endDateInput.value : null
       };
       updateAdminSaveButton();
     });
 
     // Обработчик изменения даты окончания
-    const endDateInput = document.getElementById('adminSubscriptionEndDate');
     endDateInput.addEventListener('change', () => {
       if (statusSelect.value === 'true') {
+        // Валидация: дата обязательна при активной подписке
+        if (!endDateInput.value) {
+          alert('Пожалуйста, укажите дату окончания подписки');
+          endDateInput.focus();
+          return;
+        }
+        
         adminPendingChanges.subscription = {
           userId: userId,
           subscriptionActive: true,
-          subscriptionEndDate: endDateInput.value || null
+          subscriptionEndDate: endDateInput.value
         };
         updateAdminSaveButton();
       }
@@ -6807,13 +6856,21 @@ async function saveAdminChanges() {
 
     // Сохраняем подписку
     if (adminPendingChanges.subscription) {
-      console.log('💾 Saving subscription changes:', adminPendingChanges.subscription);
+      const subscriptionData = adminPendingChanges.subscription;
+      
+      // Валидация: если активируем подписку, дата окончания обязательна
+      if (subscriptionData.subscriptionActive && !subscriptionData.subscriptionEndDate) {
+        alert('При активации подписки необходимо указать дату окончания');
+        return;
+      }
+      
+      console.log('💾 Saving subscription changes:', subscriptionData);
       const response = await fetch(`/api/admin?action=subscription&userId=${adminCurrentUserId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({
-          subscriptionActive: adminPendingChanges.subscription.subscriptionActive,
-          subscriptionEndDate: adminPendingChanges.subscription.subscriptionEndDate || null
+          subscriptionActive: subscriptionData.subscriptionActive,
+          subscriptionEndDate: subscriptionData.subscriptionEndDate || null
         })
       });
       if (!response.ok) {
