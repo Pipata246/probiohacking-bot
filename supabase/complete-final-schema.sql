@@ -5,6 +5,11 @@
 -- ВАЖНО: Таблица quiz_results НЕ используется в проекте
 -- Все ответы квиза сохраняются в таблицу quiz_answers
 -- ИИ получает данные из quiz_answers для консультаций
+--
+-- ИНТЕГРАЦИЯ KIMI:
+-- - при загрузке фото анализа: Kimi описывает анализ → сохраняется в description
+-- - при чате: если description = NULL → Kimi анализирует параллельно с DeepSeek
+-- - если description заполнена → используется тот же текст (кэш)
 -- ============================================
 
 -- ============================================
@@ -152,6 +157,24 @@ CREATE TABLE IF NOT EXISTS public.user_analysis_photos (
   CONSTRAINT fk_user FOREIGN KEY (telegram_id) REFERENCES public.users(telegram_id),
   CONSTRAINT user_analysis_photos_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE
 );
+
+-- Миграция: убедяемся что колонка description есть для KIMI интеграции
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'user_analysis_photos' 
+    AND column_name = 'description'
+  ) THEN
+    ALTER TABLE public.user_analysis_photos ADD COLUMN description text;
+    RAISE NOTICE 'Добавлена колонка description для кэширования описаний анализов от Kimi';
+  ELSE
+    RAISE NOTICE 'Колонка description уже существует в user_analysis_photos';
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'Ошибка при добавлении description: %', SQLERRM;
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.user_requests (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

@@ -4,6 +4,7 @@ const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 // Import Supabase client and middleware
 const { requestService, chatService } = require('../supabase/client.js');
 const { initUserFromWebApp } = require('../supabase/userMiddleware.js');
+const { analyzePhotoWithKimi } = require('../supabase/kimiClient.js');
 const { createClient } = require('@supabase/supabase-js');
 
 // Supabase client для проверки квиза
@@ -49,15 +50,23 @@ async function getUserDiagnosticData(userId) {
 
     // Получаем фотографии анализов только если они есть (асинхронно, не блокируем)
     let analysisPhotos = [];
+    let analysisDescriptions = {}; // Кэш описаний анализов
+    
     if (userData.analyses_uploaded) {
       const { data: photos } = await supabase
         .from('user_analysis_photos')
-        .select('analysis_group')
+        .select('id, analysis_group, photo_url, description') // Добавляем description
         .eq('telegram_id', userId)
         .limit(20); // Ограничиваем для скорости
 
       if (photos) {
         analysisPhotos = photos;
+        // Собираем описания в кэш
+        photos.forEach(photo => {
+          if (photo.description && photo.description.trim() !== '') {
+            analysisDescriptions[photo.id] = photo.description;
+          }
+        });
       }
     }
 
@@ -69,7 +78,8 @@ async function getUserDiagnosticData(userId) {
       quiz_answers: {},
       additional_answers: {},
       full_answers: answers,
-      analysis_photos: analysisPhotos
+      analysis_photos: analysisPhotos,
+      analysis_descriptions: analysisDescriptions // Добавляем описания анализов
     };
 
     answers.forEach(answer => {
@@ -125,6 +135,70 @@ function getSystemByQuestionId(questionId) {
   };
   
   return systemMap[questionId] || 'Общее состояние';
+}
+
+/**
+ * Функция для обработки анализов - параллельная генерация описаний через Kimi если нужно
+ */
+async function processAnalysisPhotosWithKimi(analysisPhotos, diagnosticData) {
+  try {
+    if (!analysisPhotos || analysisPhotos.length === 0) {
+      console.log('📊 Анализов нет');
+      return diagnosticData;
+    }
+
+    // Определяем какие анализы нуждаются в описании
+    const photosNeedingAnalysis = analysisPhotos.filter(photo => 
+      !photo.description || photo.description.trim() === ''
+    );
+
+    if (photosNeedingAnalysis.length === 0) {
+      console.log(`✅ Все ${analysisPhotos.length} анализов имеют описание (кэш)`);
+      return diagnosticData;
+    }
+
+    console.log(`🔄 Запускаем Kimi для ${photosNeedingAnalysis.length} анализов параллельно...`);
+
+    // Запускаем Kimi параллельно для всех анализов без описания
+    const kimiPromises = photosNeedingAnalysis.map(async (photo) => {
+      try {
+        const description = await analyzePhotoWithKimi(photo.photo_url, photo.analysis_group);
+        
+        // Сохраняем описание в БД (параллельно, не блокируем основной поток)
+        supabase
+          .from('user_analysis_photos')
+          .update({ description })
+          .eq('id', photo.id)
+          .catch(err => console.error(`❌ Ошибка сохранения описания для ${photo.id}:`, err));
+
+        return {
+          id: photo.id,
+          description: description
+        };
+      } catch (error) {
+        console.error(`⚠️  Ошибка Kimi для анализа ${photo.analysis_group}:`, error.message);
+        return {
+          id: photo.id,
+          description: `[Ошибка: ${error.message}]`
+        };
+      }
+    });
+
+    // Ждем всех Kimi запросов
+    const kimiResults = await Promise.all(kimiPromises);
+
+    // Обновляем кэш описаний в diagnostic data
+    kimiResults.forEach(result => {
+      diagnosticData.analysis_descriptions[result.id] = result.description;
+    });
+
+    console.log(`✅ Kimi завершил анализ ${kimiResults.length} файлов`);
+    return diagnosticData;
+
+  } catch (error) {
+    console.error('❌ Ошибка в processAnalysisPhotosWithKimi:', error);
+    return diagnosticData;
+  }
 }
 
 // Константы для управления контекстом
@@ -409,6 +483,11 @@ module.exports = async (req, res) => {
     
     chatHistory = chatHistoryResult || '';
     diagnosticData = diagnosticDataResult || null;
+
+    // 🎯 ИНТЕГРАЦИЯ KIMI: Обработка анализов - параллельная генерация описаний если нужно
+    if (diagnosticData && diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
+      diagnosticData = await processAnalysisPhotosWithKimi(diagnosticData.analysis_photos, diagnosticData);
+    }
     
     // Формируем системный промпт с учетом диагностических данных и актуальной датой
     let systemPrompt = getSystemPrompt();
@@ -431,14 +510,28 @@ module.exports = async (req, res) => {
       // Компактный формат
       systemPrompt += `\n⚠️ Статус: Анализы загружены, диагностики нет. Работай с категориями анализов.`;
       
-      // Компактная информация об анализах
+      // Информация об анализах с описаниями от Kimi
       if (diagnosticData?.analysis_photos?.length > 0) {
         const groupedPhotos = {};
         diagnosticData.analysis_photos.forEach(photo => {
-          if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = 0;
-          groupedPhotos[photo.analysis_group]++;
+          if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = [];
+          groupedPhotos[photo.analysis_group].push(photo);
         });
-        systemPrompt += `\n📷 Анализы: ${Object.entries(groupedPhotos).map(([g, c]) => `${g}(${c})`).join(', ')}. При показателях — попроси значения.`;
+        
+        let analysisInfo = `\n📷 Анализы:\n`;
+        Object.entries(groupedPhotos).forEach(([group, photos]) => {
+          analysisInfo += `\n${group} (${photos.length}):\n`;
+          photos.forEach((photo, idx) => {
+            const description = diagnosticData.analysis_descriptions?.[photo.id];
+            if (description && description.trim() !== '') {
+              analysisInfo += `  ${idx + 1}. ${description.substring(0, 300)}...\n`;
+            } else {
+              analysisInfo += `  ${idx + 1}. [Описание из Kimi - у пользователя загружено]\n`;
+            }
+          });
+        });
+        systemPrompt += analysisInfo;
+        systemPrompt += `\nПри запросе конкретных показателей — объясни что видишь на анализе.`;
       }
     } else if (quizDone && !analysesDone) {
       // Компактный формат для ускорения
@@ -475,14 +568,25 @@ module.exports = async (req, res) => {
         systemPrompt += `\n${system}: ${answers.join('; ')}`;
       });
 
-      // Компактная информация об анализах
+      // Компактная информация об анализах с описаниями
       if (diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
         const groupedPhotos = {};
         diagnosticData.analysis_photos.forEach(photo => {
-          if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = 0;
-          groupedPhotos[photo.analysis_group]++;
+          if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = [];
+          groupedPhotos[photo.analysis_group].push(photo);
         });
-        systemPrompt += `\n📷 Анализы: ${Object.entries(groupedPhotos).map(([g, c]) => `${g}(${c})`).join(', ')}. При запросе показателей — попроси значения.`;
+        
+        let analysisInfo = `\n📷 Анализы:\n`;
+        Object.entries(groupedPhotos).forEach(([group, photos]) => {
+          analysisInfo += `${group} (${photos.length}):\n`;
+          photos.forEach((photo, idx) => {
+            const description = diagnosticData.analysis_descriptions?.[photo.id];
+            if (description && description.trim() !== '') {
+              analysisInfo += `  ${idx + 1}. ${description.substring(0, 200)}...\n`;
+            }
+          });
+        });
+        systemPrompt += analysisInfo;
       }
 
       systemPrompt += `\n✅ Группируй в блоки, используй целевые значения, рекомендации по категориям с механизмами. Запрещено: [BUTTON:...], просить диагностику.`;

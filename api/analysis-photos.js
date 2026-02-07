@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { analyzePhotoWithKimi } = require('../supabase/kimiClient.js');
 
 // Supabase client
 const supabase = createClient(
@@ -197,9 +198,23 @@ async function handleAnalysisPhotos(req, res) {
       });
     }
 
-    console.log('✅ Validation passed, saving to database...');
+    console.log('✅ Validation passed, preparing Kimi analysis...');
 
-    // Сохраняем фото в базу
+    // 🎯 ИНТЕГРАЦИЯ KIMI: Анализируем фото и получаем описание
+    let analysisDescription = description || null;
+    
+    try {
+      console.log(`🤖 Запускаем Kimi для анализа "${analysis_group}"...`);
+      analysisDescription = await analyzePhotoWithKimi(photo_url, analysis_group);
+      console.log(`✅ Kimi завершил анализ на ${analysisDescription.length} символов`);
+    } catch (kimiError) {
+      console.error('⚠️  Ошибка в Kimi API, но продолжаем:', kimiError.message);
+      analysisDescription = `[Ошибка анализа Kimi: ${kimiError.message}]`;
+    }
+
+    console.log('✅ Saving to database with description...');
+
+    // Сохраняем фото в базу с описанием от Kimi
     const { data, error } = await supabase
       .from('user_analysis_photos')
       .insert({
@@ -208,7 +223,7 @@ async function handleAnalysisPhotos(req, res) {
         photo_name: photo_name || 'Фото анализа',
         file_size: file_size || 0,
         analysis_group,
-        description: description || ''
+        description: analysisDescription // Сохраняем описание от Kimi
       })
       .select()
       .single();
