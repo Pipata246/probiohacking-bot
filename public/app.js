@@ -1950,7 +1950,6 @@ function showPage(pageName) {
       currentPage = 'admin';
       isChatMode = false;
       isInRecommendedTests = false;
-      break;
       
       // Если мы возвращаемся к списку пользователей, сбрасываем изменения
       if (adminCurrentView === 'users') {
