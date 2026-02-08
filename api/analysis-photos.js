@@ -35,6 +35,40 @@ const ANALYSIS_GROUPS = [
 const SUPPORTED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
 const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf'];
 
+const BUCKET_NAME = 'analysis-photos';
+
+/**
+ * Если photo_url — Supabase Storage, возвращаем подписанный URL для надёжной загрузки (в т.ч. приватный бакет)
+ */
+async function getDownloadUrlForVision(photoUrl) {
+  if (!photoUrl || typeof photoUrl !== 'string') return photoUrl;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  if (!supabaseUrl) return photoUrl;
+  const base = supabaseUrl.replace(/\/$/, '');
+  const prefix = `${base}/storage/v1/object/public/${BUCKET_NAME}/`;
+  const signedPrefix = `${base}/storage/v1/object/sign/${BUCKET_NAME}/`;
+  if (!photoUrl.startsWith(prefix) && !photoUrl.startsWith(signedPrefix)) return photoUrl;
+  try {
+    const path = photoUrl.startsWith(prefix)
+      ? photoUrl.slice(prefix.length).split('?')[0]
+      : photoUrl.includes('/sign/')
+        ? photoUrl.split(`/sign/${BUCKET_NAME}/`)[1]?.split('?')[0]
+        : null;
+    if (!path) return photoUrl;
+    const { data, error } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(path, 60 * 10); // 10 минут
+    if (error || !data?.signedUrl) {
+      console.warn('Signed URL creation failed, using original URL:', error?.message);
+      return photoUrl;
+    }
+    return data.signedUrl;
+  } catch (e) {
+    console.warn('getDownloadUrlForVision error:', e.message);
+    return photoUrl;
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, DELETE, OPTIONS');
@@ -281,8 +315,9 @@ async function handleAnalysisPhotos(req, res) {
     
     if (!analysisDescription) {
       try {
+        const downloadUrl = await getDownloadUrlForVision(photo_url);
         console.log(`🤖 Запускаем Vision (qwen) для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
-        analysisDescription = await analyzePhotoWithVision(photo_url, analysis_group, isPdf);
+        analysisDescription = await analyzePhotoWithVision(downloadUrl, analysis_group, isPdf);
         console.log(`✅ Vision (qwen) завершил анализ на ${analysisDescription.length} символов`);
       } catch (visionError) {
         console.error('⚠️  Ошибка в Vision API, но продолжаем:', visionError.message);
