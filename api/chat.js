@@ -519,79 +519,47 @@ module.exports = async (req, res) => {
     
     // 🚀 QUICK MODE - просто отвечаем на вопрос БЕЗ диагностических данных
     if (responseMode === 'quick') {
-      systemPrompt += `\n\n⚡ РЕЖИМ БЫСТРОГО ОТВЕТА: Дай краткий, понятный ответ на вопрос (2-3 предложения максимум). Не запрашивай диагностику.`;
+      systemPrompt += `\n\n⚡ РЕЖИМ БЫСТРОГО ОТВЕТА: Ответь на вопрос пользователя кратко (2-3 предложения максимум). Не запрашивай диагностику.`;
     } else {
-      // 📋 DETAILED MODE - полный анализ с диагностическими данными
+      // 📋 DETAILED MODE - используй данные как КОНТЕКСТ, отвечай на вопрос
+      systemPrompt += `\n\n📋 РЕЖИМ ПОДРОБНОГО ОТВЕТА: Ответь на вопрос пользователя, используя его личные данные как контекст для более персонализированного ответа. НЕ предлагай диагностику если её не просили. НЕ расписывай лекции. Обращайся к его данным только если это релевантно его вопросу.`;
       
-      // Определяем статусы для построения промпта
-      const quizDone = diagnosticData?.quiz_completed === true;
-      const analysesDone = diagnosticData?.analyses_uploaded === true;
-      
-      console.log('📋 Status check:', { quizDone, analysesDone, responseMode });
-
-      if (!quizDone && !analysesDone) {
-        // Нет диагностики и анализов
-        systemPrompt += `\n⚠️ Нет данных диагностики и анализов. Отвечай на основе общих знаний.`;
-      } else if (!quizDone && analysesDone) {
-        // Есть анализы, но нет диагностики
-        systemPrompt += `\n⚠️ Статус: Анализы загружены, диагностики нет. Работай с категориями анализов.`;
+      // Добавляем контекст из данных
+      if (diagnosticData) {
+        let context = `\n\n📊 Контекст о пользователе:\n`;
         
-        // Информация об анализах
-        if (diagnosticData?.analysis_photos?.length > 0) {
-          const groupedPhotos = {};
-          diagnosticData.analysis_photos.forEach(photo => {
-            if (!groupedPhotos[photo.analysis_group]) groupedPhotos[photo.analysis_group] = [];
-            groupedPhotos[photo.analysis_group].push(photo);
-          });
-          
-          let analysisInfo = `\n📷 Анализы:\n`;
-          Object.entries(groupedPhotos).forEach(([group, photos]) => {
-            analysisInfo += `\n${group} (${photos.length}):\n`;
-            photos.forEach((photo, idx) => {
-              const description = diagnosticData.analysis_descriptions?.[photo.id];
-              if (description && description.trim() !== '') {
-                analysisInfo += `  ${idx + 1}. ${description.substring(0, 300)}...\n`;
-              } else {
-                analysisInfo += `  ${idx + 1}. [Описание из Kimi - у пользователя загружено]\n`;
-              }
-            });
-          });
-          systemPrompt += analysisInfo;
-          systemPrompt += `\nПри запросе конкретных показателей — объясни что видишь на анализе.`;
+        // Личные данные
+        if (diagnosticData.personal_data) {
+          const p = diagnosticData.personal_data;
+          context += `Профиль: ${p.fullName || 'неизвестно'}, ${p.birthDate || 'возраст не указан'}, ${p.gender || 'пол не указан'}. `;
+          if (p.weight && p.height) context += `${p.weight}кг, ${p.height}см. `;
+          if (p.profession) context += `Профессия: ${p.profession}. `;
+          if (p.sport) context += `Спорт: ${p.sport}.`;
         }
-      } else if (quizDone && !analysesDone) {
-        // Есть диагностика, но нет анализов
-        const p = diagnosticData?.personal_data || {};
-        systemPrompt += `\n\n📊 Данные: ${p.fullName || 'не указано'}, ${p.birthDate || 'возраст не указан'}, ${p.gender || 'пол не указан'}, ${p.weight || '?'}кг/${p.height || '?'}см, ${p.profession || 'профессия не указана'}, спорт: ${p.sport || 'не указан'}. Жалобы: ${diagnosticData?.additional_answers?.discomfort || 'не указано'}. Диагнозы: ${diagnosticData?.additional_answers?.diagnosis || 'не указано'}. Лечение: ${diagnosticData?.additional_answers?.treatment || 'не указано'}.`;
-
-        if (diagnosticData?.quiz_answers && Object.keys(diagnosticData.quiz_answers).length > 0) {
+        
+        // Жалобы и диагнозы если есть
+        if (diagnosticData.additional_answers) {
+          const add = diagnosticData.additional_answers;
+          if (add.discomfort) context += `\nОсновные жалобы: ${add.discomfort}.`;
+          if (add.diagnosis) context += `\nДиагнозы: ${add.diagnosis}.`;
+          if (add.treatment) context += `\nТекущее лечение: ${add.treatment}.`;
+        }
+        
+        // Краткое резюме из quiz
+        if (diagnosticData.quiz_answers && Object.keys(diagnosticData.quiz_answers).length > 0) {
           const systemsMap = {};
           Object.entries(diagnosticData.quiz_answers).forEach(([id, data]) => {
             if (!systemsMap[data.system]) systemsMap[data.system] = [];
             systemsMap[data.system].push(data.answer);
           });
           
+          context += `\nРезултаты опроса по системам организма:`;
           Object.entries(systemsMap).forEach(([system, answers]) => {
-            systemPrompt += `\n${system}: ${answers.join('; ')}`;
+            context += `\n- ${system}: ${answers.join(', ')}`;
           });
         }
         
-        systemPrompt += `\n🎯 Группируй в блоки, связывай жалобы с опросом, рекомендации с механизмами.`;
-      } else {
-        // Полная диагностика с анализами
-        const personal = diagnosticData.personal_data;
-        systemPrompt += `\n\n📊 Данные: ${personal.fullName || 'не указано'}, ${personal.birthDate || 'возраст не указан'}, ${personal.gender || 'пол не указан'}, ${personal.weight || '?'}кг/${personal.height || '?'}см, ${personal.profession || 'профессия не указана'}, спорт: ${personal.sport || 'не указан'}. Жалобы: ${diagnosticData.additional_answers.discomfort || 'не указано'}. Диагнозы: ${diagnosticData.additional_answers.diagnosis || 'не указано'}. Лечение: ${diagnosticData.additional_answers.treatment || 'не указано'}.`;
-
-        const systemsMap = {};
-        Object.entries(diagnosticData.quiz_answers).forEach(([questionId, data]) => {
-          if (!systemsMap[data.system]) systemsMap[data.system] = [];
-          systemsMap[data.system].push(data.answer);
-        });
-        
-        Object.entries(systemsMap).forEach(([system, answers]) => {
-          systemPrompt += `\n${system}: ${answers.join('; ')}`;
-        });
-
+        // Информация об анализах
         if (diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
           const groupedPhotos = {};
           diagnosticData.analysis_photos.forEach(photo => {
@@ -599,20 +567,13 @@ module.exports = async (req, res) => {
             groupedPhotos[photo.analysis_group].push(photo);
           });
           
-          let analysisInfo = `\n📷 Анализы:\n`;
+          context += `\nЗагруженные анализы:`;
           Object.entries(groupedPhotos).forEach(([group, photos]) => {
-            analysisInfo += `${group} (${photos.length}):\n`;
-            photos.forEach((photo, idx) => {
-              const description = diagnosticData.analysis_descriptions?.[photo.id];
-              if (description && description.trim() !== '') {
-                analysisInfo += `  ${idx + 1}. ${description.substring(0, 200)}...\n`;
-              }
-            });
+            context += `\n- ${group}: ${photos.length} файлов загружено`;
           });
-          systemPrompt += analysisInfo;
         }
-
-        systemPrompt += `\n✅ Группируй в блоки, используй целевые значения, рекомендации по категориям с механизмами. Запрещено: [BUTTON:...], просить диагностику.`;
+        
+        systemPrompt += context;
       }
     }
     
