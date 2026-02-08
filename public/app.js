@@ -4601,8 +4601,10 @@ async function handleFileUpload(file) {
     console.log('   Очищенное имя:', safeFileName);
     console.log('   Итоговое имя файла:', fileName);
     console.log('   Путь в Storage:', filePath);
+    console.log('   Размер файла:', file.size, 'bytes');
     
     // Сначала получаем URL для загрузки
+    console.log('⏳ Запрашиваем signed URL от backend...');
     const uploadResponse = await fetch('/api/analysis-photos?action=upload-url', {
       method: 'POST',
       headers: {
@@ -4617,30 +4619,65 @@ async function handleFileUpload(file) {
       })
     });
     
-    console.log('📤 Отправлен запрос на backend с filePath:', filePath);
+    console.log('📤 Response от backend:', uploadResponse.status, uploadResponse.statusText);
     
     if (!uploadResponse.ok) {
-      throw new Error('Не удалось получить URL для загрузки');
+      const errorText = await uploadResponse.text();
+      console.error('❌ Ошибка при получении URL:', uploadResponse.status, errorText);
+      throw new Error(`Ошибка backend: ${uploadResponse.status} - ${errorText}`);
     }
     
-    const { uploadUrl, publicUrl } = await uploadResponse.json();
+    const urlData = await uploadResponse.json();
+    console.log('📋 Получены URL от backend:', { 
+      uploadUrl: urlData.uploadUrl?.substring(0, 100) + '...', 
+      publicUrl: urlData.publicUrl 
+    });
+    
+    if (!urlData.uploadUrl || !urlData.publicUrl) {
+      console.error('❌ отсутствуют URL в ответе:', urlData);
+      throw new Error('Backend не вернул valid URLs');
+    }
+    
+    const { uploadUrl, publicUrl } = urlData;
     
     // Загружаем файл через signed URL
-    const uploadResult = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': file.type
-      },
-      body: file
-    });
+    console.log('⏳ Загружаем файл в Supabase Storage...');
+    console.log('   Метод: PUT');
+    console.log('   Content-Type:', file.type);
+    console.log('   Размер:', file.size);
+    console.log('   URL (first 150 chars):', uploadUrl.substring(0, 150));
+    
+    let uploadResult;
+    try {
+      uploadResult = await Promise.race([
+        fetch(uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': file.type
+          },
+          body: file
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout загрузки файла - более 60 секунд')), 60000)
+        )
+      ]);
+    } catch (timeoutError) {
+      console.error('❌ Timeout при загрузке:', timeoutError.message);
+      throw new Error('Загрузка файла заняла слишком долго. Проверьте интернет соединение.');
+    }
+    
+    console.log('📊 Ответ от Supabase:', uploadResult.status, uploadResult.statusText);
     
     if (!uploadResult.ok) {
       const errorText = await uploadResult.text();
-      console.error('Upload error details:', errorText);
-      throw new Error(`Не удалось загрузить файл: ${uploadResult.status} ${errorText}`);
+      console.error('❌ Upload error status:', uploadResult.status);
+      console.error('❌ Upload error details:', errorText);
+      console.error('❌ Upload error headers:', Object.fromEntries(uploadResult.headers.entries()));
+      throw new Error(`Ошибка Supabase: ${uploadResult.status} - ${errorText || 'нет деталей'}`);
     }
     
-    console.log('Файл успешно загружен в Storage:', publicUrl);
+    console.log('✅ Файл успешно загружен в Storage');
+    console.log('   Public URL:', publicUrl);
     
     // Сохраняем информацию о файле в базу данных
     const saveResponse = await fetch('/api/analysis-photos', {
@@ -4661,11 +4698,13 @@ async function handleFileUpload(file) {
     });
     
     if (!saveResponse.ok) {
-      throw new Error('Не удалось сохранить информацию о файле');
+      const errorText = await saveResponse.text();
+      console.error('❌ Ошибка сохранения в БД:', saveResponse.status, errorText);
+      throw new Error(`Ошибка при сохранении в БД: ${saveResponse.status} - ${errorText}`);
     }
     
     const saveResult = await saveResponse.json();
-    console.log('Информация о файле сохранена в БД:', saveResult);
+    console.log('✅ Информация о файле сохранена в БД:', saveResult);
     
     // Добавляем фото в состояние и обновляем UI (НЕ перезагружаем весь список)
     if (saveResult.photo) {
@@ -4674,12 +4713,28 @@ async function handleFileUpload(file) {
     }
     
     // Показываем уведомление об успешной загрузке
-    alert('Анализ успешно загружен!');
+    console.log('✅ === ФАЙЛ УСПЕШНО ЗАГРУЖЕН ПОЛНОСТЬЮ ===');
+    alert('✅ Анализ успешно загружен!');
     
-    console.log('=== ФАЙЛ УСПЕШНО ЗАГРУЖЕН В БД ===');
   } catch (error) {
-    console.error('Ошибка при загрузке файла:', error);
-    alert('Ошибка при загрузке файла: ' + error.message);
+    console.error('❌ === ОШИБКА ПРИ ЗАГРУЗКЕ ФАЙЛА ===');
+    console.error('Сообщение ошибки:', error.message);
+    console.error('Полная ошибка:', error);
+    console.error('Stack trace:', error.stack);
+    
+    // Показываем более информативное сообщение
+    let userMessage = error.message;
+    if (userMessage.includes('Timeout')) {
+      userMessage = 'Загрузка заняла слишком долго. Проверьте интернет соединение и размер файла.';
+    } else if (userMessage.includes('Invalid key')) {
+      userMessage = 'Ошибка с путем файла. Попробуйте еще раз с другим названием файла.';
+    } else if (userMessage.includes('403') || userMessage.includes('Forbidden')) {
+      userMessage = 'Ошибка доступа к хранилищу. Свяжитесь с поддержкой.';
+    } else if (userMessage.includes('500')) {
+      userMessage = 'Ошибка сервера. Попробуйте позже.';
+    }
+    
+    alert('❌ Ошибка при загрузке файла:\n\n' + userMessage);
   } finally {
     hideLoadingOverlay();
   }
