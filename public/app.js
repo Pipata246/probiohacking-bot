@@ -4649,21 +4649,18 @@ async function handleFileUpload(file) {
     
     let uploadResult;
     try {
-      uploadResult = await Promise.race([
-        fetch(uploadUrl, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': file.type
-          },
-          body: file
-        }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout загрузки файла - более 60 секунд')), 60000)
-        )
-      ]);
-    } catch (timeoutError) {
-      console.error('❌ Timeout при загрузке:', timeoutError.message);
-      throw new Error('Загрузка файла заняла слишком долго. Проверьте интернет соединение.');
+      // 🔧 УБРАЛИ TIMEOUT - положились на браузер
+      // На мобильном интернете загрузка может занять > 60 сек, это нормально
+      uploadResult = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type
+        },
+        body: file
+      });
+    } catch (fetchError) {
+      console.error('❌ Fetch error при загрузке:', fetchError.message);
+      throw new Error('Ошибка при загрузке файла: ' + fetchError.message);
     }
     
     console.log('📊 Ответ от Supabase:', uploadResult.status, uploadResult.statusText);
