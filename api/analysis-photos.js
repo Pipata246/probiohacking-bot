@@ -80,12 +80,28 @@ async function handleUploadUrl(req, res) {
     });
   }
 
-  console.log('Creating upload URL for:', filePath);
+  // 🔧 ВАЖНО: Очищаем filePath от небезопасных символов
+  function sanitizePath(path) {
+    return path
+      .split('/') // Разделяем на части
+      .map(part => {
+        // Очищаем каждую часть пути
+        return part
+          .replace(/[^a-zA-Z0-9._\-]/g, '_') // Спецсимволы → _
+          .replace(/_+/g, '_') // Множественные _ → один _
+          .toLowerCase();
+      })
+      .join('/'); // Собираем обратно
+  }
+
+  const cleanFilePath = sanitizePath(filePath);
+  console.log('Original filePath:', filePath);
+  console.log('Cleaned filePath:', cleanFilePath);
 
   // Создаем signed URL для загрузки файла в Supabase Storage
   const { data, error } = await supabaseAdmin.storage
     .from('analysis-photos')
-    .createSignedUploadUrl(filePath, 60 * 5); // URL действителен 5 минут
+    .createSignedUploadUrl(cleanFilePath, 60 * 5); // URL действителен 5 минут
 
   if (error) {
     console.error('Error creating signed upload URL:', error);
@@ -99,7 +115,7 @@ async function handleUploadUrl(req, res) {
   // Получаем public URL для файла
   const { data: { publicUrl } } = supabaseAdmin.storage
     .from('analysis-photos')
-    .getPublicUrl(filePath);
+    .getPublicUrl(cleanFilePath);
 
   console.log('Upload URL created successfully');
 
@@ -107,7 +123,7 @@ async function handleUploadUrl(req, res) {
     success: true,
     uploadUrl: data.signedUrl,
     publicUrl: publicUrl,
-    filePath: filePath
+    filePath: cleanFilePath
   });
 }
 

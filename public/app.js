@@ -4544,14 +4544,44 @@ async function handleFileUpload(file) {
   console.log('Тип файла поддерживается');
 
   try {
-    // 🔧 Функция для очистки имени файла от небезопасных символов
+    // 🔧 Функция для очистки имени файла - используем только ASCII буквы и цифры
     function sanitizeFileName(name) {
-      // Сохраняем только буквы, цифры, точку и тире
-      return name
-        .replace(/[^a-zA-Z0-9._\-\s]/g, '_') // Заменяем спецсимволы на подчеркивание
-        .replace(/\s+/g, '_') // Заменяем пробелы на подчеркивание
-        .replace(/_+/g, '_') // Убираем множественные подчеркивания
-        .toLowerCase(); // Приводим к нижнему регистру
+      // Получаем расширение файла
+      const lastDot = name.lastIndexOf('.');
+      const ext = lastDot > 0 ? name.substring(lastDot).toLowerCase() : '';
+      let nameWithoutExt = lastDot > 0 ? name.substring(0, lastDot) : name;
+      
+      // Преобразуем в массив символов и фильтруем
+      let cleaned = '';
+      for (let i = 0; i < nameWithoutExt.length; i++) {
+        const code = nameWithoutExt.charCodeAt(i);
+        const char = nameWithoutExt[i];
+        
+        // Оставляем только ASCII буквы (a-z, A-Z), цифры (0-9), дефис и подчеркивание
+        if ((code >= 48 && code <= 57) ||      // 0-9
+            (code >= 97 && code <= 122) ||    // a-z  
+            (code >= 65 && code <= 90) ||     // A-Z
+            char === '-' || char === '_' || char === ' ') {
+          cleaned += char;
+        }
+      }
+      
+      // Обработка очищенной строки
+      cleaned = cleaned
+        .replace(/\s+/g, '_')       // Пробелы → подчеркивание
+        .replace(/-+/g, '_')        // Дефисы → подчеркивание
+        .replace(/_+/g, '_')        // Множественные _ → один _
+        .toLowerCase()
+        .substring(0, 50);          // Макс 50 символов
+      
+      if (!cleaned) {
+        cleaned = 'file'; // Если ничего не осталось
+      }
+      
+      // Возвращаем санитизированное имя с расширением
+      const sanitized = cleaned + ext;
+      console.log('🔧 Sanitize:', { original: name, sanitized });
+      return sanitized;
     }
     
     // Показываем индикатор загрузки
@@ -4566,7 +4596,11 @@ async function handleFileUpload(file) {
     const fileName = `${Date.now()}_${safeFileName}`;
     const filePath = `analysis-photos/${window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'unknown'}/${fileName}`;
     
-    console.log('Загружаем файл в Storage:', filePath);
+    console.log('📁 Параметры загрузки:');
+    console.log('   Оригинальное имя:', file.name);
+    console.log('   Очищенное имя:', safeFileName);
+    console.log('   Итоговое имя файла:', fileName);
+    console.log('   Путь в Storage:', filePath);
     
     // Сначала получаем URL для загрузки
     const uploadResponse = await fetch('/api/analysis-photos?action=upload-url', {
@@ -4582,6 +4616,8 @@ async function handleFileUpload(file) {
         filePath
       })
     });
+    
+    console.log('📤 Отправлен запрос на backend с filePath:', filePath);
     
     if (!uploadResponse.ok) {
       throw new Error('Не удалось получить URL для загрузки');
