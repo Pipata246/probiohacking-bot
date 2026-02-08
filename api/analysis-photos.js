@@ -273,27 +273,34 @@ async function handleAnalysisPhotos(req, res) {
       });
     }
 
-    // Определяем тип файла
+    // Определяем тип файла (клиент может присылать 'image'/'pdf' или MIME)
     const fileExtension = photo_name ? '.' + photo_name.split('.').pop().toLowerCase() : null;
-    
-    // Определяем MIME-type по расширению
-    let fileTypeToUse = file_type;
-    if (!fileTypeToUse && fileExtension) {
+    const rawFileType = (file_type && typeof file_type === 'string') ? file_type.trim().toLowerCase() : '';
+
+    let fileTypeToUse;
+    if (rawFileType === 'pdf') {
+      fileTypeToUse = 'application/pdf';
+    } else if (rawFileType === 'image' || !rawFileType) {
+      // Клиент часто присылает file_type: 'image' — определяем MIME по расширению или дефолт
       if (fileExtension === '.pdf') fileTypeToUse = 'application/pdf';
       else if (['.jpg', '.jpeg'].includes(fileExtension)) fileTypeToUse = 'image/jpeg';
       else if (fileExtension === '.png') fileTypeToUse = 'image/png';
+      else if (fileExtension === '.webp') fileTypeToUse = 'image/webp';
+      else fileTypeToUse = 'image/jpeg'; // дефолт для фото (в т.ч. «Сделать фото» без расширения)
+    } else {
+      // Полный MIME от клиента
+      fileTypeToUse = rawFileType;
     }
-    if (!fileTypeToUse) fileTypeToUse = 'image/jpeg'; // дефолт
-    
+
     const isPdf = fileTypeToUse === 'application/pdf' || fileExtension === '.pdf';
-    
+
     // Проверка поддерживаемого типа
     const isSupported = SUPPORTED_FILE_TYPES.includes(fileTypeToUse) || isPdf;
     if (!isSupported) {
       console.log('❌ Unsupported file type:', fileTypeToUse, 'extension:', fileExtension);
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Unsupported file type. Supported: ' + SUPPORTED_EXTENSIONS.join(', ') 
+      return res.status(400).json({
+        success: false,
+        error: 'Unsupported file type. Supported: ' + SUPPORTED_EXTENSIONS.join(', ')
       });
     }
     
