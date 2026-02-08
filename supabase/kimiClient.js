@@ -4,7 +4,8 @@
  */
 
 const KIMI_API_KEY = process.env.KIMI_API_KEY;
-const KIMI_API_URL = 'https://api.moonshot.cn/v1/chat/completions';
+// Переключаемся на OpenRouter endpoint (OpenAI-compatible) для модели qwen-vl-plus
+const KIMI_API_URL = 'https://api.openrouter.ai/v1/chat/completions';
 
 // System prompt для Kimi - не врач, а помощник для анализа
 const KIMI_SYSTEM_PROMPT = `Ты не врач. Твоя задача - тщательно анализировать медицинские анализы и документы.
@@ -79,7 +80,7 @@ async function analyzePhotoWithKimi(photoUrl, analysisGroup, isPdf = false) {
     }
 
     const requestBody = {
-      model: 'moonshot-v1',
+      model: 'qwen/qwen-vl-plus',
       messages: [
         {
           role: 'system',
@@ -91,7 +92,7 @@ async function analyzePhotoWithKimi(photoUrl, analysisGroup, isPdf = false) {
         }
       ],
       temperature: 0.7,
-      max_tokens: 2000
+      max_tokens: 2500
     };
 
     console.log(`📤 Отправляем запрос на Kimi API...`);
