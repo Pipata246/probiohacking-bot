@@ -862,39 +862,51 @@ async function loadActiveChat() {
   }
 }
 
-// 🚀 Показываем выбор режима ответа (Quick vs Detailed)
+// 🚀 Показываем выбор режима ответа как сообщение от бота
 function showResponseModeSelector() {
-  const chatMessages = document.querySelector('.chat-messages');
+  const chatMessages = document.getElementById('chatMessages');
   if (!chatMessages) {
     console.error('Chat messages container not found');
     return;
   }
 
+  const container = chatMessages.querySelector('.chat-messages-container');
+  if (!container) {
+    console.error('Chat messages container not found');
+    return;
+  }
+
   // Проверяем если уже есть selector
-  if (chatMessages.querySelector('.response-mode-selector')) {
+  if (container.querySelector('.response-mode-selector')) {
     console.log('Mode selector already visible');
     return;
   }
 
-  // HTML с кнопками селектора в формате компактных кнопок
-  const selectorHTML = `
-    <div class="response-mode-selector">
-      <button class="mode-btn-compact quick-mode-btn" onclick="selectResponseMode('quick')">
-        <span class="btn-icon-small">⚡</span>
-        <span class="btn-text-small">Краткий ответ</span>
-      </button>
-      <button class="mode-btn-compact detailed-mode-btn" onclick="selectResponseMode('detailed')">
-        <span class="btn-icon-small">📋</span>
-        <span class="btn-text-small">Подробная консультация</span>
-      </button>
+  // Создаём контейнер для сообщения с кнопками
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'bot-message';
+  messageDiv.innerHTML = `
+    <div class="bot-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="10" cy="11" r="0.5" fill="white"/>
+        <circle cx="14" cy="11" r="0.5" fill="white"/>
+      </svg>
+    </div>
+    <div class="message-bubble">
+      <div class="response-mode-selector">
+        <button class="mode-btn-compact quick-mode-btn" onclick="selectResponseMode('quick')">
+          ⚡ Краткий ответ
+        </button>
+        <button class="mode-btn-compact detailed-mode-btn" onclick="selectResponseMode('detailed')">
+          📋 Подробная консультация
+        </button>
+      </div>
     </div>
   `;
 
-  // Добавляем selector в DOM
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = selectorHTML;
-  const selector = wrapper.querySelector('.response-mode-selector');
-  chatMessages.appendChild(selector);
+  container.appendChild(messageDiv);
 
   // Добавляем стили если их еще нет
   if (!document.querySelector('style[data-response-mode-styles]')) {
@@ -905,32 +917,31 @@ function showResponseModeSelector() {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding: 8px 16px;
-        margin: 8px 0;
+        padding: 0;
       }
       
       .mode-btn-compact {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        background: linear-gradient(90deg, #5a9d7f 0%, #4a8a6f 100%);
-        border: none;
-        border-radius: 20px;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: transparent;
+        border: 2px solid rgba(255, 255, 255, 0.7);
+        border-radius: 24px;
         color: white;
         cursor: pointer;
         font-size: 14px;
         font-weight: 500;
         transition: all 0.2s ease;
-        text-align: left;
-        width: 100%;
-        max-width: 280px;
+        text-align: center;
+        font-family: inherit;
       }
       
       .mode-btn-compact:hover {
-        background: linear-gradient(90deg, #6aad8f 0%, #5a9a7f 100%);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
         transform: translateY(-1px);
-        box-shadow: 0 3px 12px rgba(90, 157, 127, 0.3);
       }
       
       .mode-btn-compact:active {
@@ -938,32 +949,11 @@ function showResponseModeSelector() {
       }
       
       .quick-mode-btn {
-        background: linear-gradient(90deg, #667eea 0%, #5a6fd8 100%);
-      }
-      
-      .quick-mode-btn:hover {
-        background: linear-gradient(90deg, #7a8df5 0%, #6a7fe8 100%);
-        box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
+        border-color: rgba(255, 255, 255, 0.7);
       }
       
       .detailed-mode-btn {
-        background: linear-gradient(90deg, #f093fb 0%, #e07ac8 100%);
-      }
-      
-      .detailed-mode-btn:hover {
-        background: linear-gradient(90deg, #f5a3ff 0%, #e88ad5 100%);
-        box-shadow: 0 3px 12px rgba(240, 147, 251, 0.3);
-      }
-      
-      .btn-icon-small {
-        font-size: 16px;
-        display: inline-flex;
-        min-width: 16px;
-      }
-      
-      .btn-text-small {
-        font-size: 14px;
-        font-weight: 500;
+        border-color: rgba(255, 255, 255, 0.7);
       }
     `;
     document.head.appendChild(style);
