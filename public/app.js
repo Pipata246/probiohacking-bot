@@ -862,6 +862,147 @@ async function loadActiveChat() {
   }
 }
 
+// 🚀 Показываем выбор режима ответа (Quick vs Detailed)
+function showResponseModeSelector() {
+  const chatMessages = document.querySelector('.chat-messages');
+  if (!chatMessages) {
+    console.error('Chat messages container not found');
+    return;
+  }
+
+  // Проверяем если уже есть selector
+  if (chatMessages.querySelector('.response-mode-selector')) {
+    console.log('Mode selector already visible');
+    return;
+  }
+
+  // HTML с кнопками выбора режима
+  const selectorHTML = `
+    <div class="response-mode-selector">
+      <div class="mode-buttons">
+        <button class="mode-btn quick-mode-btn" onclick="selectResponseMode('quick')">
+          <span class="btn-emoji">🚀</span>
+          <span class="btn-text">Краткий ответ</span>
+          <span class="btn-desc">Быстро и коротко</span>
+        </button>
+        <button class="mode-btn detailed-mode-btn" onclick="selectResponseMode('detailed')">
+          <span class="btn-emoji">📋</span>
+          <span class="btn-text">Подробная консультация</span>
+          <span class="btn-desc">С анализом данных</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Добавляем selector в DOM как временный элемент перед обработкой
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = selectorHTML;
+  const selector = wrapper.querySelector('.response-mode-selector');
+  chatMessages.appendChild(selector);
+
+  // Добавляем стили если их еще нет
+  if (!document.querySelector('style[data-response-mode-styles]')) {
+    const style = document.createElement('style');
+    style.setAttribute('data-response-mode-styles', 'true');
+    style.textContent = `
+      .response-mode-selector {
+        display: flex;
+        justify-content: center;
+        padding: 12px 0;
+        gap: 8px;
+      }
+      
+      .mode-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        max-width: 340px;
+      }
+      
+      .mode-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-align: left;
+        gap: 4px;
+      }
+      
+      .mode-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+      
+      .mode-btn:active {
+        transform: translateY(0);
+      }
+      
+      .quick-mode-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      
+      .detailed-mode-btn {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+      
+      .btn-emoji {
+        font-size: 20px;
+        display: block;
+      }
+      
+      .btn-text {
+        font-size: 15px;
+        font-weight: 600;
+        display: block;
+      }
+      
+      .btn-desc {
+        font-size: 12px;
+        opacity: 0.85;
+        display: block;
+        font-weight: 400;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Прокручиваем в конец
+  setTimeout(() => {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }, 50);
+
+  console.log('✅ Mode selector shown');
+}
+
+// Обработчик выбора режима
+function selectResponseMode(mode) {
+  console.log(`📝 Response mode selected: ${mode}`);
+  
+  // Убираем selector
+  const selector = document.querySelector('.response-mode-selector');
+  if (selector) {
+    selector.remove();
+  }
+  
+  // Обновляем currentResponseMode для текущей очереди в processAiQueue
+  currentResponseMode = mode; // Установим текущий режим
+  
+  // Обрабатываем очередь со стекло режима
+  processAiQueue();
+}
+
+// Текущий режим ответа
+let currentResponseMode = 'detailed'; // По умолчанию детальный
+
 // Отправка сообщения
 function sendChatMessage(message) {
   if (viewingInactiveChatId) return; // В режиме просмотра неактивного чата отправка недоступна
@@ -895,7 +1036,8 @@ function sendChatMessage(message) {
     return;
   }
   pendingAiMessages.push(trimmed);
-  processAiQueue();
+  // 🚀 Показываем выбор режима вместо сразу обработки
+  showResponseModeSelector();
 }
 
 // Создание нового чата (становится активным)
@@ -3194,11 +3336,12 @@ function processAiQueue() {
   console.log('✅ Processing message:', next?.substring(0, 50) + '...');
   isAiBusy = true;
   setChatSendButtonMode('stop');
-  sendMessageToAI(next);
+  // 🚀 Отправляем с текущим режимом (quick или detailed)
+  sendMessageToAI(next, currentResponseMode);
 }
 
-async function sendMessageToAI(message) {
-  console.log('🤖 sendMessageToAI called with:', message?.substring(0, 50) + '...');
+async function sendMessageToAI(message, mode = 'detailed') {
+  console.log('🤖 sendMessageToAI called with:', message?.substring(0, 50) + '...', 'Mode:', mode);
   
   // Обновляем время активности
   lastAiActivityTime = Date.now();
@@ -3225,6 +3368,7 @@ async function sendMessageToAI(message) {
       body: JSON.stringify({ 
         message,
         chatId: currentChatId, // Добавляем ID текущего чата
+        mode: mode, // 🚀 Добавляем режим ответа
         telegramUser: telegramUser ? {
           id: telegramUser.id,
           first_name: telegramUser.first_name,
