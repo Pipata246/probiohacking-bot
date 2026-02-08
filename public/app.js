@@ -876,17 +876,22 @@ function showResponseModeSelector() {
     return;
   }
 
-  // HTML с кнопками выбора режима
+  // HTML с кнопками выбора режима + встроенные SVG иконки
   const selectorHTML = `
     <div class="response-mode-selector">
       <div class="mode-buttons">
         <button class="mode-btn quick-mode-btn" onclick="selectResponseMode('quick')">
-          <span class="btn-emoji">🚀</span>
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+          </svg>
           <span class="btn-text">Краткий ответ</span>
           <span class="btn-desc">Быстро и коротко</span>
         </button>
         <button class="mode-btn detailed-mode-btn" onclick="selectResponseMode('detailed')">
-          <span class="btn-emoji">📋</span>
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
           <span class="btn-text">Подробная консультация</span>
           <span class="btn-desc">С анализом данных</span>
         </button>
@@ -934,7 +939,15 @@ function showResponseModeSelector() {
         font-weight: 600;
         transition: all 0.3s ease;
         text-align: left;
-        gap: 4px;
+        gap: 8px;
+      }
+      
+      .btn-icon {
+        width: 28px;
+        height: 28px;
+        stroke: white;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
       
       .mode-btn:hover {
@@ -952,11 +965,6 @@ function showResponseModeSelector() {
       
       .detailed-mode-btn {
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      }
-      
-      .btn-emoji {
-        font-size: 20px;
-        display: block;
       }
       
       .btn-text {
