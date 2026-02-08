@@ -876,30 +876,21 @@ function showResponseModeSelector() {
     return;
   }
 
-  // HTML с кнопками выбора режима + встроенные SVG иконки
+  // HTML с кнопками селектора в формате компактных кнопок
   const selectorHTML = `
     <div class="response-mode-selector">
-      <div class="mode-buttons">
-        <button class="mode-btn quick-mode-btn" onclick="selectResponseMode('quick')">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-          </svg>
-          <span class="btn-text">Краткий ответ</span>
-          <span class="btn-desc">Быстро и коротко</span>
-        </button>
-        <button class="mode-btn detailed-mode-btn" onclick="selectResponseMode('detailed')">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 11l3 3L22 4"></path>
-            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span class="btn-text">Подробная консультация</span>
-          <span class="btn-desc">С анализом данных</span>
-        </button>
-      </div>
+      <button class="mode-btn-compact quick-mode-btn" onclick="selectResponseMode('quick')">
+        <span class="btn-icon-small">⚡</span>
+        <span class="btn-text-small">Краткий ответ</span>
+      </button>
+      <button class="mode-btn-compact detailed-mode-btn" onclick="selectResponseMode('detailed')">
+        <span class="btn-icon-small">📋</span>
+        <span class="btn-text-small">Подробная консультация</span>
+      </button>
     </div>
   `;
 
-  // Добавляем selector в DOM как временный элемент перед обработкой
+  // Добавляем selector в DOM
   const wrapper = document.createElement('div');
   wrapper.innerHTML = selectorHTML;
   const selector = wrapper.querySelector('.response-mode-selector');
@@ -912,72 +903,67 @@ function showResponseModeSelector() {
     style.textContent = `
       .response-mode-selector {
         display: flex;
-        justify-content: center;
-        padding: 12px 0;
+        flex-direction: column;
         gap: 8px;
+        padding: 8px 16px;
+        margin: 8px 0;
       }
       
-      .mode-buttons {
+      .mode-btn-compact {
         display: flex;
-        flex-direction: column;
+        align-items: center;
         gap: 10px;
-        width: 100%;
-        max-width: 340px;
-      }
-      
-      .mode-btn {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 14px 16px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 10px 14px;
+        background: linear-gradient(90deg, #5a9d7f 0%, #4a8a6f 100%);
         border: none;
-        border-radius: 12px;
+        border-radius: 20px;
         color: white;
         cursor: pointer;
-        font-size: 16px;
-        font-weight: 600;
-        transition: all 0.3s ease;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
         text-align: left;
-        gap: 8px;
+        width: 100%;
+        max-width: 280px;
       }
       
-      .btn-icon {
-        width: 28px;
-        height: 28px;
-        stroke: white;
-        stroke-linecap: round;
-        stroke-linejoin: round;
+      .mode-btn-compact:hover {
+        background: linear-gradient(90deg, #6aad8f 0%, #5a9a7f 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 12px rgba(90, 157, 127, 0.3);
       }
       
-      .mode-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-      }
-      
-      .mode-btn:active {
+      .mode-btn-compact:active {
         transform: translateY(0);
       }
       
       .quick-mode-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(90deg, #667eea 0%, #5a6fd8 100%);
+      }
+      
+      .quick-mode-btn:hover {
+        background: linear-gradient(90deg, #7a8df5 0%, #6a7fe8 100%);
+        box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
       }
       
       .detailed-mode-btn {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(90deg, #f093fb 0%, #e07ac8 100%);
       }
       
-      .btn-text {
-        font-size: 15px;
-        font-weight: 600;
-        display: block;
+      .detailed-mode-btn:hover {
+        background: linear-gradient(90deg, #f5a3ff 0%, #e88ad5 100%);
+        box-shadow: 0 3px 12px rgba(240, 147, 251, 0.3);
       }
       
-      .btn-desc {
-        font-size: 12px;
-        opacity: 0.85;
-        display: block;
-        font-weight: 400;
+      .btn-icon-small {
+        font-size: 16px;
+        display: inline-flex;
+        min-width: 16px;
+      }
+      
+      .btn-text-small {
+        font-size: 14px;
+        font-weight: 500;
       }
     `;
     document.head.appendChild(style);
