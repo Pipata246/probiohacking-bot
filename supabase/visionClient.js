@@ -36,11 +36,21 @@ async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
 
     let fileBuffer;
     try {
-      const fileResponse = await fetch(photoUrl, { timeout: 10000 });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15 сек
+      
+      const fileResponse = await fetch(photoUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      clearTimeout(timeout);
+      
       if (!fileResponse.ok) throw new Error(`Failed to fetch file: ${fileResponse.status}`);
       fileBuffer = await fileResponse.arrayBuffer();
     } catch (fetchErr) {
-      console.warn('⚠️ fetch failed, trying https fallback:', fetchErr.message);
+      console.warn('⚠️ fetch failed:', fetchErr.message, '| trying https fallback...');
       fileBuffer = await (async () => {
         const https = require('https');
         const url = require('url');
@@ -50,7 +60,10 @@ async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
             const options = {
               hostname: parsedUrl.hostname,
               path: parsedUrl.pathname + parsedUrl.search,
-              timeout: 10000
+              timeout: 15000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              }
             };
             const req = https.get(options, (res) => {
               if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -62,7 +75,7 @@ async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
             });
             req.on('timeout', () => {
               req.abort();
-              reject(new Error('https.get timeout'));
+              reject(new Error('Request timeout'));
             });
             req.on('error', e => reject(e));
           } catch (e) { reject(e); }
