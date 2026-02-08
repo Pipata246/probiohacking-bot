@@ -971,10 +971,17 @@ function showResponseModeSelector() {
 function selectResponseMode(mode) {
   console.log(`📝 Response mode selected: ${mode}`);
   
-  // Убираем selector
+  // Удаляем весь bot-message контейнер с selector внутри
   const selector = document.querySelector('.response-mode-selector');
   if (selector) {
-    selector.remove();
+    // Ищем родительский .bot-message и удаляем его
+    const botMessage = selector.closest('.bot-message');
+    if (botMessage) {
+      botMessage.remove();
+    } else {
+      // Fallback: если не найден bot-message, удаляем selector напрямую
+      selector.remove();
+    }
   }
   
   // Обновляем currentResponseMode для текущей очереди в processAiQueue
