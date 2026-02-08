@@ -157,12 +157,15 @@ async function processAnalysisPhotosWithKimi(analysisPhotos, diagnosticData) {
       return diagnosticData;
     }
 
-    console.log(`🔄 Запускаем Kimi для ${photosNeedingAnalysis.length} анализов параллельно...`);
+    console.log(`🔄 Запускаем Kimi для ${photosNeedingAnalysis.length} анализов/PDF параллельно...`);
 
     // Запускаем Kimi параллельно для всех анализов без описания
     const kimiPromises = photosNeedingAnalysis.map(async (photo) => {
       try {
-        const description = await analyzePhotoWithKimi(photo.photo_url, photo.analysis_group);
+        // Определяем, является ли файл PDF
+        const isPdf = photo.file_type === 'pdf' || photo.photo_url.toLowerCase().endsWith('.pdf');
+        
+        const description = await analyzePhotoWithKimi(photo.photo_url, photo.analysis_group, isPdf);
         
         // Сохраняем описание в БД (параллельно, не блокируем основной поток)
         supabase

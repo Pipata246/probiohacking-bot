@@ -31,6 +31,10 @@ const ANALYSIS_GROUPS = [
   'Другое'
 ];
 
+// Поддерживаемые типы файлов
+const SUPPORTED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+const SUPPORTED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.pdf'];
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, DELETE, OPTIONS');
@@ -174,11 +178,11 @@ async function handleAnalysisPhotos(req, res) {
   const telegramId = telegramUser.id;
 
   if (req.method === 'POST') {
-    // Загрузка новой фотографии
-    const { photo_url, photo_name, file_size, analysis_group, description } = req.body;
+    // Загрузка новой фотографии или PDF
+    const { photo_url, photo_name, file_size, analysis_group, description, file_type } = req.body;
 
     console.log('=== POST /api/analysis-photos ===');
-    console.log('Request body:', { photo_url, photo_name, file_size, analysis_group, description });
+    console.log('Request body:', { photo_url, photo_name, file_size, analysis_group, file_type, description });
     console.log('Telegram user data:', telegramUser);
 
     if (!photo_url || !analysis_group) {
@@ -188,6 +192,23 @@ async function handleAnalysisPhotos(req, res) {
         error: 'photo_url and analysis_group are required' 
       });
     }
+
+    // Определяем тип файла
+    const fileExtension = photo_name ? '.' + photo_name.split('.').pop().toLowerCase() : null;
+    const fileTypeToUse = file_type || (fileExtension && SUPPORTED_EXTENSIONS.includes(fileExtension) ? 
+      (fileExtension === '.pdf' ? 'application/pdf' : 'image/jpeg') : 'image/jpeg');
+    
+    const isPdf = fileTypeToUse === 'application/pdf' || fileExtension === '.pdf';
+    
+    if (!SUPPORTED_FILE_TYPES.includes(fileTypeToUse) && !isPdf) {
+      console.log('❌ Unsupported file type:', fileTypeToUse);
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Unsupported file type. Supported: ' + SUPPORTED_EXTENSIONS.join(', ') 
+      });
+    }
+    
+    console.log(`📄 File type detected: ${isPdf ? 'PDF' : 'IMAGE'}`);
 
     if (!ANALYSIS_GROUPS.includes(analysis_group)) {
       console.log('❌ Invalid analysis group:', analysis_group);
@@ -200,12 +221,12 @@ async function handleAnalysisPhotos(req, res) {
 
     console.log('✅ Validation passed, preparing Kimi analysis...');
 
-    // 🎯 ИНТЕГРАЦИЯ KIMI: Анализируем фото и получаем описание
+    // 🎯 ИНТЕГРАЦИЯ KIMI: Анализируем файл (фото или PDF) и получаем описание
     let analysisDescription = description || null;
     
     try {
-      console.log(`🤖 Запускаем Kimi для анализа "${analysis_group}"...`);
-      analysisDescription = await analyzePhotoWithKimi(photo_url, analysis_group);
+      console.log(`🤖 Запускаем Kimi для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
+      analysisDescription = await analyzePhotoWithKimi(photo_url, analysis_group, isPdf);
       console.log(`✅ Kimi завершил анализ на ${analysisDescription.length} символов`);
     } catch (kimiError) {
       console.error('⚠️  Ошибка в Kimi API, но продолжаем:', kimiError.message);
@@ -214,16 +235,17 @@ async function handleAnalysisPhotos(req, res) {
 
     console.log('✅ Saving to database with description...');
 
-    // Сохраняем фото в базу с описанием от Kimi
+    // Сохраняем файл в базу с описанием от Kimi
     const { data, error } = await supabase
       .from('user_analysis_photos')
       .insert({
         telegram_id: telegramId,
         photo_url,
-        photo_name: photo_name || 'Фото анализа',
+        photo_name: photo_name || (isPdf ? 'PDF анализа' : 'Фото анализа'),
         file_size: file_size || 0,
         analysis_group,
-        description: analysisDescription // Сохраняем описание от Kimi
+        description: analysisDescription, // Сохраняем описание от Kimi
+        file_type: isPdf ? 'pdf' : 'image' // Тип файла для различения
       })
       .select()
       .single();

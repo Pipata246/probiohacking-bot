@@ -172,8 +172,21 @@ BEGIN
   ELSE
     RAISE NOTICE 'Колонка description уже существует в user_analysis_photos';
   END IF;
+  
+  -- Добавляем file_type колонку для различения фото и PDF
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+    AND table_name = 'user_analysis_photos' 
+    AND column_name = 'file_type'
+  ) THEN
+    ALTER TABLE public.user_analysis_photos ADD COLUMN file_type varchar(10) DEFAULT 'image';
+    RAISE NOTICE 'Добавлена колонка file_type для поддержки PDF и фото (image/pdf)';
+  ELSE
+    RAISE NOTICE 'Колонка file_type уже существует в user_analysis_photos';
+  END IF;
 EXCEPTION WHEN OTHERS THEN
-  RAISE NOTICE 'Ошибка при добавлении description: %', SQLERRM;
+  RAISE NOTICE 'Ошибка при добавлении колонок: %', SQLERRM;
 END $$;
 
 CREATE TABLE IF NOT EXISTS public.user_requests (

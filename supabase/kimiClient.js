@@ -24,24 +24,59 @@ const KIMI_SYSTEM_PROMPT = `Ты не врач. Твоя задача - тщат
 - Указывай референсные диапазоны если видишь`;
 
 /**
- * Функция для анализа фото анализа через Kimi Vision API
- * @param {string} photoUrl - URL фото анализа
+ * Функция для анализа фото или PDF анализа через Kimi Vision API
+ * @param {string} photoUrl - URL фото или PDF анализа
  * @param {string} analysisGroup - Группа анализа (Анализ крови, Гормоны, и т.д.)
+ * @param {boolean} isPdf - Флаг, является ли файл PDF (опционально, определяется по расширению)
  * @returns {Promise<string>} - Описание анализа
  */
-async function analyzePhotoWithKimi(photoUrl, analysisGroup) {
+async function analyzePhotoWithKimi(photoUrl, analysisGroup, isPdf = false) {
   if (!KIMI_API_KEY) {
     throw new Error('KIMI_API_KEY is not configured');
   }
 
   try {
-    console.log(`🎯 Kimi Vision: Начинаем анализ ${analysisGroup} с фото: ${photoUrl.substring(0, 80)}...`);
+    // Определяем, является ли файл PDF по URL если не указано явно
+    const fileExtension = photoUrl.split('.').pop().toLowerCase();
+    const isPdfFile = isPdf || fileExtension === 'pdf';
+    
+    console.log(`🎯 Kimi Vision: Начинаем анализ ${analysisGroup} с файлом: ${photoUrl.substring(0, 80)}...`);
+    console.log(`📄 File type: ${isPdfFile ? 'PDF' : 'IMAGE'}`);
     console.log(`🔑 API Key present: ${KIMI_API_KEY ? 'yes' : 'no'} (length: ${KIMI_API_KEY?.length || 0})`);
 
-    // Скачиваем фото и конвертируем в base64
-    const imageResponse = await fetch(photoUrl);
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    // Скачиваем файл и конвертируем в base64
+    const fileResponse = await fetch(photoUrl);
+    if (!fileResponse.ok) {
+      throw new Error(`Failed to fetch file: ${fileResponse.statusText}`);
+    }
+    
+    const fileBuffer = await fileResponse.arrayBuffer();
+    const base64File = Buffer.from(fileBuffer).toString('base64');
+
+    // Подготовляем контент в зависимости от типа файла
+    const userContent = [];
+    
+    if (isPdfFile) {
+      // Для PDF используем document type
+      userContent.push({
+        type: 'text',
+        text: `Проанализируй этот медицинский PDF документ/анализ. Группа анализа: "${analysisGroup}". Дай максимально подробное описание всего содержимого документа.`
+      });
+      userContent.push({
+        type: 'document',
+        document: base64File
+      });
+    } else {
+      // Для изображений используем image type
+      userContent.push({
+        type: 'text',
+        text: `Проанализируй этот медицинский анализ. Группа анализа: "${analysisGroup}". Дай максимально подробное описание того, что видишь на этом анализе.`
+      });
+      userContent.push({
+        type: 'image',
+        image: base64File
+      });
+    }
 
     const requestBody = {
       model: 'moonshot-v1',
@@ -52,16 +87,7 @@ async function analyzePhotoWithKimi(photoUrl, analysisGroup) {
         },
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Проанализируй этот медицинский анализ. Группа анализа: "${analysisGroup}". Дай максимально подробное описание того, что видишь на этом анализе.`
-            },
-            {
-              type: 'image',
-              image: base64Image
-            }
-          ]
+          content: userContent
         }
       ],
       temperature: 0.7,
@@ -70,6 +96,7 @@ async function analyzePhotoWithKimi(photoUrl, analysisGroup) {
 
     console.log(`📤 Отправляем запрос на Kimi API...`);
     console.log(`📋 Request model: ${requestBody.model}`);
+    console.log(`📋 Content type: ${isPdfFile ? 'document' : 'image'}`);
 
     const response = await fetch(KIMI_API_URL, {
       method: 'POST',
@@ -116,8 +143,13 @@ async function analyzePhotoWithKimi(photoUrl, analysisGroup) {
 
 /**
  * Функция для получения описания анализа - проверка кэша или новый анализ
+ * @param {string} photoUrl - URL фото или PDF анализа
+ * @param {string} analysisGroup - Группа анализа
+ * @param {string} existingDescription - Существующее описание (кэш)
+ * @param {boolean} isPdf - Флаг, является ли файл PDF
+ * @returns {Promise<string>} - Описание анализа
  */
-async function getAnalysisDescription(photoUrl, analysisGroup, existingDescription = null) {
+async function getAnalysisDescription(photoUrl, analysisGroup, existingDescription = null, isPdf = false) {
   // Если описание уже есть в БД - возвращаем его
   if (existingDescription && existingDescription.trim() !== '') {
     console.log('📦 Используем кэшированное описание из БД');
@@ -126,7 +158,7 @@ async function getAnalysisDescription(photoUrl, analysisGroup, existingDescripti
 
   // Если описания нет - генерируем с Kimi Vision
   console.log('🔄 Генерируем описание с помощью Kimi Vision...');
-  return await analyzePhotoWithKimi(photoUrl, analysisGroup);
+  return await analyzePhotoWithKimi(photoUrl, analysisGroup, isPdf);
 }
 
 module.exports = {

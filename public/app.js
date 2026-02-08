@@ -4608,7 +4608,8 @@ async function handleFileUpload(file) {
         photo_name: file.name,
         file_size: file.size,
         analysis_group: analysisGroup,
-        description: ''
+        description: '',
+        file_type: file.type === 'application/pdf' ? 'pdf' : 'image' // 📄 Передаем тип файла
       })
     });
     
