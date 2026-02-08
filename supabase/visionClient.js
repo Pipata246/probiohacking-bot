@@ -36,20 +36,33 @@ async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
 
     let fileBuffer;
     try {
-      const fileResponse = await fetch(photoUrl);
+      const fileResponse = await fetch(photoUrl, { timeout: 10000 });
       if (!fileResponse.ok) throw new Error(`Failed to fetch file: ${fileResponse.status}`);
       fileBuffer = await fileResponse.arrayBuffer();
     } catch (fetchErr) {
       console.warn('⚠️ fetch failed, trying https fallback:', fetchErr.message);
       fileBuffer = await (async () => {
         const https = require('https');
+        const url = require('url');
         return new Promise((resolve, reject) => {
           try {
-            const req = https.get(photoUrl, (res) => {
-              if (res.statusCode < 200 || res.statusCode >= 300) return reject(new Error(`Failed to fetch file (https): ${res.statusCode}`));
+            const parsedUrl = new url.URL(photoUrl);
+            const options = {
+              hostname: parsedUrl.hostname,
+              path: parsedUrl.pathname + parsedUrl.search,
+              timeout: 10000
+            };
+            const req = https.get(options, (res) => {
+              if (res.statusCode < 200 || res.statusCode >= 300) {
+                return reject(new Error(`Failed to fetch file (https): ${res.statusCode}`));
+              }
               const chunks = [];
               res.on('data', c => chunks.push(c));
               res.on('end', () => resolve(Buffer.concat(chunks)));
+            });
+            req.on('timeout', () => {
+              req.abort();
+              reject(new Error('https.get timeout'));
             });
             req.on('error', e => reject(e));
           } catch (e) { reject(e); }

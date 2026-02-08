@@ -241,13 +241,22 @@ async function handleAnalysisPhotos(req, res) {
 
     // Определяем тип файла
     const fileExtension = photo_name ? '.' + photo_name.split('.').pop().toLowerCase() : null;
-    const fileTypeToUse = file_type || (fileExtension && SUPPORTED_EXTENSIONS.includes(fileExtension) ? 
-      (fileExtension === '.pdf' ? 'application/pdf' : 'image/jpeg') : 'image/jpeg');
+    
+    // Определяем MIME-type по расширению
+    let fileTypeToUse = file_type;
+    if (!fileTypeToUse && fileExtension) {
+      if (fileExtension === '.pdf') fileTypeToUse = 'application/pdf';
+      else if (['.jpg', '.jpeg'].includes(fileExtension)) fileTypeToUse = 'image/jpeg';
+      else if (fileExtension === '.png') fileTypeToUse = 'image/png';
+    }
+    if (!fileTypeToUse) fileTypeToUse = 'image/jpeg'; // дефолт
     
     const isPdf = fileTypeToUse === 'application/pdf' || fileExtension === '.pdf';
     
-    if (!SUPPORTED_FILE_TYPES.includes(fileTypeToUse) && !isPdf) {
-      console.log('❌ Unsupported file type:', fileTypeToUse);
+    // Проверка поддерживаемого типа
+    const isSupported = SUPPORTED_FILE_TYPES.includes(fileTypeToUse) || isPdf;
+    if (!isSupported) {
+      console.log('❌ Unsupported file type:', fileTypeToUse, 'extension:', fileExtension);
       return res.status(400).json({ 
         success: false, 
         error: 'Unsupported file type. Supported: ' + SUPPORTED_EXTENSIONS.join(', ') 
