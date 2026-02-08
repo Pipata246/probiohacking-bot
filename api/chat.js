@@ -519,33 +519,34 @@ module.exports = async (req, res) => {
     
     // 🚀 QUICK MODE - просто отвечаем на вопрос БЕЗ диагностических данных
     if (responseMode === 'quick') {
-      systemPrompt += `\n\n⚡ РЕЖИМ БЫСТРОГО ОТВЕТА: Ответь на вопрос пользователя кратко (2-3 предложения максимум). Не запрашивай диагностику.`;
+      systemPrompt += `\n\n⚡ РЕЖИМ БЫСТРОГО ОТВЕТА: Ответь на вопрос пользователя кратко (2-3 предложения максимум). Будь конкретен. Просто ответь на его вопрос.`;
     } else {
-      // 📋 DETAILED MODE - используй данные как КОНТЕКСТ, отвечай на вопрос
-      systemPrompt += `\n\n📋 РЕЖИМ ПОДРОБНОГО ОТВЕТА: Ответь на вопрос пользователя, используя его личные данные как контекст для более персонализированного ответа. НЕ предлагай диагностику если её не просили. НЕ расписывай лекции. Обращайся к его данным только если это релевантно его вопросу.`;
+      // 📋 DETAILED MODE - полный ответ с использованием данных только когда релевантно
+      systemPrompt += `\n\n📋 ПОДРОБНЫЙ ОТВЕТ: Ответь на вопрос пользователя полностью и подробно. Используй его личные данные, анализы и результаты опросов ТОЛЬКО если они релевантны его вопросу. НЕ анализируй здоровье если его об этом не просили. Просто ответь по сути на вопрос.`;
       
-      // Добавляем контекст из данных
+      // Добавляем контекст с данными (но ИИ решает использовать или нет)
       if (diagnosticData) {
-        let context = `\n\n📊 Контекст о пользователе:\n`;
+        let context = `\n\n📊 Доступные данные о пользователе (используй если релевантно):\n`;
         
         // Личные данные
         if (diagnosticData.personal_data) {
           const p = diagnosticData.personal_data;
-          context += `Профиль: ${p.fullName || 'неизвестно'}, ${p.birthDate || 'возраст не указан'}, ${p.gender || 'пол не указан'}. `;
-          if (p.weight && p.height) context += `${p.weight}кг, ${p.height}см. `;
-          if (p.profession) context += `Профессия: ${p.profession}. `;
-          if (p.sport) context += `Спорт: ${p.sport}.`;
+          context += `✓ Профиль: ${p.fullName || 'неизвестно'}, ${p.birthDate || 'возраст не указан'}, ${p.gender || 'пол не указан'}`;
+          if (p.weight && p.height) context += `, ${p.weight}кг/${p.height}см`;
+          if (p.profession) context += `, ${p.profession}`;
+          if (p.sport) context += `, спорт: ${p.sport}`;
+          context += `\n`;
         }
         
         // Жалобы и диагнозы если есть
         if (diagnosticData.additional_answers) {
           const add = diagnosticData.additional_answers;
-          if (add.discomfort) context += `\nОсновные жалобы: ${add.discomfort}.`;
-          if (add.diagnosis) context += `\nДиагнозы: ${add.diagnosis}.`;
-          if (add.treatment) context += `\nТекущее лечение: ${add.treatment}.`;
+          if (add.discomfort) context += `✓ Жалобы: ${add.discomfort}\n`;
+          if (add.diagnosis) context += `✓ Диагнозы: ${add.diagnosis}\n`;
+          if (add.treatment) context += `✓ Лечение: ${add.treatment}\n`;
         }
         
-        // Краткое резюме из quiz
+        // Результаты опроса
         if (diagnosticData.quiz_answers && Object.keys(diagnosticData.quiz_answers).length > 0) {
           const systemsMap = {};
           Object.entries(diagnosticData.quiz_answers).forEach(([id, data]) => {
@@ -553,13 +554,13 @@ module.exports = async (req, res) => {
             systemsMap[data.system].push(data.answer);
           });
           
-          context += `\nРезултаты опроса по системам организма:`;
+          context += `✓ Опрос:\n`;
           Object.entries(systemsMap).forEach(([system, answers]) => {
-            context += `\n- ${system}: ${answers.join(', ')}`;
+            context += `  - ${system}: ${answers.join(', ')}\n`;
           });
         }
         
-        // Информация об анализах
+        // Анализы
         if (diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
           const groupedPhotos = {};
           diagnosticData.analysis_photos.forEach(photo => {
@@ -567,9 +568,9 @@ module.exports = async (req, res) => {
             groupedPhotos[photo.analysis_group].push(photo);
           });
           
-          context += `\nЗагруженные анализы:`;
+          context += `✓ Загруженные анализы:\n`;
           Object.entries(groupedPhotos).forEach(([group, photos]) => {
-            context += `\n- ${group}: ${photos.length} файлов загружено`;
+            context += `  - ${group}: ${photos.length} файлов\n`;
           });
         }
         
