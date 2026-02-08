@@ -288,6 +288,7 @@ async function handleAnalysisPhotos(req, res) {
     console.log('✅ Saving to database with description...');
 
     // Сохраняем файл в базу с описанием от Kimi
+    // TODO: Добавить file_type когда колонка будет в продакшене
     const { data, error } = await supabase
       .from('user_analysis_photos')
       .insert({
@@ -296,8 +297,8 @@ async function handleAnalysisPhotos(req, res) {
         photo_name: photo_name || (isPdf ? 'PDF анализа' : 'Фото анализа'),
         file_size: file_size || 0,
         analysis_group,
-        description: analysisDescription, // Сохраняем описание от Kimi
-        file_type: isPdf ? 'pdf' : 'image' // Тип файла для различения
+        description: analysisDescription // Сохраняем описание от Kimi
+        // file_type: isPdf ? 'pdf' : 'image' // ВРЕМЕННО ОТКЛЮЧЕНО - колонка еще не создана в БД
       })
       .select()
       .single();
