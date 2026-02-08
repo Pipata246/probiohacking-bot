@@ -81,6 +81,77 @@ async function downloadFileToBuffer(url) {
 }
 
 /**
+ * Разбиение многостраничного PDF на одностраничные (Yandex Vision — лимит 1 страница)
+ */
+async function splitPdfToSinglePages(pdfBuffer) {
+  const { PDFDocument } = require('pdf-lib');
+  const sourcePdf = await PDFDocument.load(pdfBuffer);
+  const pageCount = sourcePdf.getPageCount();
+  if (pageCount <= 1) return [pdfBuffer];
+
+  const pages = [];
+  for (let i = 0; i < pageCount; i++) {
+    const newPdf = await PDFDocument.create();
+    const [copiedPage] = await newPdf.copyPages(sourcePdf, [i]);
+    newPdf.addPage(copiedPage);
+    const pdfBytes = await newPdf.save();
+    pages.push(Buffer.from(pdfBytes));
+  }
+  return pages;
+}
+
+/**
+ * Отправка одного файла в Yandex Vision OCR
+ */
+async function callYandexVisionOCR(base64Content, mimeType, authKey) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': YANDEX_IAM_TOKEN ? `Bearer ${YANDEX_IAM_TOKEN}` : `Api-Key ${YANDEX_OCR_API_KEY}`
+  };
+  if (YANDEX_FOLDER_ID) {
+    headers['x-folder-id'] = YANDEX_FOLDER_ID;
+  }
+
+  const requestBody = {
+    mimeType,
+    languageCodes: ['ru', 'en'],
+    content: base64Content
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  const response = await fetch(YANDEX_OCR_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(requestBody),
+    signal: controller.signal
+  });
+
+  clearTimeout(timeoutId);
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(`Yandex Vision API error: ${response.status} - ${responseText.substring(0, 200)}`);
+  }
+
+  const data = JSON.parse(responseText);
+  const ann = data?.result?.textAnnotation || data?.textAnnotation;
+  let extractedText = '';
+  if (ann) {
+    extractedText = ann.fullText || ann.markdown || '';
+    if (!extractedText && ann.blocks) {
+      const lines = ann.blocks.flatMap(b => (b.lines || []).map(l => l.text || '')).filter(Boolean);
+      extractedText = lines.join('\n');
+    }
+    if (!extractedText && ann.entities) {
+      extractedText = ann.entities.map(e => e.text || '').join('\n');
+    }
+  }
+  return extractedText.trim();
+}
+
+/**
  * Анализ изображения или PDF через Yandex Cloud Vision OCR
  */
 async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
@@ -108,68 +179,37 @@ async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
       throw new Error('Файл пустой или не загрузился');
     }
 
-    const base64Content = fileBuffer.toString('base64');
     const mimeType = isPdfFile ? 'application/pdf' : (fileExtension === 'png' ? 'image/png' : 'image/jpeg');
+    let texts = [];
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': YANDEX_IAM_TOKEN ? `Bearer ${YANDEX_IAM_TOKEN}` : `Api-Key ${YANDEX_OCR_API_KEY}`
-    };
-    if (YANDEX_FOLDER_ID) {
-      headers['x-folder-id'] = YANDEX_FOLDER_ID;
-    }
-
-    const requestBody = {
-      mimeType,
-      languageCodes: ['ru', 'en'],
-      content: base64Content
-    };
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-
-    const response = await fetch(YANDEX_OCR_URL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeoutId);
-
-    const responseText = await response.text();
-    if (!response.ok) {
-      console.error('Yandex Vision API error:', response.status, responseText.substring(0, 300));
-      throw new Error(`Yandex Vision API error: ${response.status} - ${responseText.substring(0, 200)}`);
-    }
-
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      throw new Error('Invalid JSON from Yandex Vision API');
-    }
-
-    // Извлекаем текст: fullText или markdown или из blocks/lines
-    const ann = data?.result?.textAnnotation || data?.textAnnotation;
-    let extractedText = '';
-    if (ann) {
-      extractedText = ann.fullText || ann.markdown || '';
-      if (!extractedText && ann.blocks) {
-        const lines = ann.blocks.flatMap(b => (b.lines || []).map(l => l.text || '')).filter(Boolean);
-        extractedText = lines.join('\n');
+    if (isPdfFile) {
+      // Многостраничный PDF: разбиваем на страницы и обрабатываем каждую
+      const pdfPages = await splitPdfToSinglePages(fileBuffer);
+      if (pdfPages.length > 1) {
+        console.log(`📄 PDF: ${pdfPages.length} страниц — обрабатываем по одной`);
       }
-      if (!extractedText && ann.entities) {
-        extractedText = ann.entities.map(e => e.text || '').join('\n');
+      for (let i = 0; i < pdfPages.length; i++) {
+        const base64Content = pdfPages[i].toString('base64');
+        const text = await callYandexVisionOCR(base64Content, 'application/pdf', authKey);
+        if (text) {
+          if (pdfPages.length > 1) {
+            texts.push(`--- Страница ${i + 1} ---\n${text}`);
+          } else {
+            texts.push(text);
+          }
+        }
       }
+    } else {
+      const base64Content = fileBuffer.toString('base64');
+      const text = await callYandexVisionOCR(base64Content, mimeType, authKey);
+      if (text) texts.push(text);
     }
 
-    const description = extractedText.trim();
+    const description = texts.join('\n\n').trim();
     if (!description) {
       throw new Error('Yandex Vision не распознал текст на изображении');
     }
 
-    // Форматируем как структурированное описание для ИИ
     const formattedDescription = `[Группа: ${analysisGroup}] Распознанный текст с анализа:\n${description}`;
 
     console.log(`✅ Vision (Yandex): Анализ завершен (${formattedDescription.length} символов)`);
