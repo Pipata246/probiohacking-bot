@@ -522,7 +522,7 @@ module.exports = async (req, res) => {
       systemPrompt += `\n\n⚡ РЕЖИМ БЫСТРОГО ОТВЕТА: Ответь на вопрос пользователя кратко (2-3 предложения максимум). Будь конкретен. Просто ответь на его вопрос.`;
     } else {
       // 📋 DETAILED MODE - полный ответ с использованием данных только когда релевантно
-      systemPrompt += `\n\n📋 ПОДРОБНЫЙ ОТВЕТ: Ответь на вопрос пользователя полностью и подробно. Используй его личные данные, анализы и результаты опросов ТОЛЬКО если они релевантны его вопросу. НЕ анализируй здоровье если его об этом не просили. Просто ответь по сути на вопрос.`;
+      systemPrompt += `\n\n📋 ПОДРОБНЫЙ ОТВЕТ: Ответь на вопрос пользователя полностью и информативно. Будь КОМПАКТЕН - избегай лишних слов и повторений. Используй его личные данные, анализы и результаты опросов ТОЛЬКО если они релевантны его вопросу. НЕ анализируй здоровье если его об этом не просили. Просто ответь по сути.`;
       
       // Добавляем контекст с данными (но ИИ решает использовать или нет)
       if (diagnosticData) {
@@ -588,9 +588,9 @@ module.exports = async (req, res) => {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message }
       ],
-      temperature: 0.9, // Увеличено для более быстрой генерации
-      max_tokens: 1000, // Уменьшено для ускорения
-      top_p: 0.98 // Увеличено для ускорения генерации
+      temperature: 0.8,
+      max_tokens: 1500, // Компактные но полные ответы
+      top_p: 0.95
     };
 
     const response = await doRequest(DEEPSEEK_API_URL, {
@@ -612,18 +612,7 @@ module.exports = async (req, res) => {
     }
 
     const data = await response.json();
-    let content = data?.choices?.[0]?.message?.content || '';
-
-    // ✅ Добавляем кнопки в конец ответа на основе статусов
-    const quizCompleted = diagnosticData?.quiz_completed === true;
-    const analysesUploaded = diagnosticData?.analyses_uploaded === true;
-    
-    if (quizCompleted) {
-      content += `\n[BUTTON:DIAGNOSTIC:Посмотреть мой профиль]`;
-    }
-    if (analysesUploaded) {
-      content += `\n[BUTTON:ANALYSIS:Посмотреть мои анализы]`;
-    }
+    const content = data?.choices?.[0]?.message?.content || '';
 
     // Увеличиваем счетчик запросов для бесплатных пользователей
     if (userInfo && userInfo.id && !subscriptionActive) {
