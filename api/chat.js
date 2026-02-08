@@ -487,10 +487,15 @@ module.exports = async (req, res) => {
     chatHistory = chatHistoryResult || '';
     diagnosticData = diagnosticDataResult || null;
 
-    // 🎯 ИНТЕГРАЦИЯ KIMI: Обработка анализов - параллельная генерация описаний если нужно
+    // 🎯 ИНТЕГРАЦИЯ KIMI: Временно отключена для тестирования
+    // Обработка анализов - параллельная генерация описаний если нужно
+    /*
     if (diagnosticData && diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
       diagnosticData = await processAnalysisPhotosWithKimi(diagnosticData.analysis_photos, diagnosticData);
     }
+    */
+    
+    console.log('⏭️  Kimi анализ временно отключен в чате');
     
     // Формируем системный промпт с учетом диагностических данных и актуальной датой
     let systemPrompt = getSystemPrompt();

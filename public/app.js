@@ -4544,6 +4544,16 @@ async function handleFileUpload(file) {
   console.log('Тип файла поддерживается');
 
   try {
+    // 🔧 Функция для очистки имени файла от небезопасных символов
+    function sanitizeFileName(name) {
+      // Сохраняем только буквы, цифры, точку и тире
+      return name
+        .replace(/[^a-zA-Z0-9._\-\s]/g, '_') // Заменяем спецсимволы на подчеркивание
+        .replace(/\s+/g, '_') // Заменяем пробелы на подчеркивание
+        .replace(/_+/g, '_') // Убираем множественные подчеркивания
+        .toLowerCase(); // Приводим к нижнему регистру
+    }
+    
     // Показываем индикатор загрузки
     showLoadingOverlay();
     
@@ -4552,7 +4562,8 @@ async function handleFileUpload(file) {
     const analysisGroup = activeTypeBtn ? activeTypeBtn.textContent : 'Другое';
     
     // Загружаем файл в Supabase Storage
-    const fileName = `${Date.now()}_${file.name}`;
+    const safeFileName = sanitizeFileName(file.name);
+    const fileName = `${Date.now()}_${safeFileName}`;
     const filePath = `analysis-photos/${window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'unknown'}/${fileName}`;
     
     console.log('Загружаем файл в Storage:', filePath);

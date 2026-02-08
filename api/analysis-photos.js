@@ -219,11 +219,14 @@ async function handleAnalysisPhotos(req, res) {
       });
     }
 
-    console.log('✅ Validation passed, preparing Kimi analysis...');
+    console.log('✅ Validation passed, prepared for Kimi analysis...');
 
-    // 🎯 ИНТЕГРАЦИЯ KIMI: Анализируем файл (фото или PDF) и получаем описание
-    let analysisDescription = description || null;
+    // 🎯 ИНТЕГРАЦИЯ KIMI: Временно отключено для тестирования загрузки
+    // Просто сохраняем файл без анализа Kimi
+    let analysisDescription = description || '[Анализ будет доступен после настройки Kimi API]';
     
+    // TODO: Включить после настройки Kimi
+    /*
     try {
       console.log(`🤖 Запускаем Kimi для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
       analysisDescription = await analyzePhotoWithKimi(photo_url, analysis_group, isPdf);
@@ -232,6 +235,9 @@ async function handleAnalysisPhotos(req, res) {
       console.error('⚠️  Ошибка в Kimi API, но продолжаем:', kimiError.message);
       analysisDescription = `[Ошибка анализа Kimi: ${kimiError.message}]`;
     }
+    */
+    
+    console.log('⏭️  Kimi анализ временно отключен, файл сохраняется в БД');
 
     console.log('✅ Saving to database with description...');
 
