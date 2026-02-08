@@ -157,7 +157,7 @@ async function processAnalysisPhotosWithVision(analysisPhotos, diagnosticData) {
       return diagnosticData;
     }
 
-    console.log(`🔄 Запускаем Vision (qwen) для ${photosNeedingAnalysis.length} анализов/PDF параллельно...`);
+    console.log(`🔄 Запускаем Vision (Yandex) для ${photosNeedingAnalysis.length} анализов/PDF параллельно...`);
 
     // Запускаем Vision параллельно для всех анализов без описания
     const visionPromises = photosNeedingAnalysis.map(async (photo) => {
@@ -192,7 +192,7 @@ async function processAnalysisPhotosWithVision(analysisPhotos, diagnosticData) {
       diagnosticData.analysis_descriptions[result.id] = result.description;
     });
 
-    console.log(`✅ Vision завершил анализ ${visionResults.length} файлов`);
+    console.log(`✅ Vision (Yandex) завершил анализ ${visionResults.length} файлов`);
     return diagnosticData;
 
   } catch (error) {
@@ -496,15 +496,12 @@ module.exports = async (req, res) => {
     chatHistory = chatHistoryResult || '';
     diagnosticData = diagnosticDataResult || null;
 
-    // 🎯 ИНТЕГРАЦИЯ Vision: Запускаем параллельно - обработка анализов + формирование промпта
-    // Если есть анализы без описания - Vision будет обрабатывать параллельно с DeepSeek
-    const visionProcessPromise = (async () => {
-      if (diagnosticData && diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
-        console.log('🔄 Запускаем Vision параллельно для анализов без описания...');
-        return await processAnalysisPhotosWithVision(diagnosticData.analysis_photos, diagnosticData);
-      }
-      return diagnosticData;
-    })();
+    // 🎯 ИНТЕГРАЦИЯ Vision: СНАЧАЛА ждём результат Vision, ПОТОМ формируем промпт
+    // Иначе описания анализов (колонка description) не попадут в контекст для ИИ
+    if (diagnosticData && diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
+      console.log('🔄 Обрабатываем анализы через Vision (Yandex) перед формированием промпта...');
+      diagnosticData = await processAnalysisPhotosWithVision(diagnosticData.analysis_photos, diagnosticData);
+    }
     
     // Формируем системный промпт с учетом режима ответа
     let systemPrompt = getSystemPrompt();
@@ -519,9 +516,9 @@ module.exports = async (req, res) => {
       systemPrompt += `\n\n⚡ РЕЖИМ БЫСТРОГО ОТВЕТА: Ответь на вопрос пользователя кратко (2-3 предложения максимум). Понятно и по сути.`;
     } else {
       // 📋 DETAILED MODE - полный ответ с использованием данных только когда релевантно
-      systemPrompt += `\n\n📋 ПОДРОБНЫЙ ОТВЕТ: Ответь на вопрос пользователя полностью и информативно. Будь точен и лаконичен - избегай воды и лишних повторений. Используй его личные данные, анализы и результаты опросов ТОЛЬКО если они релевантны его вопросу. НЕ анализируй здоровье если его об этом не просили. Дай четкий, прямой и компактный ответ.`;
+      systemPrompt += `\n\n📋 ПОДРОБНЫЙ ОТВЕТ: Ответь на вопрос пользователя полностью и информативно. Будь точен и лаконичен - избегай воды и лишних повторений. Используй его личные данные, анализы (колонка description) и результаты опросов ТОЛЬКО если они релевантны его вопросу. НЕ анализируй здоровье если его об этом не просили. Дай четкий, прямой и компактный ответ.`;
       
-      // Добавляем контекст с данными (но ИИ решает использовать или нет)
+      // Добавляем контекст с данными (включая description из user_analysis_photos)
       if (diagnosticData) {
         let context = `\n\n📊 Доступные данные о пользователе (используй если релевантно):\n`;
         
@@ -557,7 +554,7 @@ module.exports = async (req, res) => {
           });
         }
         
-        // Анализы
+        // Анализы — ВАЖНО: используем колонку description из user_analysis_photos
         if (diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
           const groupedPhotos = {};
           diagnosticData.analysis_photos.forEach(photo => {
@@ -565,14 +562,17 @@ module.exports = async (req, res) => {
             groupedPhotos[photo.analysis_group].push(photo);
           });
           
-          context += `✓ Загруженные анализы и их описания:\n`;
+          context += `✓ Загруженные анализы (description — текст распознанный с фото):\n`;
           Object.entries(groupedPhotos).forEach(([group, photos]) => {
             context += `  📊 ${group}: ${photos.length} файл(ов)\n`;
-            // Добавляем описания от Vision если есть
             photos.forEach((photo, idx) => {
-              if (diagnosticData.analysis_descriptions && diagnosticData.analysis_descriptions[photo.id]) {
-                const descriptionSnippet = diagnosticData.analysis_descriptions[photo.id].substring(0, 200);
-                context += `     Файл ${idx + 1}: ${descriptionSnippet}${descriptionSnippet.length >= 200 ? '...' : ''}\n`;
+              // Берём description из колонки БД или из analysis_descriptions (после Vision)
+              const desc = diagnosticData.analysis_descriptions?.[photo.id] ?? photo.description;
+              if (desc && String(desc).trim() !== '') {
+                const snippet = String(desc).substring(0, 1200);
+                context += `     Файл ${idx + 1}: ${snippet}${snippet.length >= 1200 ? '...' : ''}\n`;
+              } else {
+                context += `     Файл ${idx + 1}: [описание пока не сгенерировано]\n`;
               }
             });
           });
@@ -584,9 +584,6 @@ module.exports = async (req, res) => {
     
     // Оптимизация промпта: сокращаем для ускорения (убираем лишние пробелы и переносы)
     systemPrompt = systemPrompt.replace(/\n{3,}/g, '\n\n').trim();
-
-    // ⏳ Ждём результата Vision перед отправкой в DeepSeek (если Vision запущена параллельно)
-    diagnosticData = await visionProcessPromise;
 
     // DeepSeek не поддерживает vision - используем только текстовый формат
     const payload = {

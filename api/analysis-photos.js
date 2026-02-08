@@ -315,20 +315,20 @@ async function handleAnalysisPhotos(req, res) {
       });
     }
 
-    console.log('✅ Validation passed, prepared for Vision (qwen) analysis...');
+    console.log('✅ Validation passed, prepared for Vision (Yandex) analysis...');
 
-    // 🎯 Анализируем фото при загрузке с Vision (qwen)
+    // 🎯 Анализируем фото при загрузке с Vision (Yandex Cloud OCR)
     let analysisDescription = description || null;
     
     if (!analysisDescription) {
       try {
         const downloadUrl = await getDownloadUrlForVision(photo_url);
-        console.log(`🤖 Запускаем Vision (qwen) для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
+        console.log(`🤖 Запускаем Vision (Yandex) для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
         analysisDescription = await analyzePhotoWithVision(downloadUrl, analysis_group, isPdf);
-        console.log(`✅ Vision (qwen) завершил анализ на ${analysisDescription.length} символов`);
+        console.log(`✅ Vision (Yandex) завершил анализ на ${analysisDescription.length} символов`);
       } catch (visionError) {
         console.error('⚠️  Ошибка в Vision API, но продолжаем:', visionError.message);
-        analysisDescription = `[Ошибка анализа Vision: ${visionError.message}]`;
+        analysisDescription = `[Ошибка анализа Yandex Vision: ${visionError.message}]`;
       }
     } else {
       console.log('📦 Используем предоставленное описание (кэш)');

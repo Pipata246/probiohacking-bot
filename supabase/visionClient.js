@@ -1,26 +1,12 @@
 /**
- * Vision (Qwen VL Plus) via OpenRouter for analyzing medical analysis photos and PDFs
- * OpenRouter format: image_url for images, file for PDFs
+ * Vision (Yandex Cloud OCR) для анализа медицинских фото и PDF
+ * Использует Yandex Cloud Vision OCR API для распознавания текста с изображений
  */
 
-const VISION_API_KEY = process.env.VISION_API_KEY || process.env.OPENROUTER_API_KEY || process.env.KIMI_API_KEY;
-const VISION_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
-const VISION_SYSTEM_PROMPT = `Ты не врач. Твоя задача - тщательно анализировать медицинские анализы и документы.
-Анализируй загруженные файлы (группу анализов) очень подробно, основываясь на медицинских знаниях, но ТОЛЬКО как ИИ-помощник, а не как врач.
-
-ВАЖНО:
-- Не ставь диагнозы
-- Не рецепты и не лечение
-- Только описание ТОГО, что видишь на анализах
-- Укажи нормальные/ненормальные значения если видишь
-- Опиши тренды и паттерны если анализов несколько
-
-ФОРМАТ ответа:
-- Максимум подробности
-- Структурированный текст
-- Перечисляй показатели и их значения
-- Указывай референсные диапазоны если видишь`;
+const YANDEX_OCR_API_KEY = process.env.YANDEX_OCR_API_KEY || process.env.YANDEX_VISION_API_KEY;
+const YANDEX_IAM_TOKEN = process.env.YANDEX_IAM_TOKEN;
+const YANDEX_FOLDER_ID = process.env.YANDEX_FOLDER_ID;
+const YANDEX_OCR_URL = 'https://ocr.api.cloud.yandex.net/ocr/v1/recognizeText';
 
 const FETCH_TIMEOUT_MS = 30000;
 const BUCKET_NAME = 'analysis-photos';
@@ -54,7 +40,7 @@ async function getDownloadUrlForVision(photoUrl) {
 }
 
 /**
- * Скачивание файла по URL через Node.js https/http (надёжно в serverless)
+ * Скачивание файла по URL через Node.js https/http
  */
 async function downloadFileToBuffer(url) {
   const parsed = new URL(url);
@@ -94,9 +80,13 @@ async function downloadFileToBuffer(url) {
   });
 }
 
+/**
+ * Анализ изображения или PDF через Yandex Cloud Vision OCR
+ */
 async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
-  if (!VISION_API_KEY) {
-    throw new Error('VISION_API_KEY is not configured');
+  const authKey = YANDEX_OCR_API_KEY || YANDEX_IAM_TOKEN;
+  if (!authKey) {
+    throw new Error('YANDEX_OCR_API_KEY (или YANDEX_IAM_TOKEN) не настроен');
   }
 
   try {
@@ -104,7 +94,7 @@ async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
     const fileExtension = String(resolvedUrl).split('.').pop().split('?')[0].toLowerCase();
     const isPdfFile = isPdf || fileExtension === 'pdf';
 
-    console.log(`🎯 Vision (qwen): Анализ ${analysisGroup}, тип: ${isPdfFile ? 'PDF' : 'IMAGE'}, URL: ${String(resolvedUrl).substring(0, 100)}...`);
+    console.log(`🎯 Vision (Yandex): Анализ ${analysisGroup}, тип: ${isPdfFile ? 'PDF' : 'IMAGE'}, URL: ${String(resolvedUrl).substring(0, 100)}...`);
 
     let fileBuffer;
     try {
@@ -118,85 +108,81 @@ async function analyzePhotoWithVision(photoUrl, analysisGroup, isPdf = false) {
       throw new Error('Файл пустой или не загрузился');
     }
 
-    const base64File = fileBuffer.toString('base64');
+    const base64Content = fileBuffer.toString('base64');
+    const mimeType = isPdfFile ? 'application/pdf' : (fileExtension === 'png' ? 'image/png' : 'image/jpeg');
 
-    // OpenRouter: images — image_url с data URL; PDF — file с file_data
-    const userContent = [];
-    const promptText = `Проанализируй этот медицинский ${isPdfFile ? 'PDF документ/анализ' : 'анализ (изображение)'}. Группа анализа: "${analysisGroup}".`;
-
-    userContent.push({ type: 'text', text: promptText });
-
-    if (isPdfFile) {
-      userContent.push({
-        type: 'file',
-        file: {
-          filename: 'document.pdf',
-          file_data: `data:application/pdf;base64,${base64File}`
-        }
-      });
-    } else {
-      const mime = fileExtension === 'png' ? 'image/png' : 'image/jpeg';
-      userContent.push({
-        type: 'image_url',
-        imageUrl: {
-          url: `data:${mime};base64,${base64File}`
-        }
-      });
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': YANDEX_IAM_TOKEN ? `Bearer ${YANDEX_IAM_TOKEN}` : `Api-Key ${YANDEX_OCR_API_KEY}`
+    };
+    if (YANDEX_FOLDER_ID) {
+      headers['x-folder-id'] = YANDEX_FOLDER_ID;
     }
 
     const requestBody = {
-      model: 'qwen/qwen-vl-plus',
-      messages: [
-        { role: 'system', content: VISION_SYSTEM_PROMPT },
-        { role: 'user', content: userContent }
-      ],
-      temperature: 0.3,
-      max_tokens: 2500
+      mimeType,
+      languageCodes: ['ru', 'en'],
+      content: base64Content
     };
 
-    const response = await fetch(VISION_API_URL, {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    const response = await fetch(YANDEX_OCR_URL, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${VISION_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
+      headers,
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     const responseText = await response.text();
     if (!response.ok) {
-      console.error('Vision API error response:', responseText);
-      throw new Error(`Vision API error: ${response.status} - ${responseText.substring(0, 200)}`);
+      console.error('Yandex Vision API error:', response.status, responseText.substring(0, 300));
+      throw new Error(`Yandex Vision API error: ${response.status} - ${responseText.substring(0, 200)}`);
     }
 
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      throw new Error('Invalid JSON from Vision API');
+      throw new Error('Invalid JSON from Yandex Vision API');
     }
 
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Invalid Vision API response structure: ' + responseText.substring(0, 300));
+    // Извлекаем текст: fullText или markdown или из blocks/lines
+    const ann = data?.result?.textAnnotation || data?.textAnnotation;
+    let extractedText = '';
+    if (ann) {
+      extractedText = ann.fullText || ann.markdown || '';
+      if (!extractedText && ann.blocks) {
+        const lines = ann.blocks.flatMap(b => (b.lines || []).map(l => l.text || '')).filter(Boolean);
+        extractedText = lines.join('\n');
+      }
+      if (!extractedText && ann.entities) {
+        extractedText = ann.entities.map(e => e.text || '').join('\n');
+      }
     }
 
-    const content = data.choices[0].message.content;
-    const description = (content && typeof content === 'string' ? content : '').trim();
+    const description = extractedText.trim();
     if (!description) {
-      throw new Error('Пустой ответ от Vision API');
+      throw new Error('Yandex Vision не распознал текст на изображении');
     }
 
-    console.log(`✅ Vision (qwen): Анализ завершен (${description.length} символов)`);
-    return description;
+    // Форматируем как структурированное описание для ИИ
+    const formattedDescription = `[Группа: ${analysisGroup}] Распознанный текст с анализа:\n${description}`;
+
+    console.log(`✅ Vision (Yandex): Анализ завершен (${formattedDescription.length} символов)`);
+    return formattedDescription;
   } catch (err) {
-    console.error('❌ Vision API Error:', err.message);
+    console.error('❌ Yandex Vision Error:', err.message);
     throw err;
   }
 }
 
 async function getAnalysisDescription(photoUrl, analysisGroup, existingDescription = null, isPdf = false) {
   if (existingDescription && String(existingDescription).trim() !== '') return existingDescription;
-  console.log('🔄 Generating description via Vision (qwen)...');
+  console.log('🔄 Generating description via Yandex Vision...');
   return await analyzePhotoWithVision(photoUrl, analysisGroup, isPdf);
 }
 
