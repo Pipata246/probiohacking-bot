@@ -267,28 +267,25 @@ async function handleAnalysisPhotos(req, res) {
 
     console.log('✅ Validation passed, prepared for Kimi analysis...');
 
-    // 🎯 ИНТЕГРАЦИЯ KIMI: Временно отключено для тестирования загрузки
-    // Просто сохраняем файл без анализа Kimi
-    let analysisDescription = description || '[Анализ будет доступен после настройки Kimi API]';
+    // 🎯 ИНТЕГРАЦИЯ KIMI: Анализируем фото при загрузке
+    let analysisDescription = description || null;
     
-    // TODO: Включить после настройки Kimi
-    /*
-    try {
-      console.log(`🤖 Запускаем Kimi для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
-      analysisDescription = await analyzePhotoWithKimi(photo_url, analysis_group, isPdf);
-      console.log(`✅ Kimi завершил анализ на ${analysisDescription.length} символов`);
-    } catch (kimiError) {
-      console.error('⚠️  Ошибка в Kimi API, но продолжаем:', kimiError.message);
-      analysisDescription = `[Ошибка анализа Kimi: ${kimiError.message}]`;
+    if (!analysisDescription) {
+      try {
+        console.log(`🤖 Запускаем Kimi для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
+        analysisDescription = await analyzePhotoWithKimi(photo_url, analysis_group, isPdf);
+        console.log(`✅ Kimi завершил анализ на ${analysisDescription.length} символов`);
+      } catch (kimiError) {
+        console.error('⚠️  Ошибка в Kimi API, но продолжаем:', kimiError.message);
+        analysisDescription = `[Ошибка анализа Kimi: ${kimiError.message}]`;
+      }
+    } else {
+      console.log('📦 Используем предоставленное описание (кэш)');
     }
-    */
-    
-    console.log('⏭️  Kimi анализ временно отключен, файл сохраняется в БД');
 
     console.log('✅ Saving to database with description...');
 
-    // Сохраняем файл в базу с описанием от Kimi
-    // TODO: Добавить file_type когда колонка будет в продакшене
+    // Сохраняем файл в базу с описанием от Kimi и типом файла
     const { data, error } = await supabase
       .from('user_analysis_photos')
       .insert({
@@ -297,8 +294,8 @@ async function handleAnalysisPhotos(req, res) {
         photo_name: photo_name || (isPdf ? 'PDF анализа' : 'Фото анализа'),
         file_size: file_size || 0,
         analysis_group,
-        description: analysisDescription // Сохраняем описание от Kimi
-        // file_type: isPdf ? 'pdf' : 'image' // ВРЕМЕННО ОТКЛЮЧЕНО - колонка еще не создана в БД
+        description: analysisDescription, // Сохраняем описание от Kimi
+        file_type: isPdf ? 'pdf' : 'image' // Сохраняем тип файла для различия
       })
       .select()
       .single();

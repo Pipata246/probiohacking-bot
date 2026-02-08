@@ -499,15 +499,15 @@ module.exports = async (req, res) => {
     chatHistory = chatHistoryResult || '';
     diagnosticData = diagnosticDataResult || null;
 
-    // 🎯 ИНТЕГРАЦИЯ KIMI: Временно отключена для тестирования
-    // Обработка анализов - параллельная генерация описаний если нужно
-    /*
-    if (diagnosticData && diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
-      diagnosticData = await processAnalysisPhotosWithKimi(diagnosticData.analysis_photos, diagnosticData);
-    }
-    */
-    
-    console.log('⏭️  Kimi анализ временно отключен в чате');
+    // 🎯 ИНТЕГРАЦИЯ KIMI: Запускаем параллельно - обработка анализов + формирование промпта
+    // Если есть анализы без описания - Kimi будет обрабатывать параллельно с DeepSeek
+    const kimiProcessPromise = (async () => {
+      if (diagnosticData && diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
+        console.log('🔄 Запускаем Kimi параллельно для анализов без описания...');
+        return await processAnalysisPhotosWithKimi(diagnosticData.analysis_photos, diagnosticData);
+      }
+      return diagnosticData;
+    })();
     
     // Формируем системный промпт с учетом режима ответа
     let systemPrompt = getSystemPrompt();
@@ -568,9 +568,16 @@ module.exports = async (req, res) => {
             groupedPhotos[photo.analysis_group].push(photo);
           });
           
-          context += `✓ Загруженные анализы:\n`;
+          context += `✓ Загруженные анализы и их описания:\n`;
           Object.entries(groupedPhotos).forEach(([group, photos]) => {
-            context += `  - ${group}: ${photos.length} файлов\n`;
+            context += `  📊 ${group}: ${photos.length} файл(ов)\n`;
+            // Добавляем описания от Kimi if есть
+            photos.forEach((photo, idx) => {
+              if (diagnosticData.analysis_descriptions && diagnosticData.analysis_descriptions[photo.id]) {
+                const descriptionSnippet = diagnosticData.analysis_descriptions[photo.id].substring(0, 200);
+                context += `     Файл ${idx + 1}: ${descriptionSnippet}${descriptionSnippet.length >= 200 ? '...' : ''}\n`;
+              }
+            });
           });
         }
         
@@ -580,6 +587,9 @@ module.exports = async (req, res) => {
     
     // Оптимизация промпта: сокращаем для ускорения (убираем лишние пробелы и переносы)
     systemPrompt = systemPrompt.replace(/\n{3,}/g, '\n\n').trim();
+
+    // ⏳ Ждём результата Kimi перед отправкой в DeepSeek (если Kimi запущена параллельно)
+    diagnosticData = await kimiProcessPromise;
 
     // DeepSeek не поддерживает vision - используем только текстовый формат
     const payload = {
