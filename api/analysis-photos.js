@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-const { analyzePhotoWithKimi } = require('../supabase/kimiClient.js');
+const { analyzePhotoWithVision } = require('../supabase/visionClient.js');
 
 // Supabase client
 const supabase = createClient(
@@ -265,19 +265,19 @@ async function handleAnalysisPhotos(req, res) {
       });
     }
 
-    console.log('✅ Validation passed, prepared for Kimi analysis...');
+    console.log('✅ Validation passed, prepared for Vision (qwen) analysis...');
 
-    // 🎯 ИНТЕГРАЦИЯ KIMI: Анализируем фото при загрузке
+    // 🎯 Анализируем фото при загрузке с Vision (qwen)
     let analysisDescription = description || null;
     
     if (!analysisDescription) {
       try {
-        console.log(`🤖 Запускаем Kimi для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
-        analysisDescription = await analyzePhotoWithKimi(photo_url, analysis_group, isPdf);
-        console.log(`✅ Kimi завершил анализ на ${analysisDescription.length} символов`);
-      } catch (kimiError) {
-        console.error('⚠️  Ошибка в Kimi API, но продолжаем:', kimiError.message);
-        analysisDescription = `[Ошибка анализа Kimi: ${kimiError.message}]`;
+        console.log(`🤖 Запускаем Vision (qwen) для анализа "${analysis_group}" (${isPdf ? 'PDF' : 'IMAGE'})...`);
+        analysisDescription = await analyzePhotoWithVision(photo_url, analysis_group, isPdf);
+        console.log(`✅ Vision (qwen) завершил анализ на ${analysisDescription.length} символов`);
+      } catch (visionError) {
+        console.error('⚠️  Ошибка в Vision API, но продолжаем:', visionError.message);
+        analysisDescription = `[Ошибка анализа Vision: ${visionError.message}]`;
       }
     } else {
       console.log('📦 Используем предоставленное описание (кэш)');
@@ -285,7 +285,7 @@ async function handleAnalysisPhotos(req, res) {
 
     console.log('✅ Saving to database with description...');
 
-    // Сохраняем файл в базу с описанием от Kimi и типом файла
+    // Сохраняем файл в базу с описанием от Vision и типом файла
     const { data, error } = await supabase
       .from('user_analysis_photos')
       .insert({
@@ -294,7 +294,7 @@ async function handleAnalysisPhotos(req, res) {
         photo_name: photo_name || (isPdf ? 'PDF анализа' : 'Фото анализа'),
         file_size: file_size || 0,
         analysis_group,
-        description: analysisDescription, // Сохраняем описание от Kimi
+        description: analysisDescription, // Сохраняем описание от Vision
         file_type: isPdf ? 'pdf' : 'image' // Сохраняем тип файла для различия
       })
       .select()

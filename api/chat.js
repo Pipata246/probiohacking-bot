@@ -4,7 +4,7 @@ const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 // Import Supabase client and middleware
 const { requestService, chatService } = require('../supabase/client.js');
 const { initUserFromWebApp } = require('../supabase/userMiddleware.js');
-const { analyzePhotoWithKimi } = require('../supabase/kimiClient.js');
+const { analyzePhotoWithVision } = require('../supabase/visionClient.js');
 const { createClient } = require('@supabase/supabase-js');
 
 // Supabase client для проверки квиза
@@ -138,9 +138,9 @@ function getSystemByQuestionId(questionId) {
 }
 
 /**
- * Функция для обработки анализов - параллельная генерация описаний через Kimi если нужно
+ * Функция для обработки анализов - параллельная генерация описаний через Vision если нужно
  */
-async function processAnalysisPhotosWithKimi(analysisPhotos, diagnosticData) {
+async function processAnalysisPhotosWithVision(analysisPhotos, diagnosticData) {
   try {
     if (!analysisPhotos || analysisPhotos.length === 0) {
       console.log('📊 Анализов нет');
@@ -157,15 +157,15 @@ async function processAnalysisPhotosWithKimi(analysisPhotos, diagnosticData) {
       return diagnosticData;
     }
 
-    console.log(`🔄 Запускаем Kimi для ${photosNeedingAnalysis.length} анализов/PDF параллельно...`);
+    console.log(`🔄 Запускаем Vision (qwen) для ${photosNeedingAnalysis.length} анализов/PDF параллельно...`);
 
-    // Запускаем Kimi параллельно для всех анализов без описания
-    const kimiPromises = photosNeedingAnalysis.map(async (photo) => {
+    // Запускаем Vision параллельно для всех анализов без описания
+    const visionPromises = photosNeedingAnalysis.map(async (photo) => {
       try {
         // Определяем, является ли файл PDF
         const isPdf = photo.file_type === 'pdf' || photo.photo_url.toLowerCase().endsWith('.pdf');
         
-        const description = await analyzePhotoWithKimi(photo.photo_url, photo.analysis_group, isPdf);
+        const description = await analyzePhotoWithVision(photo.photo_url, photo.analysis_group, isPdf);
         
         // Сохраняем описание в БД (параллельно, не блокируем основной поток)
         supabase
@@ -174,12 +174,9 @@ async function processAnalysisPhotosWithKimi(analysisPhotos, diagnosticData) {
           .eq('id', photo.id)
           .catch(err => console.error(`❌ Ошибка сохранения описания для ${photo.id}:`, err));
 
-        return {
-          id: photo.id,
-          description: description
-        };
+        return { id: photo.id, description };
       } catch (error) {
-        console.error(`⚠️  Ошибка Kimi для анализа ${photo.analysis_group}:`, error.message);
+        console.error(`⚠️  Ошибка Vision для анализа ${photo.analysis_group}:`, error.message);
         return {
           id: photo.id,
           description: `[Ошибка: ${error.message}]`
@@ -187,19 +184,19 @@ async function processAnalysisPhotosWithKimi(analysisPhotos, diagnosticData) {
       }
     });
 
-    // Ждем всех Kimi запросов
-    const kimiResults = await Promise.all(kimiPromises);
+    // Ждем всех Vision запросов
+    const visionResults = await Promise.all(visionPromises);
 
     // Обновляем кэш описаний в diagnostic data
-    kimiResults.forEach(result => {
+    visionResults.forEach(result => {
       diagnosticData.analysis_descriptions[result.id] = result.description;
     });
 
-    console.log(`✅ Kimi завершил анализ ${kimiResults.length} файлов`);
+    console.log(`✅ Vision завершил анализ ${visionResults.length} файлов`);
     return diagnosticData;
 
   } catch (error) {
-    console.error('❌ Ошибка в processAnalysisPhotosWithKimi:', error);
+    console.error('❌ Ошибка в processAnalysisPhotosWithVision:', error);
     return diagnosticData;
   }
 }
@@ -499,12 +496,12 @@ module.exports = async (req, res) => {
     chatHistory = chatHistoryResult || '';
     diagnosticData = diagnosticDataResult || null;
 
-    // 🎯 ИНТЕГРАЦИЯ KIMI: Запускаем параллельно - обработка анализов + формирование промпта
-    // Если есть анализы без описания - Kimi будет обрабатывать параллельно с DeepSeek
-    const kimiProcessPromise = (async () => {
+    // 🎯 ИНТЕГРАЦИЯ Vision: Запускаем параллельно - обработка анализов + формирование промпта
+    // Если есть анализы без описания - Vision будет обрабатывать параллельно с DeepSeek
+    const visionProcessPromise = (async () => {
       if (diagnosticData && diagnosticData.analysis_photos && diagnosticData.analysis_photos.length > 0) {
-        console.log('🔄 Запускаем Kimi параллельно для анализов без описания...');
-        return await processAnalysisPhotosWithKimi(diagnosticData.analysis_photos, diagnosticData);
+        console.log('🔄 Запускаем Vision параллельно для анализов без описания...');
+        return await processAnalysisPhotosWithVision(diagnosticData.analysis_photos, diagnosticData);
       }
       return diagnosticData;
     })();
@@ -571,7 +568,7 @@ module.exports = async (req, res) => {
           context += `✓ Загруженные анализы и их описания:\n`;
           Object.entries(groupedPhotos).forEach(([group, photos]) => {
             context += `  📊 ${group}: ${photos.length} файл(ов)\n`;
-            // Добавляем описания от Kimi if есть
+            // Добавляем описания от Vision если есть
             photos.forEach((photo, idx) => {
               if (diagnosticData.analysis_descriptions && diagnosticData.analysis_descriptions[photo.id]) {
                 const descriptionSnippet = diagnosticData.analysis_descriptions[photo.id].substring(0, 200);
@@ -588,8 +585,8 @@ module.exports = async (req, res) => {
     // Оптимизация промпта: сокращаем для ускорения (убираем лишние пробелы и переносы)
     systemPrompt = systemPrompt.replace(/\n{3,}/g, '\n\n').trim();
 
-    // ⏳ Ждём результата Kimi перед отправкой в DeepSeek (если Kimi запущена параллельно)
-    diagnosticData = await kimiProcessPromise;
+    // ⏳ Ждём результата Vision перед отправкой в DeepSeek (если Vision запущена параллельно)
+    diagnosticData = await visionProcessPromise;
 
     // DeepSeek не поддерживает vision - используем только текстовый формат
     const payload = {
