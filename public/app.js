@@ -4069,11 +4069,10 @@ async function loadDiaryFromApi() {
 
     // Очищаем локальные данные и заполняем из БД
     diaryData = {};
-    const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
 
     entries.forEach((entry) => {
       try {
-        const dateStr = entry.entry_date;
+        const dateStr = entry.entry_date; // YYYY-MM-DD
         const timeStr = (entry.entry_time || '').slice(0, 5);
         const title = entry.title || '';
         if (!dateStr || !timeStr || !title) return;
@@ -4081,7 +4080,7 @@ async function loadDiaryFromApi() {
         const d = new Date(dateStr);
         if (Number.isNaN(d.getTime())) return;
 
-        const key = `${dayNames[d.getDay()]}-${d.getDate()}`;
+        const key = dateStr; // используем полную дату как ключ
         if (!diaryData[key]) diaryData[key] = [];
         
         diaryData[key].push({
@@ -6351,12 +6350,12 @@ function generateWeekDays() {
     
     const dayName = dayNames[date.getDay()];
     const dayNumber = date.getDate();
-    const fullDate = date.toISOString().split('T')[0];
+    const fullDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
     
     days.push({
       name: dayName,
       number: dayNumber,
-      key: `${dayName}-${dayNumber}`,
+      key: fullDate, // Используем полную дату как ключ, чтобы избежать коллизий
       fullDate: fullDate,
       isToday: i === 0 // Первый день всегда сегодня
     });
@@ -6389,7 +6388,7 @@ function updateCalendarHTML() {
   // Устанавливаем сегодняшний день как активный по умолчанию
   const todayDay = weekDays.find(day => day.isToday);
   if (todayDay) {
-    currentSelectedDay = todayDay.key;
+    currentSelectedDay = todayDay.key; // YYYY-MM-DD
   }
 }
 
@@ -6399,7 +6398,7 @@ let diaryData = {};
 // Функция для инициализации данных дневника с примерами для сегодня
 function initializeDiaryData() {
   const today = new Date();
-  const todayKey = `${['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'][today.getDay()]}-${today.getDate()}`;
+  const todayKey = today.toISOString().split('T')[0]; // YYYY-MM-DD
   
   console.log(`📝 Инициализация данных для сегодняшнего дня: ${todayKey}`);
 
@@ -6435,15 +6434,10 @@ function cleanupOldEntries() {
   weekAgo.setDate(today.getDate() - 7);
   
   Object.keys(diaryData).forEach(dayKey => {
-    // Извлекаем дату из ключа и проверяем, не старше ли она недели
-    const [dayName, dayNumber] = dayKey.split('-');
-    
-    // Создаем дату для сравнения, учитывая возможность перехода между месяцами
-    let dayDate = new Date(today.getFullYear(), today.getMonth(), parseInt(dayNumber));
-    
-    // Если дата в будущем (например, 30 число в начале месяца), значит это предыдущий месяц
-    if (dayDate > today) {
-      dayDate = new Date(today.getFullYear(), today.getMonth() - 1, parseInt(dayNumber));
+    // dayKey теперь в формате YYYY-MM-DD
+    const dayDate = new Date(dayKey);
+    if (Number.isNaN(dayDate.getTime())) {
+      return;
     }
     
     if (dayDate < weekAgo) {
@@ -6485,9 +6479,8 @@ function initializeDiary() {
 
 // Функция для получения ключа дня из элемента
 function getDayKey(dayElement) {
-  const dayName = dayElement.querySelector('.day-name').textContent;
-  const dayNumber = dayElement.querySelector('.day-number').textContent;
-  return `${dayName}-${dayNumber}`;
+  // Теперь используем полную дату из data-date
+  return dayElement.getAttribute('data-date');
 }
 
 // Функция для загрузки записей выбранного дня
@@ -6535,8 +6528,18 @@ function loadDayEntries(dayKey) {
 // Функция для обновления заголовка записей
 function updateEntriesTitle(dayKey) {
   const entriesTitle = document.querySelector('.entries-title');
-  const [dayName, dayNumber] = dayKey.split('-');
-  entriesTitle.textContent = `Записи на ${dayName} ${dayNumber}`;
+  if (entriesTitle) {
+    // dayKey теперь в формате YYYY-MM-DD
+    const d = new Date(dayKey);
+    if (!Number.isNaN(d.getTime())) {
+      const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
+      const dayName = dayNames[d.getDay()];
+      const dayNumber = d.getDate().toString().padStart(2, '0');
+      entriesTitle.textContent = `Записи на ${dayName} ${dayNumber}`;
+    } else {
+      entriesTitle.textContent = 'Записи';
+    }
+  }
 }
 
 // Функция для переключения дня
