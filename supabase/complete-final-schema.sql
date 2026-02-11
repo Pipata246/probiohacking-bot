@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   free_requests_count integer NOT NULL DEFAULT 0,
   subscription_start_date timestamp with time zone,
   subscription_end_date timestamp with time zone,
+  program_created boolean NOT NULL DEFAULT false,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
@@ -107,6 +108,17 @@ BEGIN
      ) THEN
        ALTER TABLE public.users ADD COLUMN subscription_end_date timestamp with time zone;
        RAISE NOTICE 'Добавлена колонка subscription_end_date';
+     END IF;
+     
+     -- Добавляем program_created если её нет
+     IF NOT EXISTS (
+       SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public'
+       AND table_name = 'users'
+       AND column_name = 'program_created'
+     ) THEN
+       ALTER TABLE public.users ADD COLUMN program_created boolean NOT NULL DEFAULT false;
+       RAISE NOTICE 'Добавлена колонка program_created (флаг созданной персональной программы)';
      END IF;
 EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'Ошибка при добавлении колонок подписки: %', SQLERRM;
@@ -201,6 +213,32 @@ CREATE TABLE IF NOT EXISTS public.user_requests (
   CONSTRAINT user_requests_pkey PRIMARY KEY (id),
   CONSTRAINT user_requests_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE,
   CONSTRAINT user_requests_chat_id_fkey FOREIGN KEY (chat_id) REFERENCES public.chats(id) ON DELETE CASCADE
+);
+
+-- Таблица ЗДОРОВЬЕ: агрегированные рекомендации ИИ по 4 ключевым направлениям
+CREATE TABLE IF NOT EXISTS public.health_programs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
+  telegram_id bigint NOT NULL REFERENCES public.users(telegram_id),
+  supplements text,           -- Нутрицевтики и добавки (решение проблемы)
+  nutrition text,             -- Питание
+  stress text,                -- Стресс и управление нагрузкой
+  sleep text,                 -- Сон и восстановление
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT health_programs_pkey PRIMARY KEY (id)
+);
+
+-- Таблица ДНЕВНИК: расписание приёмов/действий из персональной программы
+CREATE TABLE IF NOT EXISTS public.diary_entries (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.users(id) ON DELETE CASCADE,
+  telegram_id bigint NOT NULL REFERENCES public.users(telegram_id),
+  entry_date date NOT NULL,
+  entry_time time NOT NULL,
+  title text NOT NULL,        -- Текст записи (напр. "Магний 400 мг")
+  notes text,                 -- Доп. пояснение при необходимости
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT diary_entries_pkey PRIMARY KEY (id)
 );
 
 -- ============================================
@@ -352,6 +390,8 @@ ALTER TABLE public.user_requests DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_analysis_photos DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chats DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.quiz_answers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.health_programs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.diary_entries DISABLE ROW LEVEL SECURITY;
 
 -- Удаляем все существующие политики если они есть
 DROP POLICY IF EXISTS "Users can view own data" ON public.users;
@@ -373,6 +413,8 @@ GRANT ALL ON public.user_requests TO anon;
 GRANT ALL ON public.chats TO anon;
 GRANT ALL ON public.quiz_answers TO anon;
 GRANT ALL ON public.user_analysis_photos TO anon;
+GRANT ALL ON public.health_programs TO anon;
+GRANT ALL ON public.diary_entries TO anon;
 
 -- Права на выполнение функций
 GRANT EXECUTE ON FUNCTION get_active_chat(UUID) TO anon;
