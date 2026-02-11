@@ -3568,6 +3568,19 @@ async function createProgramFromDraft(button) {
         button.disabled = false;
         button.textContent = 'Составить персональную программу';
       }
+      // Показываем пользователю понятное сообщение об ошибке
+      try {
+        const msg = (data && (data.error || data.message))
+          ? String(data.error || data.message)
+          : 'Не удалось сохранить программу. Обновите приложение и попробуйте ещё раз.';
+        if (tg && typeof tg.showAlert === 'function') {
+          tg.showAlert(msg);
+        } else {
+          alert(msg);
+        }
+      } catch (_) {
+        // ignore
+      }
       return;
     }
 
