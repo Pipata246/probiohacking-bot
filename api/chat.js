@@ -377,6 +377,64 @@ function extractProgramFromContent(text) {
   const endIdx = text.indexOf(END);
 
   if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+    // Маркеры не найдены — пробуем извлечь JSON-блок эвристически (как в скрине у пользователя)
+    try {
+      // Ищем последнее вхождение "health" или "diary" и ближайшую открывающую фигурную скобку перед ним
+      const healthPos = text.lastIndexOf('"health"');
+      const diaryPos = text.lastIndexOf('"diary"');
+      const anchor = Math.max(healthPos, diaryPos);
+
+      if (anchor !== -1) {
+        const beforeAnchor = text.slice(0, anchor);
+        const jsonStart = beforeAnchor.lastIndexOf('{');
+        const jsonEnd = text.lastIndexOf('}');
+
+        if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+          const candidate = text.slice(jsonStart, jsonEnd + 1).trim();
+
+          try {
+            const parsed = JSON.parse(candidate);
+            const health = parsed.health || parsed.healthProgram || null;
+            const diary = Array.isArray(parsed.diary) ? parsed.diary : [];
+
+            if (health) {
+              const goalsArray = Array.isArray(health.goals)
+                ? health.goals.map((g) => String(g || '').trim()).filter(Boolean)
+                : [];
+
+              result.healthProgram = {
+                supplements: health.supplements || '',
+                nutrition: health.nutrition || '',
+                stress: health.stress || '',
+                sleep: health.sleep || '',
+                goals: goalsArray
+              };
+            }
+
+            result.diaryEntries = diary
+              .map((entry) => ({
+                time: (entry.time || entry.entry_time || '').trim(),
+                title: (entry.title || entry.name || '').trim(),
+                notes: (entry.notes || entry.comment || '').trim()
+              }))
+              .filter((e) => e.time && e.title);
+
+            // Вырезаем этот JSON-блок из видимого текста
+            const before = text.slice(0, jsonStart).trimEnd();
+            const after = text.slice(jsonEnd + 1).trimStart();
+            result.cleanedText = `${before}\n\n${after}`.trim();
+
+            return result;
+          } catch (innerErr) {
+            console.warn('Heuristic JSON parse failed in extractProgramFromContent:', innerErr.message);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Heuristic JSON extraction error:', e.message);
+    }
+
+    // Ничего не смогли извлечь — возвращаем исходный текст без изменений
     return result;
   }
 
