@@ -4243,7 +4243,7 @@ body.chat-overlay-visible .search-container {
 
 .recommendation-item.expanded .rec-details {
   margin-top: clamp(8px, 2vh, 10px);
-  font-size: clamp(11px, 2.8vw, 13px);
+  font-size: clamp(13px, 3.4vw, 15px);
   color: #374151;
   line-height: 1.5;
   border-top: 1px solid rgba(0, 0, 0, 0.06);

@@ -420,10 +420,62 @@ function updateHealthGoalsUI() {
 
   const html = goalsArray
     .slice(0, 3)
-    .map((g) => `— ${g}`)
+    .map((g) => g)
     .join('<br>');
 
   goalsTextEl.innerHTML = html;
+}
+
+// =============================
+// Работа с дневником через API
+// =============================
+
+async function upsertDiaryEntryOnServer(id, entryDate, entryTime, title, notes) {
+  const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+
+  const body = {
+    id: id || null,
+    entry_date: entryDate,
+    entry_time: entryTime,
+    title,
+    notes: notes || ''
+  };
+
+  const response = await fetch('/api/diary', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok || !data || data.success === false || !data.entry) {
+    throw new Error(data?.error || `Failed to save diary entry (${response.status})`);
+  }
+
+  return data.entry;
+}
+
+async function deleteDiaryEntryOnServer(id) {
+  const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+
+  const response = await fetch('/api/diary', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+    },
+    body: JSON.stringify({ id })
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok || !data || data.success === false) {
+    throw new Error(data?.error || `Failed to delete diary entry (${response.status})`);
+  }
 }
 
 // Функция закрытия модального окна подписки
@@ -2904,17 +2956,81 @@ function escapeHtml(text) {
 
 // Форматирование markdown в HTML для сообщений ИИ
 function formatMarkdown(text) {
-  let formatted = escapeHtml(text);
-  
+  if (!text) return '';
+
+  // Экранируем HTML
+  const escaped = escapeHtml(text);
+  const lines = escaped.split('\n');
+  const chunks = [];
+
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Пытаемся распознать markdown-таблицу
+    const looksLikeHeader = trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.includes('|');
+    const next = lines[i + 1]?.trim() || '';
+    const looksLikeSeparator =
+      next.startsWith('|') &&
+      next.endsWith('|') &&
+      /^(\|\s*:?-{3,}:?\s*)+\|$/.test(next);
+
+    if (looksLikeHeader && looksLikeSeparator) {
+      const headerLine = trimmed;
+      const separatorLine = next;
+      i += 2;
+
+      const dataLines = [];
+      while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().includes('|')) {
+        dataLines.push(lines[i].trim());
+        i++;
+      }
+
+      const parseRow = (row) =>
+        row
+          .slice(1, -1)
+          .split('|')
+          .map((cell) => cell.trim());
+
+      const headers = parseRow(headerLine);
+      const rows = dataLines.map(parseRow);
+
+      let tableHtml = '<table class=\"ai-table\"><thead><tr>';
+      headers.forEach((h) => {
+        tableHtml += `<th>${h}</th>`;
+      });
+      tableHtml += '</tr></thead><tbody>';
+
+      rows.forEach((row) => {
+        tableHtml += '<tr>';
+        row.forEach((cell) => {
+          tableHtml += `<td>${cell}</td>`;
+        });
+        tableHtml += '</tr>';
+      });
+
+      tableHtml += '</tbody></table>';
+      chunks.push(tableHtml);
+      continue;
+    }
+
+    chunks.push(line);
+    i++;
+  }
+
+  let formatted = chunks.join('\n');
+
   // **текст** → <strong>текст</strong>
   formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  
+
   // *текст* → <em>текст</em>
   formatted = formatted.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  
-  // Переносы строк → <br>
+
+  // Переносы строк (кроме уже вставленных таблиц) → <br>
   formatted = formatted.replace(/\n/g, '<br>');
-  
+
   return formatted;
 }
 
@@ -3462,7 +3578,22 @@ async function createProgramFromDraft(button) {
       button.textContent = 'Программа сохранена';
     }
 
-    // После успешного сохранения сразу отправляем пользователя в раздел Здоровье
+    // После успешного сохранения сразу обновляем программу и дневник из БД
+    try {
+      await loadHealthProgramFromApi();
+    } catch (e) {
+      console.warn('Health program reload error after save:', e);
+    }
+    try {
+      await loadDiaryFromApi();
+    } catch (e) {
+      console.warn('Diary reload error after save:', e);
+    }
+
+    // И обновляем блок целей
+    updateHealthGoalsUI();
+
+    // Переходим в раздел Здоровье
     showPage('health');
   } catch (e) {
     console.error('createProgramFromDraft error:', e);
@@ -3932,11 +4063,13 @@ async function loadDiaryFromApi() {
 
         const key = `${dayNames[d.getDay()]}-${d.getDate()}`;
         if (!diaryData[key]) diaryData[key] = [];
-
+        
         diaryData[key].push({
           id: String(entry.id || `${dateStr}-${timeStr}-${title}`),
           time: timeStr,
-          text: title
+          text: title,
+          date: dateStr,
+          notes: entry.notes || ''
         });
       } catch (e) {
         console.warn('Skip invalid diary entry from API:', e);
@@ -6470,44 +6603,64 @@ function saveDiaryEntry() {
   // Получаем выбранное время
   const selectedTime = `${hourSelect.value}:${minuteSelect.value}`;
   
+  // Определяем дату выбранного дня
+  const activeDayEl = document.querySelector('.diary-day.active');
+  const dayDateAttr = activeDayEl?.getAttribute('data-date');
+  let entryDate = dayDateAttr || new Date().toISOString().slice(0, 10);
+
   // Инициализируем массив для текущего дня если его нет
   if (!diaryData[currentSelectedDay]) {
     diaryData[currentSelectedDay] = [];
   }
-  
+
+  // Определяем, редактируем ли существующую запись
+  let existingEntry = null;
   if (currentEditingEntryId) {
-    // Редактирование существующей записи
-    const entryIndex = diaryData[currentSelectedDay].findIndex(entry => entry.id === currentEditingEntryId);
-    if (entryIndex !== -1) {
-      diaryData[currentSelectedDay][entryIndex].text = entryText;
-      diaryData[currentSelectedDay][entryIndex].time = selectedTime;
+    existingEntry = diaryData[currentSelectedDay].find(entry => entry.id === currentEditingEntryId);
+    if (existingEntry && existingEntry.date) {
+      entryDate = existingEntry.date;
     }
-  } else {
-    // Создание новой записи
-    const newEntryId = Date.now().toString();
-    
-    const newEntry = {
-      id: newEntryId,
-      time: selectedTime,
-      text: entryText
-    };
-    
-    diaryData[currentSelectedDay].push(newEntry);
   }
-  
-  // Сортируем записи по времени
-  diaryData[currentSelectedDay].sort((a, b) => {
-    const timeA = a.time.split(':').map(Number);
-    const timeB = b.time.split(':').map(Number);
-    return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
-  });
-  
-  // Перезагружаем записи для текущего дня
-  loadDayEntries(currentSelectedDay);
-  
-  closeDiaryModal();
-  
-  console.log(`Запись сохранена для дня ${currentSelectedDay}: ${selectedTime} - ${entryText}`);
+
+  // Сохраняем в БД
+  upsertDiaryEntryOnServer(existingEntry ? existingEntry.id : null, entryDate, selectedTime, entryText, existingEntry?.notes || '')
+    .then((savedEntry) => {
+      const savedId = String(savedEntry.id);
+
+      if (existingEntry) {
+        existingEntry.id = savedId;
+        existingEntry.time = selectedTime;
+        existingEntry.text = entryText;
+        existingEntry.date = savedEntry.entry_date;
+        existingEntry.notes = savedEntry.notes || '';
+      } else {
+        diaryData[currentSelectedDay].push({
+          id: savedId,
+          time: selectedTime,
+          text: entryText,
+          date: savedEntry.entry_date,
+          notes: savedEntry.notes || ''
+        });
+      }
+
+      // Сортируем записи по времени
+      diaryData[currentSelectedDay].sort((a, b) => {
+        const timeA = a.time.split(':').map(Number);
+        const timeB = b.time.split(':').map(Number);
+        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+      });
+
+      // Перезагружаем записи для текущего дня
+      loadDayEntries(currentSelectedDay);
+
+      closeDiaryModal();
+
+      console.log(`Запись сохранена в БД для дня ${currentSelectedDay} (${entryDate}): ${selectedTime} - ${entryText}`);
+    })
+    .catch((error) => {
+      console.error('Ошибка сохранения записи дневника в БД:', error);
+      tg.showAlert('Не удалось сохранить запись. Попробуйте еще раз.');
+    });
 }
 
 // Функция показа модального окна для страницы здоровья
@@ -6813,17 +6966,22 @@ function deleteEntry(entryId) {
   // Находим индекс записи
   const entryIndex = diaryData[currentSelectedDay].findIndex(entry => entry.id === entryId);
   
-  if (entryIndex !== -1) {
-    const deletedEntry = diaryData[currentSelectedDay][entryIndex];
-    
-    // Удаляем запись из массива
-    diaryData[currentSelectedDay].splice(entryIndex, 1);
-    
-    // Перезагружаем записи
-    loadDayEntries(currentSelectedDay);
-    
-    console.log(`🗑️ Удалена запись: ${deletedEntry.time} - ${deletedEntry.text}`);
+  if (entryIndex === -1) {
+    return;
   }
+
+  const deletedEntry = diaryData[currentSelectedDay][entryIndex];
+
+  deleteDiaryEntryOnServer(deletedEntry.id)
+    .then(() => {
+      diaryData[currentSelectedDay].splice(entryIndex, 1);
+      loadDayEntries(currentSelectedDay);
+      console.log(`🗑️ Удалена запись из БД: ${deletedEntry.time} - ${deletedEntry.text}`);
+    })
+    .catch((error) => {
+      console.error('Ошибка удаления записи дневника в БД:', error);
+      tg.showAlert('Не удалось удалить запись. Попробуйте еще раз.');
+    });
 }
 
 // ========================================
