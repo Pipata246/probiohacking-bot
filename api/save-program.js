@@ -55,6 +55,11 @@ module.exports = async (req, res) => {
     await supabase.from('diary_entries').delete().eq('telegram_id', telegramId);
 
     // Вставляем программу здоровья
+    const goalsArray = Array.isArray(healthProgram.goals)
+      ? healthProgram.goals.map((g) => String(g || '').trim()).filter(Boolean)
+      : [];
+    const goalsText = goalsArray.join('\n');
+
     const { data: hpData, error: hpError } = await supabase
       .from('health_programs')
       .insert({
@@ -63,7 +68,8 @@ module.exports = async (req, res) => {
         supplements: healthProgram.supplements || '',
         nutrition: healthProgram.nutrition || '',
         stress: healthProgram.stress || '',
-        sleep: healthProgram.sleep || ''
+        sleep: healthProgram.sleep || '',
+        goals: goalsText || null
       })
       .select()
       .single();
@@ -77,23 +83,31 @@ module.exports = async (req, res) => {
     const entries = Array.isArray(diaryEntries) ? diaryEntries : [];
     if (entries.length > 0) {
       const today = new Date();
-      const dateStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+      today.setHours(0, 0, 0, 0);
 
-      const rows = entries
-        .map((entry) => {
+      const rows = [];
+
+      // Создаём расписание на ближайшие 30 дней
+      for (let offset = 0; offset < 30; offset++) {
+        const day = new Date(today);
+        day.setDate(today.getDate() + offset);
+        const dateStr = day.toISOString().slice(0, 10); // YYYY-MM-DD
+
+        entries.forEach((entry) => {
           const time = (entry.time || '').trim();
           const title = (entry.title || '').trim();
-          if (!time || !title) return null;
-          return {
+          if (!time || !title) return;
+
+          rows.push({
             user_id: userId,
             telegram_id: telegramId,
             entry_date: dateStr,
             entry_time: time,
             title,
             notes: (entry.notes || '').trim()
-          };
-        })
-        .filter(Boolean);
+          });
+        });
+      }
 
       if (rows.length > 0) {
         const { error: deError } = await supabase

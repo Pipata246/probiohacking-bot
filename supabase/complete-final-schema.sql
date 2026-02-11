@@ -224,9 +224,27 @@ CREATE TABLE IF NOT EXISTS public.health_programs (
   nutrition text,             -- Питание
   stress text,                -- Стресс и управление нагрузкой
   sleep text,                 -- Сон и восстановление
+  goals text,                 -- 3 главные цели на ближайший месяц (каждая с новой строки)
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT health_programs_pkey PRIMARY KEY (id)
 );
+
+-- Миграция: добавляем колонку goals, если её ещё нет
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'health_programs'
+      AND column_name = 'goals'
+  ) THEN
+    ALTER TABLE public.health_programs
+      ADD COLUMN goals text;
+    RAISE NOTICE 'Добавлена колонка goals в health_programs (3 главные цели на месяц)';
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'Ошибка при добавлении колонки goals в health_programs: %', SQLERRM;
+END $$;
 
 -- Таблица ДНЕВНИК: расписание приёмов/действий из персональной программы
 CREATE TABLE IF NOT EXISTS public.diary_entries (

@@ -4251,11 +4251,6 @@ body.chat-overlay-visible .search-container {
   font-family: 'Inter', sans-serif;
 }
 
-.recommendation-item.expanded .rec-add-btn svg {
-  transform: rotate(45deg);
-  transition: transform 0.2s ease;
-}
-
 /* Секция куратора - объединенный блок */
 .curator-section {
   background: #FEF7EC;

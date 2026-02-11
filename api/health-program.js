@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
     // Получаем последнюю сохранённую программу
     const { data: program, error } = await supabase
       .from('health_programs')
-      .select('supplements, nutrition, stress, sleep, created_at')
+      .select('supplements, nutrition, stress, sleep, goals, created_at')
       .eq('telegram_id', telegramId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -55,17 +55,42 @@ module.exports = async (req, res) => {
       return res.status(500).json({ success: false, error: error.message });
     }
 
-    const hasProgram = !!program;
+    const now = new Date();
+    let hasProgram = !!program;
+    let programExpired = false;
+
+    if (program && program.created_at) {
+      const createdAt = new Date(program.created_at);
+      const diffMs = now.getTime() - createdAt.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      if (diffDays > 30) {
+        programExpired = true;
+        hasProgram = false;
+      }
+    }
+
+    let goals = null;
+    if (program && program.goals) {
+      const raw = String(program.goals);
+      goals = raw
+        .split(/\r?\n/)
+        .map((g) => g.trim())
+        .filter(Boolean);
+    }
 
     return res.status(200).json({
       success: true,
       programCreated: hasProgram,
-      healthProgram: hasProgram ? {
-        supplements: program.supplements || '',
-        nutrition: program.nutrition || '',
-        stress: program.stress || '',
-        sleep: program.sleep || ''
-      } : null
+      programExpired,
+      healthProgram: hasProgram
+        ? {
+            supplements: program.supplements || '',
+            nutrition: program.nutrition || '',
+            stress: program.stress || '',
+            sleep: program.sleep || '',
+            goals: goals || null
+          }
+        : null
     });
   } catch (error) {
     console.error('health-program API Error:', error);

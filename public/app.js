@@ -392,6 +392,40 @@ function showSubscriptionModal(title, description) {
   }
 }
 
+// Обновление блока "Цели на ближайший месяц" на странице Здоровье
+function updateHealthGoalsUI() {
+  const goalsTextEl = document.querySelector('.goals-text');
+  if (!goalsTextEl) return;
+
+  const hp = currentHealthProgram || (lastProgramDraft && lastProgramDraft.healthProgram) || null;
+
+  if (!hp || !hp.goals || (Array.isArray(hp.goals) && hp.goals.length === 0)) {
+    // Если целей нет — можно оставить заглушку или очистить блок.
+    // Сейчас очистим, чтобы не вводить в заблуждение.
+    goalsTextEl.innerHTML = 'Цели на ближайший месяц будут сформированы после персональной программы.';
+    return;
+  }
+
+  const goalsArray = Array.isArray(hp.goals)
+    ? hp.goals
+    : String(hp.goals)
+        .split(/\r?\n/)
+        .map((g) => g.trim())
+        .filter(Boolean);
+
+  if (goalsArray.length === 0) {
+    goalsTextEl.innerHTML = 'Цели на ближайший месяц будут сформированы после персональной программы.';
+    return;
+  }
+
+  const html = goalsArray
+    .slice(0, 3)
+    .map((g) => `— ${g}`)
+    .join('<br>');
+
+  goalsTextEl.innerHTML = html;
+}
+
 // Функция закрытия модального окна подписки
 function closeSubscriptionModal() {
   const modal = document.getElementById('subscriptionModal');
@@ -3770,18 +3804,17 @@ async function loadAppData() {
   
   await appDataPromise;
   
-  // Если у пользователя уже есть сохранённая программа, загружаем её и дневник из БД
-  if (programCreated) {
-    try {
-      await loadHealthProgramFromApi();
-    } catch (e) {
-      console.warn('Health program load error:', e);
-    }
-    try {
-      await loadDiaryFromApi();
-    } catch (e) {
-      console.warn('Diary load error:', e);
-    }
+  // Всегда пробуем загрузить сохранённую программу и дневник из БД.
+  // Бэкенд сам решает, есть ли активная программа и не истёк ли месяц.
+  try {
+    await loadHealthProgramFromApi();
+  } catch (e) {
+    console.warn('Health program load error:', e);
+  }
+  try {
+    await loadDiaryFromApi();
+  } catch (e) {
+    console.warn('Diary load error:', e);
   }
   
   // Обновляем баннер после загрузки данных
@@ -3836,12 +3869,23 @@ async function loadHealthProgramFromApi() {
       return;
     }
 
-    if (data.healthProgram) {
-      currentHealthProgram = data.healthProgram;
+    const hp = data.healthProgram || null;
+    const programExpired = data.programExpired === true;
+
+    if (hp && !programExpired) {
+      currentHealthProgram = hp;
       programCreated = true;
       console.log('✅ Health program loaded:', currentHealthProgram);
+      updateHealthGoalsUI();
     } else {
-      console.log('ℹ️ Health program not found for user');
+      currentHealthProgram = null;
+      if (programExpired) {
+        programCreated = false;
+        console.log('ℹ️ Health program expired (older than 30 days)');
+      } else {
+        console.log('ℹ️ Health program not found for user');
+      }
+      updateHealthGoalsUI();
     }
   } catch (e) {
     console.warn('loadHealthProgramFromApi error:', e);
@@ -6541,6 +6585,13 @@ function toggleHealthRecommendationInline(btn) {
     item.classList.remove('expanded');
     const existing = item.querySelector('.rec-details');
     if (existing) existing.remove();
+
+    // Возвращаем иконку плюса
+    btn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5V19M5 12H19" stroke="#2A3F5F" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    `;
     return;
   }
 
@@ -6593,6 +6644,13 @@ function toggleHealthRecommendationInline(btn) {
 
   item.appendChild(details);
   item.classList.add('expanded');
+
+  // Меняем иконку на минус
+  btn.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M5 12H19" stroke="#2A3F5F" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+  `;
 }
 
 // Модальное окно с готовыми рекомендациями по конкретной категории (Здоровье)

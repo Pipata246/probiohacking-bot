@@ -39,10 +39,15 @@ module.exports = async (req, res) => {
     const user = JSON.parse(params.user);
     const telegramId = user.id;
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().slice(0, 10);
+
     const { data, error } = await supabase
       .from('diary_entries')
       .select('id, entry_date, entry_time, title, notes')
       .eq('telegram_id', telegramId)
+      .gte('entry_date', todayStr) // показываем только актуальные записи (сегодня и дальше)
       .order('entry_date', { ascending: true })
       .order('entry_time', { ascending: true });
 
