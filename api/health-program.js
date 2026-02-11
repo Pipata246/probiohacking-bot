@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
     // Получаем последнюю сохранённую программу
     const { data: program, error } = await supabase
       .from('health_programs')
-      .select('supplements, nutrition, stress, sleep, goals, created_at')
+      .select('supplements, nutrition, stress, sleep, goals, request, created_at')
       .eq('telegram_id', telegramId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -88,7 +88,8 @@ module.exports = async (req, res) => {
             nutrition: program.nutrition || '',
             stress: program.stress || '',
             sleep: program.sleep || '',
-            goals: goals || null
+            goals: goals || null,
+            request: program.request || null
           }
         : null
     });

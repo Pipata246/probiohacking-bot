@@ -79,7 +79,9 @@ async function getUserDiagnosticData(userId) {
       additional_answers: {},
       full_answers: answers,
       analysis_photos: analysisPhotos,
-      analysis_descriptions: analysisDescriptions // Добавляем описания анализов
+      analysis_descriptions: analysisDescriptions, // Добавляем описания анализов
+      current_program: null,
+      today_diary: []
     };
 
     answers.forEach(answer => {
@@ -102,6 +104,59 @@ async function getUserDiagnosticData(userId) {
         };
       }
     });
+
+    // Загружаем текущую сохранённую программу здоровья (если есть)
+    try {
+      const { data: program } = await supabase
+        .from('health_programs')
+        .select('supplements, nutrition, stress, sleep, goals, request, created_at')
+        .eq('telegram_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (program) {
+        let goalsArray = [];
+        if (program.goals) {
+          goalsArray = String(program.goals)
+            .split(/\r?\n/)
+            .map((g) => g.trim())
+            .filter(Boolean);
+        }
+
+        diagnosticData.current_program = {
+          supplements: program.supplements || '',
+          nutrition: program.nutrition || '',
+          stress: program.stress || '',
+          sleep: program.sleep || '',
+          goals: goalsArray,
+          request: program.request || null,
+          created_at: program.created_at || null
+        };
+      }
+    } catch (e) {
+      console.warn('Failed to load current health_program for diagnosticData:', e.message);
+    }
+
+    // Загружаем дневник только за один день (сегодня) чтобы не перегружать контекст
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().slice(0, 10);
+
+      const { data: diary } = await supabase
+        .from('diary_entries')
+        .select('entry_date, entry_time, title, notes, request')
+        .eq('telegram_id', userId)
+        .eq('entry_date', todayStr)
+        .order('entry_time', { ascending: true });
+
+      if (Array.isArray(diary) && diary.length > 0) {
+        diagnosticData.today_diary = diary;
+      }
+    } catch (e) {
+      console.warn('Failed to load today diary for diagnosticData:', e.message);
+    }
 
     console.log('📊 Diagnostic data loaded for user:', userId);
     return diagnosticData;
@@ -664,6 +719,43 @@ module.exports = async (req, res) => {
                 context += `     Файл ${idx + 1}: [описание пока не сгенерировано]\n`;
               }
             });
+          });
+        }
+        
+        // Текущая сохранённая программа здоровья (если есть)
+        if (diagnosticData.current_program) {
+          const hp = diagnosticData.current_program;
+          context += `\n✓ Текущая персональная программа (по запросу: \"${hp.request || 'не указан'}\"):\n`;
+          if (hp.goals && Array.isArray(hp.goals) && hp.goals.length > 0) {
+            context += `  Цели на ближайший месяц:\n`;
+            hp.goals.forEach((g, idx) => {
+              context += `   ${idx + 1}) ${g}\n`;
+            });
+          }
+          if (hp.supplements) {
+            const s = String(hp.supplements);
+            context += `  Нутрицевтики и добавки (уже учтены): ${s.substring(0, 400)}${s.length > 400 ? '...' : ''}\n`;
+          }
+          if (hp.nutrition) {
+            const n = String(hp.nutrition);
+            context += `  Питание (уже учтено): ${n.substring(0, 400)}${n.length > 400 ? '...' : ''}\n`;
+          }
+          if (hp.stress) {
+            const st = String(hp.stress);
+            context += `  Стресс и нагрузка (уже учтены): ${st.substring(0, 400)}${st.length > 400 ? '...' : ''}\n`;
+          }
+          if (hp.sleep) {
+            const sl = String(hp.sleep);
+            context += `  Сон и восстановление (уже учтены): ${sl.substring(0, 400)}${sl.length > 400 ? '...' : ''}\n`;
+          }
+        }
+
+        // Пример дневника только за один день, чтобы не перегружать контекст
+        if (diagnosticData.today_diary && diagnosticData.today_diary.length > 0) {
+          context += `✓ Пример дневника на ОДИН день (типичный день текущей программы):\n`;
+          diagnosticData.today_diary.forEach((entry) => {
+            const t = (entry.entry_time || '').toString().slice(0, 5);
+            context += `  - ${t}: ${entry.title}${entry.notes ? ` (${entry.notes})` : ''}\n`;
           });
         }
         

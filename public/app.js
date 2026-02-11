@@ -3548,7 +3548,8 @@ async function createProgramFromDraft(button) {
         username: telegramUser.username
       },
       healthProgram: lastProgramDraft.healthProgram,
-      diaryEntries: lastProgramDraft.diaryEntries || []
+      diaryEntries: lastProgramDraft.diaryEntries || [],
+      request: lastProgramDraft.requestText || ''
     };
 
     const response = await fetch('/api/save-program', {
@@ -3830,20 +3831,26 @@ async function sendMessageToAI(message, mode = 'detailed') {
         addSubscriptionRecommendation(remaining);
       }
 
-      // Сохраняем черновик программы из ответа, если он есть
-      if (data.healthProgram || (Array.isArray(data.diaryEntries) && data.diaryEntries.length > 0)) {
-        lastProgramDraft = {
-          healthProgram: data.healthProgram || null,
-          diaryEntries: Array.isArray(data.diaryEntries) ? data.diaryEntries : []
-        };
-        console.log('💾 Черновик программы сохранен:', lastProgramDraft);
-      } else {
-        lastProgramDraft = null;
-      }
+      // Сохраняем черновик программы из ответа, если он есть (только для подробного режима)
+      if (mode === 'detailed') {
+        if (data.healthProgram || (Array.isArray(data.diaryEntries) && data.diaryEntries.length > 0)) {
+          lastProgramDraft = {
+            healthProgram: data.healthProgram || null,
+            diaryEntries: Array.isArray(data.diaryEntries) ? data.diaryEntries : [],
+            requestText: message
+          };
+          console.log('💾 Черновик программы сохранен:', lastProgramDraft);
+        } else {
+          lastProgramDraft = null;
+        }
 
-      // Показываем кнопку создания программы, если разрешено
-      if (data.canCreateProgram) {
-        addCreateProgramButton(true);
+        // Показываем кнопку создания программы, если разрешено (ТОЛЬКО для подробного ответа)
+        if (data.canCreateProgram) {
+          addCreateProgramButton(true);
+        }
+      } else {
+        // В режиме краткого ответа не сохраняем черновик и не показываем кнопку программы
+        lastProgramDraft = null;
       }
       
       // Обрабатываем переполнение контекста

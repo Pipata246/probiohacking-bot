@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { telegramUser, healthProgram, diaryEntries } = req.body || {};
+    const { telegramUser, healthProgram, diaryEntries, request } = req.body || {};
 
     if (!telegramUser || !telegramUser.id) {
       return res.status(400).json({ success: false, error: 'Telegram user data required' });
@@ -69,6 +69,7 @@ module.exports = async (req, res) => {
         nutrition: healthProgram.nutrition || '',
         stress: healthProgram.stress || '',
         sleep: healthProgram.sleep || '',
+        request: (request || '').toString().trim() || null,
         goals: goalsText || null
       })
       .select()
@@ -104,7 +105,8 @@ module.exports = async (req, res) => {
             entry_date: dateStr,
             entry_time: time,
             title,
-            notes: (entry.notes || '').trim()
+            notes: (entry.notes || '').trim(),
+            request: (request || '').toString().trim() || null
           });
         });
       }

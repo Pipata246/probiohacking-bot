@@ -225,6 +225,7 @@ CREATE TABLE IF NOT EXISTS public.health_programs (
   stress text,                -- Стресс и управление нагрузкой
   sleep text,                 -- Сон и восстановление
   goals text,                 -- 3 главные цели на ближайший месяц (каждая с новой строки)
+  request text,               -- Исходный запрос пользователя, по которому составлена программа
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT health_programs_pkey PRIMARY KEY (id)
 );
@@ -242,6 +243,17 @@ BEGIN
       ADD COLUMN goals text;
     RAISE NOTICE 'Добавлена колонка goals в health_programs (3 главные цели на месяц)';
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'health_programs'
+      AND column_name = 'request'
+  ) THEN
+    ALTER TABLE public.health_programs
+      ADD COLUMN request text;
+    RAISE NOTICE 'Добавлена колонка request в health_programs (исходный запрос)';
+  END IF;
 EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'Ошибка при добавлении колонки goals в health_programs: %', SQLERRM;
 END $$;
@@ -255,9 +267,26 @@ CREATE TABLE IF NOT EXISTS public.diary_entries (
   entry_time time NOT NULL,
   title text NOT NULL,        -- Текст записи (напр. "Магний 400 мг")
   notes text,                 -- Доп. пояснение при необходимости
+   request text,              -- Исходный запрос, к которому относится запись дневника
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT diary_entries_pkey PRIMARY KEY (id)
 );
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'diary_entries'
+      AND column_name = 'request'
+  ) THEN
+    ALTER TABLE public.diary_entries
+      ADD COLUMN request text;
+    RAISE NOTICE 'Добавлена колонка request в diary_entries (исходный запрос)';
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'Ошибка при добавлении колонки request в diary_entries: %', SQLERRM;
+END $$;
 
 -- ============================================
 -- 2. ИНДЕКСЫ (для оптимизации запросов)
