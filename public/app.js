@@ -2720,11 +2720,8 @@ document.addEventListener('click', (e) => {
       return;
     }
 
-    // Если программа уже сохранена – показываем конкретные рекомендации по категории
-    const item = btn.closest('.recommendation-item');
-    const titleEl = item?.querySelector('.rec-title');
-    const categoryTitle = titleEl ? titleEl.textContent.trim() : '';
-    showHealthRecommendationModal(categoryTitle);
+    // Если программа уже сохранена – разворачиваем панель с рекомендациями прямо в карточке
+    toggleHealthRecommendationInline(btn);
     return;
   }
   
@@ -6526,6 +6523,76 @@ function closeHealthModal() {
       modal.remove();
     }, 300); // Ждем завершения анимации
   }
+}
+
+// Разворачивание рекомендаций по здоровью прямо в карточке (как на макете)
+function toggleHealthRecommendationInline(btn) {
+  const item = btn.closest('.recommendation-item');
+  if (!item) return;
+
+  const hp = currentHealthProgram || (lastProgramDraft && lastProgramDraft.healthProgram) || null;
+  if (!hp) {
+    console.warn('Нет сохранённой программы здоровья для показа рекомендаций');
+    return;
+  }
+
+  // Если уже развернуто — сворачиваем
+  if (item.classList.contains('expanded')) {
+    item.classList.remove('expanded');
+    const existing = item.querySelector('.rec-details');
+    if (existing) existing.remove();
+    return;
+  }
+
+  // Сворачиваем остальные карточки
+  document.querySelectorAll('.recommendation-item.expanded').forEach((other) => {
+    other.classList.remove('expanded');
+    const details = other.querySelector('.rec-details');
+    if (details) details.remove();
+  });
+
+  // Определяем, какой блок программы показывать
+  const type = btn.getAttribute('data-type') || '';
+  let text = '';
+
+  if (type === 'supplements') {
+    text = hp.supplements || '';
+  } else if (type === 'nutrition') {
+    text = hp.nutrition || '';
+  } else if (type === 'stress') {
+    text = hp.stress || '';
+  } else if (type === 'sleep') {
+    text = hp.sleep || '';
+  } else {
+    const titleEl = item.querySelector('.rec-title');
+    const title = titleEl ? titleEl.textContent.trim().toLowerCase() : '';
+
+    if (title.includes('нутри') || title.includes('добав')) {
+      text = hp.supplements || '';
+    } else if (title.includes('питан')) {
+      text = hp.nutrition || '';
+    } else if (title.includes('сон')) {
+      text = hp.sleep || '';
+    } else if (title.includes('стресс')) {
+      text = hp.stress || '';
+    }
+  }
+
+  if (!text) {
+    text =
+      hp.supplements ||
+      hp.nutrition ||
+      hp.stress ||
+      hp.sleep ||
+      'Рекомендации для этой категории пока не сформированы.';
+  }
+
+  const details = document.createElement('div');
+  details.className = 'rec-details';
+  details.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+
+  item.appendChild(details);
+  item.classList.add('expanded');
 }
 
 // Модальное окно с готовыми рекомендациями по конкретной категории (Здоровье)
