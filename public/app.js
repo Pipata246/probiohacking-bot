@@ -375,6 +375,9 @@ let lastProgramDraft = null;  // Черновик персональной пр�
 let subscriptionActive = false; // Статус подписки
 let freeRequestsCount = 0; // Количество запросов бесплатного пользователя
 let programCreated = false; // Флаг: у пользователя уже есть сохраненная программа здоровья
+let analysesUploaded = false; // Флаг: загружены ли анализы
+let currentHealthProgram = null; // Текущая сохранённая программа здоровья (4 блока)
+let serverDiaryEntries = []; // Записи дневника, полученные из БД
 
 // Функция показа модального окна подписки
 function showSubscriptionModal(title, description) {
@@ -470,7 +473,9 @@ async function checkQuizStatus() {
       isAdmin = data.admin === true;
       subscriptionActive = data.subscription_active === true;
       freeRequestsCount = data.free_requests_count ?? 0;
-      console.log('📋 Quiz status SET:', quizCompleted, 'Date:', quizCompletionDate, 'Admin:', isAdmin, 'Subscription:', subscriptionActive, 'Free requests:', freeRequestsCount);
+      programCreated = data.program_created === true || data.programCreated === true || programCreated;
+      analysesUploaded = data.analyses_uploaded === true || data.analysesUploaded === true || analysesUploaded;
+      console.log('📋 Quiz status SET:', quizCompleted, 'Date:', quizCompletionDate, 'Admin:', isAdmin, 'Subscription:', subscriptionActive, 'Free requests:', freeRequestsCount, 'Program created:', programCreated, 'Analyses uploaded:', analysesUploaded);
       
       // Обновляем UI диагностики и админской панели
       updateDiagnosticsUI();
@@ -531,6 +536,99 @@ function updateDiagnosticsUI() {
     // Скрываем элементы
     if (retakeCard) retakeCard.style.display = 'none';
     if (completionDateBlock) completionDateBlock.style.display = 'none';
+  }
+}
+
+// =============================
+// Загрузка программы здоровья и дневника из БД
+// =============================
+
+async function loadHealthProgramFromApi() {
+  const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+  try {
+    const response = await fetch('/api/health-program', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) {
+      console.warn('health-program response not ok:', response.status);
+      return;
+    }
+
+    const data = await response.json();
+    if (!data?.success) return;
+
+    if (data.healthProgram) {
+      currentHealthProgram = data.healthProgram;
+      programCreated = data.programCreated === true || programCreated;
+      console.log('✅ Health program loaded:', currentHealthProgram);
+    }
+  } catch (e) {
+    console.error('loadHealthProgramFromApi error:', e);
+  }
+}
+
+async function loadDiaryFromApi() {
+  const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+  try {
+    const response = await fetch('/api/diary', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) {
+      console.warn('diary response not ok:', response.status);
+      return;
+    }
+
+    const data = await response.json();
+    if (!data?.success || !Array.isArray(data.entries)) return;
+
+    serverDiaryEntries = data.entries;
+    console.log('✅ Diary entries loaded from server:', serverDiaryEntries.length);
+
+    // Гидрируем структуру diaryData из БД
+    diaryData = {};
+    const weekDaysShort = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
+
+    serverDiaryEntries.forEach((entry) => {
+      try {
+        const dateObj = new Date(entry.entry_date);
+        if (isNaN(dateObj.getTime())) return;
+        const dayName = weekDaysShort[dateObj.getDay()];
+        const dayNumber = dateObj.getDate();
+        const key = `${dayName}-${dayNumber}`;
+
+        if (!diaryData[key]) diaryData[key] = [];
+
+        const timeStr = String(entry.entry_time || '').slice(0, 5); // HH:MM
+        const text = entry.title || '';
+        if (!timeStr || !text) return;
+
+        diaryData[key].push({
+          id: entry.id || `${key}-${timeStr}`,
+          time: timeStr,
+          text,
+          notes: entry.notes || ''
+        });
+      } catch (e) {
+        console.warn('Skip invalid diary entry from server:', e);
+      }
+    });
+
+    // Сортируем записи внутри каждого дня по времени
+    Object.keys(diaryData).forEach((key) => {
+      diaryData[key].sort((a, b) => {
+        const [ah, am] = a.time.split(':').map(Number);
+        const [bh, bm] = b.time.split(':').map(Number);
+        return ah * 60 + am - (bh * 60 + bm);
+      });
+    });
+  } catch (e) {
+    console.error('loadDiaryFromApi error:', e);
   }
 }
 
@@ -2613,7 +2711,20 @@ document.addEventListener('click', (e) => {
   
   // Кнопки плюсов в рекомендациях на странице Здоровье
   if (e.target.closest('.rec-add-btn')) {
-    showHealthModal();
+    const btn = e.target.closest('.rec-add-btn');
+    if (!btn) return;
+
+    // Если программа ещё не создана – показываем подсказку про диагностику и анализы
+    if (!programCreated) {
+      showHealthModal();
+      return;
+    }
+
+    // Если программа уже сохранена – показываем конкретные рекомендации по категории
+    const item = btn.closest('.recommendation-item');
+    const titleEl = item?.querySelector('.rec-title');
+    const categoryTitle = titleEl ? titleEl.textContent.trim() : '';
+    showHealthRecommendationModal(categoryTitle);
     return;
   }
   
@@ -3662,10 +3773,26 @@ async function loadAppData() {
   
   await appDataPromise;
   
+  // Если у пользователя уже есть сохранённая программа, загружаем её и дневник из БД
+  if (programCreated) {
+    try {
+      await loadHealthProgramFromApi();
+    } catch (e) {
+      console.warn('Health program load error:', e);
+    }
+    try {
+      await loadDiaryFromApi();
+    } catch (e) {
+      console.warn('Diary load error:', e);
+    }
+  }
+  
   // Обновляем баннер после загрузки данных
   updateFreeModeBanner();
   
-  // После загрузки статуса квиза, предзагружаем данные дневника если квиз пройден
+  // После загрузки статуса квиза, предзагружаем данные дневника:
+  // - если программы нет — инициализируем демо-дневник
+  // - если программа есть — дневник уже заполнен из БД
   if (quizCompleted) {
     console.log('📝 Предзагрузка данных дневника...');
     try {
@@ -3689,6 +3816,96 @@ async function loadAppData() {
   
   appDataLoaded = true;
   console.log(`✅ Все данные загружены за ${Date.now() - startTime}ms`);
+}
+
+// Загрузка сохранённой программы здоровья из API в currentHealthProgram
+async function loadHealthProgramFromApi() {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/health-program', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) {
+      console.warn('health-program response not ok:', response.status);
+      return;
+    }
+
+    const data = await response.json().catch(() => null);
+    if (!data || data.success === false) {
+      console.warn('health-program returned error payload:', data);
+      return;
+    }
+
+    if (data.healthProgram) {
+      currentHealthProgram = data.healthProgram;
+      programCreated = true;
+      console.log('✅ Health program loaded:', currentHealthProgram);
+    } else {
+      console.log('ℹ️ Health program not found for user');
+    }
+  } catch (e) {
+    console.warn('loadHealthProgramFromApi error:', e);
+  }
+}
+
+// Загрузка записей дневника из API и наполнение diaryData
+async function loadDiaryFromApi() {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/diary', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) {
+      console.warn('diary response not ok:', response.status);
+      return;
+    }
+
+    const data = await response.json().catch(() => null);
+    if (!data || data.success === false) {
+      console.warn('diary returned error payload:', data);
+      return;
+    }
+
+    const entries = Array.isArray(data.entries) ? data.entries : [];
+    serverDiaryEntries = entries;
+
+    // Очищаем локальные данные и заполняем из БД
+    diaryData = {};
+    const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
+
+    entries.forEach((entry) => {
+      try {
+        const dateStr = entry.entry_date;
+        const timeStr = (entry.entry_time || '').slice(0, 5);
+        const title = entry.title || '';
+        if (!dateStr || !timeStr || !title) return;
+
+        const d = new Date(dateStr);
+        if (Number.isNaN(d.getTime())) return;
+
+        const key = `${dayNames[d.getDay()]}-${d.getDate()}`;
+        if (!diaryData[key]) diaryData[key] = [];
+
+        diaryData[key].push({
+          id: String(entry.id || `${dateStr}-${timeStr}-${title}`),
+          time: timeStr,
+          text: title
+        });
+      } catch (e) {
+        console.warn('Skip invalid diary entry from API:', e);
+      }
+    });
+
+    console.log('✅ Diary entries loaded from API, days:', Object.keys(diaryData).length);
+  } catch (e) {
+    console.warn('loadDiaryFromApi error:', e);
+  }
 }
 
 // Проверка и восстановление состояния AI
@@ -5991,6 +6208,12 @@ function initializeDiaryData() {
   const todayKey = `${['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'][today.getDay()]}-${today.getDate()}`;
   
   console.log(`📝 Инициализация данных для сегодняшнего дня: ${todayKey}`);
+
+  // Если у пользователя уже есть сохранённая программа и дневник загружен из БД,
+  // не добавляем демо-записи
+  if (programCreated) {
+    return;
+  }
   
   // Добавляем примеры записей только для сегодняшнего дня (если их еще нет)
   if (!diaryData[todayKey]) {
@@ -6046,11 +6269,13 @@ function initializeDiary() {
   // Обновляем календарь с актуальными датами (сегодня всегда первый)
   updateCalendarHTML();
   
-  // Инициализируем данные для сегодняшнего дня
+  // Инициализируем данные для сегодняшнего дня (демо только если нет сохранённой программы)
   initializeDiaryData();
   
-  // Очищаем старые записи (старше 7 дней)
-  cleanupOldEntries();
+  // Очищаем старые записи (старше 7 дней) для демо-режима
+  if (!programCreated) {
+    cleanupOldEntries();
+  }
   
   // Автоматически выбираем сегодняшний день (первый в списке)
   const todayElement = document.querySelector('.diary-day.active');
@@ -6255,9 +6480,11 @@ function showHealthModal() {
     <div class="health-modal-content">
       <button class="health-modal-close" id="closeHealthModal">×</button>
       <div class="health-modal-body">
-        <h2 class="health-modal-title">Пройдите диагностику</h2>
-        <p class="health-modal-text">Для того, чтобы узнать свои рекомендации, для начала необходимо пройти диагностику</p>
-        <button class="health-modal-btn" id="goToDiagnosticsBtn">Пройти диагностику</button>
+        <h2 class="health-modal-title">Сначала диагностика и анализы</h2>
+        <p class="health-modal-text">
+          Пройдите диагностику, загрузите ваши анализы и обратитесь к ИИ‑помощнику для составления программы.
+        </p>
+        <button class="health-modal-btn" id="goToDiagnosticsBtn">Перейти к диагностике</button>
       </div>
     </div>
   `;
@@ -6299,6 +6526,70 @@ function closeHealthModal() {
       modal.remove();
     }, 300); // Ждем завершения анимации
   }
+}
+
+// Модальное окно с готовыми рекомендациями по конкретной категории (Здоровье)
+function showHealthRecommendationModal(categoryTitle) {
+  const hp = currentHealthProgram || (lastProgramDraft && lastProgramDraft.healthProgram) || null;
+  if (!hp) {
+    console.warn('Нет сохранённой программы здоровья для показа рекомендаций');
+    return;
+  }
+
+  const title = categoryTitle || 'Рекомендации';
+  const lower = title.toLowerCase();
+
+  let text = '';
+  if (lower.includes('нутри') || lower.includes('добав')) {
+    text = hp.supplements || '';
+  } else if (lower.includes('питан')) {
+    text = hp.nutrition || '';
+  } else if (lower.includes('сон')) {
+    text = hp.sleep || '';
+  } else if (lower.includes('стресс')) {
+    text = hp.stress || '';
+  } else if (lower.includes('физичес') || lower.includes('активн')) {
+    // Физическая активность часто идёт в связке со стрессом/сном – используем блок stress
+    text = hp.stress || hp.sleep || '';
+  }
+
+  if (!text) {
+    text = hp.supplements || hp.nutrition || hp.stress || hp.sleep || 'Рекомендации для этой категории пока не сформированы.';
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'health-modal-overlay';
+  modal.id = 'healthModal';
+
+  modal.innerHTML = `
+    <div class="health-modal-content">
+      <button class="health-modal-close" id="closeHealthModal">×</button>
+      <div class="health-modal-body">
+        <h2 class="health-modal-title">${title}</h2>
+        <p class="health-modal-text">${text.replace(/\n/g, '<br>')}</p>
+        <button class="health-modal-btn" id="closeHealthModalBtn">Понятно</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  setTimeout(() => {
+    modal.classList.add('active');
+  }, 10);
+
+  document.getElementById('closeHealthModal').addEventListener('click', () => {
+    closeHealthModal();
+  });
+  document.getElementById('closeHealthModalBtn').addEventListener('click', () => {
+    closeHealthModal();
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeHealthModal();
+    }
+  });
 }
 
 // Функция переключения режима редактирования
