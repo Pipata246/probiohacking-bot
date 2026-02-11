@@ -371,8 +371,10 @@ let quizCompleted = false;
 let quizCompletionDate = null;
 let isAdmin = false;
 let diaryInitialized = false; // Флаг инициализации дневника
+let lastProgramDraft = null;  // Черновик персональной программы (health + diary) из последнего ответа ИИ
 let subscriptionActive = false; // Статус подписки
 let freeRequestsCount = 0; // Количество запросов бесплатного пользователя
+let programCreated = false; // Флаг: у пользователя уже есть сохраненная программа здоровья
 
 // Функция показа модального окна подписки
 function showSubscriptionModal(title, description) {
@@ -2402,9 +2404,10 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Кнопка создания программы
+  // Кнопка создания персональной программы
   if (e.target.closest('.create-program-btn')) {
-    showPage('health');
+    const btn = e.target.closest('.create-program-btn');
+    createProgramFromDraft(btn);
     return;
   }
   
@@ -3233,6 +3236,101 @@ function addStatusRecommendations(quizCompleted, analysesUploaded) {
   chatMessagesScrollToBottom();
 }
 
+// Кнопка под ответом ИИ для создания персональной программы
+function addCreateProgramButton(canCreateProgram) {
+  if (!canCreateProgram) return;
+
+  const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages?.querySelector('.chat-messages-container');
+  if (!container) return;
+
+  const lastBotMessage = container.querySelector('.bot-message:last-of-type');
+  if (!lastBotMessage) return;
+
+  const bubble = lastBotMessage.querySelector('.message-bubble');
+  if (!bubble) return;
+
+  const block = document.createElement('div');
+  block.className = 'status-recommendations';
+  block.innerHTML = `
+    <div class="status-recommendation-item">
+      <span class="recommendation-text">Готово! Можно сохранить персональную программу и расписание в разделы «Здоровье» и «Дневник».</span>
+      <button class="recommendation-btn create-program-btn">Составить персональную программу</button>
+    </div>
+  `;
+
+  bubble.appendChild(block);
+  chatMessagesScrollToBottom();
+}
+
+// Сохранение персональной программы (health + diary) в БД
+async function createProgramFromDraft(button) {
+  try {
+    if (!lastProgramDraft || !lastProgramDraft.healthProgram) {
+      console.warn('Нет черновика программы для сохранения');
+      return;
+    }
+
+    const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
+    if (!telegramUser || !telegramUser.id) {
+      console.warn('Telegram user is not available for saving program');
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Сохраняем программу...';
+    }
+
+    const body = {
+      telegramUser: {
+        id: telegramUser.id,
+        first_name: telegramUser.first_name,
+        last_name: telegramUser.last_name,
+        username: telegramUser.username
+      },
+      healthProgram: lastProgramDraft.healthProgram,
+      diaryEntries: lastProgramDraft.diaryEntries || []
+    };
+
+    const response = await fetch('/api/save-program', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok || !data?.success) {
+      console.error('Failed to save program:', data || response.status);
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Составить персональную программу';
+      }
+      return;
+    }
+
+    programCreated = true;
+    console.log('✅ Персональная программа сохранена:', data);
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'Программа сохранена';
+    }
+
+    // После успешного сохранения сразу отправляем пользователя в раздел Здоровье
+    showPage('health');
+  } catch (e) {
+    console.error('createProgramFromDraft error:', e);
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'Составить персональную программу';
+    }
+  }
+}
+
 // Добавление кнопок действий к сообщению
 function addActionButtons(messageElement, buttons) {
   const bubble = messageElement?.querySelector('.message-bubble');
@@ -3457,6 +3555,22 @@ async function sendMessageToAI(message, mode = 'detailed') {
         // Для бесплатных пользователей показываем информацию о подписке
         const remaining = data.remainingFreeRequests !== undefined ? data.remainingFreeRequests : Math.max(0, 3 - freeRequestsCount);
         addSubscriptionRecommendation(remaining);
+      }
+
+      // Сохраняем черновик программы из ответа, если он есть
+      if (data.healthProgram || (Array.isArray(data.diaryEntries) && data.diaryEntries.length > 0)) {
+        lastProgramDraft = {
+          healthProgram: data.healthProgram || null,
+          diaryEntries: Array.isArray(data.diaryEntries) ? data.diaryEntries : []
+        };
+        console.log('💾 Черновик программы сохранен:', lastProgramDraft);
+      } else {
+        lastProgramDraft = null;
+      }
+
+      // Показываем кнопку создания программы, если разрешено
+      if (data.canCreateProgram) {
+        addCreateProgramButton(true);
       }
       
       // Обрабатываем переполнение контекста

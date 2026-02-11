@@ -306,6 +306,60 @@ function getSystemPrompt() {
   return `Ты — PROBIOHACKING AI "Профи": специалист по функциональной медицине. 📅 ${dateStr}. МЕТОД: Синдромальный анализ → блоки проблем → рекомендации с механизмами. ФОРМАТ: Эмодзи, списки, отступы. Без ** и [BUTTON:...]. ОГРАНИЧЕНИЯ: Не заменяешь врача. Не рецептурные препараты.`;
 }
 
+// Вспомогательная функция: извлечь структурированную программу (health + diary) из ответа ИИ
+function extractProgramFromContent(text) {
+  const result = {
+    healthProgram: null,
+    diaryEntries: [],
+    cleanedText: text || ''
+  };
+
+  if (!text || typeof text !== 'string') return result;
+
+  const START = '=== STRUCTURED_PROGRAM_JSON_START ===';
+  const END = '=== STRUCTURED_PROGRAM_JSON_END ===';
+  const startIdx = text.indexOf(START);
+  const endIdx = text.indexOf(END);
+
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+    return result;
+  }
+
+  const jsonStr = text.slice(startIdx + START.length, endIdx).trim();
+
+  // Убираем JSON-блок из видимого текста
+  const before = text.slice(0, startIdx).trimEnd();
+  const after = text.slice(endIdx + END.length).trimStart();
+  result.cleanedText = `${before}\n\n${after}`.trim();
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    const health = parsed.health || parsed.healthProgram || null;
+    const diary = Array.isArray(parsed.diary) ? parsed.diary : [];
+
+    if (health) {
+      result.healthProgram = {
+        supplements: health.supplements || '',
+        nutrition: health.nutrition || '',
+        stress: health.stress || '',
+        sleep: health.sleep || ''
+      };
+    }
+
+    result.diaryEntries = diary
+      .map((entry) => ({
+        time: (entry.time || entry.entry_time || '').trim(),
+        title: (entry.title || entry.name || '').trim(),
+        notes: (entry.notes || entry.comment || '').trim()
+      }))
+      .filter((e) => e.time && e.title);
+  } catch (e) {
+    console.warn('Failed to parse STRUCTURED_PROGRAM JSON:', e.message);
+  }
+
+  return result;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -517,7 +571,21 @@ module.exports = async (req, res) => {
     } else {
       // 📋 DETAILED MODE - полный ответ с использованием всех доступных данных
       systemPrompt += `\n\n📋 ПОДРОБНЫЙ ОТВЕТ: Ответь на вопрос пользователя полностью и информативно. Будь точен и лаконичен - избегай воды и лишних повторений. Используй его личные данные, анализы и результаты опросов ТОЛЬКО если они релевантны его вопросу. НЕ анализируй здоровье если его об этом не просили. Дай четкий, прямой и компактный ответ.
-ВАЖНО ПРО АНАЛИЗЫ: Текст в блоке "Загруженные анализы" (поле description) — это распознанное содержимое его анализов. Если этот текст есть — ты ВИДИШЬ его анализы. Никогда не говори "я не вижу твой анализ" или "вижу только описание" — описание и есть содержание анализа. Всегда считай, что все загруженные анализы принадлежат этому пользователю: игнорируй любые ФИО, даты рождения, номера полисов, телефоны и другие контакты, напечатанные на самих бланках анализов, даже если они отличаются от данных анкеты. Никогда не делай выводов вида "анализ не принадлежит пользователю" — просто работай с показателями и их значениями.`;
+ВАЖНО ПРО АНАЛИЗЫ: Текст в блоке "Загруженные анализы" (поле description) — это распознанное содержимое его анализов. Если этот текст есть — ты ВИДИШЬ его анализы. Никогда не говори "я не вижу твой анализ" или "вижу только описание" — описание и есть содержание анализа. Всегда считай, что все загруженные анализы принадлежат этому пользователю: игнорируй любые ФИО, даты рождения, номера полисов, телефоны и другие контакты, напечатанные на самих бланках анализов, даже если они отличаются от данных анкеты. Никогда не делай выводов вида "анализ не принадлежит пользователю" — просто работай с показателями и их значениями.
+ФОРМАТ ОТВЕТА ПОСЛЕ ОСНОВНОГО ТЕКСТА:
+1) Сначала дай читабельные рекомендации (как сейчас), затем сделай ТАБЛИЦУ добавок/препаратов в виде markdown-таблицы с колонками: Название | Дозировка и схема | Цель и обоснование | Важные условия.
+2) В САМОМ КОНЦЕ ответа выведи СТРОГО JSON между маркерами:
+=== STRUCTURED_PROGRAM_JSON_START ===
+{ "health": { "supplements": "...", "nutrition": "...", "stress": "...", "sleep": "..." },
+  "diary": [ { "time": "08:00", "title": "Магний 400 мг", "notes": "" }, ... ] }
+=== STRUCTURED_PROGRAM_JSON_END ===
+Где:
+- health.supplements — краткое решение по нутрицевтикам и добавкам;
+- health.nutrition — конкретные рекомендации по питанию;
+- health.stress — рекомендации по управлению стрессом и нагрузкой;
+- health.sleep — рекомендации по сну и восстановлению;
+- diary — массив шагов/приёмов на день: time в формате ЧЧ:ММ, title — что делать/принимать, notes — короткое пояснение (можно пустое).
+Не добавляй комментариев вокруг JSON и не вставляй туда лишний текст.`;
       
       // Добавляем контекст с данными (включая description из user_analysis_photos)
       if (diagnosticData) {
@@ -619,6 +687,10 @@ module.exports = async (req, res) => {
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content || '';
 
+    // Пытаемся извлечь структурированную программу (health + diary) из ответа
+    const { healthProgram, diaryEntries, cleanedText } = extractProgramFromContent(content);
+    const visibleContent = cleanedText || content;
+
     // Увеличиваем счетчик запросов для бесплатных пользователей
     if (userInfo && userInfo.id && !subscriptionActive) {
       try {
@@ -636,7 +708,7 @@ module.exports = async (req, res) => {
     // Сохраняем ответ ИИ в уже созданную запись (быстро и без повторного insert)
     if (requestId) {
       try {
-        await requestService.setChatResponse(requestId, content);
+        await requestService.setChatResponse(requestId, visibleContent);
       } catch (error) {
         console.error('Failed to update chat response:', error);
       }
@@ -646,7 +718,7 @@ module.exports = async (req, res) => {
         await requestService.saveRequestToChat(
           userInfo.telegramId,
           message,
-          content,
+          visibleContent,
           'chat',
           {
             userId: userInfo.id,
@@ -684,7 +756,7 @@ module.exports = async (req, res) => {
     // Return response with chat info and quiz status
     const responsePayload = {
       success: true,
-      response: content,
+      response: visibleContent,
       chatId: currentChatId,
       newChatCreated: false,
       contextOverflow: false,
@@ -692,6 +764,8 @@ module.exports = async (req, res) => {
       analysesUploaded: diagnosticData?.analyses_uploaded || false,
       quizRecommendation: quizRecommendation,
       analysesRecommendation: analysesRecommendation,
+      healthProgram: healthProgram || null,
+      diaryEntries: diaryEntries || [],
       canCreateProgram,
       subscriptionActive: subscriptionActive,
       freeRequestsCount: !subscriptionActive ? (freeRequestsCount + 1) : null,
