@@ -676,6 +676,10 @@ module.exports = async (req, res) => {
       quizRecommendation = !diagnosticData?.quiz_completed ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null;
       analysesRecommendation = !diagnosticData?.analyses_uploaded ? 'Рекомендуем загрузить анализы для получения более точных рекомендаций' : null;
     }
+
+    const quizCompletedFlag = diagnosticData?.quiz_completed || false;
+    const analysesUploadedFlag = diagnosticData?.analyses_uploaded || false;
+    const canCreateProgram = subscriptionActive && quizCompletedFlag && analysesUploadedFlag;
     
     // Return response with chat info and quiz status
     const responsePayload = {
@@ -684,10 +688,11 @@ module.exports = async (req, res) => {
       chatId: currentChatId,
       newChatCreated: false,
       contextOverflow: false,
-      quizCompleted: diagnosticData?.quiz_completed || false,
+      quizCompleted: quizCompletedFlag,
       analysesUploaded: diagnosticData?.analyses_uploaded || false,
       quizRecommendation: quizRecommendation,
       analysesRecommendation: analysesRecommendation,
+      canCreateProgram,
       subscriptionActive: subscriptionActive,
       freeRequestsCount: !subscriptionActive ? (freeRequestsCount + 1) : null,
       remainingFreeRequests: !subscriptionActive ? Math.max(0, 3 - (freeRequestsCount + 1)) : null
