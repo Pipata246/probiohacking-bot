@@ -1476,9 +1476,36 @@ body.chat-overlay-visible .search-container {
 }
 
 .sidebar-footer {
-  padding: 24px 20px;
+  padding: 16px 20px 24px;
   border-top: 1px solid #F0EDE6;
   position: relative;
+}
+
+.sidebar-instruction-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: rgba(60, 128, 91, 0.1);
+  border: none;
+  border-radius: 12px;
+  color: #3C805B;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.sidebar-instruction-btn:active {
+  background: rgba(60, 128, 91, 0.2);
+  transform: scale(0.98);
+}
+
+.sidebar-instruction-btn svg {
+  flex-shrink: 0;
 }
 
 .sidebar-user {
@@ -6380,4 +6407,261 @@ body.chat-overlay-visible .search-container {
 .admin-grant-modal-btn-continue:active {
   background: #1E2D42;
   transform: scale(0.98);
+}
+
+/* ========================================
+   ОНБОРДИНГ / ИНСТРУКЦИЯ
+======================================== */
+
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999998;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.onboarding-overlay.active {
+  display: flex;
+}
+
+/* Подсветка элемента */
+.onboarding-highlight {
+  position: relative;
+  z-index: 999999 !important;
+  box-shadow: 0 0 0 4px rgba(60, 128, 91, 0.5), 0 0 20px rgba(60, 128, 91, 0.3);
+  border-radius: 12px;
+}
+
+/* Тултип инструкции */
+.onboarding-tooltip {
+  background: #FEF7EC;
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: onboardingFadeIn 0.3s ease;
+}
+
+@keyframes onboardingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.onboarding-skip {
+  background: none;
+  border: none;
+  color: #3C805B;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 0.2s;
+}
+
+.onboarding-skip:active {
+  opacity: 0.7;
+}
+
+.onboarding-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: rgba(60, 128, 91, 0.1);
+  border-radius: 50%;
+  font-size: 18px;
+  color: #3B4F6B;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.onboarding-close:active {
+  background: rgba(60, 128, 91, 0.2);
+  transform: scale(0.95);
+}
+
+.onboarding-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.onboarding-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #3B4F6B;
+  margin-bottom: 8px;
+}
+
+.onboarding-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #5A6B7D;
+  margin-bottom: 20px;
+}
+
+.onboarding-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.onboarding-step {
+  font-size: 13px;
+  color: #8B9AAD;
+}
+
+.onboarding-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.onboarding-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.onboarding-btn-back {
+  background: transparent;
+  color: #5A6B7D;
+}
+
+.onboarding-btn-back:active {
+  background: rgba(60, 128, 91, 0.1);
+}
+
+.onboarding-btn-back:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.onboarding-btn-next,
+.onboarding-btn-finish {
+  background: linear-gradient(135deg, #3C805B 0%, #639B7C 100%);
+  color: white;
+}
+
+.onboarding-btn-next:active,
+.onboarding-btn-finish:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* Финальный экран */
+.onboarding-final {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.onboarding-final-content {
+  background: #FEF7EC;
+  border-radius: 20px;
+  padding: 32px 24px;
+  max-width: 340px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: onboardingFadeIn 0.3s ease;
+}
+
+.onboarding-final-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.onboarding-final-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #3B4F6B;
+  margin-bottom: 12px;
+}
+
+.onboarding-final-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #5A6B7D;
+  margin-bottom: 24px;
+}
+
+/* Чекбокс "Больше не показывать" */
+.onboarding-checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #5A6B7D;
+}
+
+.onboarding-checkbox {
+  display: none;
+}
+
+.onboarding-checkbox-custom {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #3C805B;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.onboarding-checkbox:checked + .onboarding-checkbox-custom {
+  background: #3C805B;
+}
+
+.onboarding-checkbox:checked + .onboarding-checkbox-custom::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.onboarding-btn-finish {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
 }

@@ -100,6 +100,247 @@ function getFilledAnswersCount() {
   ).length;
 }
 
+// ========================================
+// ОНБОРДИНГ / ИНСТРУКЦИЯ
+// ========================================
+
+const onboardingSteps = [
+  {
+    icon: '👋',
+    title: 'Добро пожаловать в PROBIOHACKING!',
+    text: 'Давайте проведём краткий обзор основных возможностей платформы'
+  },
+  {
+    icon: '📋',
+    title: 'Диагностика',
+    text: 'Пройдите умный опрос о состоянии вашего здоровья и загрузите анализы. ИИ выявит ваши дисбалансы.',
+    highlightNav: 1 // Индекс кнопки навигации
+  },
+  {
+    icon: '💬',
+    title: 'Чат с ИИ-наставником',
+    text: 'Задавайте вопросы о здоровье. ИИ создаст персональную программу на основе ваших данных.',
+    highlightNav: 3 // Чат
+  },
+  {
+    icon: '💚',
+    title: 'Ваше здоровье',
+    text: 'Здесь хранится ваша персональная программа: питание, добавки, рекомендации по стрессу и сну.',
+    highlightNav: 2 // Здоровье
+  },
+  {
+    icon: '📅',
+    title: 'Дневник',
+    text: 'Отслеживайте свой прогресс. Дневник с напоминаниями поможет следовать программе.',
+    highlightNav: 4 // Дневник
+  },
+  {
+    icon: '👨‍⚕️',
+    title: 'Поддержка эксперта',
+    text: 'Ваш личный куратор (нутрициолог) адаптирует программу и ответит на вопросы в чате.'
+  },
+  {
+    icon: '☰',
+    title: 'Меню',
+    text: 'В меню доступны: настройки профиля, подписка, а также возможность перезапустить эту инструкцию.',
+    highlightElement: '#menuBtn'
+  }
+];
+
+let currentOnboardingStep = 0;
+let onboardingActive = false;
+
+// Инициализация онбординга
+function initOnboarding() {
+  const overlay = document.getElementById('onboardingOverlay');
+  const tooltip = document.getElementById('onboardingTooltip');
+  const finalScreen = document.getElementById('onboardingFinal');
+  const closeBtn = document.getElementById('onboardingClose');
+  const skipBtn = document.getElementById('onboardingSkip');
+  const backBtn = document.getElementById('onboardingBack');
+  const nextBtn = document.getElementById('onboardingNext');
+  const finishBtn = document.getElementById('onboardingFinish');
+  const dontShowCheckbox = document.getElementById('onboardingDontShow');
+
+  if (!overlay) return;
+
+  // Закрыть (×)
+  closeBtn?.addEventListener('click', () => {
+    showOnboardingFinal();
+  });
+
+  // Пропустить
+  skipBtn?.addEventListener('click', () => {
+    showOnboardingFinal();
+  });
+
+  // Назад
+  backBtn?.addEventListener('click', () => {
+    if (currentOnboardingStep > 0) {
+      currentOnboardingStep--;
+      showOnboardingStep(currentOnboardingStep);
+    }
+  });
+
+  // Далее
+  nextBtn?.addEventListener('click', () => {
+    if (currentOnboardingStep < onboardingSteps.length - 1) {
+      currentOnboardingStep++;
+      showOnboardingStep(currentOnboardingStep);
+    } else {
+      showOnboardingFinal();
+    }
+  });
+
+  // Завершить
+  finishBtn?.addEventListener('click', async () => {
+    const dontShow = dontShowCheckbox?.checked || false;
+    await completeOnboarding(dontShow);
+    hideOnboarding();
+  });
+}
+
+// Показать шаг онбординга
+function showOnboardingStep(stepIndex) {
+  const step = onboardingSteps[stepIndex];
+  if (!step) return;
+
+  const overlay = document.getElementById('onboardingOverlay');
+  const tooltip = document.getElementById('onboardingTooltip');
+  const finalScreen = document.getElementById('onboardingFinal');
+  const iconEl = document.getElementById('onboardingIcon');
+  const titleEl = document.getElementById('onboardingTitle');
+  const textEl = document.getElementById('onboardingText');
+  const stepEl = document.getElementById('onboardingStep');
+  const backBtn = document.getElementById('onboardingBack');
+  const nextBtn = document.getElementById('onboardingNext');
+
+  // Убираем подсветку с предыдущих элементов
+  document.querySelectorAll('.onboarding-highlight').forEach(el => {
+    el.classList.remove('onboarding-highlight');
+  });
+
+  // Показываем тултип, скрываем финальный экран
+  if (tooltip) tooltip.style.display = 'block';
+  if (finalScreen) finalScreen.style.display = 'none';
+
+  // Обновляем контент
+  if (iconEl) iconEl.textContent = step.icon;
+  if (titleEl) titleEl.textContent = step.title;
+  if (textEl) textEl.textContent = step.text;
+  if (stepEl) stepEl.textContent = `${stepIndex + 1} из ${onboardingSteps.length}`;
+
+  // Кнопка "Назад"
+  if (backBtn) {
+    backBtn.style.display = stepIndex === 0 ? 'none' : 'block';
+  }
+
+  // Кнопка "Далее"
+  if (nextBtn) {
+    nextBtn.textContent = stepIndex === onboardingSteps.length - 1 ? 'Завершить' : 'Далее';
+  }
+
+  // Подсветка элемента навигации
+  if (step.highlightNav !== undefined) {
+    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+    if (navItems[step.highlightNav]) {
+      navItems[step.highlightNav].classList.add('onboarding-highlight');
+    }
+  }
+
+  // Подсветка конкретного элемента
+  if (step.highlightElement) {
+    const el = document.querySelector(step.highlightElement);
+    if (el) {
+      el.classList.add('onboarding-highlight');
+    }
+  }
+
+  // Показываем overlay
+  overlay?.classList.add('active');
+  onboardingActive = true;
+}
+
+// Показать финальный экран
+function showOnboardingFinal() {
+  const tooltip = document.getElementById('onboardingTooltip');
+  const finalScreen = document.getElementById('onboardingFinal');
+
+  // Убираем подсветку
+  document.querySelectorAll('.onboarding-highlight').forEach(el => {
+    el.classList.remove('onboarding-highlight');
+  });
+
+  if (tooltip) tooltip.style.display = 'none';
+  if (finalScreen) finalScreen.style.display = 'flex';
+}
+
+// Скрыть онбординг
+function hideOnboarding() {
+  const overlay = document.getElementById('onboardingOverlay');
+  
+  // Убираем подсветку
+  document.querySelectorAll('.onboarding-highlight').forEach(el => {
+    el.classList.remove('onboarding-highlight');
+  });
+
+  overlay?.classList.remove('active');
+  onboardingActive = false;
+  currentOnboardingStep = 0;
+}
+
+// Запустить онбординг
+function startOnboarding() {
+  currentOnboardingStep = 0;
+  showOnboardingStep(0);
+}
+
+// Сохранить статус прохождения онбординга
+async function completeOnboarding(dontShowAgain) {
+  if (!dontShowAgain) return;
+
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/user', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      },
+      body: JSON.stringify({ onboarding_completed: true })
+    });
+
+    if (response.ok) {
+      console.log('✅ Онбординг завершён, статус сохранён');
+    }
+  } catch (error) {
+    console.error('❌ Ошибка сохранения статуса онбординга:', error);
+  }
+}
+
+// Проверить нужно ли показывать онбординг
+async function checkOnboardingStatus() {
+  try {
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/user', {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.user?.onboarding_completed !== true;
+    }
+  } catch (error) {
+    console.error('❌ Ошибка проверки статуса онбординга:', error);
+  }
+  return true; // По умолчанию показываем
+}
+
+// Глобальная функция для запуска из меню
+window.startOnboarding = startOnboarding;
+
 // =========================================
 // ВРЕМЕННО ОТКЛЮЧАЕМ REALTIME
 // =========================================
@@ -2529,6 +2770,13 @@ document.addEventListener('click', (e) => {
   // Закрытие сайдбара
   if (e.target.closest('#sidebarClose') || e.target.closest('#sidebarOverlay')) {
     closeSidebar();
+    return;
+  }
+  
+  // Кнопка инструкции в сайдбаре
+  if (e.target.closest('#sidebarInstructionBtn')) {
+    closeSidebar();
+    setTimeout(() => startOnboarding(), 300);
     return;
   }
   
@@ -7436,12 +7684,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Добавляем класс fade-out для плавной анимации
         splashScreen.classList.add('fade-out');
         // Ждём завершения анимации перед полным скрытием
-        setTimeout(() => {
+        setTimeout(async () => {
           splashScreen.classList.add('hidden');
           console.log('✅ Приложение готово');
+          
+          // Инициализируем онбординг
+          initOnboarding();
+          
+          // Проверяем нужно ли показать онбординг
+          const shouldShowOnboarding = await checkOnboardingStatus();
+          if (shouldShowOnboarding) {
+            setTimeout(() => startOnboarding(), 500);
+          }
         }, 800); // Увеличено время для плавной анимации
       } else {
         console.log('✅ Приложение готово (без splash screen)');
+        
+        // Инициализируем онбординг
+        initOnboarding();
+        
+        // Проверяем нужно ли показать онбординг
+        const shouldShowOnboarding = await checkOnboardingStatus();
+        if (shouldShowOnboarding) {
+          setTimeout(() => startOnboarding(), 500);
+        }
       }
     } catch (error) {
       console.error('❌ Ошибка при инициализации приложения:', error);
