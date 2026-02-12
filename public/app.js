@@ -108,42 +108,50 @@ const onboardingSteps = [
   {
     icon: '👋',
     title: 'Добро пожаловать в PROBIOHACKING!',
-    text: 'Давайте проведём краткий обзор основных возможностей платформы'
+    text: 'Давайте проведём краткий обзор основных возможностей платформы',
+    position: 'center'
   },
   {
     icon: '📋',
     title: 'Диагностика',
-    text: 'Пройдите умный опрос о состоянии вашего здоровья и загрузите анализы. ИИ выявит ваши дисбалансы.',
-    highlightNav: 1 // Индекс кнопки навигации
+    text: 'Пройдите опрос о здоровье и загрузите анализы. ИИ выявит дисбалансы.',
+    highlightNav: 1,
+    position: 'above-nav'
   },
   {
-    icon: '💬',
-    title: 'Чат с ИИ-наставником',
-    text: 'Задавайте вопросы о здоровье. ИИ создаст персональную программу на основе ваших данных.',
-    highlightNav: 3 // Чат
+    icon: '🤖',
+    title: 'ИИ-наставник',
+    text: 'На главной странице задавайте вопросы. ИИ создаст персональную программу.',
+    highlightNav: 0,
+    position: 'above-nav'
   },
   {
     icon: '💚',
     title: 'Ваше здоровье',
-    text: 'Здесь хранится ваша персональная программа: питание, добавки, рекомендации по стрессу и сну.',
-    highlightNav: 2 // Здоровье
+    text: 'Здесь хранится ваша программа: питание, добавки, управление стрессом и сном.',
+    highlightNav: 2,
+    position: 'above-nav'
   },
   {
     icon: '📅',
     title: 'Дневник',
-    text: 'Отслеживайте свой прогресс. Дневник с напоминаниями поможет следовать программе.',
-    highlightNav: 4 // Дневник
+    text: 'Отслеживайте прогресс. Напоминания помогут следовать программе.',
+    highlightNav: 4,
+    position: 'above-nav'
   },
   {
-    icon: '👨‍⚕️',
-    title: 'Поддержка эксперта',
-    text: 'Ваш личный куратор (нутрициолог) адаптирует программу и ответит на вопросы в чате.'
+    icon: '📚',
+    title: 'База знаний',
+    text: 'Здесь вы найдёте полезные статьи и информацию о здоровье.',
+    highlightNav: 3,
+    position: 'above-nav'
   },
   {
     icon: '☰',
     title: 'Меню',
-    text: 'В меню доступны: настройки профиля, подписка, а также возможность перезапустить эту инструкцию.',
-    highlightElement: '#menuBtn'
+    text: 'Здесь доступна история ваших чатов с ИИ-наставником.',
+    highlightElement: '#menuBtn',
+    position: 'below-element'
   }
 ];
 
@@ -221,7 +229,11 @@ function showOnboardingStep(stepIndex) {
   });
 
   // Показываем тултип, скрываем финальный экран
-  if (tooltip) tooltip.style.display = 'block';
+  if (tooltip) {
+    tooltip.style.display = 'block';
+    // Сбрасываем классы позиции
+    tooltip.classList.remove('position-center', 'position-above-nav', 'position-below-element');
+  }
   if (finalScreen) finalScreen.style.display = 'none';
 
   // Обновляем контент
@@ -240,11 +252,14 @@ function showOnboardingStep(stepIndex) {
     nextBtn.textContent = stepIndex === onboardingSteps.length - 1 ? 'Завершить' : 'Далее';
   }
 
+  let highlightedElement = null;
+
   // Подсветка элемента навигации
   if (step.highlightNav !== undefined) {
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
     if (navItems[step.highlightNav]) {
       navItems[step.highlightNav].classList.add('onboarding-highlight');
+      highlightedElement = navItems[step.highlightNav];
     }
   }
 
@@ -253,6 +268,26 @@ function showOnboardingStep(stepIndex) {
     const el = document.querySelector(step.highlightElement);
     if (el) {
       el.classList.add('onboarding-highlight');
+      highlightedElement = el;
+    }
+  }
+
+  // Позиционирование tooltip
+  if (tooltip) {
+    const position = step.position || 'center';
+    
+    if (position === 'above-nav' && highlightedElement) {
+      tooltip.classList.add('position-above-nav');
+      // Позиционируем стрелку к элементу
+      const rect = highlightedElement.getBoundingClientRect();
+      const arrowLeft = rect.left + rect.width / 2;
+      tooltip.style.setProperty('--arrow-left', `${arrowLeft}px`);
+    } else if (position === 'below-element' && highlightedElement) {
+      tooltip.classList.add('position-below-element');
+      const rect = highlightedElement.getBoundingClientRect();
+      tooltip.style.setProperty('--tooltip-top', `${rect.bottom + 20}px`);
+    } else {
+      tooltip.classList.add('position-center');
     }
   }
 
@@ -7650,12 +7685,20 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // Загружаем данные в фоновом режиме
   let appDataLoaded = false;
-  let appDataPromise = loadAppData().then(() => {
+  let shouldShowOnboarding = false;
+  
+  // Параллельная загрузка данных и статуса онбординга
+  let appDataPromise = Promise.all([
+    loadAppData(),
+    checkOnboardingStatus()
+  ]).then(([_, onboardingStatus]) => {
     appDataLoaded = true;
+    shouldShowOnboarding = onboardingStatus;
     console.log('✅ Данные приложения загружены в фоне');
+    console.log('📋 Статус онбординга:', shouldShowOnboarding ? 'показать' : 'скрыть');
   }).catch(err => {
     console.error('❌ Ошибка загрузки данных:', err);
-    appDataLoaded = true; // Продолжаем даже при ошибке
+    appDataLoaded = true;
   });
 
   // Функция для показа приложения
@@ -7679,34 +7722,29 @@ document.addEventListener('DOMContentLoaded', async function() {
         mainApp.style.display = 'flex';
       }
       
+      // Инициализируем онбординг сразу
+      initOnboarding();
+      
       // Плавно скрываем splash screen если есть
       if (splashScreen) {
         // Добавляем класс fade-out для плавной анимации
         splashScreen.classList.add('fade-out');
         // Ждём завершения анимации перед полным скрытием
-        setTimeout(async () => {
+        setTimeout(() => {
           splashScreen.classList.add('hidden');
           console.log('✅ Приложение готово');
           
-          // Инициализируем онбординг
-          initOnboarding();
-          
-          // Проверяем нужно ли показать онбординг
-          const shouldShowOnboarding = await checkOnboardingStatus();
+          // Запускаем онбординг если нужно (статус уже загружен)
           if (shouldShowOnboarding) {
-            setTimeout(() => startOnboarding(), 500);
+            startOnboarding();
           }
-        }, 800); // Увеличено время для плавной анимации
+        }, 600);
       } else {
         console.log('✅ Приложение готово (без splash screen)');
         
-        // Инициализируем онбординг
-        initOnboarding();
-        
-        // Проверяем нужно ли показать онбординг
-        const shouldShowOnboarding = await checkOnboardingStatus();
+        // Запускаем онбординг если нужно
         if (shouldShowOnboarding) {
-          setTimeout(() => startOnboarding(), 500);
+          startOnboarding();
         }
       }
     } catch (error) {
