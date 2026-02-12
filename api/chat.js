@@ -824,7 +824,8 @@ module.exports = async (req, res) => {
             context += `     1) Оставшегося запроса: "${keepRequest}"\n`;
             context += `     2) Нового запроса пользователя (его текущее сообщение)\n`;
             context += `   Программа должна быть БЕЗ ДУБЛЕЙ. В diary каждое время уникально!\n`;
-            context += `   Игнорируй старые рекомендации по заменяемому запросу — они будут удалены.\n\n`;
+            context += `   Игнорируй старые рекомендации по заменяемому запросу — они будут удалены.\n`;
+            context += `   ОБЯЗАТЕЛЬНО выведи JSON между маркерами === STRUCTURED_PROGRAM_JSON_START === и === STRUCTURED_PROGRAM_JSON_END ===\n\n`;
           } else {
             // ОБЫЧНЫЙ РЕЖИМ: добавление к существующей программе
             const requestsDisplay = programRequests.length > 0

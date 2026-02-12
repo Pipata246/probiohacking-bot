@@ -1342,6 +1342,7 @@ function selectCuratorMode() {
   pendingReplaceRequestIndex = null;
   processAiQueue();
 }
+window.selectCuratorMode = selectCuratorMode;
 
 // Выбор: заменить один из запросов программы
 function selectReplaceRequest(index) {
@@ -1351,6 +1352,7 @@ function selectReplaceRequest(index) {
   pendingReplaceRequestIndex = index; // 0 или 1
   processAiQueue();
 }
+window.selectReplaceRequest = selectReplaceRequest;
 
 // Текущий режим ответа
 let currentResponseMode = 'detailed'; // По умолчанию детальный
@@ -3698,9 +3700,13 @@ function addCreateProgramButton(canCreateProgram) {
 
 // Сохранение персональной программы (health + diary) в БД
 async function createProgramFromDraft(button) {
+  console.log('🔧 createProgramFromDraft called, lastProgramDraft:', lastProgramDraft);
   try {
     if (!lastProgramDraft || !lastProgramDraft.healthProgram) {
-      console.warn('Нет черновика программы для сохранения');
+      console.warn('Нет черновика программы для сохранения, lastProgramDraft:', lastProgramDraft);
+      if (tg && typeof tg.showAlert === 'function') {
+        tg.showAlert('Программа не была сгенерирована. Попробуйте задать вопрос ещё раз.');
+      }
       return;
     }
 
@@ -3723,12 +3729,15 @@ async function createProgramFromDraft(button) {
     
     let requests = [];
     
+    // Индекс замены берём из черновика (сохранён при получении ответа ИИ)
+    const replaceIndex = lastProgramDraft.replaceRequestIndex;
+    
     // Если была выбрана замена одного из запросов
-    if (pendingReplaceRequestIndex !== null && previousRequests.length >= 2) {
+    if (replaceIndex !== null && replaceIndex !== undefined && previousRequests.length >= 2) {
       // Заменяем запрос по индексу
       requests = [...previousRequests];
-      requests[pendingReplaceRequestIndex] = newRequestText || requests[pendingReplaceRequestIndex];
-      console.log(`🔄 Replaced request ${pendingReplaceRequestIndex + 1}:`, requests);
+      requests[replaceIndex] = newRequestText || requests[replaceIndex];
+      console.log(`🔄 Replaced request ${replaceIndex + 1}:`, requests);
     } else if (previousRequests.length >= 2) {
       // Уже 2 запроса и не выбрана замена — не добавляем (это не должно произойти, но на всякий случай)
       requests = previousRequests;
@@ -3740,9 +3749,6 @@ async function createProgramFromDraft(button) {
         ? [...previousRequests, newRequestText]
         : (previousRequests.length ? previousRequests : (newRequestText ? [newRequestText] : []));
     }
-    
-    // Сбрасываем индекс замены после использования
-    pendingReplaceRequestIndex = null;
 
     const body = {
       telegramUser: {
@@ -4056,12 +4062,15 @@ async function sendMessageToAI(message, mode = 'detailed') {
           lastProgramDraft = {
             healthProgram: data.healthProgram || null,
             diaryEntries: Array.isArray(data.diaryEntries) ? data.diaryEntries : [],
-            requestText: message
+            requestText: message,
+            replaceRequestIndex: pendingReplaceRequestIndex // Сохраняем индекс замены
           };
           console.log('💾 Черновик программы сохранен:', lastProgramDraft);
         } else {
           lastProgramDraft = null;
         }
+        // Сбрасываем pendingReplaceRequestIndex после сохранения в черновик
+        pendingReplaceRequestIndex = null;
 
         // Показываем кнопку создания программы, если разрешено (ТОЛЬКО для подробного ответа)
         if (data.canCreateProgram) {
