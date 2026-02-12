@@ -1157,23 +1157,198 @@ function showResponseModeSelector() {
 function selectResponseMode(mode) {
   console.log(`📝 Response mode selected: ${mode}`);
   
+  // Проверяем: если выбран detailed и уже есть программа с 2 запросами — показать выбор замены
+  const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
+    ? currentHealthProgram.requests
+    : [];
+  
+  if (mode === 'detailed' && programRequests.length >= 2) {
+    console.log('⚠️ Program already has 2 requests, showing replace modal');
+    showProgramReplaceModal(programRequests);
+    return;
+  }
+  
   // Удаляем весь bot-message контейнер с selector внутри
+  removeModeSelector();
+  
+  // Обновляем currentResponseMode для текущей очереди в processAiQueue
+  currentResponseMode = mode; // Установим текущий режим
+  pendingReplaceRequestIndex = null; // Сбрасываем индекс замены
+  
+  // Обрабатываем очередь со стекло режима
+  processAiQueue();
+}
+
+// Индекс запроса для замены (0 или 1), null если не заменяем
+let pendingReplaceRequestIndex = null;
+
+// Удаление селектора режима
+function removeModeSelector() {
   const selector = document.querySelector('.response-mode-selector');
   if (selector) {
-    // Ищем родительский .bot-message и удаляем его
     const botMessage = selector.closest('.bot-message');
     if (botMessage) {
       botMessage.remove();
     } else {
-      // Fallback: если не найден bot-message, удаляем selector напрямую
       selector.remove();
     }
   }
+  // Также удаляем модальное окно замены если есть
+  const replaceModal = document.querySelector('.program-replace-modal');
+  if (replaceModal) {
+    const botMessage = replaceModal.closest('.bot-message');
+    if (botMessage) {
+      botMessage.remove();
+    } else {
+      replaceModal.remove();
+    }
+  }
+}
+
+// Показать модальное окно выбора: заменить блок или задать вопрос куратору
+function showProgramReplaceModal(requests) {
+  // Удаляем старый selector
+  const oldSelector = document.querySelector('.response-mode-selector');
+  if (oldSelector) {
+    const botMessage = oldSelector.closest('.bot-message');
+    if (botMessage) botMessage.remove();
+  }
   
-  // Обновляем currentResponseMode для текущей очереди в processAiQueue
-  currentResponseMode = mode; // Установим текущий режим
+  const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages?.querySelector('.chat-messages-container');
+  if (!container) return;
   
-  // Обрабатываем очередь со стекло режима
+  // Сокращаем текст запросов для отображения
+  const shortRequest = (text, maxLen = 50) => {
+    if (!text) return '(пустой)';
+    return text.length > maxLen ? text.substring(0, maxLen) + '...' : text;
+  };
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'bot-message';
+  messageDiv.innerHTML = `
+    <div class="bot-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="10" cy="11" r="0.5" fill="white"/>
+        <circle cx="14" cy="11" r="0.5" fill="white"/>
+      </svg>
+    </div>
+    <div class="message-bubble">
+      <div class="program-replace-modal">
+        <div class="replace-modal-title">⚠️ Программа уже содержит 2 запроса</div>
+        <div class="replace-modal-subtitle">Выберите действие:</div>
+        
+        <button class="replace-modal-btn curator-btn" onclick="selectCuratorMode()">
+          💬 Задать вопрос куратору
+          <span class="btn-hint">Ответ без изменения программы</span>
+        </button>
+        
+        <div class="replace-divider">или заменить один из запросов:</div>
+        
+        <button class="replace-modal-btn replace-btn" onclick="selectReplaceRequest(0)">
+          🔄 Заменить запрос 1
+          <span class="btn-hint">${shortRequest(requests[0])}</span>
+        </button>
+        
+        <button class="replace-modal-btn replace-btn" onclick="selectReplaceRequest(1)">
+          🔄 Заменить запрос 2
+          <span class="btn-hint">${shortRequest(requests[1])}</span>
+        </button>
+      </div>
+    </div>
+  `;
+  
+  container.appendChild(messageDiv);
+  
+  // Добавляем стили
+  if (!document.querySelector('style[data-replace-modal-styles]')) {
+    const style = document.createElement('style');
+    style.setAttribute('data-replace-modal-styles', 'true');
+    style.textContent = `
+      .program-replace-modal {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 4px 0;
+      }
+      .replace-modal-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 2px;
+      }
+      .replace-modal-subtitle {
+        font-size: 13px;
+        opacity: 0.9;
+        margin-bottom: 4px;
+      }
+      .replace-divider {
+        font-size: 12px;
+        opacity: 0.7;
+        text-align: center;
+        margin: 6px 0 2px;
+      }
+      .replace-modal-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 12px 16px;
+        background: transparent;
+        border: 2px solid rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-align: center;
+        font-family: inherit;
+      }
+      .replace-modal-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
+      }
+      .replace-modal-btn .btn-hint {
+        font-size: 11px;
+        font-weight: 400;
+        opacity: 0.8;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .curator-btn {
+        border-color: rgba(100, 200, 150, 0.8);
+      }
+      .replace-btn {
+        border-color: rgba(255, 180, 100, 0.8);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  setTimeout(() => {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }, 50);
+}
+
+// Выбор: задать вопрос куратору (без изменения программы)
+function selectCuratorMode() {
+  console.log('📝 Curator mode selected (quick, no program change)');
+  removeModeSelector();
+  currentResponseMode = 'quick';
+  pendingReplaceRequestIndex = null;
+  processAiQueue();
+}
+
+// Выбор: заменить один из запросов программы
+function selectReplaceRequest(index) {
+  console.log(`📝 Replace request ${index + 1} selected`);
+  removeModeSelector();
+  currentResponseMode = 'detailed';
+  pendingReplaceRequestIndex = index; // 0 или 1
   processAiQueue();
 }
 
@@ -3540,15 +3715,34 @@ async function createProgramFromDraft(button) {
       button.textContent = 'Сохраняем программу...';
     }
 
-    // Список запросов программы: уже сохранённые + текущий (накапливаем, без дубликатов)
+    // Список запросов программы: уже сохранённые + текущий (накапливаем, без дубликатов, максимум 2)
     const previousRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests) && currentHealthProgram.requests.length > 0)
       ? currentHealthProgram.requests
       : [];
     const newRequestText = (lastProgramDraft.requestText || '').trim();
-    const lastPrevious = previousRequests[previousRequests.length - 1];
-    const requests = newRequestText && newRequestText !== lastPrevious
-      ? [...previousRequests, newRequestText]
-      : (previousRequests.length ? previousRequests : (newRequestText ? [newRequestText] : []));
+    
+    let requests = [];
+    
+    // Если была выбрана замена одного из запросов
+    if (pendingReplaceRequestIndex !== null && previousRequests.length >= 2) {
+      // Заменяем запрос по индексу
+      requests = [...previousRequests];
+      requests[pendingReplaceRequestIndex] = newRequestText || requests[pendingReplaceRequestIndex];
+      console.log(`🔄 Replaced request ${pendingReplaceRequestIndex + 1}:`, requests);
+    } else if (previousRequests.length >= 2) {
+      // Уже 2 запроса и не выбрана замена — не добавляем (это не должно произойти, но на всякий случай)
+      requests = previousRequests;
+      console.warn('⚠️ Program already has 2 requests, not adding new one');
+    } else {
+      // Обычная логика: добавляем новый запрос если он отличается от последнего
+      const lastPrevious = previousRequests[previousRequests.length - 1];
+      requests = newRequestText && newRequestText !== lastPrevious
+        ? [...previousRequests, newRequestText]
+        : (previousRequests.length ? previousRequests : (newRequestText ? [newRequestText] : []));
+    }
+    
+    // Сбрасываем индекс замены после использования
+    pendingReplaceRequestIndex = null;
 
     const body = {
       telegramUser: {
@@ -3755,6 +3949,7 @@ async function sendMessageToAI(message, mode = 'detailed') {
         message,
         chatId: currentChatId, // Добавляем ID текущего чата
         mode: mode, // 🚀 Добавляем режим ответа
+        replaceRequestIndex: pendingReplaceRequestIndex, // Индекс запроса для замены (0 или 1, null если не заменяем)
         telegramUser: telegramUser ? {
           id: telegramUser.id,
           first_name: telegramUser.first_name,

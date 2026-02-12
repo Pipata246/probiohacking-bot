@@ -499,14 +499,15 @@ module.exports = async (req, res) => {
       });
     }
 
-    const { message, telegramUser, mode } = req.body || {};
+    const { message, telegramUser, mode, replaceRequestIndex } = req.body || {};
     const responseMode = mode || 'detailed'; // 'quick' или 'detailed'
+    // replaceRequestIndex: 0 или 1 если пользователь заменяет один из запросов программы, null/undefined иначе
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ success: false, error: 'Invalid message' });
     }
 
-    console.log(`📝 Chat mode: ${responseMode}, Message length: ${message.length}`);
+    console.log(`📝 Chat mode: ${responseMode}, Message length: ${message.length}, Replace index: ${replaceRequestIndex}`);
 
     // Initialize user first
     let userInfo = null;
@@ -800,17 +801,37 @@ module.exports = async (req, res) => {
               programRequests = [raw];
             }
           }
-          const requestsDisplay = programRequests.length > 0
-            ? programRequests.map((r, i) => `${i + 1}) "${r}"`).join('; ')
-            : 'не указан';
+          
+          // Проверяем: пользователь заменяет один из запросов?
+          const isReplacing = replaceRequestIndex !== null && replaceRequestIndex !== undefined && programRequests.length >= 2;
+          const keepRequestIndex = isReplacing ? (replaceRequestIndex === 0 ? 1 : 0) : null;
+          const keepRequest = isReplacing ? programRequests[keepRequestIndex] : null;
+          
+          if (isReplacing) {
+            // РЕЖИМ ЗАМЕНЫ: пользователь заменяет один из запросов программы
+            context += `\n⚠️ РЕЖИМ ЗАМЕНЫ ЗАПРОСА:\n`;
+            context += `   Пользователь ЗАМЕНЯЕТ запрос ${replaceRequestIndex + 1} на новый.\n`;
+            context += `   Оставшийся запрос: "${keepRequest}"\n`;
+            context += `   Новый запрос: текущее сообщение пользователя\n`;
+            context += `   ЗАДАЧА: Создай НОВУЮ ОБЪЕДИНЁННУЮ программу на основе:\n`;
+            context += `     1) Оставшегося запроса: "${keepRequest}"\n`;
+            context += `     2) Нового запроса пользователя (его текущее сообщение)\n`;
+            context += `   Программа должна быть БЕЗ ДУБЛЕЙ. В diary каждое время уникально!\n`;
+            context += `   Игнорируй старые рекомендации по заменяемому запросу — они будут удалены.\n\n`;
+          } else {
+            // ОБЫЧНЫЙ РЕЖИМ: добавление к существующей программе
+            const requestsDisplay = programRequests.length > 0
+              ? programRequests.map((r, i) => `${i + 1}) "${r}"`).join('; ')
+              : 'не указан';
 
-          context += `\n✓ ТЕКУЩАЯ ПЕРСОНАЛЬНАЯ ПРОГРАММА (составлена по запросам: ${requestsDisplay}):\n`;
-          context += `⚠️ ВАЖНО: У пользователя УЖЕ ЕСТЬ программа. Ты должен ОБЪЕДИНИТЬ её с новым запросом:\n`;
-          context += `   - НЕ дублируй добавки/действия, которые уже есть в программе\n`;
-          context += `   - Если новый запрос противоречит старому — замени старое на новое\n`;
-          context += `   - Если новый запрос дополняет — добавь новое к существующему\n`;
-          context += `   - В итоговом JSON выдай ОБЪЕДИНЁННУЮ программу (health + diary) без дублей\n`;
-          context += `   - В diary КАЖДОЕ ВРЕМЯ УНИКАЛЬНО! Если на одно время несколько добавок — объедини в одну строку через " + "\n`;
+            context += `\n✓ ТЕКУЩАЯ ПЕРСОНАЛЬНАЯ ПРОГРАММА (составлена по запросам: ${requestsDisplay}):\n`;
+            context += `⚠️ ВАЖНО: У пользователя УЖЕ ЕСТЬ программа. Ты должен ОБЪЕДИНИТЬ её с новым запросом:\n`;
+            context += `   - НЕ дублируй добавки/действия, которые уже есть в программе\n`;
+            context += `   - Если новый запрос противоречит старому — замени старое на новое\n`;
+            context += `   - Если новый запрос дополняет — добавь новое к существующему\n`;
+            context += `   - В итоговом JSON выдай ОБЪЕДИНЁННУЮ программу (health + diary) без дублей\n`;
+            context += `   - В diary КАЖДОЕ ВРЕМЯ УНИКАЛЬНО! Если на одно время несколько добавок — объедини в одну строку через " + "\n`;
+          }
 
           if (hp.goals && Array.isArray(hp.goals) && hp.goals.length > 0) {
             context += `  Цели на ближайший месяц:\n`;
