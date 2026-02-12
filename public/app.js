@@ -7746,34 +7746,24 @@ document.addEventListener('DOMContentLoaded', async function() {
         mainApp.style.display = 'flex';
       }
       
-      // Инициализируем онбординг сразу
+      // Инициализируем онбординг
       initOnboarding();
+      
+      // СРАЗУ запускаем онбординг если нужно (БЕЗ задержки!)
+      if (shouldShowOnboarding) {
+        console.log('🚀 Запускаем онбординг СРАЗУ...');
+        startOnboarding(false);
+      }
       
       // Плавно скрываем splash screen если есть
       if (splashScreen) {
-        // Добавляем класс fade-out для плавной анимации
         splashScreen.classList.add('fade-out');
-        // Ждём завершения анимации перед полным скрытием
         setTimeout(() => {
           splashScreen.classList.add('hidden');
           console.log('✅ Приложение готово');
-          console.log('📋 shouldShowOnboarding:', shouldShowOnboarding);
-          
-          // Запускаем онбординг если нужно (статус уже загружен)
-          if (shouldShowOnboarding) {
-            console.log('🚀 Запускаем онбординг...');
-            startOnboarding(false);
-          }
         }, 600);
       } else {
         console.log('✅ Приложение готово (без splash screen)');
-        console.log('📋 shouldShowOnboarding:', shouldShowOnboarding);
-        
-        // Запускаем онбординг если нужно
-        if (shouldShowOnboarding) {
-          console.log('🚀 Запускаем онбординг...');
-          startOnboarding(false);
-        }
       }
     } catch (error) {
       console.error('❌ Ошибка при инициализации приложения:', error);

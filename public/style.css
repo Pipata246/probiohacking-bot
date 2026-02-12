@@ -6426,15 +6426,17 @@ body.chat-overlay-visible .search-container {
   justify-content: center;
   padding: 20px;
   box-sizing: border-box;
-  pointer-events: none;
-}
-
-.onboarding-overlay > * {
-  pointer-events: auto;
+  pointer-events: all; /* Блокируем ВСЕ клики */
 }
 
 .onboarding-overlay.active {
   display: flex;
+}
+
+/* Только tooltip и финальный экран кликабельны */
+.onboarding-tooltip,
+.onboarding-final {
+  pointer-events: auto;
 }
 
 /* Подсветка элемента */
@@ -6448,6 +6450,7 @@ body.chat-overlay-visible .search-container {
   border-radius: 12px;
   background: white !important;
   animation: onboardingPulse 1.5s ease-in-out infinite;
+  pointer-events: none !important; /* НЕ кликабельны во время инструкции */
 }
 
 @keyframes onboardingPulse {
