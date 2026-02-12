@@ -1157,25 +1157,14 @@ function showResponseModeSelector() {
 function selectResponseMode(mode) {
   console.log(`📝 Response mode selected: ${mode}`);
   
-  // Проверяем: если выбран detailed и уже есть программа с 2 запросами — показать выбор замены
-  const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
-    ? currentHealthProgram.requests
-    : [];
-  
-  if (mode === 'detailed' && programRequests.length >= 2) {
-    console.log('⚠️ Program already has 2 requests, showing replace modal');
-    showProgramReplaceModal(programRequests);
-    return;
-  }
-  
   // Удаляем весь bot-message контейнер с selector внутри
   removeModeSelector();
   
   // Обновляем currentResponseMode для текущей очереди в processAiQueue
-  currentResponseMode = mode; // Установим текущий режим
-  pendingReplaceRequestIndex = null; // Сбрасываем индекс замены
+  currentResponseMode = mode;
+  pendingReplaceRequestIndex = null;
   
-  // Обрабатываем очередь со стекло режима
+  // Обрабатываем очередь
   processAiQueue();
 }
 
@@ -1203,127 +1192,100 @@ function removeModeSelector() {
       replaceModal.remove();
     }
   }
+  // И компактное модальное окно действий
+  const actionsModal = document.querySelector('.program-actions-compact');
+  if (actionsModal) actionsModal.remove();
 }
 
-// Показать модальное окно выбора: заменить блок или задать вопрос куратору
+// Показать компактное модальное окно выбора после ответа ИИ (когда 2 запроса в программе)
 function showProgramReplaceModal(requests) {
-  // Удаляем старый selector
-  const oldSelector = document.querySelector('.response-mode-selector');
-  if (oldSelector) {
-    const botMessage = oldSelector.closest('.bot-message');
-    if (botMessage) botMessage.remove();
-  }
-  
   const chatMessages = document.getElementById('chatMessages');
   const container = chatMessages?.querySelector('.chat-messages-container');
   if (!container) return;
   
   // Сокращаем текст запросов для отображения
-  const shortRequest = (text, maxLen = 50) => {
+  const shortRequest = (text, maxLen = 35) => {
     if (!text) return '(пустой)';
     return text.length > maxLen ? text.substring(0, maxLen) + '...' : text;
   };
   
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'bot-message';
-  messageDiv.innerHTML = `
-    <div class="bot-avatar">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
-        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="10" cy="11" r="0.5" fill="white"/>
-        <circle cx="14" cy="11" r="0.5" fill="white"/>
-      </svg>
-    </div>
-    <div class="message-bubble">
-      <div class="program-replace-modal">
-        <div class="replace-modal-title">⚠️ Программа уже содержит 2 запроса</div>
-        <div class="replace-modal-subtitle">Выберите действие:</div>
-        
-        <button class="replace-modal-btn curator-btn" onclick="selectCuratorMode()">
-          💬 Задать вопрос куратору
-          <span class="btn-hint">Ответ без изменения программы</span>
-        </button>
-        
-        <div class="replace-divider">или заменить один из запросов:</div>
-        
-        <button class="replace-modal-btn replace-btn" onclick="selectReplaceRequest(0)">
-          🔄 Заменить запрос 1
-          <span class="btn-hint">${shortRequest(requests[0])}</span>
-        </button>
-        
-        <button class="replace-modal-btn replace-btn" onclick="selectReplaceRequest(1)">
-          🔄 Заменить запрос 2
-          <span class="btn-hint">${shortRequest(requests[1])}</span>
-        </button>
-      </div>
+  // Компактный блок с кнопками (не на весь экран)
+  const actionsDiv = document.createElement('div');
+  actionsDiv.className = 'program-actions-compact';
+  actionsDiv.innerHTML = `
+    <div class="actions-title">Программа содержит 2 запроса. Что сделать?</div>
+    <div class="actions-buttons">
+      <button class="action-btn replace-btn" onclick="selectReplaceRequest(0)">
+        🔄 Заменить: "${shortRequest(requests[0])}"
+      </button>
+      <button class="action-btn replace-btn" onclick="selectReplaceRequest(1)">
+        🔄 Заменить: "${shortRequest(requests[1])}"
+      </button>
+      <button class="action-btn health-btn" onclick="goToHealthPage()">
+        💚 Перейти в Здоровье
+      </button>
+      <button class="action-btn cancel-btn" onclick="closeProgramActionsModal()">
+        ✕ Отмена
+      </button>
     </div>
   `;
   
-  container.appendChild(messageDiv);
+  container.appendChild(actionsDiv);
   
   // Добавляем стили
-  if (!document.querySelector('style[data-replace-modal-styles]')) {
+  if (!document.querySelector('style[data-program-actions-styles]')) {
     const style = document.createElement('style');
-    style.setAttribute('data-replace-modal-styles', 'true');
+    style.setAttribute('data-program-actions-styles', 'true');
     style.textContent = `
-      .program-replace-modal {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 4px 0;
+      .program-actions-compact {
+        background: rgba(74, 139, 108, 0.15);
+        border: 1px solid rgba(74, 139, 108, 0.4);
+        border-radius: 12px;
+        padding: 12px;
+        margin: 8px 0;
       }
-      .replace-modal-title {
-        font-weight: 600;
-        font-size: 14px;
-        margin-bottom: 2px;
-      }
-      .replace-modal-subtitle {
+      .actions-title {
         font-size: 13px;
-        opacity: 0.9;
-        margin-bottom: 4px;
-      }
-      .replace-divider {
-        font-size: 12px;
-        opacity: 0.7;
-        text-align: center;
-        margin: 6px 0 2px;
-      }
-      .replace-modal-btn {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        padding: 12px 16px;
-        background: transparent;
-        border: 2px solid rgba(255, 255, 255, 0.7);
-        border-radius: 16px;
-        color: white;
-        cursor: pointer;
-        font-size: 14px;
         font-weight: 500;
-        transition: all 0.2s ease;
+        color: white;
+        margin-bottom: 10px;
         text-align: center;
+      }
+      .actions-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+      }
+      .action-btn {
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.1);
+        color: white;
         font-family: inherit;
-      }
-      .replace-modal-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: white;
-      }
-      .replace-modal-btn .btn-hint {
-        font-size: 11px;
-        font-weight: 400;
-        opacity: 0.8;
-        max-width: 200px;
+        max-width: 100%;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
       }
-      .curator-btn {
-        border-color: rgba(100, 200, 150, 0.8);
+      .action-btn:hover {
+        background: rgba(255,255,255,0.2);
+        border-color: rgba(255,255,255,0.5);
       }
-      .replace-btn {
-        border-color: rgba(255, 180, 100, 0.8);
+      .action-btn.replace-btn {
+        border-color: rgba(255, 180, 100, 0.6);
+      }
+      .action-btn.health-btn {
+        border-color: rgba(100, 200, 150, 0.6);
+      }
+      .action-btn.cancel-btn {
+        border-color: rgba(255, 100, 100, 0.4);
+        background: rgba(255, 100, 100, 0.1);
       }
     `;
     document.head.appendChild(style);
@@ -1333,6 +1295,20 @@ function showProgramReplaceModal(requests) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }, 50);
 }
+
+// Перейти на страницу Здоровье
+function goToHealthPage() {
+  closeProgramActionsModal();
+  showPage('health');
+}
+window.goToHealthPage = goToHealthPage;
+
+// Закрыть модальное окно действий
+function closeProgramActionsModal() {
+  const modal = document.querySelector('.program-actions-compact');
+  if (modal) modal.remove();
+}
+window.closeProgramActionsModal = closeProgramActionsModal;
 
 // Выбор: задать вопрос куратору (без изменения программы)
 function selectCuratorMode() {
@@ -1347,10 +1323,21 @@ window.selectCuratorMode = selectCuratorMode;
 // Выбор: заменить один из запросов программы
 function selectReplaceRequest(index) {
   console.log(`📝 Replace request ${index + 1} selected`);
-  removeModeSelector();
-  currentResponseMode = 'detailed';
-  pendingReplaceRequestIndex = index; // 0 или 1
-  processAiQueue();
+  closeProgramActionsModal();
+  
+  // Сохраняем индекс замены в черновик
+  if (lastProgramDraft) {
+    lastProgramDraft.replaceRequestIndex = index;
+  }
+  
+  // Находим кнопку создания программы и нажимаем её
+  const createBtn = document.querySelector('.create-program-btn:not([disabled])');
+  if (createBtn) {
+    createProgramFromDraft(createBtn);
+  } else {
+    // Если кнопки нет, вызываем напрямую
+    createProgramFromDraft(null);
+  }
 }
 window.selectReplaceRequest = selectReplaceRequest;
 
@@ -4144,7 +4131,12 @@ async function sendMessageToAI(message, mode = 'detailed') {
           }
           pendingReplaceRequestIndex = null;
           
-          if (data.canCreateProgram) {
+          // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
+          const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
+            ? currentHealthProgram.requests : [];
+          if (programRequests.length >= 2 && data.canCreateProgram) {
+            showProgramReplaceModal(programRequests);
+          } else if (data.canCreateProgram) {
             addCreateProgramButton(true);
           }
         } else {
@@ -4241,8 +4233,12 @@ async function sendMessageToAI(message, mode = 'detailed') {
         // Сбрасываем pendingReplaceRequestIndex после сохранения в черновик
         pendingReplaceRequestIndex = null;
 
-        // Показываем кнопку создания программы, если разрешено (ТОЛЬКО для подробного ответа)
-        if (data.canCreateProgram) {
+        // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
+        const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
+          ? currentHealthProgram.requests : [];
+        if (programRequests.length >= 2 && data.canCreateProgram) {
+          showProgramReplaceModal(programRequests);
+        } else if (data.canCreateProgram) {
           addCreateProgramButton(true);
         }
       } else {
