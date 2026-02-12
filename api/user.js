@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
       const updates = req.body;
       
       // Белый список полей, которые можно обновлять
-      const allowedFields = ['onboarding_completed'];
+      const allowedFields = [];
       
       // Фильтруем только разрешённые поля
       const filteredUpdates = {};
