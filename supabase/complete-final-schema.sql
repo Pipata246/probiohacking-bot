@@ -60,7 +60,6 @@ CREATE TABLE IF NOT EXISTS public.users (
   subscription_start_date timestamp with time zone,
   subscription_end_date timestamp with time zone,
   program_created boolean NOT NULL DEFAULT false,
-  onboarding_completed boolean NOT NULL DEFAULT false,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
@@ -120,17 +119,6 @@ BEGIN
      ) THEN
        ALTER TABLE public.users ADD COLUMN program_created boolean NOT NULL DEFAULT false;
        RAISE NOTICE 'Добавлена колонка program_created (флаг созданной персональной программы)';
-     END IF;
-     
-     -- Добавляем onboarding_completed если её нет
-     IF NOT EXISTS (
-       SELECT 1 FROM information_schema.columns
-       WHERE table_schema = 'public'
-       AND table_name = 'users'
-       AND column_name = 'onboarding_completed'
-     ) THEN
-       ALTER TABLE public.users ADD COLUMN onboarding_completed boolean NOT NULL DEFAULT false;
-       RAISE NOTICE 'Добавлена колонка onboarding_completed (флаг прохождения инструкции)';
      END IF;
 EXCEPTION WHEN OTHERS THEN
   RAISE NOTICE 'Ошибка при добавлении колонок подписки: %', SQLERRM;
