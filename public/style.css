@@ -5214,7 +5214,6 @@ body.chat-overlay-visible .search-container {
   max-height: 100dvh;
   background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   padding-top: calc(env(safe-area-inset-top, 44px) + 28px);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
   position: relative;
   z-index: 1000;
   width: 100%;
@@ -5233,13 +5232,12 @@ body.chat-overlay-visible .search-container {
 
 .admin-content {
   flex: 1;
-  padding: 20px;
+  padding: 0 20px 20px;
   overflow-y: auto !important;
   overflow-x: hidden;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
-  /* Безопасный отступ снизу для навигации */
-  padding-bottom: 120px;
+  padding-bottom: 100px;
 }
 
 .admin-loading {
@@ -5271,10 +5269,11 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: #FEF7EC;
-  margin-bottom: 20px;
+  margin: 0 0 16px 0;
+  padding: 0 20px;
 }
 
 .admin-users-list {
@@ -5284,18 +5283,18 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-user-item {
-  background: rgba(254, 247, 236, 0.12);
+  background: #FEF7EC;
   border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border: 1px solid rgba(254, 247, 236, 0.2);
-  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.admin-user-item:hover {
-  background: rgba(254, 247, 236, 0.15);
+.admin-user-item:active {
+  transform: scale(0.98);
 }
 
 .admin-user-header {
@@ -5312,25 +5311,25 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   gap: 4px;
   flex: 1;
-  min-width: 0; /* Позволяет тексту обрезаться при необходимости */
+  min-width: 0;
 }
 
 .admin-user-name {
   font-size: 16px;
   font-weight: 600;
-  color: #FEF7EC;
+  color: #3B4F6B;
 }
 
 .admin-user-status {
   font-size: 13px;
-  color: rgba(254, 247, 236, 0.7);
+  color: #8B8B8B;
 }
 
 .admin-expand-btn {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(254, 247, 236, 0.15);
+  background: #3C805B;
   border: none;
   display: flex;
   align-items: center;
@@ -5340,15 +5339,15 @@ body.chat-overlay-visible .search-container {
   transition: background-color 0.2s ease;
   color: #FEF7EC;
   position: relative;
-  margin-left: auto; /* Прижимаем кнопку к правому краю */
+  margin-left: auto;
 }
 
 .admin-expand-btn:hover {
-  background: rgba(254, 247, 236, 0.25);
+  background: #2d6346;
 }
 
 .admin-expand-btn:active {
-  background: rgba(254, 247, 236, 0.3);
+  background: #245236;
 }
 
 .admin-expand-btn svg {
@@ -5357,7 +5356,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-user-item.expanded .admin-expand-btn {
-  background: rgba(254, 247, 236, 0.25);
+  background: #2d6346;
 }
 
 .admin-user-submenu {
@@ -5367,6 +5366,7 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   gap: 8px;
   padding-top: 12px;
+  border-top: 1px solid rgba(59, 79, 107, 0.1);
 }
 
 .admin-user-item.expanded .admin-user-submenu {
@@ -5374,7 +5374,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-submenu-item {
-  background: rgba(254, 247, 236, 0.08);
+  background: rgba(60, 128, 91, 0.08);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
@@ -5382,21 +5382,29 @@ body.chat-overlay-visible .search-container {
   align-items: center;
   border: none;
   cursor: pointer;
-  color: #FEF7EC;
-  font-size: 15px;
+  color: #3B4F6B;
+  font-size: 14px;
+  font-weight: 500;
   transition: background 0.2s;
 }
 
 .admin-submenu-item:active {
-  background: rgba(254, 247, 236, 0.15);
+  background: rgba(60, 128, 91, 0.15);
 }
 
-.admin-submenu-item-no-arrow {
-  justify-content: flex-start !important;
+.admin-submenu-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.admin-submenu-item-no-arrow svg {
-  display: none;
+.admin-submenu-icon {
+  color: #3C805B;
+  flex-shrink: 0;
+}
+
+.admin-submenu-item svg:last-child {
+  color: #8B8B8B;
 }
 
 .admin-section-title {
@@ -5410,33 +5418,36 @@ body.chat-overlay-visible .search-container {
 .admin-error {
   padding: 20px;
   text-align: center;
-  color: #FEF7EC;
+  color: #3B4F6B;
   font-size: 15px;
-  background: rgba(254, 247, 236, 0.1);
+  background: #FEF7EC;
   border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .admin-error {
-  color: #FF6B3D;
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
 }
 
 .admin-quiz-item {
-  background: rgba(254, 247, 236, 0.12);
+  background: #FEF7EC;
   border-radius: 16px;
   padding: 16px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(254, 247, 236, 0.2);
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .admin-quiz-question {
-  color: #FEF7EC;
-  font-size: 15px;
-  margin-bottom: 12px;
-  line-height: 1.5;
+  color: #3B4F6B;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  line-height: 1.4;
 }
 
 .admin-quiz-answer {
-  color: #FEF7EC;
+  color: #666;
   font-size: 14px;
 }
 
@@ -5444,48 +5455,55 @@ body.chat-overlay-visible .search-container {
   width: 100%;
   margin-top: 8px;
   padding: 12px 16px;
-  background: rgba(254, 247, 236, 0.15);
-  border: 1px solid rgba(254, 247, 236, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(59, 79, 107, 0.2);
   border-radius: 12px;
-  color: #FEF7EC;
-  font-size: 15px;
+  color: #3B4F6B;
+  font-size: 14px;
   outline: none;
+  box-sizing: border-box;
+}
+
+.admin-quiz-input:focus {
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
 }
 
 .admin-quiz-input::placeholder {
-  color: rgba(254, 247, 236, 0.5);
+  color: #999;
 }
 
 .admin-quiz-textarea {
   width: 100%;
   margin-top: 8px;
   padding: 12px 16px;
-  background: rgba(254, 247, 236, 0.15);
-  border: 1px solid rgba(254, 247, 236, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(59, 79, 107, 0.2);
   border-radius: 12px;
-  color: #FEF7EC;
-  font-size: 15px;
+  color: #3B4F6B;
+  font-size: 14px;
   font-family: inherit;
   min-height: 100px;
   resize: vertical;
+  box-sizing: border-box;
 }
 
 .admin-quiz-textarea:focus {
   outline: none;
-  border-color: rgba(254, 247, 236, 0.5);
-  background: rgba(254, 247, 236, 0.2);
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
 }
 
 .admin-quiz-textarea::placeholder {
-  color: rgba(254, 247, 236, 0.5);
+  color: #999;
 }
 
 .admin-analysis-item {
-  background: rgba(254, 247, 236, 0.12);
+  background: #FEF7EC;
   border-radius: 16px;
   padding: 16px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(254, 247, 236, 0.2);
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: opacity 0.2s;
 }
 
@@ -5513,7 +5531,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-analysis-name {
-  color: #FEF7EC;
+  color: #3B4F6B;
   font-size: 14px;
   font-weight: 500;
   margin: 0;
@@ -5528,55 +5546,63 @@ body.chat-overlay-visible .search-container {
 .admin-analysis-category {
   flex: 1;
   padding: 10px 14px;
-  background: rgba(254, 247, 236, 0.15);
-  border: 1px solid rgba(254, 247, 236, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(59, 79, 107, 0.2);
   border-radius: 12px;
-  color: #FEF7EC;
+  color: #3B4F6B;
   font-size: 14px;
   outline: none;
 }
 
+.admin-analysis-category:focus {
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
+}
+
 .admin-analysis-category option {
-  background: #3C805B;
-  color: #FEF7EC;
+  background: #FFFFFF;
+  color: #3B4F6B;
 }
 
 .admin-analysis-delete {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(255, 107, 61, 0.2);
-  border: 1px solid rgba(255, 107, 61, 0.4);
+  background: rgba(220, 53, 69, 0.1);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #FF6B3D;
+  color: #dc3545;
   transition: background 0.2s;
 }
 
 .admin-analysis-delete:active {
-  background: rgba(255, 107, 61, 0.3);
+  background: rgba(220, 53, 69, 0.2);
 }
 
 .admin-nav-buttons {
-  position: static;
-  margin: 20px 12px;
-  margin-bottom: 100px; /* Отступ от панели навигации */
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 20px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px) + 80px);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  z-index: 1;
+  z-index: 10;
+  background: linear-gradient(180deg, transparent 0%, rgba(60, 128, 91, 0.95) 20%);
 }
 
 .admin-view-header {
-  padding: 20px;
-  border-bottom: 1px solid rgba(254, 247, 236, 0.2);
+  padding: 16px 20px;
 }
 
 .admin-view-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: #FEF7EC;
   margin: 0;
@@ -5587,37 +5613,39 @@ body.chat-overlay-visible .search-container {
 .admin-subscription-view {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 20px; /* Небольшой отступ снизу */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-quiz-answers,
 .admin-analyses-list {
-  padding: 20px;
-  padding-bottom: 20px; /* Отступ снизу */
+  padding: 0 20px;
+  padding-bottom: 100px;
   flex: 1;
 }
 
 /* Стили для формы редактирования подписки */
 .admin-subscription-content {
-  padding: 20px;
+  padding: 0 20px;
+  padding-bottom: 100px;
   flex: 1;
 }
 
 /* Информация о текущей подписке */
 .admin-subscription-current-info {
-  background: rgba(254, 247, 236, 0.1);
-  border: 1px solid rgba(254, 247, 236, 0.2);
-  border-radius: 12px;
+  background: #FEF7EC;
+  border-radius: 16px;
   padding: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .admin-subscription-current-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #FEF7EC;
+  color: #3B4F6B;
   margin: 0 0 16px 0;
 }
 
@@ -5632,7 +5660,7 @@ body.chat-overlay-visible .search-container {
   justify-content: space-between;
   align-items: center;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(254, 247, 236, 0.1);
+  border-bottom: 1px solid rgba(59, 79, 107, 0.1);
 }
 
 .admin-subscription-current-row:last-child {
@@ -5642,35 +5670,39 @@ body.chat-overlay-visible .search-container {
 .admin-subscription-current-label {
   font-size: 14px;
   font-weight: 500;
-  color: rgba(254, 247, 236, 0.7);
+  color: #8B8B8B;
 }
 
 .admin-subscription-current-value {
   font-size: 14px;
   font-weight: 600;
-  color: #FEF7EC;
+  color: #3B4F6B;
 }
 
 .admin-subscription-status-active {
-  color: #4CAF50 !important;
+  color: #3C805B !important;
 }
 
 .admin-subscription-status-inactive {
-  color: #ff6b6b !important;
+  color: #dc3545 !important;
 }
 
 /* Блок изменений подписки */
 .admin-subscription-form {
+  background: #FEF7EC;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .admin-subscription-form-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: #FEF7EC;
-  margin: 0 0 8px 0;
+  color: #3B4F6B;
+  margin: 0;
 }
 
 .admin-subscription-field {
@@ -5680,52 +5712,51 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-subscription-label {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: #FEF7EC;
+  color: #3B4F6B;
 }
 
 .admin-subscription-select {
   padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(254, 247, 236, 0.3);
-  background: rgba(254, 247, 236, 0.1);
-  color: #FEF7EC;
-  font-size: 15px;
+  border: 1px solid rgba(59, 79, 107, 0.2);
+  background: #FFFFFF;
+  color: #3B4F6B;
+  font-size: 14px;
   font-weight: 500;
   outline: none;
   transition: all 0.2s ease;
 }
 
 .admin-subscription-select:focus {
-  border-color: rgba(254, 247, 236, 0.6);
-  background: rgba(254, 247, 236, 0.15);
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
 }
 
 .admin-subscription-select option {
-  background: #2A3F5F;
-  color: #FEF7EC;
+  background: #FFFFFF;
+  color: #3B4F6B;
 }
 
 .admin-subscription-date-input {
   padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(254, 247, 236, 0.3);
-  background: rgba(254, 247, 236, 0.1);
-  color: #FEF7EC;
-  font-size: 15px;
+  border: 1px solid rgba(59, 79, 107, 0.2);
+  background: #FFFFFF;
+  color: #3B4F6B;
+  font-size: 14px;
   font-weight: 500;
   outline: none;
   transition: all 0.2s ease;
 }
 
 .admin-subscription-date-input:focus {
-  border-color: rgba(254, 247, 236, 0.6);
-  background: rgba(254, 247, 236, 0.15);
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
 }
 
 .admin-subscription-date-input::-webkit-calendar-picker-indicator {
-  filter: invert(1);
   opacity: 0.7;
   cursor: pointer;
 }
@@ -5736,42 +5767,44 @@ body.chat-overlay-visible .search-container {
   gap: 4px;
   padding: 12px 16px;
   border-radius: 12px;
-  background: rgba(254, 247, 236, 0.05);
-  border: 1px solid rgba(254, 247, 236, 0.1);
+  background: rgba(60, 128, 91, 0.08);
 }
 
 .admin-subscription-info-label {
   font-size: 13px;
   font-weight: 500;
-  color: rgba(254, 247, 236, 0.7);
+  color: #8B8B8B;
 }
 
 .admin-subscription-info-value {
   font-size: 15px;
   font-weight: 600;
-  color: #FEF7EC;
+  color: #3B4F6B;
 }
 
 /* ========== ADMIN HEALTH ========== */
 .admin-health-view {
   display: none;
   flex-direction: column;
-  height: 100%;
-  padding: 20px;
-  padding-bottom: 120px;
+  flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-health-content {
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: 20px;
+  padding: 0 20px;
+  padding-bottom: 100px;
 }
 
 .admin-health-form {
+  background: #FEF7EC;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .admin-health-field {
@@ -5783,15 +5816,23 @@ body.chat-overlay-visible .search-container {
 .admin-health-label {
   font-size: 14px;
   font-weight: 600;
-  color: #FEF7EC;
+  color: #3B4F6B;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-field-icon {
+  color: #3C805B;
+  flex-shrink: 0;
 }
 
 .admin-health-textarea {
-  background: rgba(254, 247, 236, 0.12);
-  border: 1px solid rgba(254, 247, 236, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(59, 79, 107, 0.2);
   border-radius: 12px;
   padding: 12px;
-  color: #FEF7EC;
+  color: #3B4F6B;
   font-size: 14px;
   font-family: inherit;
   resize: vertical;
@@ -5800,19 +5841,20 @@ body.chat-overlay-visible .search-container {
 
 .admin-health-textarea:focus {
   outline: none;
-  border-color: rgba(254, 247, 236, 0.6);
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
 }
 
 .admin-health-info {
   padding: 12px;
-  background: rgba(254, 247, 236, 0.08);
+  background: rgba(60, 128, 91, 0.08);
   border-radius: 8px;
   margin-top: 8px;
 }
 
 .admin-health-info small {
   font-size: 12px;
-  color: rgba(254, 247, 236, 0.7);
+  color: #666;
   word-break: break-word;
 }
 
@@ -5820,16 +5862,15 @@ body.chat-overlay-visible .search-container {
 .admin-diary-view {
   display: none;
   flex-direction: column;
-  height: 100%;
-  padding: 20px;
-  padding-bottom: 120px;
+  flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-diary-content {
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: 20px;
+  padding: 0 20px;
+  padding-bottom: 100px;
 }
 
 .admin-diary-list {
@@ -5839,28 +5880,33 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-diary-date-group {
+  background: #FEF7EC;
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .admin-diary-date-header {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(254, 247, 236, 0.8);
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(254, 247, 236, 0.2);
+  color: #3B4F6B;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(59, 79, 107, 0.1);
   text-transform: capitalize;
 }
 
 .admin-diary-entry {
-  background: rgba(254, 247, 236, 0.12);
+  background: #FFFFFF;
   border-radius: 12px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   transition: opacity 0.3s;
+  border: 1px solid rgba(59, 79, 107, 0.1);
 }
 
 .admin-diary-entry-deleted {
@@ -5877,10 +5923,10 @@ body.chat-overlay-visible .search-container {
 .admin-diary-time-input {
   width: 90px;
   padding: 8px 10px;
-  background: rgba(254, 247, 236, 0.15);
-  border: 1px solid rgba(254, 247, 236, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(59, 79, 107, 0.2);
   border-radius: 8px;
-  color: #FEF7EC;
+  color: #3B4F6B;
   font-size: 14px;
   font-family: inherit;
 }
@@ -5888,10 +5934,10 @@ body.chat-overlay-visible .search-container {
 .admin-diary-title-input {
   flex: 1;
   padding: 8px 12px;
-  background: rgba(254, 247, 236, 0.15);
-  border: 1px solid rgba(254, 247, 236, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(59, 79, 107, 0.2);
   border-radius: 8px;
-  color: #FEF7EC;
+  color: #3B4F6B;
   font-size: 14px;
   font-family: inherit;
 }
@@ -5899,30 +5945,32 @@ body.chat-overlay-visible .search-container {
 .admin-diary-notes-input {
   width: 100%;
   padding: 8px 12px;
-  background: rgba(254, 247, 236, 0.08);
-  border: 1px solid rgba(254, 247, 236, 0.2);
+  background: rgba(60, 128, 91, 0.05);
+  border: 1px solid rgba(59, 79, 107, 0.1);
   border-radius: 8px;
-  color: rgba(254, 247, 236, 0.9);
+  color: #666;
   font-size: 13px;
   font-family: inherit;
   resize: none;
+  box-sizing: border-box;
 }
 
 .admin-diary-time-input:focus,
 .admin-diary-title-input:focus,
 .admin-diary-notes-input:focus {
   outline: none;
-  border-color: rgba(254, 247, 236, 0.5);
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
 }
 
 .admin-diary-delete-btn {
   width: 32px;
   height: 32px;
   padding: 0;
-  background: rgba(255, 100, 100, 0.2);
+  background: rgba(220, 53, 69, 0.1);
   border: none;
   border-radius: 8px;
-  color: #ff6b6b;
+  color: #dc3545;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -5931,43 +5979,43 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-diary-delete-btn:hover {
-  background: rgba(255, 100, 100, 0.3);
+  background: rgba(220, 53, 69, 0.2);
 }
 
 .admin-add-diary-btn {
-  padding: 12px 20px;
-  background: rgba(74, 139, 108, 0.3);
-  border: 1px dashed rgba(74, 139, 108, 0.6);
+  padding: 14px 20px;
+  background: #FEF7EC;
+  border: 2px dashed #3C805B;
   border-radius: 12px;
-  color: #4A8B6C;
+  color: #3C805B;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 12px;
 }
 
-.admin-add-diary-btn:hover {
-  background: rgba(74, 139, 108, 0.4);
+.admin-add-diary-btn:active {
+  background: rgba(60, 128, 91, 0.1);
 }
 
 /* Форма добавления записи */
 .admin-diary-add-form {
-  background: rgba(74, 139, 108, 0.15);
-  border: 1px solid rgba(74, 139, 108, 0.4);
-  border-radius: 12px;
+  background: #FEF7EC;
+  border-radius: 16px;
   padding: 16px;
   margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .admin-diary-add-form h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #FEF7EC;
+  color: #3B4F6B;
 }
 
 .admin-diary-add-row {
@@ -5978,10 +6026,10 @@ body.chat-overlay-visible .search-container {
 .admin-diary-date-add,
 .admin-diary-time-add {
   padding: 10px 12px;
-  background: rgba(254, 247, 236, 0.12);
-  border: 1px solid rgba(254, 247, 236, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(59, 79, 107, 0.2);
   border-radius: 8px;
-  color: #FEF7EC;
+  color: #3B4F6B;
   font-size: 14px;
   font-family: inherit;
 }
@@ -5994,10 +6042,10 @@ body.chat-overlay-visible .search-container {
 .admin-diary-notes-add {
   width: 100%;
   padding: 10px 12px;
-  background: rgba(254, 247, 236, 0.12);
-  border: 1px solid rgba(254, 247, 236, 0.3);
+  background: #FFFFFF;
+  border: 1px solid rgba(59, 79, 107, 0.2);
   border-radius: 8px;
-  color: #FEF7EC;
+  color: #3B4F6B;
   font-size: 14px;
   font-family: inherit;
   box-sizing: border-box;
@@ -6025,21 +6073,21 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-diary-add-cancel {
-  background: rgba(254, 247, 236, 0.15);
-  color: rgba(254, 247, 236, 0.8);
+  background: rgba(59, 79, 107, 0.1);
+  color: #3B4F6B;
 }
 
 .admin-diary-add-confirm {
-  background: #4A8B6C;
+  background: #3C805B;
   color: #FEF7EC;
 }
 
 .admin-diary-add-cancel:hover {
-  background: rgba(254, 247, 236, 0.25);
+  background: rgba(59, 79, 107, 0.2);
 }
 
 .admin-diary-add-confirm:hover {
-  background: #5aa57c;
+  background: #2d6346;
 }
 
 .admin-nav-btn {

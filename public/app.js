@@ -7580,37 +7580,70 @@ function renderAdminUsers(users) {
     
     submenu.innerHTML = `
       <button class="admin-submenu-item" data-action="quiz" data-user-id="${user.id}">
-        <span>Диагностика пользователя</span>
+        <div class="admin-submenu-left">
+          <svg class="admin-submenu-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Диагностика</span>
+        </div>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button class="admin-submenu-item" data-action="analyses" data-user-id="${user.id}">
-        <span>Анализы пользователя</span>
+        <div class="admin-submenu-left">
+          <svg class="admin-submenu-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Анализы</span>
+        </div>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button class="admin-submenu-item" data-action="health" data-user-id="${user.id}">
-        <span>💚 Здоровье пользователя</span>
+        <div class="admin-submenu-left">
+          <svg class="admin-submenu-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Здоровье</span>
+        </div>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button class="admin-submenu-item" data-action="diary" data-user-id="${user.id}">
-        <span>📅 Дневник пользователя</span>
+        <div class="admin-submenu-left">
+          <svg class="admin-submenu-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Дневник</span>
+        </div>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       <button class="admin-submenu-item" data-action="subscription" data-user-id="${user.id}">
-        <span>Подписка пользователя</span>
+        <div class="admin-submenu-left">
+          <svg class="admin-submenu-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Подписка</span>
+        </div>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-      <button class="admin-submenu-item admin-submenu-item-no-arrow" data-action="grant-admin" data-user-id="${user.id}">
-        <span>Выдать админские права</span>
+      <button class="admin-submenu-item" data-action="grant-admin" data-user-id="${user.id}">
+        <div class="admin-submenu-left">
+          <svg class="admin-submenu-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Админские права</span>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </button>
     `;
 
@@ -8041,7 +8074,7 @@ async function viewUserSubscription(userId) {
             min="${new Date().toISOString().split('T')[0]}"
             required
           />
-          <div class="admin-subscription-hint" style="font-size: 12px; color: rgba(254, 247, 236, 0.7); margin-top: 4px;">
+          <div class="admin-subscription-hint" style="font-size: 12px; color: #8B8B8B; margin-top: 4px;">
             Обязательное поле при активации подписки
           </div>
         </div>
@@ -8140,32 +8173,57 @@ async function viewUserHealth(userId) {
         <input type="hidden" id="adminHealthProgramId" value="${program.id}">
         
         <div class="admin-health-field">
-          <label class="admin-health-label">💊 Нутрицевтики и добавки</label>
+          <label class="admin-health-label">
+            <svg class="admin-field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-2.084-.145l-1.935.25m0 0l2.066 3.05a1.5 1.5 0 01-.75 2.268l-.968.242a3 3 0 01-2.687-.594l-.9-.72a1.5 1.5 0 00-1.224-.267l-1.572.393a2 2 0 01-1.941-.498L3 17.5m9-6.75l-2.066-3.05a1.5 1.5 0 01.75-2.268l.968-.242a3 3 0 012.687.594l.9.72a1.5 1.5 0 001.224.267l1.572-.393a2 2 0 011.941.498L21 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Нутрицевтики и добавки
+          </label>
           <textarea class="admin-health-textarea" id="adminHealthSupplements" rows="4">${(program.supplements || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
         </div>
         
         <div class="admin-health-field">
-          <label class="admin-health-label">🍽 Питание</label>
+          <label class="admin-health-label">
+            <svg class="admin-field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-4.42 0-8-1.79-8-4V6c0-2.21 3.58-4 8-4s8 1.79 8 4v8c0 2.21-3.58 4-8 4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Питание
+          </label>
           <textarea class="admin-health-textarea" id="adminHealthNutrition" rows="4">${(program.nutrition || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
         </div>
         
         <div class="admin-health-field">
-          <label class="admin-health-label">🧘 Стресс и управление нагрузкой</label>
+          <label class="admin-health-label">
+            <svg class="admin-field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Стресс и управление нагрузкой
+          </label>
           <textarea class="admin-health-textarea" id="adminHealthStress" rows="4">${(program.stress || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
         </div>
         
         <div class="admin-health-field">
-          <label class="admin-health-label">😴 Сон и восстановление</label>
+          <label class="admin-health-label">
+            <svg class="admin-field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Сон и восстановление
+          </label>
           <textarea class="admin-health-textarea" id="adminHealthSleep" rows="4">${(program.sleep || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
         </div>
         
         <div class="admin-health-field">
-          <label class="admin-health-label">🎯 Цели на месяц</label>
+          <label class="admin-health-label">
+            <svg class="admin-field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Цели на месяц
+          </label>
           <textarea class="admin-health-textarea" id="adminHealthGoals" rows="4">${(program.goals || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
         </div>
         
         <div class="admin-health-info">
-          <small>📝 Запрос пользователя: ${program.request || '—'}</small>
+          <small>Запрос пользователя: ${program.request || '—'}</small>
         </div>
       </div>
     `;
