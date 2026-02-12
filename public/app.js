@@ -136,14 +136,14 @@ const onboardingSteps = [
     icon: '📅',
     title: 'Дневник',
     text: 'Отслеживайте прогресс. Напоминания помогут следовать программе.',
-    highlightNav: 4,
+    highlightNav: 3,
     position: 'above-nav'
   },
   {
     icon: '📚',
     title: 'База знаний',
     text: 'Здесь вы найдёте полезные статьи и информацию о здоровье.',
-    highlightNav: 3,
+    highlightNav: 4,
     position: 'above-nav'
   },
   {
@@ -157,6 +157,7 @@ const onboardingSteps = [
 
 let currentOnboardingStep = 0;
 let onboardingActive = false;
+let onboardingFromMenu = false; // Запущен из меню (не показывать финальный экран)
 
 // Инициализация онбординга
 function initOnboarding() {
@@ -174,12 +175,20 @@ function initOnboarding() {
 
   // Закрыть (×)
   closeBtn?.addEventListener('click', () => {
-    showOnboardingFinal();
+    if (onboardingFromMenu) {
+      hideOnboarding();
+    } else {
+      showOnboardingFinal();
+    }
   });
 
   // Пропустить
   skipBtn?.addEventListener('click', () => {
-    showOnboardingFinal();
+    if (onboardingFromMenu) {
+      hideOnboarding();
+    } else {
+      showOnboardingFinal();
+    }
   });
 
   // Назад
@@ -196,7 +205,12 @@ function initOnboarding() {
       currentOnboardingStep++;
       showOnboardingStep(currentOnboardingStep);
     } else {
-      showOnboardingFinal();
+      // На последнем шаге
+      if (onboardingFromMenu) {
+        hideOnboarding();
+      } else {
+        showOnboardingFinal();
+      }
     }
   });
 
@@ -322,10 +336,13 @@ function hideOnboarding() {
   overlay?.classList.remove('active');
   onboardingActive = false;
   currentOnboardingStep = 0;
+  onboardingFromMenu = false;
 }
 
 // Запустить онбординг
-function startOnboarding() {
+// isFromMenu = true если запущен из меню (тогда не показывать финальный экран)
+function startOnboarding(isFromMenu = false) {
+  onboardingFromMenu = isFromMenu;
   currentOnboardingStep = 0;
   showOnboardingStep(0);
 }
@@ -357,6 +374,7 @@ async function completeOnboarding(dontShowAgain) {
 async function checkOnboardingStatus() {
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    console.log('🔍 Проверка статуса онбординга...');
     const response = await fetch('/api/user', {
       headers: {
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
@@ -365,7 +383,12 @@ async function checkOnboardingStatus() {
 
     if (response.ok) {
       const data = await response.json();
-      return data.user?.onboarding_completed !== true;
+      const onboardingCompleted = data.user?.onboarding_completed === true;
+      console.log('📋 onboarding_completed из БД:', data.user?.onboarding_completed);
+      console.log('📋 Показывать онбординг:', !onboardingCompleted);
+      return !onboardingCompleted;
+    } else {
+      console.warn('⚠️ Ошибка ответа API:', response.status);
     }
   } catch (error) {
     console.error('❌ Ошибка проверки статуса онбординга:', error);
@@ -2811,7 +2834,7 @@ document.addEventListener('click', (e) => {
   // Кнопка инструкции в сайдбаре
   if (e.target.closest('#sidebarInstructionBtn')) {
     closeSidebar();
-    setTimeout(() => startOnboarding(), 300);
+    setTimeout(() => startOnboarding(true), 300); // true = запуск из меню
     return;
   }
   
@@ -7699,6 +7722,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }).catch(err => {
     console.error('❌ Ошибка загрузки данных:', err);
     appDataLoaded = true;
+    shouldShowOnboarding = true; // При ошибке показываем онбординг
   });
 
   // Функция для показа приложения
@@ -7733,18 +7757,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         setTimeout(() => {
           splashScreen.classList.add('hidden');
           console.log('✅ Приложение готово');
+          console.log('📋 shouldShowOnboarding:', shouldShowOnboarding);
           
           // Запускаем онбординг если нужно (статус уже загружен)
           if (shouldShowOnboarding) {
-            startOnboarding();
+            console.log('🚀 Запускаем онбординг...');
+            startOnboarding(false);
           }
         }, 600);
       } else {
         console.log('✅ Приложение готово (без splash screen)');
+        console.log('📋 shouldShowOnboarding:', shouldShowOnboarding);
         
         // Запускаем онбординг если нужно
         if (shouldShowOnboarding) {
-          startOnboarding();
+          console.log('🚀 Запускаем онбординг...');
+          startOnboarding(false);
         }
       }
     } catch (error) {

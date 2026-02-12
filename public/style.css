@@ -6465,6 +6465,28 @@ body.chat-overlay-visible .search-container {
   }
 }
 
+/* Текст и иконки навигации при выделении */
+.onboarding-highlight .nav-text {
+  color: #3C805B !important;
+}
+
+.onboarding-highlight svg {
+  stroke: #3C805B !important;
+}
+
+/* Полоски меню при выделении */
+#menuBtn.onboarding-highlight span,
+.menu-btn.onboarding-highlight span,
+.onboarding-highlight.menu-btn span {
+  background: #2C2C2C !important;
+}
+
+/* Контент навигации при выделении */
+.onboarding-highlight.nav-item span,
+.nav-item.onboarding-highlight span {
+  color: #3C805B !important;
+}
+
 /* Тултип инструкции */
 .onboarding-tooltip {
   background: #FEF7EC;
