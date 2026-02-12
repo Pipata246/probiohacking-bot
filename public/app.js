@@ -216,8 +216,12 @@ function initOnboarding() {
 
   // Завершить
   finishBtn?.addEventListener('click', async () => {
-    const dontShow = dontShowCheckbox?.checked || false;
-    await completeOnboarding(dontShow);
+    const checkbox = document.getElementById('onboardingDontShow');
+    const dontShow = checkbox?.checked || false;
+    console.log('📋 Галочка "Больше не показывать":', dontShow);
+    if (dontShow) {
+      await completeOnboarding(true);
+    }
     hideOnboarding();
   });
 }
@@ -247,6 +251,11 @@ function showOnboardingStep(stepIndex) {
     tooltip.style.display = 'block';
     // Сбрасываем классы позиции
     tooltip.classList.remove('position-center', 'position-above-nav', 'position-below-element');
+    
+    // Анимация смены контента
+    tooltip.classList.remove('slide-animate');
+    void tooltip.offsetWidth; // Триггер reflow для перезапуска анимации
+    tooltip.classList.add('slide-animate');
   }
   if (finalScreen) finalScreen.style.display = 'none';
 
@@ -7709,33 +7718,77 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Загружаем данные в фоновом режиме
   let appDataLoaded = false;
   let shouldShowOnboarding = false;
+  let onboardingStatusLoaded = false;
+  let userClickedStart = false;
   
-  // Параллельная загрузка данных и статуса онбординга
-  let appDataPromise = Promise.all([
-    loadAppData(),
-    checkOnboardingStatus()
-  ]).then(([_, onboardingStatus]) => {
-    appDataLoaded = true;
-    shouldShowOnboarding = onboardingStatus;
-    console.log('✅ Данные приложения загружены в фоне');
-    console.log('📋 Статус онбординга:', shouldShowOnboarding ? 'показать' : 'скрыть');
+  // СРАЗУ загружаем статус онбординга (параллельно с остальными данными)
+  console.log('📋 Загружаем статус онбординга...');
+  
+  // Загрузка статуса онбординга - приоритетная
+  const onboardingPromise = checkOnboardingStatus().then(status => {
+    onboardingStatusLoaded = true;
+    shouldShowOnboarding = status;
+    console.log('📋 Статус онбординга загружен:', shouldShowOnboarding ? 'показать' : 'скрыть');
+    
+    // Если нужно показать онбординг - СРАЗУ показываем приложение с онбордингом
+    if (shouldShowOnboarding && !userClickedStart) {
+      console.log('🚀 Автоматический запуск онбординга...');
+      showAppWithOnboarding();
+    }
   }).catch(err => {
-    console.error('❌ Ошибка загрузки данных:', err);
-    appDataLoaded = true;
+    console.error('❌ Ошибка загрузки статуса онбординга:', err);
+    onboardingStatusLoaded = true;
     shouldShowOnboarding = true; // При ошибке показываем онбординг
+    if (!userClickedStart) {
+      showAppWithOnboarding();
+    }
+  });
+  
+  // Параллельная загрузка данных приложения
+  const appDataPromise = loadAppData().then(() => {
+    appDataLoaded = true;
+    console.log('✅ Данные приложения загружены');
+  }).catch(err => {
+    console.error('❌ Ошибка загрузки данных приложения:', err);
+    appDataLoaded = true;
   });
 
-  // Функция для показа приложения
+  // Функция показа приложения с онбордингом (без ожидания клика)
+  async function showAppWithOnboarding() {
+    // Скрываем splash screen сразу
+    if (splashScreen) {
+      splashScreen.classList.add('fade-out');
+      splashScreen.classList.add('hidden');
+    }
+    
+    // Показываем главную страницу
+    showPage('main');
+    
+    // Показываем приложение
+    if (mainApp) {
+      mainApp.classList.add('active');
+      mainApp.style.display = 'flex';
+    }
+    
+    // Инициализируем и запускаем онбординг СРАЗУ
+    initOnboarding();
+    startOnboarding(false);
+    console.log('🚀 Онбординг запущен МГНОВЕННО');
+  }
+
+  // Функция для показа приложения (после клика на кнопку)
   async function showApp() {
     try {
+      userClickedStart = true;
+      
       // Показываем лоадер если данные ещё загружаются
       if (!appDataLoaded && splashLoader) {
         splashLoader.style.display = 'block';
         if (splashStartBtn) splashStartBtn.style.display = 'none';
       }
       
-      // Ждём загрузки данных если ещё не загружены
-      await appDataPromise;
+      // Ждём загрузки данных
+      await Promise.all([appDataPromise, onboardingPromise]);
       
       // Показываем главную страницу
       showPage('main');
@@ -7749,34 +7802,29 @@ document.addEventListener('DOMContentLoaded', async function() {
       // Инициализируем онбординг
       initOnboarding();
       
-      // СРАЗУ запускаем онбординг если нужно (БЕЗ задержки!)
+      // Запускаем онбординг если нужно
       if (shouldShowOnboarding) {
-        console.log('🚀 Запускаем онбординг СРАЗУ...');
+        console.log('🚀 Запускаем онбординг...');
         startOnboarding(false);
       }
       
-      // Плавно скрываем splash screen если есть
+      // Плавно скрываем splash screen
       if (splashScreen) {
         splashScreen.classList.add('fade-out');
         setTimeout(() => {
           splashScreen.classList.add('hidden');
           console.log('✅ Приложение готово');
-        }, 600);
-      } else {
-        console.log('✅ Приложение готово (без splash screen)');
+        }, 300);
       }
     } catch (error) {
       console.error('❌ Ошибка при инициализации приложения:', error);
-      // Показываем приложение даже при ошибке
       if (mainApp) {
         mainApp.classList.add('active');
         mainApp.style.display = 'flex';
       }
       if (splashScreen) {
         splashScreen.classList.add('fade-out');
-        setTimeout(() => {
-          splashScreen.classList.add('hidden');
-        }, 800);
+        splashScreen.classList.add('hidden');
       }
     }
   }
