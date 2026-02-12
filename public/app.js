@@ -7397,12 +7397,30 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   const splashScreen = document.getElementById('splashScreen');
   const mainApp = document.getElementById('mainApp');
+  const splashStartBtn = document.getElementById('splashStartBtn');
+  const splashLoader = document.getElementById('splashLoader');
+
+  // Загружаем данные в фоновом режиме
+  let appDataLoaded = false;
+  let appDataPromise = loadAppData().then(() => {
+    appDataLoaded = true;
+    console.log('✅ Данные приложения загружены в фоне');
+  }).catch(err => {
+    console.error('❌ Ошибка загрузки данных:', err);
+    appDataLoaded = true; // Продолжаем даже при ошибке
+  });
 
   // Функция для показа приложения
   async function showApp() {
     try {
-      // Ждём загрузки данных
-      await loadAppData();
+      // Показываем лоадер если данные ещё загружаются
+      if (!appDataLoaded && splashLoader) {
+        splashLoader.style.display = 'block';
+        if (splashStartBtn) splashStartBtn.style.display = 'none';
+      }
+      
+      // Ждём загрузки данных если ещё не загружены
+      await appDataPromise;
       
       // Показываем главную страницу
       showPage('main');
@@ -7441,18 +7459,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
   
-  // Запускаем инициализацию
-  if (splashScreen) {
-    console.log('✅ Приветственный экран найден');
-    showApp();
-  } else {
-    // Если нет splash screen - сразу показываем приложение
+  // Обработчик кнопки "Начать диагностику"
+  if (splashStartBtn) {
+    splashStartBtn.addEventListener('click', () => {
+      console.log('🎯 Нажата кнопка "Начать диагностику"');
+      showApp();
+    });
+  }
+  
+  // Если нет splash screen - сразу показываем приложение
+  if (!splashScreen) {
     console.log('ℹ️ Splash screen не найден, показываем приложение сразу');
     if (mainApp) {
       mainApp.classList.add('active');
       mainApp.style.display = 'flex';
     }
     showApp();
+  } else {
+    console.log('✅ Приветственный экран найден, ожидаем нажатия кнопки');
   }
 });
 
