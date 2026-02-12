@@ -5059,7 +5059,7 @@ body.chat-overlay-visible .search-container {
   height: 100vh;
   background: linear-gradient(180deg, #3C805B 0%, #639B7C 100%);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   z-index: 999999;
   overflow-y: auto;
@@ -5096,7 +5096,7 @@ body.chat-overlay-visible .search-container {
 .splash-content {
   max-width: 100%;
   width: 100%;
-  padding: 60px 16px 24px;
+  padding: 20px 16px;
   text-align: center;
   box-sizing: border-box;
 }
