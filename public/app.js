@@ -3242,6 +3242,74 @@ function addUserMessage(text) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// === STREAMING BUBBLE FUNCTIONS ===
+
+// Добавляем стили для streaming
+(function addStreamingStyles() {
+  if (document.querySelector('style[data-streaming-styles]')) return;
+  const style = document.createElement('style');
+  style.setAttribute('data-streaming-styles', 'true');
+  style.textContent = `
+    .streaming-text::after {
+      content: '▋';
+      animation: blink 0.7s infinite;
+      margin-left: 2px;
+      color: #4A8B6C;
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+// Создаём bubble для streaming ответа
+function createStreamingBubble() {
+  const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages?.querySelector('.chat-messages-container');
+  if (!container) return null;
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'bot-message streaming-message';
+  messageDiv.innerHTML = `
+    <div class="bot-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
+        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="10" cy="11" r="0.5" fill="white"/>
+        <circle cx="14" cy="11" r="0.5" fill="white"/>
+      </svg>
+    </div>
+    <div class="message-bubble">
+      <div class="message-text streaming-text"></div>
+    </div>
+  `;
+  container.appendChild(messageDiv);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  return messageDiv;
+}
+
+// Обновляем текст в streaming bubble
+function updateStreamingBubble(bubble, text) {
+  if (!bubble) return;
+  const textEl = bubble.querySelector('.streaming-text');
+  if (textEl) {
+    // Форматируем markdown и обновляем
+    textEl.innerHTML = formatMarkdown(text);
+  }
+}
+
+// Финализируем streaming bubble (убираем класс streaming)
+function finalizeStreamingBubble(bubble) {
+  if (!bubble) return;
+  bubble.classList.remove('streaming-message');
+  const textEl = bubble.querySelector('.streaming-text');
+  if (textEl) {
+    textEl.classList.remove('streaming-text');
+  }
+}
+
 function addBotMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
   const container = chatMessages.querySelector('.chat-messages-container');
@@ -3953,9 +4021,9 @@ async function sendMessageToAI(message, mode = 'detailed') {
       },
       body: JSON.stringify({ 
         message,
-        chatId: currentChatId, // Добавляем ID текущего чата
-        mode: mode, // 🚀 Добавляем режим ответа
-        replaceRequestIndex: pendingReplaceRequestIndex, // Индекс запроса для замены (0 или 1, null если не заменяем)
+        chatId: currentChatId,
+        mode: mode,
+        replaceRequestIndex: pendingReplaceRequestIndex,
         telegramUser: telegramUser ? {
           id: telegramUser.id,
           first_name: telegramUser.first_name,
@@ -3967,44 +4035,145 @@ async function sendMessageToAI(message, mode = 'detailed') {
       signal: aiAbortController.signal
     });
 
-    const contentType = (response.headers.get('content-type') || '').toLowerCase();
-    let data = null;
-    let rawText = '';
-
-    try {
-      if (contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        rawText = await response.text();
-        try {
-          data = JSON.parse(rawText);
-        } catch (_) {
-          data = null;
-        }
-      }
-    } catch (_) {
-      try {
-        rawText = await response.text();
-      } catch (_) {
-        rawText = '';
-      }
-    }
-
     if (!response.ok) {
       finalizeTypingBubble({ appendActions: false });
-      const serverMsg = (data && (data.error || data.message)) ? String(data.error || data.message) : '';
-      const hint = serverMsg ? `Ошибка сервера: ${serverMsg}` : `Ошибка сервера: ${response.status}`;
-      addBotMessage(hint);
+      addBotMessage(`Ошибка сервера: ${response.status}`);
       resetAiState();
       aiAbortController = null;
       processAiQueue();
       return;
     }
 
-    // Проверяем требование подписки (API теперь возвращает success: true с сообщением)
+    const contentType = (response.headers.get('content-type') || '').toLowerCase();
+    
+    // Проверяем если это SSE streaming
+    if (contentType.includes('text/event-stream')) {
+      // Streaming режим — читаем поток и обновляем UI в реальном времени
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+      let data = null; // Финальные данные
+      let buffer = '';
+      
+      // Убираем индикатор печати и создаём bubble для streaming
+      finalizeTypingBubble({ appendActions: false });
+      const streamBubble = createStreamingBubble();
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6).trim();
+              if (!jsonStr) continue;
+              try {
+                const parsed = JSON.parse(jsonStr);
+                
+                if (parsed.error) {
+                  // Ошибка от сервера
+                  updateStreamingBubble(streamBubble, `Ошибка: ${parsed.error}`);
+                  break;
+                }
+                
+                if (parsed.chunk) {
+                  // Чанк текста — добавляем в UI сразу
+                  fullResponse += parsed.chunk;
+                  updateStreamingBubble(streamBubble, fullResponse);
+                  chatMessagesScrollToBottom();
+                }
+                
+                if (parsed.done) {
+                  // Финальные данные
+                  data = parsed;
+                }
+              } catch (e) {
+                // Игнорируем ошибки парсинга
+              }
+            }
+          }
+        }
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error('Streaming error:', e);
+        }
+      }
+      
+      // Финализируем streaming bubble
+      finalizeStreamingBubble(streamBubble);
+      
+      // Обрабатываем финальные данные
+      if (data) {
+        if (data.subscriptionActive !== undefined) {
+          subscriptionActive = data.subscriptionActive;
+        }
+        if (data.freeRequestsCount !== undefined && !subscriptionActive) {
+          freeRequestsCount = data.freeRequestsCount;
+        }
+        
+        // Обрабатываем статус квиза
+        if (data.quizCompleted !== undefined) {
+          quizCompleted = data.quizCompleted;
+        }
+        
+        // Рекомендации
+        if (subscriptionActive) {
+          addStatusRecommendations(data.quizCompleted, data.analysesUploaded);
+        } else {
+          const remaining = data.remainingFreeRequests !== undefined ? data.remainingFreeRequests : Math.max(0, 3 - freeRequestsCount);
+          addSubscriptionRecommendation(remaining);
+        }
+        
+        // Сохраняем черновик программы
+        if (mode === 'detailed') {
+          if (data.healthProgram || (Array.isArray(data.diaryEntries) && data.diaryEntries.length > 0)) {
+            lastProgramDraft = {
+              healthProgram: data.healthProgram || null,
+              diaryEntries: Array.isArray(data.diaryEntries) ? data.diaryEntries : [],
+              requestText: message,
+              replaceRequestIndex: pendingReplaceRequestIndex
+            };
+            console.log('💾 Черновик программы сохранен:', lastProgramDraft);
+          } else {
+            lastProgramDraft = null;
+          }
+          pendingReplaceRequestIndex = null;
+          
+          if (data.canCreateProgram) {
+            addCreateProgramButton(true);
+          }
+        } else {
+          lastProgramDraft = null;
+        }
+      }
+      
+      resetAiState();
+      aiAbortController = null;
+      processAiQueue();
+      return;
+    }
+    
+    // Fallback: не-streaming ответ (JSON)
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (_) {
+      finalizeTypingBubble({ appendActions: false });
+      addBotMessage('Ошибка обработки ответа сервера');
+      resetAiState();
+      aiAbortController = null;
+      processAiQueue();
+      return;
+    }
+
+    // Проверяем требование подписки
     if (data?.subscriptionRequired && data?.response) {
       finalizeTypingBubble({ appendActions: false });
-      // Убираем ссылку из текста и добавляем кнопку
       const messageText = data.response.replace(/https:\/\/t\.me\/Probiohackingbot/g, '').trim();
       addBotMessageWithButton(
         messageText || 'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.',

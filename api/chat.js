@@ -881,7 +881,7 @@ module.exports = async (req, res) => {
     // Оптимизация промпта: сокращаем для ускорения (убираем лишние пробелы и переносы)
     systemPrompt = systemPrompt.replace(/\n{3,}/g, '\n\n').trim();
 
-    // DeepSeek не поддерживает vision - используем только текстовый формат
+    // DeepSeek с streaming для моментального начала ответа
     const payload = {
       model: 'deepseek-chat',
       messages: [
@@ -889,124 +889,184 @@ module.exports = async (req, res) => {
         { role: 'user', content: message }
       ],
       temperature: responseMode === 'quick' ? 0.7 : 0.85,
-      max_tokens: responseMode === 'quick' ? 600 : 3000, // Quick: ~2000 символов, Detailed: полная генерация
-      top_p: 0.95
+      max_tokens: responseMode === 'quick' ? 600 : 3000,
+      top_p: 0.95,
+      stream: true // Включаем streaming
     };
 
-    const response = await doRequest(DEEPSEEK_API_URL, {
+    // SSE headers для streaming на фронт
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Для nginx
+
+    const https = require('https');
+    const apiUrl = new URL(DEEPSEEK_API_URL);
+    
+    let fullContent = '';
+    
+    const apiReq = https.request({
+      hostname: apiUrl.hostname,
+      path: apiUrl.pathname,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${DEEPSEEK_API_KEY}`
-      },
-      body: JSON.stringify(payload)
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+      }
+    }, (apiRes) => {
+      if (apiRes.statusCode !== 200) {
+        res.write(`data: ${JSON.stringify({ error: `DeepSeek API error: ${apiRes.statusCode}` })}\n\n`);
+        res.end();
+        return;
+      }
+
+      let buffer = '';
+      
+      apiRes.on('data', (chunk) => {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Оставляем неполную строку в буфере
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === '[DONE]') {
+              continue;
+            }
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const delta = parsed?.choices?.[0]?.delta?.content || '';
+              if (delta) {
+                fullContent += delta;
+                // Отправляем чанк на фронт
+                res.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
+              }
+            } catch (e) {
+              // Игнорируем ошибки парсинга
+            }
+          }
+        }
+      });
+
+      apiRes.on('end', async () => {
+        // Обрабатываем оставшийся буфер
+        if (buffer.startsWith('data: ')) {
+          const jsonStr = buffer.slice(6).trim();
+          if (jsonStr && jsonStr !== '[DONE]') {
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const delta = parsed?.choices?.[0]?.delta?.content || '';
+              if (delta) {
+                fullContent += delta;
+                res.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
+              }
+            } catch (e) {}
+          }
+        }
+
+        // Пытаемся извлечь структурированную программу (health + diary) из ответа
+        const { healthProgram, diaryEntries, cleanedText } = extractProgramFromContent(fullContent);
+        const visibleContent = cleanedText || fullContent;
+
+        // Увеличиваем счетчик запросов для бесплатных пользователей
+        if (userInfo && userInfo.id && !subscriptionActive) {
+          try {
+            const newCount = freeRequestsCount + 1;
+            await supabase
+              .from('users')
+              .update({ free_requests_count: newCount })
+              .eq('id', userInfo.id);
+            console.log(`Updated free requests count: ${freeRequestsCount} -> ${newCount}`);
+          } catch (error) {
+            console.error('Failed to update free requests count:', error);
+          }
+        }
+        
+        // Сохраняем ответ ИИ в уже созданную запись
+        if (requestId) {
+          try {
+            await requestService.setChatResponse(requestId, visibleContent);
+          } catch (error) {
+            console.error('Failed to update chat response:', error);
+          }
+        } else if (userInfo && userInfo.telegramId && currentChatId) {
+          try {
+            await requestService.saveRequestToChat(
+              userInfo.telegramId,
+              message,
+              visibleContent,
+              'chat',
+              {
+                userId: userInfo.id,
+                chatId: currentChatId,
+                firstName: userInfo.firstName,
+                lastName: userInfo.lastName,
+                username: userInfo.username,
+                languageCode: userInfo.languageCode,
+                userAgent: req.headers['user-agent'],
+                timestamp: new Date().toISOString(),
+                contextOverflow: false
+              },
+              currentChatId
+            );
+          } catch (error) {
+            console.error('Failed to save request to chat:', error);
+          }
+        }
+
+        // Формируем финальный ответ с метаданными
+        const quizCompletedFlag = diagnosticData?.quiz_completed || false;
+        const analysesUploadedFlag = diagnosticData?.analyses_uploaded || false;
+        const canCreateProgram = subscriptionActive && quizCompletedFlag && analysesUploadedFlag;
+        
+        const finalPayload = {
+          done: true,
+          success: true,
+          chatId: currentChatId,
+          quizCompleted: quizCompletedFlag,
+          analysesUploaded: analysesUploadedFlag,
+          healthProgram: healthProgram || null,
+          diaryEntries: diaryEntries || [],
+          canCreateProgram,
+          subscriptionActive: subscriptionActive,
+          freeRequestsCount: !subscriptionActive ? (freeRequestsCount + 1) : null,
+          remainingFreeRequests: !subscriptionActive ? Math.max(0, 3 - (freeRequestsCount + 1)) : null
+        };
+
+        res.write(`data: ${JSON.stringify(finalPayload)}\n\n`);
+        res.end();
+      });
+
+      apiRes.on('error', (err) => {
+        console.error('DeepSeek stream error:', err);
+        res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+        res.end();
+      });
     });
 
-    if (!response.ok) {
-      const errText = await response.text().catch(() => '');
-      return res.status(500).json({
-        success: false,
-        error: `DeepSeek API error: ${response.status}`,
-        details: errText
-      });
-    }
+    apiReq.on('error', (err) => {
+      console.error('DeepSeek request error:', err);
+      res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+      res.end();
+    });
 
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content || '';
+    apiReq.write(JSON.stringify(payload));
+    apiReq.end();
 
-    // Пытаемся извлечь структурированную программу (health + diary) из ответа
-    const { healthProgram, diaryEntries, cleanedText } = extractProgramFromContent(content);
-    const visibleContent = cleanedText || content;
-
-    // Увеличиваем счетчик запросов для бесплатных пользователей
-    if (userInfo && userInfo.id && !subscriptionActive) {
-      try {
-        const newCount = freeRequestsCount + 1;
-        await supabase
-          .from('users')
-          .update({ free_requests_count: newCount })
-          .eq('id', userInfo.id);
-        console.log(`Updated free requests count: ${freeRequestsCount} -> ${newCount}`);
-      } catch (error) {
-        console.error('Failed to update free requests count:', error);
-      }
-    }
-    
-    // Сохраняем ответ ИИ в уже созданную запись (быстро и без повторного insert)
-    if (requestId) {
-      try {
-        await requestService.setChatResponse(requestId, visibleContent);
-      } catch (error) {
-        console.error('Failed to update chat response:', error);
-      }
-    } else if (userInfo && userInfo.telegramId && currentChatId) {
-      // fallback: старое поведение
-      try {
-        await requestService.saveRequestToChat(
-          userInfo.telegramId,
-          message,
-          visibleContent,
-          'chat',
-          {
-            userId: userInfo.id,
-            chatId: currentChatId,
-            firstName: userInfo.firstName,
-            lastName: userInfo.lastName,
-            username: userInfo.username,
-            languageCode: userInfo.languageCode,
-            userAgent: req.headers['user-agent'],
-            timestamp: new Date().toISOString(),
-            contextOverflow: shouldCreateNewChat
-          },
-          currentChatId
-        );
-      } catch (error) {
-        console.error('Failed to save request to chat:', error);
-      }
-    }
-
-    // Формируем ответ с учетом подписки
-    // Для бесплатных пользователей не показываем рекомендации по диагностике и анализам
-    let quizRecommendation = null;
-    let analysesRecommendation = null;
-    
-    if (subscriptionActive) {
-      // Только для пользователей с подпиской показываем рекомендации
-      quizRecommendation = !diagnosticData?.quiz_completed ? 'Рекомендуем пройти персональную диагностику для получения точных рекомендаций' : null;
-      analysesRecommendation = !diagnosticData?.analyses_uploaded ? 'Рекомендуем загрузить анализы для получения более точных рекомендаций' : null;
-    }
-
-    const quizCompletedFlag = diagnosticData?.quiz_completed || false;
-    const analysesUploadedFlag = diagnosticData?.analyses_uploaded || false;
-    const canCreateProgram = subscriptionActive && quizCompletedFlag && analysesUploadedFlag;
-    
-    // Return response with chat info and quiz status
-    const responsePayload = {
-      success: true,
-      response: visibleContent,
-      chatId: currentChatId,
-      newChatCreated: false,
-      contextOverflow: false,
-      quizCompleted: quizCompletedFlag,
-      analysesUploaded: diagnosticData?.analyses_uploaded || false,
-      quizRecommendation: quizRecommendation,
-      analysesRecommendation: analysesRecommendation,
-      healthProgram: healthProgram || null,
-      diaryEntries: diaryEntries || [],
-      canCreateProgram,
-      subscriptionActive: subscriptionActive,
-      freeRequestsCount: !subscriptionActive ? (freeRequestsCount + 1) : null,
-      remainingFreeRequests: !subscriptionActive ? Math.max(0, 3 - (freeRequestsCount + 1)) : null
-    };
-
-    return res.status(200).json(responsePayload);
   } catch (error) {
     console.error('Chat API Error:', error);
     console.error('Error stack:', error.stack);
-    return res.status(500).json({
-      success: false,
-      error: error?.message || 'Unknown error',
-      debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    
+    // Если headers уже отправлены (streaming начался), отправляем ошибку через SSE
+    if (res.headersSent) {
+      res.write(`data: ${JSON.stringify({ error: error?.message || 'Unknown error' })}\n\n`);
+      res.end();
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: error?.message || 'Unknown error',
+        debug: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      });
+    }
   }
 };
