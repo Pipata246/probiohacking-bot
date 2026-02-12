@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { telegramUser, healthProgram, diaryEntries, request } = req.body || {};
+    const { telegramUser, healthProgram, diaryEntries, request, requests } = req.body || {};
 
     if (!telegramUser || !telegramUser.id) {
       return res.status(400).json({ success: false, error: 'Telegram user data required' });
@@ -50,6 +50,14 @@ module.exports = async (req, res) => {
 
     const userId = user.id;
 
+    // Список запросов, из которых состоит программа: массив накапливается (не заменяется)
+    const requestsList = Array.isArray(requests) && requests.length > 0
+      ? requests.map((r) => String(r || '').trim()).filter(Boolean)
+      : (request !== undefined && request !== null && String(request).trim())
+        ? [String(request).trim()]
+        : [];
+    const requestStorage = requestsList.length > 0 ? JSON.stringify(requestsList) : null;
+
     // Очищаем старую программу и дневник для пользователя (если были)
     await supabase.from('health_programs').delete().eq('telegram_id', telegramId);
     await supabase.from('diary_entries').delete().eq('telegram_id', telegramId);
@@ -69,7 +77,7 @@ module.exports = async (req, res) => {
         nutrition: healthProgram.nutrition || '',
         stress: healthProgram.stress || '',
         sleep: healthProgram.sleep || '',
-        request: (request || '').toString().trim() || null,
+        request: requestStorage,
         goals: goalsText || null
       })
       .select()
@@ -106,7 +114,7 @@ module.exports = async (req, res) => {
             entry_time: time,
             title,
             notes: (entry.notes || '').trim(),
-            request: (request || '').toString().trim() || null
+            request: requestStorage
           });
         });
       }

@@ -3540,6 +3540,13 @@ async function createProgramFromDraft(button) {
       button.textContent = 'Сохраняем программу...';
     }
 
+    // Список запросов программы: уже сохранённые + текущий (накапливаем, не заменяем)
+    const previousRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests) && currentHealthProgram.requests.length > 0)
+      ? currentHealthProgram.requests
+      : [];
+    const newRequestText = (lastProgramDraft.requestText || '').trim();
+    const requests = newRequestText ? [...previousRequests, newRequestText] : previousRequests;
+
     const body = {
       telegramUser: {
         id: telegramUser.id,
@@ -3549,7 +3556,8 @@ async function createProgramFromDraft(button) {
       },
       healthProgram: lastProgramDraft.healthProgram,
       diaryEntries: lastProgramDraft.diaryEntries || [],
-      request: lastProgramDraft.requestText || ''
+      request: newRequestText || (previousRequests[previousRequests.length - 1] || ''),
+      requests
     };
 
     const response = await fetch('/api/save-program', {

@@ -78,6 +78,22 @@ module.exports = async (req, res) => {
         .filter(Boolean);
     }
 
+    // request в БД: либо JSON-массив запросов ["q1","q2"], либо один текст (старый формат)
+    let requests = [];
+    if (program && program.request) {
+      const raw = String(program.request).trim();
+      if (raw.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(raw);
+          requests = Array.isArray(parsed) ? parsed.map((r) => String(r || '')) : [raw];
+        } catch (_) {
+          requests = [raw];
+        }
+      } else {
+        requests = [raw];
+      }
+    }
+
     return res.status(200).json({
       success: true,
       programCreated: hasProgram,
@@ -89,7 +105,8 @@ module.exports = async (req, res) => {
             stress: program.stress || '',
             sleep: program.sleep || '',
             goals: goals || null,
-            request: program.request || null
+            request: program.request || null,
+            requests
           }
         : null
     });
