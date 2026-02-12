@@ -783,7 +783,28 @@ module.exports = async (req, res) => {
         // Текущая сохранённая программа здоровья (если есть)
         if (diagnosticData.current_program) {
           const hp = diagnosticData.current_program;
-          context += `\n✓ Текущая персональная программа (по запросу: \"${hp.request || 'не указан'}\"):\n`;
+          // Определяем запросы программы (могут быть в JSON-массиве или как строка)
+          let programRequests = [];
+          if (hp.request) {
+            const raw = String(hp.request).trim();
+            if (raw.startsWith('[')) {
+              try { programRequests = JSON.parse(raw); } catch (_) { programRequests = [raw]; }
+            } else {
+              programRequests = [raw];
+            }
+          }
+          const requestsDisplay = programRequests.length > 0
+            ? programRequests.map((r, i) => `${i + 1}) "${r}"`).join('; ')
+            : 'не указан';
+
+          context += `\n✓ ТЕКУЩАЯ ПЕРСОНАЛЬНАЯ ПРОГРАММА (составлена по запросам: ${requestsDisplay}):\n`;
+          context += `⚠️ ВАЖНО: У пользователя УЖЕ ЕСТЬ программа. Ты должен ОБЪЕДИНИТЬ её с новым запросом:\n`;
+          context += `   - НЕ дублируй добавки/действия, которые уже есть в программе\n`;
+          context += `   - Если новый запрос противоречит старому — замени старое на новое\n`;
+          context += `   - Если новый запрос дополняет — добавь новое к существующему\n`;
+          context += `   - В итоговом JSON выдай ОБЪЕДИНЁННУЮ программу (health + diary) без дублей\n`;
+          context += `   - В diary не должно быть двух одинаковых действий в одно время\n`;
+
           if (hp.goals && Array.isArray(hp.goals) && hp.goals.length > 0) {
             context += `  Цели на ближайший месяц:\n`;
             hp.goals.forEach((g, idx) => {
@@ -792,19 +813,19 @@ module.exports = async (req, res) => {
           }
           if (hp.supplements) {
             const s = String(hp.supplements);
-            context += `  Нутрицевтики и добавки (уже учтены): ${s.substring(0, 400)}${s.length > 400 ? '...' : ''}\n`;
+            context += `  Нутрицевтики и добавки (уже в программе): ${s.substring(0, 400)}${s.length > 400 ? '...' : ''}\n`;
           }
           if (hp.nutrition) {
             const n = String(hp.nutrition);
-            context += `  Питание (уже учтено): ${n.substring(0, 400)}${n.length > 400 ? '...' : ''}\n`;
+            context += `  Питание (уже в программе): ${n.substring(0, 400)}${n.length > 400 ? '...' : ''}\n`;
           }
           if (hp.stress) {
             const st = String(hp.stress);
-            context += `  Стресс и нагрузка (уже учтены): ${st.substring(0, 400)}${st.length > 400 ? '...' : ''}\n`;
+            context += `  Стресс и нагрузка (уже в программе): ${st.substring(0, 400)}${st.length > 400 ? '...' : ''}\n`;
           }
           if (hp.sleep) {
             const sl = String(hp.sleep);
-            context += `  Сон и восстановление (уже учтены): ${sl.substring(0, 400)}${sl.length > 400 ? '...' : ''}\n`;
+            context += `  Сон и восстановление (уже в программе): ${sl.substring(0, 400)}${sl.length > 400 ? '...' : ''}\n`;
           }
         }
 

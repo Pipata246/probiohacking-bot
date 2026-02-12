@@ -58,17 +58,10 @@ module.exports = async (req, res) => {
         : [];
     const requestStorage = requestsList.length > 0 ? JSON.stringify(requestsList) : null;
 
-    // Текущий запрос этого сохранения (для дневника: одна запись дневника = один запрос)
-    const currentRequestText = requestsList.length > 0 ? requestsList[requestsList.length - 1] : null;
-
-    // Очищаем только программу здоровья; дневник — только блок по текущему запросу (остальные запросы не трогаем)
+    // ИИ возвращает ОБЪЕДИНЁННУЮ программу (без дублей), поэтому полностью перезаписываем
+    // health_programs и diary_entries — старые записи удаляем, вставляем новые
     await supabase.from('health_programs').delete().eq('telegram_id', telegramId);
-    if (currentRequestText) {
-      const requestVariants = [currentRequestText, JSON.stringify([currentRequestText])];
-      await supabase.from('diary_entries').delete().eq('telegram_id', telegramId).in('request', requestVariants);
-    } else {
-      await supabase.from('diary_entries').delete().eq('telegram_id', telegramId);
-    }
+    await supabase.from('diary_entries').delete().eq('telegram_id', telegramId);
 
     // Вставляем программу здоровья
     const goalsArray = Array.isArray(healthProgram.goals)
@@ -122,7 +115,7 @@ module.exports = async (req, res) => {
             entry_time: time,
             title,
             notes: (entry.notes || '').trim(),
-            request: currentRequestText
+            request: requestStorage  // Все запросы программы (JSON-массив)
           });
         });
       }
