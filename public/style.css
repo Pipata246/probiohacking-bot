@@ -5096,7 +5096,7 @@ body.chat-overlay-visible .search-container {
 .splash-content {
   max-width: 100%;
   width: 100%;
-  padding: 16px 16px 24px;
+  padding: 60px 16px 24px;
   text-align: center;
   box-sizing: border-box;
 }
