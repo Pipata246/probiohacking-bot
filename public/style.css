@@ -5392,6 +5392,19 @@ body.chat-overlay-visible .search-container {
   background: rgba(60, 128, 91, 0.15);
 }
 
+.admin-submenu-item-danger {
+  background: rgba(220, 53, 69, 0.08);
+  color: #dc3545;
+}
+
+.admin-submenu-item-danger:active {
+  background: rgba(220, 53, 69, 0.15);
+}
+
+.admin-submenu-item-danger .admin-submenu-icon {
+  color: #dc3545;
+}
+
 .admin-submenu-left {
   display: flex;
   align-items: center;

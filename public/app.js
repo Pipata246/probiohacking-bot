@@ -7634,12 +7634,15 @@ function renderAdminUsers(users) {
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
-      <button class="admin-submenu-item" data-action="grant-admin" data-user-id="${user.id}">
+      <button class="admin-submenu-item ${user.admin ? 'admin-submenu-item-danger' : ''}" data-action="grant-admin" data-user-id="${user.id}" data-is-admin="${user.admin ? 'true' : 'false'}">
         <div class="admin-submenu-left">
           <svg class="admin-submenu-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            ${user.admin 
+              ? '<path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+              : '<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+            }
           </svg>
-          <span>Админские права</span>
+          <span>${user.admin ? 'Снять админские права' : 'Выдать админские права'}</span>
         </div>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -7662,7 +7665,8 @@ function renderAdminUsers(users) {
         } else if (action === 'subscription') {
           viewUserSubscription(userId);
         } else if (action === 'grant-admin') {
-          showGrantAdminModal(userId);
+          const isCurrentlyAdmin = btn.dataset.isAdmin === 'true';
+          showGrantAdminModal(userId, isCurrentlyAdmin);
         }
       });
     });
@@ -7733,7 +7737,8 @@ async function viewUserQuiz(userId) {
     const answersMap = new Map();
     if (data.answers && data.answers.length > 0) {
       data.answers.forEach(answer => {
-        answersMap.set(answer.question_id, answer.answer_text || '');
+        // Используем answer_text если есть, иначе answer_value
+        answersMap.set(answer.question_id, answer.answer_text || answer.answer_value || '');
       });
     }
     
@@ -8456,15 +8461,29 @@ function showAddDiaryEntryForm(userId) {
 }
 
 // Показать модальное окно для выдачи админских прав
-function showGrantAdminModal(userId) {
+function showGrantAdminModal(userId, isCurrentlyAdmin = false) {
   const modal = document.getElementById('adminGrantModal');
   if (!modal) return;
+
+  // Обновляем тексты в модальном окне в зависимости от текущего статуса
+  const title = modal.querySelector('.admin-grant-modal-title');
+  const warning = modal.querySelector('.admin-grant-modal-warning');
+  const continueBtn = document.getElementById('adminGrantModalContinue');
+  
+  if (isCurrentlyAdmin) {
+    if (title) title.textContent = 'Снять админские права';
+    if (warning) warning.textContent = 'Вы уверены, что хотите снять админские права у этого пользователя? Пользователь потеряет доступ к админской панели.';
+    if (continueBtn) continueBtn.textContent = 'Снять права';
+  } else {
+    if (title) title.textContent = 'Выдать админские права';
+    if (warning) warning.textContent = 'Вы уверены, что хотите выдать админские права этому пользователю? Пользователь получит доступ к админской панели и сможет управлять другими пользователями.';
+    if (continueBtn) continueBtn.textContent = 'Выдать права';
+  }
 
   modal.classList.add('active');
 
   // Обработчик кнопки "Отмена"
   const cancelBtn = document.getElementById('adminGrantModalCancel');
-  const continueBtn = document.getElementById('adminGrantModalContinue');
 
   // Закрытие модального окна
   const closeModal = () => {
@@ -8499,17 +8518,18 @@ function showGrantAdminModal(userId) {
     continueBtnClone.textContent = 'Сохранение...';
     
     try {
-      // Сразу отправляем запрос на сервер для изменения статуса
+      // Отправляем запрос на сервер для изменения статуса (обратный от текущего)
       const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
       const headers = {
         'Content-Type': 'application/json',
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       };
 
+      const newAdminStatus = !isCurrentlyAdmin;
       const response = await fetch(`/api/admin?action=setAdmin&userId=${userId}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ isAdmin: true })
+        body: JSON.stringify({ isAdmin: newAdminStatus })
       });
 
       if (!response.ok) {
@@ -8530,7 +8550,7 @@ function showGrantAdminModal(userId) {
       console.error('Error saving admin status:', error);
       alert('Ошибка сохранения изменения статуса админа');
       continueBtnClone.disabled = false;
-      continueBtnClone.textContent = 'Продолжить';
+      continueBtnClone.textContent = isCurrentlyAdmin ? 'Снять права' : 'Выдать права';
     }
   });
 }
