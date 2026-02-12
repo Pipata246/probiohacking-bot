@@ -3540,12 +3540,15 @@ async function createProgramFromDraft(button) {
       button.textContent = 'Сохраняем программу...';
     }
 
-    // Список запросов программы: уже сохранённые + текущий (накапливаем, не заменяем)
+    // Список запросов программы: уже сохранённые + текущий (накапливаем, без дубликатов)
     const previousRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests) && currentHealthProgram.requests.length > 0)
       ? currentHealthProgram.requests
       : [];
     const newRequestText = (lastProgramDraft.requestText || '').trim();
-    const requests = newRequestText ? [...previousRequests, newRequestText] : previousRequests;
+    const lastPrevious = previousRequests[previousRequests.length - 1];
+    const requests = newRequestText && newRequestText !== lastPrevious
+      ? [...previousRequests, newRequestText]
+      : (previousRequests.length ? previousRequests : (newRequestText ? [newRequestText] : []));
 
     const body = {
       telegramUser: {
