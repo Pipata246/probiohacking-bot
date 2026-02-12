@@ -418,6 +418,192 @@ module.exports = async function handler(req, res) {
       return res.json({ success: true, data });
     }
 
+    // ========== ЗДОРОВЬЕ (health_programs) ==========
+
+    // Получение программы здоровья пользователя
+    if (action === 'health' && userId && req.method === 'GET') {
+      // Получаем telegram_id пользователя
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
+      const { data: programs, error } = await supabase
+        .from('health_programs')
+        .select('*')
+        .eq('telegram_id', userData.telegram_id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return res.json({ 
+        success: true, 
+        programs: programs || []
+      });
+    }
+
+    // Обновление программы здоровья
+    if (action === 'health' && userId && req.method === 'PUT') {
+      const { programId, supplements, nutrition, stress, sleep, goals } = req.body;
+
+      if (!programId) {
+        return res.status(400).json({ success: false, error: 'programId required' });
+      }
+
+      // Получаем telegram_id пользователя для проверки
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
+      const updateData = {};
+      if (supplements !== undefined) updateData.supplements = supplements;
+      if (nutrition !== undefined) updateData.nutrition = nutrition;
+      if (stress !== undefined) updateData.stress = stress;
+      if (sleep !== undefined) updateData.sleep = sleep;
+      if (goals !== undefined) updateData.goals = goals;
+
+      const { error } = await supabase
+        .from('health_programs')
+        .update(updateData)
+        .eq('id', programId)
+        .eq('telegram_id', userData.telegram_id);
+
+      if (error) throw error;
+
+      return res.json({ success: true });
+    }
+
+    // ========== ДНЕВНИК (diary_entries) ==========
+
+    // Получение дневника пользователя
+    if (action === 'diary' && userId && req.method === 'GET') {
+      // Получаем telegram_id пользователя
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
+      const { data: entries, error } = await supabase
+        .from('diary_entries')
+        .select('*')
+        .eq('telegram_id', userData.telegram_id)
+        .order('entry_date', { ascending: true })
+        .order('entry_time', { ascending: true });
+
+      if (error) throw error;
+
+      return res.json({ 
+        success: true, 
+        entries: entries || []
+      });
+    }
+
+    // Обновление записи дневника
+    if (action === 'diary' && userId && req.method === 'PUT') {
+      const { entryId, entry_time, title, notes } = req.body;
+
+      if (!entryId) {
+        return res.status(400).json({ success: false, error: 'entryId required' });
+      }
+
+      // Получаем telegram_id пользователя для проверки
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
+      const updateData = {};
+      if (entry_time !== undefined) updateData.entry_time = entry_time;
+      if (title !== undefined) updateData.title = title;
+      if (notes !== undefined) updateData.notes = notes;
+
+      const { error } = await supabase
+        .from('diary_entries')
+        .update(updateData)
+        .eq('id', entryId)
+        .eq('telegram_id', userData.telegram_id);
+
+      if (error) throw error;
+
+      return res.json({ success: true });
+    }
+
+    // Добавление записи в дневник
+    if (action === 'diary' && userId && req.method === 'POST') {
+      const { entry_date, entry_time, title, notes } = req.body;
+
+      if (!entry_date || !entry_time || !title) {
+        return res.status(400).json({ success: false, error: 'entry_date, entry_time, and title required' });
+      }
+
+      // Получаем данные пользователя
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
+      const { data, error } = await supabase
+        .from('diary_entries')
+        .insert({
+          user_id: userData.id,
+          telegram_id: userData.telegram_id,
+          entry_date,
+          entry_time,
+          title,
+          notes: notes || ''
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ success: true, entry: data });
+    }
+
+    // Удаление записи дневника
+    if (action === 'diary' && userId && req.method === 'DELETE') {
+      const { entryId } = req.query;
+
+      if (!entryId) {
+        return res.status(400).json({ success: false, error: 'entryId required' });
+      }
+
+      // Получаем telegram_id пользователя для проверки
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('telegram_id')
+        .eq('id', userId)
+        .single();
+
+      if (userError || !userData) throw userError || new Error('User not found');
+
+      const { error } = await supabase
+        .from('diary_entries')
+        .delete()
+        .eq('id', entryId)
+        .eq('telegram_id', userData.telegram_id);
+
+      if (error) throw error;
+
+      return res.json({ success: true });
+    }
+
     return res.status(400).json({ success: false, error: 'Invalid action' });
   } catch (error) {
     console.error('❌ Admin API error:', error);

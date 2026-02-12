@@ -5752,6 +5752,296 @@ body.chat-overlay-visible .search-container {
   color: #FEF7EC;
 }
 
+/* ========== ADMIN HEALTH ========== */
+.admin-health-view {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  padding-bottom: 120px;
+  overflow-y: auto;
+}
+
+.admin-health-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.admin-health-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-health-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-health-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FEF7EC;
+}
+
+.admin-health-textarea {
+  background: rgba(254, 247, 236, 0.12);
+  border: 1px solid rgba(254, 247, 236, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  color: #FEF7EC;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.admin-health-textarea:focus {
+  outline: none;
+  border-color: rgba(254, 247, 236, 0.6);
+}
+
+.admin-health-info {
+  padding: 12px;
+  background: rgba(254, 247, 236, 0.08);
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.admin-health-info small {
+  font-size: 12px;
+  color: rgba(254, 247, 236, 0.7);
+  word-break: break-word;
+}
+
+/* ========== ADMIN DIARY ========== */
+.admin-diary-view {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  padding-bottom: 120px;
+  overflow-y: auto;
+}
+
+.admin-diary-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.admin-diary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-diary-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-diary-date-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(254, 247, 236, 0.8);
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(254, 247, 236, 0.2);
+  text-transform: capitalize;
+}
+
+.admin-diary-entry {
+  background: rgba(254, 247, 236, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 0.3s;
+}
+
+.admin-diary-entry-deleted {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.admin-diary-entry-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-diary-time-input {
+  width: 90px;
+  padding: 8px 10px;
+  background: rgba(254, 247, 236, 0.15);
+  border: 1px solid rgba(254, 247, 236, 0.3);
+  border-radius: 8px;
+  color: #FEF7EC;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.admin-diary-title-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(254, 247, 236, 0.15);
+  border: 1px solid rgba(254, 247, 236, 0.3);
+  border-radius: 8px;
+  color: #FEF7EC;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.admin-diary-notes-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(254, 247, 236, 0.08);
+  border: 1px solid rgba(254, 247, 236, 0.2);
+  border-radius: 8px;
+  color: rgba(254, 247, 236, 0.9);
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+}
+
+.admin-diary-time-input:focus,
+.admin-diary-title-input:focus,
+.admin-diary-notes-input:focus {
+  outline: none;
+  border-color: rgba(254, 247, 236, 0.5);
+}
+
+.admin-diary-delete-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 100, 100, 0.2);
+  border: none;
+  border-radius: 8px;
+  color: #ff6b6b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.admin-diary-delete-btn:hover {
+  background: rgba(255, 100, 100, 0.3);
+}
+
+.admin-add-diary-btn {
+  padding: 12px 20px;
+  background: rgba(74, 139, 108, 0.3);
+  border: 1px dashed rgba(74, 139, 108, 0.6);
+  border-radius: 12px;
+  color: #4A8B6C;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.admin-add-diary-btn:hover {
+  background: rgba(74, 139, 108, 0.4);
+}
+
+/* Форма добавления записи */
+.admin-diary-add-form {
+  background: rgba(74, 139, 108, 0.15);
+  border: 1px solid rgba(74, 139, 108, 0.4);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-diary-add-form h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #FEF7EC;
+}
+
+.admin-diary-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-diary-date-add,
+.admin-diary-time-add {
+  padding: 10px 12px;
+  background: rgba(254, 247, 236, 0.12);
+  border: 1px solid rgba(254, 247, 236, 0.3);
+  border-radius: 8px;
+  color: #FEF7EC;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.admin-diary-date-add {
+  flex: 1;
+}
+
+.admin-diary-title-add,
+.admin-diary-notes-add {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(254, 247, 236, 0.12);
+  border: 1px solid rgba(254, 247, 236, 0.3);
+  border-radius: 8px;
+  color: #FEF7EC;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.admin-diary-notes-add {
+  resize: none;
+}
+
+.admin-diary-add-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.admin-diary-add-cancel,
+.admin-diary-add-confirm {
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.admin-diary-add-cancel {
+  background: rgba(254, 247, 236, 0.15);
+  color: rgba(254, 247, 236, 0.8);
+}
+
+.admin-diary-add-confirm {
+  background: #4A8B6C;
+  color: #FEF7EC;
+}
+
+.admin-diary-add-cancel:hover {
+  background: rgba(254, 247, 236, 0.25);
+}
+
+.admin-diary-add-confirm:hover {
+  background: #5aa57c;
+}
+
 .admin-nav-btn {
   padding: 14px 24px;
   border-radius: 24px;

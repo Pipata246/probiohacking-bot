@@ -2303,7 +2303,7 @@ function showPage(pageName) {
       
       // Если мы возвращаемся к списку пользователей, сбрасываем изменения
       if (adminCurrentView === 'users') {
-        adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
+        adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null, health: null, diary: [] };
         updateAdminSaveButton();
       }
       
@@ -7460,13 +7460,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 // АДМИНСКАЯ ПАНЕЛЬ
 // ========================================
 
-let adminCurrentView = 'users'; // 'users' | 'quiz' | 'analyses' | 'subscription'
+let adminCurrentView = 'users'; // 'users' | 'quiz' | 'analyses' | 'subscription' | 'health' | 'diary'
 let adminCurrentUserId = null;
 let adminPendingChanges = {
   quiz: [],
   analyses: [],
   adminStatus: null, // { userId: number, isAdmin: boolean }
-  subscription: null // { userId: string, subscriptionActive: boolean, subscriptionEndDate: string }
+  subscription: null, // { userId: string, subscriptionActive: boolean, subscriptionEndDate: string }
+  health: null, // { programId, supplements, nutrition, stress, sleep, goals }
+  diary: [] // [{ entryId, entry_time, title, notes, action: 'update' | 'delete' | 'add' }]
 };
 
 // Загрузка списка пользователей
@@ -7589,6 +7591,18 @@ function renderAdminUsers(users) {
           <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+      <button class="admin-submenu-item" data-action="health" data-user-id="${user.id}">
+        <span>💚 Здоровье пользователя</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="admin-submenu-item" data-action="diary" data-user-id="${user.id}">
+        <span>📅 Дневник пользователя</span>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       <button class="admin-submenu-item" data-action="subscription" data-user-id="${user.id}">
         <span>Подписка пользователя</span>
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -7608,6 +7622,10 @@ function renderAdminUsers(users) {
           viewUserQuiz(userId);
         } else if (action === 'analyses') {
           viewUserAnalyses(userId);
+        } else if (action === 'health') {
+          viewUserHealth(userId);
+        } else if (action === 'diary') {
+          viewUserDiary(userId);
         } else if (action === 'subscription') {
           viewUserSubscription(userId);
         } else if (action === 'grant-admin') {
@@ -8085,6 +8103,300 @@ async function viewUserSubscription(userId) {
   }
 }
 
+// ========== ЗДОРОВЬЕ ПОЛЬЗОВАТЕЛЯ ==========
+async function viewUserHealth(userId) {
+  try {
+    adminCurrentView = 'health';
+    adminCurrentUserId = userId;
+    adminPendingChanges.health = null;
+
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch(`/api/admin?action=health&userId=${userId}`, {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    if (!data.success) throw new Error('API error');
+
+    const healthView = document.getElementById('adminHealthView');
+    const healthContent = document.getElementById('adminHealthContent');
+    if (!healthView || !healthContent) return;
+
+    if (!data.programs || data.programs.length === 0) {
+      healthContent.innerHTML = '<div class="admin-message">У пользователя нет программы здоровья</div>';
+      showAdminNavigation(true, 'health');
+      return;
+    }
+
+    // Берём последнюю программу
+    const program = data.programs[0];
+
+    healthContent.innerHTML = `
+      <div class="admin-health-form">
+        <input type="hidden" id="adminHealthProgramId" value="${program.id}">
+        
+        <div class="admin-health-field">
+          <label class="admin-health-label">💊 Нутрицевтики и добавки</label>
+          <textarea class="admin-health-textarea" id="adminHealthSupplements" rows="4">${(program.supplements || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+        </div>
+        
+        <div class="admin-health-field">
+          <label class="admin-health-label">🍽 Питание</label>
+          <textarea class="admin-health-textarea" id="adminHealthNutrition" rows="4">${(program.nutrition || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+        </div>
+        
+        <div class="admin-health-field">
+          <label class="admin-health-label">🧘 Стресс и управление нагрузкой</label>
+          <textarea class="admin-health-textarea" id="adminHealthStress" rows="4">${(program.stress || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+        </div>
+        
+        <div class="admin-health-field">
+          <label class="admin-health-label">😴 Сон и восстановление</label>
+          <textarea class="admin-health-textarea" id="adminHealthSleep" rows="4">${(program.sleep || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+        </div>
+        
+        <div class="admin-health-field">
+          <label class="admin-health-label">🎯 Цели на месяц</label>
+          <textarea class="admin-health-textarea" id="adminHealthGoals" rows="4">${(program.goals || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+        </div>
+        
+        <div class="admin-health-info">
+          <small>📝 Запрос пользователя: ${program.request || '—'}</small>
+        </div>
+      </div>
+    `;
+
+    // Добавляем обработчики изменений
+    const fields = ['Supplements', 'Nutrition', 'Stress', 'Sleep', 'Goals'];
+    fields.forEach(field => {
+      const textarea = document.getElementById(`adminHealth${field}`);
+      if (textarea) {
+        textarea.addEventListener('input', () => {
+          adminPendingChanges.health = {
+            programId: program.id,
+            supplements: document.getElementById('adminHealthSupplements')?.value,
+            nutrition: document.getElementById('adminHealthNutrition')?.value,
+            stress: document.getElementById('adminHealthStress')?.value,
+            sleep: document.getElementById('adminHealthSleep')?.value,
+            goals: document.getElementById('adminHealthGoals')?.value
+          };
+          updateAdminSaveButton();
+        });
+      }
+    });
+
+    showAdminNavigation(true, 'health');
+  } catch (error) {
+    console.error('Error loading user health:', error);
+    const healthContent = document.getElementById('adminHealthContent');
+    if (healthContent) {
+      healthContent.innerHTML = '<div class="admin-error">Ошибка загрузки данных здоровья</div>';
+    }
+  }
+}
+
+// ========== ДНЕВНИК ПОЛЬЗОВАТЕЛЯ ==========
+async function viewUserDiary(userId) {
+  try {
+    adminCurrentView = 'diary';
+    adminCurrentUserId = userId;
+    adminPendingChanges.diary = [];
+
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch(`/api/admin?action=diary&userId=${userId}`, {
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    if (!data.success) throw new Error('API error');
+
+    const diaryView = document.getElementById('adminDiaryView');
+    const diaryContent = document.getElementById('adminDiaryContent');
+    if (!diaryView || !diaryContent) return;
+
+    if (!data.entries || data.entries.length === 0) {
+      diaryContent.innerHTML = `
+        <div class="admin-message">У пользователя нет записей в дневнике</div>
+        <button class="admin-add-diary-btn" id="adminAddDiaryEntryBtn">+ Добавить запись</button>
+      `;
+      document.getElementById('adminAddDiaryEntryBtn')?.addEventListener('click', () => showAddDiaryEntryForm(userId));
+      showAdminNavigation(true, 'diary');
+      return;
+    }
+
+    // Группируем записи по дате
+    const entriesByDate = {};
+    data.entries.forEach(entry => {
+      const date = entry.entry_date;
+      if (!entriesByDate[date]) entriesByDate[date] = [];
+      entriesByDate[date].push(entry);
+    });
+
+    let html = '<div class="admin-diary-list">';
+    
+    // Кнопка добавления новой записи
+    html += '<button class="admin-add-diary-btn" id="adminAddDiaryEntryBtn">+ Добавить запись</button>';
+    
+    Object.keys(entriesByDate).sort().forEach(date => {
+      const formattedDate = new Date(date).toLocaleDateString('ru-RU', { 
+        weekday: 'short', day: 'numeric', month: 'long' 
+      });
+      
+      html += `<div class="admin-diary-date-group">
+        <div class="admin-diary-date-header">${formattedDate}</div>`;
+      
+      entriesByDate[date].forEach(entry => {
+        html += `
+          <div class="admin-diary-entry" data-entry-id="${entry.id}">
+            <div class="admin-diary-entry-row">
+              <input type="time" class="admin-diary-time-input" data-entry-id="${entry.id}" value="${entry.entry_time?.substring(0, 5) || ''}">
+              <input type="text" class="admin-diary-title-input" data-entry-id="${entry.id}" value="${(entry.title || '').replace(/"/g, '&quot;')}" placeholder="Название">
+              <button class="admin-diary-delete-btn" data-entry-id="${entry.id}">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <textarea class="admin-diary-notes-input" data-entry-id="${entry.id}" rows="2" placeholder="Примечания">${(entry.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+    });
+    
+    html += '</div>';
+    diaryContent.innerHTML = html;
+
+    // Добавляем обработчики
+    document.getElementById('adminAddDiaryEntryBtn')?.addEventListener('click', () => showAddDiaryEntryForm(userId));
+    
+    // Обработчики изменений для существующих записей
+    diaryContent.querySelectorAll('.admin-diary-time-input, .admin-diary-title-input, .admin-diary-notes-input').forEach(input => {
+      input.addEventListener('input', () => {
+        const entryId = input.dataset.entryId;
+        const entryDiv = input.closest('.admin-diary-entry');
+        const timeInput = entryDiv.querySelector('.admin-diary-time-input');
+        const titleInput = entryDiv.querySelector('.admin-diary-title-input');
+        const notesInput = entryDiv.querySelector('.admin-diary-notes-input');
+        
+        const existing = adminPendingChanges.diary.findIndex(c => c.entryId === entryId && c.action !== 'delete');
+        if (existing >= 0) {
+          adminPendingChanges.diary[existing] = {
+            entryId,
+            entry_time: timeInput.value,
+            title: titleInput.value,
+            notes: notesInput.value,
+            action: 'update'
+          };
+        } else {
+          adminPendingChanges.diary.push({
+            entryId,
+            entry_time: timeInput.value,
+            title: titleInput.value,
+            notes: notesInput.value,
+            action: 'update'
+          });
+        }
+        updateAdminSaveButton();
+      });
+    });
+
+    // Обработчики удаления
+    diaryContent.querySelectorAll('.admin-diary-delete-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const entryId = btn.dataset.entryId;
+        const entryDiv = btn.closest('.admin-diary-entry');
+        
+        // Визуально помечаем как удалённую
+        entryDiv.classList.add('admin-diary-entry-deleted');
+        
+        // Убираем из изменений обновление, добавляем удаление
+        adminPendingChanges.diary = adminPendingChanges.diary.filter(c => c.entryId !== entryId);
+        adminPendingChanges.diary.push({ entryId, action: 'delete' });
+        updateAdminSaveButton();
+      });
+    });
+
+    showAdminNavigation(true, 'diary');
+  } catch (error) {
+    console.error('Error loading user diary:', error);
+    const diaryContent = document.getElementById('adminDiaryContent');
+    if (diaryContent) {
+      diaryContent.innerHTML = '<div class="admin-error">Ошибка загрузки дневника</div>';
+    }
+  }
+}
+
+// Форма добавления новой записи дневника
+function showAddDiaryEntryForm(userId) {
+  const diaryContent = document.getElementById('adminDiaryContent');
+  if (!diaryContent) return;
+
+  // Создаём форму добавления
+  const formHtml = `
+    <div class="admin-diary-add-form" id="adminDiaryAddForm">
+      <h3>Новая запись</h3>
+      <div class="admin-diary-add-row">
+        <input type="date" class="admin-diary-date-add" id="adminDiaryNewDate" value="${new Date().toISOString().split('T')[0]}">
+        <input type="time" class="admin-diary-time-add" id="adminDiaryNewTime" value="08:00">
+      </div>
+      <input type="text" class="admin-diary-title-add" id="adminDiaryNewTitle" placeholder="Название записи">
+      <textarea class="admin-diary-notes-add" id="adminDiaryNewNotes" rows="2" placeholder="Примечания (необязательно)"></textarea>
+      <div class="admin-diary-add-buttons">
+        <button class="admin-diary-add-cancel" id="adminDiaryCancelAdd">Отмена</button>
+        <button class="admin-diary-add-confirm" id="adminDiaryConfirmAdd">Добавить</button>
+      </div>
+    </div>
+  `;
+  
+  diaryContent.insertAdjacentHTML('afterbegin', formHtml);
+  
+  document.getElementById('adminDiaryCancelAdd')?.addEventListener('click', () => {
+    document.getElementById('adminDiaryAddForm')?.remove();
+  });
+  
+  document.getElementById('adminDiaryConfirmAdd')?.addEventListener('click', async () => {
+    const date = document.getElementById('adminDiaryNewDate')?.value;
+    const time = document.getElementById('adminDiaryNewTime')?.value;
+    const title = document.getElementById('adminDiaryNewTitle')?.value?.trim();
+    const notes = document.getElementById('adminDiaryNewNotes')?.value?.trim();
+    
+    if (!date || !time || !title) {
+      alert('Заполните дату, время и название');
+      return;
+    }
+    
+    try {
+      const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+      const response = await fetch(`/api/admin?action=diary&userId=${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+        },
+        body: JSON.stringify({ entry_date: date, entry_time: time, title, notes })
+      });
+      
+      if (!response.ok) throw new Error('Failed to add entry');
+      
+      // Перезагружаем дневник
+      viewUserDiary(userId);
+    } catch (error) {
+      console.error('Error adding diary entry:', error);
+      alert('Ошибка добавления записи');
+    }
+  });
+}
+
 // Показать модальное окно для выдачи админских прав
 function showGrantAdminModal(userId) {
   const modal = document.getElementById('adminGrantModal');
@@ -8170,51 +8482,47 @@ function showAdminNavigation(show) {
   const navQuiz = document.getElementById('adminNavButtonsQuiz');
   const navAnalyses = document.getElementById('adminNavButtonsAnalyses');
   const navSubscription = document.getElementById('adminNavButtonsSubscription');
+  const navHealth = document.getElementById('adminNavButtonsHealth');
+  const navDiary = document.getElementById('adminNavButtonsDiary');
   
   // Скрываем/показываем основной контент и view
   const content = document.getElementById('adminContent');
   const quizView = document.getElementById('adminQuizView');
   const analysesView = document.getElementById('adminAnalysesView');
   const subscriptionView = document.getElementById('adminSubscriptionView');
+  const healthView = document.getElementById('adminHealthView');
+  const diaryView = document.getElementById('adminDiaryView');
+  
+  // Скрыть все view и nav
+  const hideAll = () => {
+    [quizView, analysesView, subscriptionView, healthView, diaryView].forEach(v => { if (v) v.style.display = 'none'; });
+    [navQuiz, navAnalyses, navSubscription, navHealth, navDiary].forEach(n => { if (n) n.style.display = 'none'; });
+  };
   
   if (show) {
     if (content) content.style.display = 'none';
+    hideAll();
+    
     if (adminCurrentView === 'quiz' && quizView) {
       quizView.style.display = 'flex';
       if (navQuiz) navQuiz.style.display = 'flex';
-      if (analysesView) analysesView.style.display = 'none';
-      if (subscriptionView) subscriptionView.style.display = 'none';
-      if (navAnalyses) navAnalyses.style.display = 'none';
-      if (navSubscription) navSubscription.style.display = 'none';
-      // Обновляем видимость кнопки "Сохранить" для опросника
-      updateAdminSaveButton();
     } else if (adminCurrentView === 'analyses' && analysesView) {
       analysesView.style.display = 'flex';
       if (navAnalyses) navAnalyses.style.display = 'flex';
-      if (quizView) quizView.style.display = 'none';
-      if (subscriptionView) subscriptionView.style.display = 'none';
-      if (navQuiz) navQuiz.style.display = 'none';
-      if (navSubscription) navSubscription.style.display = 'none';
-      // Обновляем видимость кнопки "Сохранить" для анализов
-      updateAdminSaveButton();
     } else if (adminCurrentView === 'subscription' && subscriptionView) {
       subscriptionView.style.display = 'flex';
       if (navSubscription) navSubscription.style.display = 'flex';
-      if (quizView) quizView.style.display = 'none';
-      if (analysesView) analysesView.style.display = 'none';
-      if (navQuiz) navQuiz.style.display = 'none';
-      if (navAnalyses) navAnalyses.style.display = 'none';
-      // Обновляем видимость кнопки "Сохранить" для подписки
-      updateAdminSaveButton();
+    } else if (adminCurrentView === 'health' && healthView) {
+      healthView.style.display = 'flex';
+      if (navHealth) navHealth.style.display = 'flex';
+    } else if (adminCurrentView === 'diary' && diaryView) {
+      diaryView.style.display = 'flex';
+      if (navDiary) navDiary.style.display = 'flex';
     }
+    updateAdminSaveButton();
   } else {
     if (content) content.style.display = 'block';
-    if (quizView) quizView.style.display = 'none';
-    if (analysesView) analysesView.style.display = 'none';
-    if (subscriptionView) subscriptionView.style.display = 'none';
-    if (navQuiz) navQuiz.style.display = 'none';
-    if (navAnalyses) navAnalyses.style.display = 'none';
-    if (navSubscription) navSubscription.style.display = 'none';
+    hideAll();
   }
 }
 
@@ -8222,10 +8530,14 @@ function showAdminNavigation(show) {
 function updateAdminSaveButton() {
   const saveBtnQuiz = document.getElementById('adminSaveBtnQuiz');
   const saveBtnAnalyses = document.getElementById('adminSaveBtnAnalyses');
+  const saveBtnHealth = document.getElementById('adminSaveBtnHealth');
+  const saveBtnDiary = document.getElementById('adminSaveBtnDiary');
   
   const hasQuizChanges = adminPendingChanges.quiz.length > 0;
   const hasAnalysesChanges = adminPendingChanges.analyses.length > 0;
   const hasAdminStatusChange = adminPendingChanges.adminStatus !== null;
+  const hasHealthChanges = adminPendingChanges.health !== null;
+  const hasDiaryChanges = adminPendingChanges.diary.length > 0;
   
   // Показываем кнопку сохранения в списке пользователей если есть изменения статуса админа
   const adminContentSaveContainer = document.getElementById('adminContentSaveContainer');
@@ -8240,6 +8552,12 @@ function updateAdminSaveButton() {
   }
   if (saveBtnAnalyses) {
     saveBtnAnalyses.style.display = hasAnalysesChanges ? 'flex' : 'none';
+  }
+  if (saveBtnHealth) {
+    saveBtnHealth.style.display = hasHealthChanges ? 'flex' : 'none';
+  }
+  if (saveBtnDiary) {
+    saveBtnDiary.style.display = hasDiaryChanges ? 'flex' : 'none';
   }
 }
 
@@ -8314,22 +8632,25 @@ async function saveAdminChanges() {
   const saveBtnQuiz = document.getElementById('adminSaveBtnQuiz');
   const saveBtnAnalyses = document.getElementById('adminSaveBtnAnalyses');
   const saveBtnSubscription = document.getElementById('adminSaveBtnSubscription');
+  const saveBtnHealth = document.getElementById('adminSaveBtnHealth');
+  const saveBtnDiary = document.getElementById('adminSaveBtnDiary');
   const currentView = adminCurrentView; // Сохраняем текущий view
-  const saveBtn = currentView === 'quiz' ? saveBtnQuiz : (currentView === 'analyses' ? saveBtnAnalyses : saveBtnSubscription);
+  
+  // Определяем активную кнопку
+  const saveBtnMap = {
+    quiz: saveBtnQuiz,
+    analyses: saveBtnAnalyses,
+    subscription: saveBtnSubscription,
+    health: saveBtnHealth,
+    diary: saveBtnDiary
+  };
+  const saveBtn = saveBtnMap[currentView];
   
   // Отключаем все кнопки на время сохранения
-  if (saveBtnQuiz) {
-    saveBtnQuiz.disabled = true;
-    if (currentView === 'quiz') saveBtnQuiz.textContent = 'Сохранение...';
-  }
-  if (saveBtnAnalyses) {
-    saveBtnAnalyses.disabled = true;
-    if (currentView === 'analyses') saveBtnAnalyses.textContent = 'Сохранение...';
-  }
-  if (saveBtnSubscription) {
-    saveBtnSubscription.disabled = true;
-    if (currentView === 'subscription') saveBtnSubscription.textContent = 'Сохранение...';
-  }
+  Object.values(saveBtnMap).forEach(btn => {
+    if (btn) btn.disabled = true;
+  });
+  if (saveBtn) saveBtn.textContent = 'Сохранение...';
 
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
@@ -8414,13 +8735,53 @@ async function saveAdminChanges() {
       console.log('✅ Subscription saved successfully:', result);
     }
 
+    // Сохраняем здоровье
+    if (adminPendingChanges.health) {
+      const healthData = adminPendingChanges.health;
+      console.log('💾 Saving health changes:', healthData);
+      const response = await fetch(`/api/admin?action=health&userId=${adminCurrentUserId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(healthData)
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error('Failed to save health: ' + errorText);
+      }
+      const result = await response.json();
+      console.log('✅ Health saved successfully:', result);
+    }
+
+    // Сохраняем дневник
+    for (const change of adminPendingChanges.diary) {
+      if (change.action === 'delete') {
+        const response = await fetch(`/api/admin?action=diary&userId=${adminCurrentUserId}&entryId=${change.entryId}`, {
+          method: 'DELETE',
+          headers
+        });
+        if (!response.ok) throw new Error('Failed to delete diary entry');
+      } else if (change.action === 'update') {
+        const response = await fetch(`/api/admin?action=diary&userId=${adminCurrentUserId}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            entryId: change.entryId,
+            entry_time: change.entry_time,
+            title: change.title,
+            notes: change.notes
+          })
+        });
+        if (!response.ok) throw new Error('Failed to update diary entry');
+      }
+    }
+
     // Показываем сообщение об успешном сохранении перед сбросом состояния
     if (saveBtn) {
       saveBtn.textContent = 'Сохранено!';
     }
 
     // Сбрасываем изменения и возвращаемся к списку
-    adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
+    adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null, health: null, diary: [] };
     adminCurrentView = 'users';
     adminCurrentUserId = null;
     showAdminNavigation(false);
@@ -8484,7 +8845,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminBackBtnQuiz.addEventListener('click', () => {
       adminCurrentView = 'users';
       adminCurrentUserId = null;
-      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null, health: null, diary: [] };
       showAdminNavigation(false);
       loadAdminUsers();
     });
@@ -8498,7 +8859,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminBackBtnAnalyses.addEventListener('click', () => {
       adminCurrentView = 'users';
       adminCurrentUserId = null;
-      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null, health: null, diary: [] };
       showAdminNavigation(false);
       loadAdminUsers();
     });
@@ -8515,7 +8876,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adminBackBtnSubscription.addEventListener('click', () => {
       adminCurrentView = 'users';
       adminCurrentUserId = null;
-      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null };
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null, health: null, diary: [] };
       showAdminNavigation(false);
       loadAdminUsers();
     });
@@ -8523,6 +8884,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (adminSaveBtnSubscription) {
     adminSaveBtnSubscription.addEventListener('click', saveAdminChanges);
+  }
+
+  // Обработчики для Здоровья
+  const adminBackBtnHealth = document.getElementById('adminBackBtnHealth');
+  const adminSaveBtnHealth = document.getElementById('adminSaveBtnHealth');
+
+  if (adminBackBtnHealth) {
+    adminBackBtnHealth.addEventListener('click', () => {
+      adminCurrentView = 'users';
+      adminCurrentUserId = null;
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null, health: null, diary: [] };
+      showAdminNavigation(false);
+      loadAdminUsers();
+    });
+  }
+
+  if (adminSaveBtnHealth) {
+    adminSaveBtnHealth.addEventListener('click', saveAdminChanges);
+  }
+
+  // Обработчики для Дневника
+  const adminBackBtnDiary = document.getElementById('adminBackBtnDiary');
+  const adminSaveBtnDiary = document.getElementById('adminSaveBtnDiary');
+
+  if (adminBackBtnDiary) {
+    adminBackBtnDiary.addEventListener('click', () => {
+      adminCurrentView = 'users';
+      adminCurrentUserId = null;
+      adminPendingChanges = { quiz: [], analyses: [], adminStatus: null, subscription: null, health: null, diary: [] };
+      showAdminNavigation(false);
+      loadAdminUsers();
+    });
+  }
+
+  if (adminSaveBtnDiary) {
+    adminSaveBtnDiary.addEventListener('click', saveAdminChanges);
   }
 
   if (adminContentSaveBtn) {
