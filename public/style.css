@@ -5083,9 +5083,9 @@ body.chat-overlay-visible .search-container {
 
 /* Спиннер загрузки на splash screen */
 .splash-loader {
-  width: 36px;
-  height: 36px;
-  margin: 24px auto 0;
+  width: 28px;
+  height: 28px;
+  margin: 16px auto 0;
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-top: 3px solid #fff;
   border-radius: 50%;
@@ -5094,55 +5094,62 @@ body.chat-overlay-visible .search-container {
 }
 
 .splash-content {
-  max-width: 500px;
-  padding: 40px 20px 60px;
+  max-width: 100%;
+  width: 100%;
+  padding: 16px 16px 24px;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .splash-title {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
   color: white;
-  margin-bottom: 16px;
-  line-height: 1.3;
+  margin-bottom: 8px;
+  line-height: 1.25;
 }
 
 .splash-subtitle {
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.5;
   color: #FEF7EC;
   opacity: 0.9;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 /* Блоки УТП */
 .splash-features {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 8px;
+  margin-bottom: 16px;
   text-align: left;
 }
 
 .splash-feature {
   background: rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 10px 12px;
   display: flex;
-  gap: 14px;
+  gap: 10px;
   align-items: flex-start;
 }
 
 .splash-feature-icon {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+}
+
+.splash-feature-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .splash-feature-content {
@@ -5150,28 +5157,28 @@ body.chat-overlay-visible .search-container {
 }
 
 .splash-feature-title {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: white;
-  margin-bottom: 6px;
-  line-height: 1.3;
+  margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .splash-feature-text {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 11px;
+  line-height: 1.4;
   color: rgba(254, 247, 236, 0.85);
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
 .splash-feature-result {
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 10px;
+  line-height: 1.3;
   color: rgba(254, 247, 236, 0.95);
   background: rgba(255, 255, 255, 0.1);
-  padding: 8px 10px;
-  border-radius: 8px;
-  margin-top: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  margin-top: 5px;
 }
 
 .splash-feature-result strong {
@@ -5180,13 +5187,13 @@ body.chat-overlay-visible .search-container {
 
 /* CTA блок */
 .splash-cta {
-  margin-top: 24px;
+  margin-top: 12px;
 }
 
 .splash-cta-text {
-  font-size: 15px;
+  font-size: 12px;
   color: rgba(254, 247, 236, 0.9);
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   font-weight: 500;
 }
 
@@ -5194,9 +5201,9 @@ body.chat-overlay-visible .search-container {
   background: white;
   color: #3C805B;
   border: none;
-  border-radius: 14px;
-  padding: 16px 40px;
-  font-size: 16px;
+  border-radius: 12px;
+  padding: 12px 32px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
