@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { createClient } = require('@supabase/supabase-js');
 
 const token = process.env.BOT_TOKEN;
-const miniAppUrl = 'https://probiohacking-bot.vercel.app';
+const miniAppUrl = process.env.MINI_APP_URL || 'https://probiohacking-bot.vercel.app';
 
 // Создаем бота с опциями для serverless окружения
 const bot = new TelegramBot(token, { polling: false });
