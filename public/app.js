@@ -3772,6 +3772,9 @@ function typeMessage(text, callback) {
     return;
   }
 
+  // Перед показом убираем служебный JSON с программой, чтобы пользователь его не видел
+  text = stripStructuredProgramJson(text);
+
   // Извлекаем кнопки из текста
   const buttonRegex = /\[BUTTON:(DIAGNOSTIC|ANALYSIS):([^\]]+)\]/g;
   const buttons = [];
