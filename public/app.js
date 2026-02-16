@@ -3425,6 +3425,28 @@ function addWelcomeMessage() {
   // Быстрые запросы теперь на главной странице
 }
 
+// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ:
+// скрыть служебный JSON с программой между маркерами
+// === STRUCTURED_PROGRAM_JSON_START === ... === STRUCTURED_PROGRAM_JSON_END ===,
+// чтобы пользователь видел только человеческий текст и таблицу.
+function stripStructuredProgramJson(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  const START = '=== STRUCTURED_PROGRAM_JSON_START ===';
+  const END = '=== STRUCTURED_PROGRAM_JSON_END ===';
+  
+  const startIdx = text.indexOf(START);
+  const endIdx = text.indexOf(END);
+  
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+    return text;
+  }
+  
+  const before = text.slice(0, startIdx).trimEnd();
+  const after = text.slice(endIdx + END.length).trimStart();
+  return `${before}\n\n${after}`.trim();
+}
+
 function addUserMessage(text) {
   const chatMessages = document.getElementById('chatMessages');
   const container = chatMessages.querySelector('.chat-messages-container');
@@ -3504,8 +3526,10 @@ function updateStreamingBubble(bubble, text) {
   if (!bubble) return;
   const textEl = bubble.querySelector('.streaming-text');
   if (textEl) {
+    // Удаляем служебный JSON с программой перед отображением
+    const cleanText = stripStructuredProgramJson(text);
     // Форматируем markdown и обновляем
-    textEl.innerHTML = formatMarkdown(text);
+    textEl.innerHTML = formatMarkdown(cleanText);
   }
 }
 
