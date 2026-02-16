@@ -4318,9 +4318,19 @@ async function sendMessageToAI(message, mode = 'detailed') {
                 }
                 
                 if (parsed.chunk) {
-                  // Чанк текста — добавляем в UI сразу
+                  // Чанк текста — добавляем в полный ответ
                   fullResponse += parsed.chunk;
-                  updateStreamingBubble(streamBubble, fullResponse);
+
+                  // Показываем пользователю ТОЛЬКО «человеческий» текст БЕЗ служебного JSON.
+                  // Как только в потоке появляется маркер JSON, просто обрезаем текст по нему.
+                  let visibleText = fullResponse;
+                  const marker = '=== STRUCTURED_PROGRAM_JSON_START ===';
+                  const markerIndex = visibleText.indexOf(marker);
+                  if (markerIndex !== -1) {
+                    visibleText = visibleText.slice(0, markerIndex).trimEnd();
+                  }
+
+                  updateStreamingBubble(streamBubble, visibleText);
                   chatMessagesScrollToBottom();
                 }
                 
