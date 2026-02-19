@@ -4291,7 +4291,7 @@ async function sendMessageToAI(message, mode = 'detailed') {
     });
 
     if (!response.ok) {
-      finalizeTypingBubble({ appendActions: false });
+      removeTypingIndicator();
       addBotMessage(`Ошибка сервера: ${response.status}`);
       resetAiState();
       aiAbortController = null;
@@ -4310,8 +4310,8 @@ async function sendMessageToAI(message, mode = 'detailed') {
       let data = null; // Финальные данные
       let buffer = '';
       
-      // Убираем индикатор печати и создаём bubble для streaming
-      finalizeTypingBubble({ appendActions: false });
+      // Полностью убираем блок «Анализируем ваши данные», чтобы не оставалось пустого окна
+      removeTypingIndicator();
       const streamBubble = createStreamingBubble();
       
       try {
@@ -4433,7 +4433,7 @@ async function sendMessageToAI(message, mode = 'detailed') {
     try {
       data = await response.json();
     } catch (_) {
-      finalizeTypingBubble({ appendActions: false });
+      removeTypingIndicator();
       addBotMessage('Ошибка обработки ответа сервера');
       resetAiState();
       aiAbortController = null;
@@ -4443,7 +4443,7 @@ async function sendMessageToAI(message, mode = 'detailed') {
 
     // Проверяем требование подписки
     if (data?.subscriptionRequired && data?.response) {
-      finalizeTypingBubble({ appendActions: false });
+      removeTypingIndicator();
       const messageText = data.response.replace(/https:\/\/t\.me\/Probiohackingbot/g, '').trim();
       addBotMessageWithButton(
         messageText || 'Вы использовали все бесплатные запросы. Для продолжения работы оформите подписку в боте.',
@@ -4457,7 +4457,7 @@ async function sendMessageToAI(message, mode = 'detailed') {
     }
 
     if (!data?.success || !data?.response) {
-      finalizeTypingBubble({ appendActions: false });
+      removeTypingIndicator();
       const serverMsg = data?.error ? `Ошибка сервера: ${String(data.error)}` : 'Извините, произошла ошибка при обработке запроса. Попробуйте позже.';
       addBotMessage(serverMsg);
       resetAiState();
@@ -4574,7 +4574,7 @@ async function sendMessageToAI(message, mode = 'detailed') {
       processAiQueue();
       return;
     }
-    finalizeTypingBubble({ appendActions: false });
+    removeTypingIndicator();
     const msg = error?.message ? String(error.message) : '';
     const shown = msg ? `Не удалось выполнить запрос: ${msg}` : 'Не удалось выполнить запрос к серверу.';
     addBotMessage(shown);
@@ -4772,8 +4772,8 @@ function checkAndRecoverAiState() {
       activeTypewriter.forceComplete();
     }
     
-    // Сбрасываем состояние
-    finalizeTypingBubble({ appendActions: false });
+    // Сбрасываем состояние (убираем пустой индикатор)
+    removeTypingIndicator();
     resetAiState();
     pendingAiMessages = [];
     
