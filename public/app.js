@@ -1385,6 +1385,8 @@ function selectResponseMode(mode) {
 
 // Индекс запроса для замены (0 или 1), null если не заменяем
 let pendingReplaceRequestIndex = null;
+// Список из 2 запросов при показе модалки «Заменить» — fallback, чтобы замена работала даже если черновик обновился
+let replaceModalProgramRequests = null;
 
 // Удаление селектора режима (убираем весь блок с кнопками, чтобы не оставалась пустая «штучка»)
 function removeModeSelector() {
@@ -1419,9 +1421,11 @@ function showProgramReplaceModal(requests) {
   const container = chatMessages?.querySelector('.chat-messages-container');
   if (!container) return;
   
-  // Сохраняем список запросов в черновик, чтобы при нажатии «Заменить» программа точно перезаписалась
-  if (lastProgramDraft && Array.isArray(requests) && requests.length >= 2) {
-    lastProgramDraft.programRequestsForReplace = requests.slice(0, 2);
+  // Сохраняем список запросов в черновик и в глобальную переменную (fallback при нажатии «Заменить»)
+  const twoRequests = Array.isArray(requests) && requests.length >= 2 ? requests.slice(0, 2) : null;
+  if (twoRequests) {
+    replaceModalProgramRequests = twoRequests;
+    if (lastProgramDraft) lastProgramDraft.programRequestsForReplace = twoRequests;
   }
   
   // Сокращаем текст запросов для отображения
@@ -4039,11 +4043,12 @@ async function createProgramFromDraft(button) {
       }
     }
 
-    // Список запросов программы: из черновика (при замене) или из загруженной программы
+    // Список запросов программы: при замене — из черновика, глобального fallback или загруженной программы
     const draftRequests = (lastProgramDraft.programRequestsForReplace && lastProgramDraft.programRequestsForReplace.length >= 2)
       ? lastProgramDraft.programRequestsForReplace
       : null;
-    let previousRequests = draftRequests ||
+    const savedTwo = (replaceModalProgramRequests && replaceModalProgramRequests.length >= 2) ? replaceModalProgramRequests : null;
+    let previousRequests = draftRequests || savedTwo ||
       ((currentHealthProgram && Array.isArray(currentHealthProgram.requests) && currentHealthProgram.requests.length > 0)
         ? currentHealthProgram.requests
         : []);
@@ -4051,13 +4056,12 @@ async function createProgramFromDraft(button) {
     
     let requests = [];
     
-    // Индекс замены уже объявлен выше
-    
     // Если была выбрана замена одного из запросов
     if (replaceIndex !== null && replaceIndex !== undefined && previousRequests.length >= 2) {
       // Заменяем запрос по индексу
       requests = [...previousRequests];
       requests[replaceIndex] = newRequestText || requests[replaceIndex];
+      replaceModalProgramRequests = null; // сброс после использования
       console.log(`🔄 Replaced request ${replaceIndex + 1}:`, requests);
     } else if (previousRequests.length >= 2) {
       // Уже 2 запроса и не выбрана замена — не добавляем (это не должно произойти, но на всякий случай)
@@ -4071,6 +4075,16 @@ async function createProgramFromDraft(button) {
         : (previousRequests.length ? previousRequests : (newRequestText ? [newRequestText] : []));
     }
 
+    // API ожидает объект с полями supplements, nutrition, stress, sleep, goals
+    const hp = lastProgramDraft.healthProgram;
+    const healthProgram = {
+      supplements: (hp && hp.supplements !== undefined) ? String(hp.supplements) : '',
+      nutrition: (hp && hp.nutrition !== undefined) ? String(hp.nutrition) : '',
+      stress: (hp && hp.stress !== undefined) ? String(hp.stress) : '',
+      sleep: (hp && hp.sleep !== undefined) ? String(hp.sleep) : '',
+      goals: Array.isArray(hp && hp.goals) ? hp.goals : (hp && hp.goals != null ? [String(hp.goals)] : [])
+    };
+
     const body = {
       telegramUser: {
         id: telegramUser.id,
@@ -4078,10 +4092,10 @@ async function createProgramFromDraft(button) {
         last_name: telegramUser.last_name,
         username: telegramUser.username
       },
-      healthProgram: lastProgramDraft.healthProgram,
+      healthProgram,
       diaryEntries: lastProgramDraft.diaryEntries || [],
       request: newRequestText || (previousRequests[previousRequests.length - 1] || ''),
-      requests
+      requests: requests.length > 0 ? requests : (previousRequests.length ? previousRequests : [])
     };
 
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
@@ -4094,15 +4108,50 @@ async function createProgramFromDraft(button) {
       body: JSON.stringify(body)
     });
 
-    const data = await response.json().catch(() => null);
+    let data = await response.json().catch(() => null);
+
+    // Если "User not found" — один раз инициализируем пользователя и повторяем сохранение
+    if (response.status === 404 && data?.error === 'User not found') {
+      try {
+        const initRes = await fetch('/api/init-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(window.Telegram?.WebApp?.initData && { 'X-Telegram-WebApp-Data': window.Telegram.WebApp.initData })
+          },
+          body: JSON.stringify({})
+        });
+        if (initRes.ok) {
+          const retryRes = await fetch('/api/save-program', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+            },
+            body: JSON.stringify(body)
+          });
+          data = await retryRes.json().catch(() => null);
+          if (retryRes.ok && data?.success) {
+            programCreated = true;
+            if (button) { button.disabled = true; button.textContent = 'Программа сохранена'; }
+            try { await loadHealthProgramFromApi(); } catch (e) {}
+            try { await loadDiaryFromApi(); } catch (e) {}
+            updateHealthGoalsUI();
+            showPage('health');
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('init-user retry failed:', e);
+      }
+    }
 
     if (!response.ok || !data?.success) {
       console.error('Failed to save program:', data || response.status);
       if (button) {
         button.disabled = false;
-        button.textContent = 'Составить персональную программу';
+        button.textContent = 'Получить консультацию';
       }
-      // Показываем пользователю понятное сообщение об ошибке
       try {
         const msg = (data && (data.error || data.message))
           ? String(data.error || data.message)
@@ -4112,9 +4161,7 @@ async function createProgramFromDraft(button) {
         } else {
           alert(msg);
         }
-      } catch (_) {
-        // ignore
-      }
+      } catch (_) {}
       return;
     }
 
@@ -4147,8 +4194,13 @@ async function createProgramFromDraft(button) {
     console.error('createProgramFromDraft error:', e);
     if (button) {
       button.disabled = false;
-      button.textContent = 'Составить персональную программу';
+      button.textContent = 'Получить консультацию';
     }
+    try {
+      const msg = e?.message ? String(e.message) : 'Не удалось сохранить программу. Попробуйте ещё раз.';
+      if (typeof tg !== 'undefined' && tg && typeof tg.showAlert === 'function') tg.showAlert(msg);
+      else alert(msg);
+    } catch (_) {}
   }
 }
 
