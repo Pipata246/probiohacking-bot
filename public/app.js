@@ -1386,17 +1386,18 @@ function selectResponseMode(mode) {
 // Индекс запроса для замены (0 или 1), null если не заменяем
 let pendingReplaceRequestIndex = null;
 
-// Удаление селектора режима
+// Удаление селектора режима (убираем весь блок с кнопками, чтобы не оставалась пустая «штучка»)
 function removeModeSelector() {
-  const selector = document.querySelector('.response-mode-selector');
-  if (selector) {
+  document.querySelectorAll('.response-mode-selector').forEach(function (selector) {
     const botMessage = selector.closest('.bot-message');
     if (botMessage) {
       botMessage.remove();
     } else {
-      selector.remove();
+      const bubble = selector.closest('.message-bubble');
+      if (bubble) bubble.remove();
+      else selector.remove();
     }
-  }
+  });
   // Также удаляем модальное окно замены если есть
   const replaceModal = document.querySelector('.program-replace-modal');
   if (replaceModal) {
@@ -1447,14 +1448,14 @@ function showProgramReplaceModal(requests) {
   
   container.appendChild(actionsDiv);
   
-  // Добавляем стили
+  // Стиль в духе приложения: белая обводка, без оранжевого фона, все кнопки одного размера
   if (!document.querySelector('style[data-program-actions-styles]')) {
     const style = document.createElement('style');
     style.setAttribute('data-program-actions-styles', 'true');
     style.textContent = `
       .program-actions-compact {
-        background: rgba(74, 139, 108, 0.15);
-        border: 1px solid rgba(74, 139, 108, 0.4);
+        background: rgba(74, 139, 108, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
         border-radius: 12px;
         padding: 12px;
         margin: 8px 0;
@@ -1462,45 +1463,43 @@ function showProgramReplaceModal(requests) {
       .actions-title {
         font-size: 13px;
         font-weight: 500;
-        color: white;
+        color: #FEF7EC;
         margin-bottom: 10px;
         text-align: center;
       }
       .actions-buttons {
         display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        justify-content: center;
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
       }
       .action-btn {
-        padding: 8px 12px;
+        padding: 12px 16px;
         border-radius: 20px;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
-        border: 1px solid rgba(255,255,255,0.3);
-        background: rgba(255,255,255,0.1);
-        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        background: transparent;
+        color: #FEF7EC;
         font-family: inherit;
-        max-width: 100%;
+        width: 100%;
+        min-height: 44px;
+        box-sizing: border-box;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
       }
       .action-btn:hover {
-        background: rgba(255,255,255,0.2);
-        border-color: rgba(255,255,255,0.5);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: #FEF7EC;
       }
-      .action-btn.replace-btn {
-        border-color: rgba(255, 180, 100, 0.6);
-      }
-      .action-btn.health-btn {
-        border-color: rgba(100, 200, 150, 0.6);
-      }
+      .action-btn.replace-btn,
+      .action-btn.health-btn,
       .action-btn.cancel-btn {
-        border-color: rgba(255, 100, 100, 0.4);
-        background: rgba(255, 100, 100, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        background: transparent;
       }
     `;
     document.head.appendChild(style);
