@@ -1419,6 +1419,11 @@ function showProgramReplaceModal(requests) {
   const container = chatMessages?.querySelector('.chat-messages-container');
   if (!container) return;
   
+  // Сохраняем список запросов в черновик, чтобы при нажатии «Заменить» программа точно перезаписалась
+  if (lastProgramDraft && Array.isArray(requests) && requests.length >= 2) {
+    lastProgramDraft.programRequestsForReplace = requests.slice(0, 2);
+  }
+  
   // Сокращаем текст запросов для отображения
   const shortRequest = (text, maxLen = 35) => {
     if (!text) return '(пустой)';
@@ -4024,16 +4029,29 @@ async function createProgramFromDraft(button) {
       button.textContent = 'Сохраняем программу...';
     }
 
-    // Список запросов программы: уже сохранённые + текущий (накапливаем, без дубликатов, максимум 2)
-    const previousRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests) && currentHealthProgram.requests.length > 0)
-      ? currentHealthProgram.requests
-      : [];
+    // При замене запроса: если списка запросов нет — подгружаем программу из API
+    const replaceIndex = lastProgramDraft.replaceRequestIndex;
+    if (replaceIndex !== null && replaceIndex !== undefined && (!currentHealthProgram || !Array.isArray(currentHealthProgram.requests) || currentHealthProgram.requests.length < 2)) {
+      try {
+        await loadHealthProgramFromApi();
+      } catch (e) {
+        console.warn('loadHealthProgramFromApi before replace:', e);
+      }
+    }
+
+    // Список запросов программы: из черновика (при замене) или из загруженной программы
+    const draftRequests = (lastProgramDraft.programRequestsForReplace && lastProgramDraft.programRequestsForReplace.length >= 2)
+      ? lastProgramDraft.programRequestsForReplace
+      : null;
+    let previousRequests = draftRequests ||
+      ((currentHealthProgram && Array.isArray(currentHealthProgram.requests) && currentHealthProgram.requests.length > 0)
+        ? currentHealthProgram.requests
+        : []);
     const newRequestText = (lastProgramDraft.requestText || '').trim();
     
     let requests = [];
     
-    // Индекс замены берём из черновика (сохранён при получении ответа ИИ)
-    const replaceIndex = lastProgramDraft.replaceRequestIndex;
+    // Индекс замены уже объявлен выше
     
     // Если была выбрана замена одного из запросов
     if (replaceIndex !== null && replaceIndex !== undefined && previousRequests.length >= 2) {
@@ -4066,10 +4084,12 @@ async function createProgramFromDraft(button) {
       requests
     };
 
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
     const response = await fetch('/api/save-program', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       },
       body: JSON.stringify(body)
     });
