@@ -438,7 +438,9 @@ function extractProgramFromContent(text) {
     return result;
   }
 
-  const jsonStr = text.slice(startIdx + START.length, endIdx).trim();
+  let jsonStr = text.slice(startIdx + START.length, endIdx).trim();
+  // На всякий случай убираем висячие запятые перед } и ] чтобы не ломать JSON.parse
+  jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1');
 
   // Убираем JSON-блок из видимого текста
   const before = text.slice(0, startIdx).trimEnd();

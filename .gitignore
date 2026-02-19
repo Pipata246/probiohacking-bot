@@ -1,2 +1,7 @@
 .env
 node_modules/
+
+# Автодеплой через Git — не используем
+deploy_probio_key
+deploy_probio_key.pub
+.github/
