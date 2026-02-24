@@ -9836,6 +9836,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (aboutInput) aboutInput.value = '';
 
         await loadAdminDoctors();
+        // Обновляем список врачей на вкладке консультации, чтобы сразу увидеть изменения
+        loadDoctors().catch(err => console.error('❌ Error reloading doctors after add:', err));
       } catch (error) {
         console.error('❌ Error adding doctor:', error);
         alert('Не удалось добавить врача: ' + (error.message || 'неизвестная ошибка'));
