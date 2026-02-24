@@ -272,6 +272,19 @@ CREATE TABLE IF NOT EXISTS public.diary_entries (
   CONSTRAINT diary_entries_pkey PRIMARY KEY (id)
 );
 
+-- Таблица ВРАЧИ: справочник специалистов для вкладки консультации
+CREATE TABLE IF NOT EXISTS public.doctors (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  full_name text NOT NULL,
+  specialization text NOT NULL,
+  experience text,          -- Стаж (свободный текст, отображается вместе со специализацией)
+  avatar_url text,          -- Ссылка на фото врача (круглый аватар)
+  about text,               -- Подробное описание врача, показывается при раскрытии карточки
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT doctors_pkey PRIMARY KEY (id)
+);
+
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -320,6 +333,10 @@ CREATE INDEX IF NOT EXISTS idx_user_analysis_photos_telegram_id ON public.user_a
 CREATE INDEX IF NOT EXISTS idx_user_analysis_photos_group ON public.user_analysis_photos(analysis_group);
 CREATE INDEX IF NOT EXISTS idx_user_analysis_photos_upload_date ON public.user_analysis_photos(upload_date DESC);
 
+-- Индексы для doctors
+CREATE INDEX IF NOT EXISTS idx_doctors_full_name ON public.doctors(full_name);
+CREATE INDEX IF NOT EXISTS idx_doctors_specialization ON public.doctors(specialization);
+
 -- ============================================
 -- 3. ФУНКЦИИ ДЛЯ ОБНОВЛЕНИЯ TIMESTAMPS
 -- ============================================
@@ -359,6 +376,12 @@ CREATE TRIGGER update_quiz_answers_updated_at
 DROP TRIGGER IF EXISTS update_user_analysis_photos_updated_at ON public.user_analysis_photos;
 CREATE TRIGGER update_user_analysis_photos_updated_at
   BEFORE UPDATE ON public.user_analysis_photos
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_doctors_updated_at ON public.doctors;
+CREATE TRIGGER update_doctors_updated_at
+  BEFORE UPDATE ON public.doctors
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -439,6 +462,7 @@ ALTER TABLE public.chats DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.quiz_answers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.health_programs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.diary_entries DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.doctors DISABLE ROW LEVEL SECURITY;
 
 -- Удаляем все существующие политики если они есть
 DROP POLICY IF EXISTS "Users can view own data" ON public.users;
@@ -462,6 +486,7 @@ GRANT ALL ON public.quiz_answers TO anon;
 GRANT ALL ON public.user_analysis_photos TO anon;
 GRANT ALL ON public.health_programs TO anon;
 GRANT ALL ON public.diary_entries TO anon;
+GRANT ALL ON public.doctors TO anon;
 
 -- Права на выполнение функций
 GRANT EXECUTE ON FUNCTION get_active_chat(UUID) TO anon;
@@ -487,6 +512,14 @@ COMMENT ON COLUMN public.chats.message_count IS 'Счетчик сообщени
 COMMENT ON COLUMN public.chats.auto_created IS 'Был ли чат создан автоматически при переполнении контекста';
 COMMENT ON COLUMN public.quiz_answers.telegram_id IS 'Telegram ID пользователя (для быстрого поиска без JOIN)';
 COMMENT ON COLUMN public.user_analysis_photos.analysis_group IS 'Группа анализа: Анализ крови, Гормоны, Витамины, Другое';
+
+-- Комментарии к таблице врачей
+COMMENT ON TABLE public.doctors IS 'Справочник врачей для вкладки консультации';
+COMMENT ON COLUMN public.doctors.full_name IS 'ФИО врача';
+COMMENT ON COLUMN public.doctors.specialization IS 'Специализация врача';
+COMMENT ON COLUMN public.doctors.experience IS 'Стаж врача (свободный текст, напр. «Стаж 10 лет»)';
+COMMENT ON COLUMN public.doctors.avatar_url IS 'URL аватара врача (круглая картинка)';
+COMMENT ON COLUMN public.doctors.about IS 'Подробная информация о враче (образование, подход, дополнительные детали)';
 
 -- ============================================
 -- 10. STORAGE BUCKET И ПОЛИТИКИ

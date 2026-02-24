@@ -2444,7 +2444,10 @@ function showPage(pageName) {
       currentPage = 'consultation';
       isChatMode = false;
       isInRecommendedTests = false;
-      updateBottomNavActiveItem();
+      // Загружаем список врачей при открытии вкладки консультации
+      loadDoctors().catch(err => {
+        console.error('❌ Error loading doctors:', err);
+      });
       break;
     }
     case 'diary': {
@@ -3931,6 +3934,136 @@ function typeMessage(text, callback) {
       forceFinalize();
     }
   };
+
+// Загрузка списка врачей для вкладки консультации
+async function loadDoctors() {
+  const list = document.getElementById('doctorsList');
+  if (!list) return;
+
+  try {
+    list.innerHTML = `
+      <div class="admin-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Загрузка врачей...</div>
+      </div>
+    `;
+
+    const response = await fetch('/api/doctors', {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || 'Ошибка загрузки врачей');
+    }
+
+    renderDoctorsList(data.doctors || []);
+  } catch (error) {
+    console.error('❌ Error loading doctors:', error);
+    if (list) {
+      list.innerHTML = `
+        <div class="admin-error">Не удалось загрузить список врачей. Попробуйте позже.</div>
+      `;
+    }
+  }
+}
+
+function renderDoctorsList(doctors) {
+  const list = document.getElementById('doctorsList');
+  if (!list) return;
+
+  if (!doctors.length) {
+    list.innerHTML = `
+      <div class="admin-message">Список врачей пока пуст. Врачи появятся здесь, когда вы добавите их через админку.</div>
+    `;
+    return;
+  }
+
+  list.innerHTML = '';
+
+  doctors.forEach(doctor => {
+    const card = document.createElement('div');
+    card.className = 'doctor-card';
+    card.dataset.id = doctor.id;
+
+    const initials = (doctor.full_name || '')
+      .split(' ')
+      .filter(Boolean)
+      .map(part => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'Dr';
+
+    card.innerHTML = `
+      <div class="doctor-header">
+        <div class="doctor-avatar"></div>
+        <div class="doctor-main">
+          <div class="doctor-name">${doctor.full_name || 'Врач'}</div>
+          <div class="doctor-meta">
+            ${doctor.specialization || 'Специалист'}
+            ${doctor.experience ? ' • ' + doctor.experience : ''}
+          </div>
+        </div>
+        <button class="doctor-expand-btn" type="button" aria-label="Подробнее о враче">
+          <svg class="doctor-icon-plus" width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="doctor-icon-minus" width="20" height="20" viewBox="0 0 20 20" fill="none" style="display: none;">
+            <path d="M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="doctor-details"${doctor.about ? '' : ' style="display: none;"'}>
+        ${doctor.about ? doctor.about.replace(/\n/g, '<br>') : ''}
+      </div>
+    `;
+
+    const avatarEl = card.querySelector('.doctor-avatar');
+    if (avatarEl) {
+      if (doctor.avatar_url) {
+        avatarEl.style.backgroundImage = `url(${doctor.avatar_url})`;
+        avatarEl.textContent = '';
+      } else {
+        avatarEl.textContent = initials;
+      }
+    }
+
+    const expandBtn = card.querySelector('.doctor-expand-btn');
+    const detailsEl = card.querySelector('.doctor-details');
+    const plusIcon = card.querySelector('.doctor-icon-plus');
+    const minusIcon = card.querySelector('.doctor-icon-minus');
+
+    if (expandBtn && detailsEl && plusIcon && minusIcon) {
+      expandBtn.addEventListener('click', () => {
+        const isExpanded = card.classList.contains('expanded');
+        if (isExpanded) {
+          card.classList.remove('expanded');
+          detailsEl.style.display = doctor.about ? 'none' : 'none';
+          plusIcon.style.display = 'block';
+          minusIcon.style.display = 'none';
+        } else {
+          if (doctor.about) {
+            detailsEl.style.display = 'block';
+          }
+          card.classList.add('expanded');
+          plusIcon.style.display = 'none';
+          minusIcon.style.display = 'block';
+        }
+      });
+    }
+
+    list.appendChild(card);
+  });
+}
 
   typeChar();
 }
@@ -9039,6 +9172,160 @@ function updateAdminSaveButton() {
   }
 }
 
+// Открытие/закрытие экрана врачей в админке
+function openAdminDoctorsView() {
+  const content = document.getElementById('adminContent');
+  const doctorsView = document.getElementById('adminDoctorsView');
+  const navDoctors = document.getElementById('adminNavButtonsDoctors');
+  if (content) content.style.display = 'none';
+  if (doctorsView) doctorsView.style.display = 'flex';
+  if (navDoctors) navDoctors.style.display = 'flex';
+  loadAdminDoctors().catch(err => {
+    console.error('❌ Error loading doctors for admin:', err);
+  });
+}
+
+function closeAdminDoctorsView() {
+  const content = document.getElementById('adminContent');
+  const doctorsView = document.getElementById('adminDoctorsView');
+  const navDoctors = document.getElementById('adminNavButtonsDoctors');
+  if (doctorsView) doctorsView.style.display = 'none';
+  if (navDoctors) navDoctors.style.display = 'none';
+  if (content) content.style.display = 'block';
+}
+
+async function loadAdminDoctors() {
+  const list = document.getElementById('adminDoctorsList');
+  if (!list) return;
+
+  try {
+    list.innerHTML = `
+      <div class="admin-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Загрузка врачей...</div>
+      </div>
+    `;
+
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const response = await fetch('/api/admin?action=doctors', {
+      method: 'GET',
+      headers: {
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.error || 'Ошибка загрузки врачей');
+    }
+
+    renderAdminDoctorsList(data.doctors || []);
+  } catch (error) {
+    console.error('❌ Error loading doctors (admin):', error);
+    list.innerHTML = `
+      <div class="admin-error">Не удалось загрузить список врачей. Попробуйте обновить страницу.</div>
+    `;
+  }
+}
+
+function renderAdminDoctorsList(doctors) {
+  const list = document.getElementById('adminDoctorsList');
+  if (!list) return;
+
+  if (!doctors.length) {
+    list.innerHTML = `
+      <div class="admin-message">Врачи пока не добавлены. Используйте форму выше, чтобы добавить первого врача.</div>
+    `;
+    return;
+  }
+
+  list.innerHTML = '';
+
+  doctors.forEach(doctor => {
+    const item = document.createElement('div');
+    item.className = 'admin-doctor-item';
+    item.dataset.id = doctor.id;
+
+    const initials = (doctor.full_name || '')
+      .split(' ')
+      .filter(Boolean)
+      .map(part => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || 'Dr';
+
+    item.innerHTML = `
+      <div class="admin-doctor-header">
+        <div class="doctor-avatar"></div>
+        <div class="admin-doctor-main">
+          <div class="admin-doctor-name">${doctor.full_name || 'Врач'}</div>
+          <div class="admin-doctor-meta">
+            ${doctor.specialization || 'Специалист'}
+            ${doctor.experience ? ' • ' + doctor.experience : ''}
+          </div>
+        </div>
+      </div>
+      <div class="admin-field" style="margin-top: 4px;">
+        <label class="admin-label">Описание</label>
+        <textarea class="admin-textarea admin-doctor-about-input" rows="3" data-doctor-id="${doctor.id}">${doctor.about || ''}</textarea>
+      </div>
+      <div class="admin-doctor-actions">
+        <button class="admin-doctor-delete-btn" data-doctor-id="${doctor.id}">Удалить</button>
+      </div>
+    `;
+
+    const avatarEl = item.querySelector('.doctor-avatar');
+    if (avatarEl) {
+      if (doctor.avatar_url) {
+        avatarEl.style.backgroundImage = `url(${doctor.avatar_url})`;
+        avatarEl.textContent = '';
+      } else {
+        avatarEl.textContent = initials;
+      }
+    }
+
+    list.appendChild(item);
+  });
+
+  // Навешиваем обработчики удаления
+  list.querySelectorAll('.admin-doctor-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const doctorId = btn.dataset.doctorId;
+      if (!doctorId) return;
+      if (!confirm('Удалить этого врача?')) return;
+
+      try {
+        const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+        const response = await fetch(`/api/admin?action=doctors&doctorId=${doctorId}`, {
+          method: 'DELETE',
+          headers: {
+            ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Ошибка удаления врача');
+        }
+
+        await loadAdminDoctors();
+      } catch (error) {
+        console.error('❌ Error deleting doctor:', error);
+        alert('Не удалось удалить врача: ' + (error.message || 'неизвестная ошибка'));
+      }
+    });
+  });
+}
 // Сохранение изменений статуса админа (отдельная функция для списка пользователей)
 async function saveAdminStatusChange() {
   if (!adminPendingChanges.adminStatus) return;
@@ -9403,7 +9690,91 @@ document.addEventListener('DOMContentLoaded', () => {
   if (adminContentSaveBtn) {
     adminContentSaveBtn.addEventListener('click', saveAdminStatusChange);
   }
-  
+
+  // Обработчики для экрана врачей
+  const adminDoctorsBtn = document.getElementById('adminDoctorsBtn');
+  const adminBackBtnDoctors = document.getElementById('adminBackBtnDoctors');
+  const adminDoctorsAddBtn = document.getElementById('adminDoctorsAddBtn');
+
+  if (adminDoctorsBtn) {
+    adminDoctorsBtn.addEventListener('click', () => {
+      openAdminDoctorsView();
+    });
+  }
+
+  if (adminBackBtnDoctors) {
+    adminBackBtnDoctors.addEventListener('click', () => {
+      closeAdminDoctorsView();
+    });
+  }
+
+  if (adminDoctorsAddBtn) {
+    adminDoctorsAddBtn.addEventListener('click', async () => {
+      const fullNameInput = document.getElementById('doctorFullNameInput');
+      const specializationInput = document.getElementById('doctorSpecializationInput');
+      const experienceInput = document.getElementById('doctorExperienceInput');
+      const avatarUrlInput = document.getElementById('doctorAvatarUrlInput');
+      const aboutInput = document.getElementById('doctorAboutInput');
+
+      const full_name = fullNameInput?.value.trim();
+      const specialization = specializationInput?.value.trim();
+      const experience = experienceInput?.value.trim();
+      const avatar_url = avatarUrlInput?.value.trim();
+      const about = aboutInput?.value.trim();
+
+      if (!full_name || !specialization) {
+        alert('Пожалуйста, заполните ФИО и специализацию.');
+        return;
+      }
+
+      try {
+        adminDoctorsAddBtn.disabled = true;
+        adminDoctorsAddBtn.textContent = 'Добавление...';
+
+        const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+        const response = await fetch('/api/admin?action=doctors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+          },
+          body: JSON.stringify({
+            full_name,
+            specialization,
+            experience: experience || null,
+            avatar_url: avatar_url || null,
+            about: about || null
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Ошибка добавления врача');
+        }
+
+        // Очищаем форму
+        if (fullNameInput) fullNameInput.value = '';
+        if (specializationInput) specializationInput.value = '';
+        if (experienceInput) experienceInput.value = '';
+        if (avatarUrlInput) avatarUrlInput.value = '';
+        if (aboutInput) aboutInput.value = '';
+
+        await loadAdminDoctors();
+      } catch (error) {
+        console.error('❌ Error adding doctor:', error);
+        alert('Не удалось добавить врача: ' + (error.message || 'неизвестная ошибка'));
+      } finally {
+        adminDoctorsAddBtn.disabled = false;
+        adminDoctorsAddBtn.textContent = 'Добавить врача';
+      }
+    });
+  }
+
   // Обработчик клика на кнопку админа (делегирование событий)
   document.addEventListener('click', (e) => {
     if (e.target.closest('.admin-nav-item')) {

@@ -60,7 +60,7 @@ module.exports = async function handler(req, res) {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    const { action, userId, analysisId } = req.query;
+    const { action, userId, analysisId, doctorId } = req.query;
 
     // Получение списка всех пользователей
     if (action === 'users' && req.method === 'GET') {
@@ -598,6 +598,90 @@ module.exports = async function handler(req, res) {
         .delete()
         .eq('id', entryId)
         .eq('telegram_id', userData.telegram_id);
+
+      if (error) throw error;
+
+      return res.json({ success: true });
+    }
+
+    // ========== ВРАЧИ (doctors) ==========
+
+    // Получение списка врачей (для админки)
+    if (action === 'doctors' && req.method === 'GET') {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('id, full_name, specialization, experience, avatar_url, about, created_at')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      return res.json({
+        success: true,
+        doctors: data || []
+      });
+    }
+
+    // Добавление врача
+    if (action === 'doctors' && req.method === 'POST') {
+      const { full_name, specialization, experience, avatar_url, about } = req.body || {};
+
+      if (!full_name || !specialization) {
+        return res.status(400).json({
+          success: false,
+          error: 'full_name и specialization обязательны'
+        });
+      }
+
+      const { data, error } = await supabase
+        .from('doctors')
+        .insert({
+          full_name,
+          specialization,
+          experience: experience || null,
+          avatar_url: avatar_url || null,
+          about: about || null
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ success: true, doctor: data });
+    }
+
+    // Обновление врача
+    if (action === 'doctors' && doctorId && req.method === 'PUT') {
+      const { full_name, specialization, experience, avatar_url, about } = req.body || {};
+
+      const updateData = {};
+      if (full_name !== undefined) updateData.full_name = full_name;
+      if (specialization !== undefined) updateData.specialization = specialization;
+      if (experience !== undefined) updateData.experience = experience;
+      if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
+      if (about !== undefined) updateData.about = about;
+
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ success: false, error: 'Нет полей для обновления' });
+      }
+
+      const { data, error } = await supabase
+        .from('doctors')
+        .update(updateData)
+        .eq('id', doctorId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return res.json({ success: true, doctor: data });
+    }
+
+    // Удаление врача
+    if (action === 'doctors' && doctorId && req.method === 'DELETE') {
+      const { error } = await supabase
+        .from('doctors')
+        .delete()
+        .eq('id', doctorId);
 
       if (error) throw error;
 
