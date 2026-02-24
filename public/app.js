@@ -4037,47 +4037,31 @@ async function createProgramFromDraft(button) {
       button.textContent = 'Сохраняем программу...';
     }
 
-    // При замене запроса: если списка запросов нет — подгружаем программу из API
-    const replaceIndex = lastProgramDraft.replaceRequestIndex;
-    if (replaceIndex !== null && replaceIndex !== undefined && (!currentHealthProgram || !Array.isArray(currentHealthProgram.requests) || currentHealthProgram.requests.length < 2)) {
-      try {
-        await loadHealthProgramFromApi();
-      } catch (e) {
-        console.warn('loadHealthProgramFromApi before replace:', e);
-      }
-    }
-
-    // Список запросов программы: при замене — из черновика, глобального fallback или загруженной программы
-    const draftRequests = (lastProgramDraft.programRequestsForReplace && lastProgramDraft.programRequestsForReplace.length >= 2)
-      ? lastProgramDraft.programRequestsForReplace
-      : null;
-    const savedTwo = (replaceModalProgramRequests && replaceModalProgramRequests.length >= 2) ? replaceModalProgramRequests : null;
-    let previousRequests = draftRequests || savedTwo ||
-      ((currentHealthProgram && Array.isArray(currentHealthProgram.requests) && currentHealthProgram.requests.length > 0)
-        ? currentHealthProgram.requests
-        : []);
+    // Формируем итоговый список запросов программы.
+    // Берём все предыдущие запросы из сохранённой программы + текущий запрос,
+    // убираем дубли и ограничиваем список первыми тремя.
+    const existingRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
+      ? currentHealthProgram.requests
+      : [];
     const newRequestText = (lastProgramDraft.requestText || '').trim();
-    
-    let requests = [];
-    
-    // Если была выбрана замена одного из запросов
-    if (replaceIndex !== null && replaceIndex !== undefined && previousRequests.length >= 2) {
-      // Заменяем запрос по индексу
-      requests = [...previousRequests];
-      requests[replaceIndex] = newRequestText || requests[replaceIndex];
-      replaceModalProgramRequests = null; // сброс после использования
-      console.log(`🔄 Replaced request ${replaceIndex + 1}:`, requests);
-    } else if (previousRequests.length >= 2) {
-      // Уже 2 запроса и не выбрана замена — не добавляем (это не должно произойти, но на всякий случай)
-      requests = previousRequests;
-      console.warn('⚠️ Program already has 2 requests, not adding new one');
-    } else {
-      // Обычная логика: добавляем новый запрос если он отличается от последнего
-      const lastPrevious = previousRequests[previousRequests.length - 1];
-      requests = newRequestText && newRequestText !== lastPrevious
-        ? [...previousRequests, newRequestText]
-        : (previousRequests.length ? previousRequests : (newRequestText ? [newRequestText] : []));
+
+    const rawRequests = [
+      ...existingRequests,
+      ...(newRequestText ? [newRequestText] : [])
+    ]
+      .map((r) => (r || '').trim())
+      .filter(Boolean);
+
+    const uniqueRequests = [];
+    const seen = new Set();
+    for (const r of rawRequests) {
+      const key = r.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      uniqueRequests.push(r);
     }
+    // Максимум 3 запроса в программе
+    const requests = uniqueRequests.slice(0, 3);
 
     // API ожидает объект с полями supplements, nutrition, stress, sleep, goals
     const hp = lastProgramDraft.healthProgram;
@@ -4098,8 +4082,9 @@ async function createProgramFromDraft(button) {
       },
       healthProgram,
       diaryEntries: lastProgramDraft.diaryEntries || [],
-      request: newRequestText || (previousRequests[previousRequests.length - 1] || ''),
-      requests: requests.length > 0 ? requests : (previousRequests.length ? previousRequests : [])
+      // Для совместимости: один "последний" запрос и полный список всех запросов программы
+      request: requests.length > 0 ? requests[requests.length - 1] : (newRequestText || ''),
+      requests
     };
 
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;

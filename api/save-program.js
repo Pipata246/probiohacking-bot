@@ -90,7 +90,18 @@ module.exports = async (req, res) => {
     }
 
     // Вставляем записи дневника (если есть)
-    const entries = Array.isArray(diaryEntries) ? diaryEntries : [];
+    const rawEntries = Array.isArray(diaryEntries) ? diaryEntries : [];
+    // Убираем дубли по времени: на один временной слот (например, 08:00) оставляем только первую запись
+    const uniqueEntries = [];
+    const seenTimes = new Set();
+    for (const entry of rawEntries) {
+      const time = (entry.time || '').trim();
+      if (!time) continue;
+      if (seenTimes.has(time)) continue;
+      seenTimes.add(time);
+      uniqueEntries.push(entry);
+    }
+    const entries = uniqueEntries;
     if (entries.length > 0) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
