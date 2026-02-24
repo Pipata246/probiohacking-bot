@@ -1374,8 +1374,25 @@ function selectResponseMode(mode) {
   
   // Удаляем весь bot-message контейнер с selector внутри
   removeModeSelector();
+
+  // Если пользователь выбрал подробный ответ и уже есть 2 запроса в программе,
+  // сначала спрашиваем, какой запрос заменить или отвечать без изменения программы.
+  if (mode === 'detailed') {
+    const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
+      ? currentHealthProgram.requests
+      : [];
+    const canCreateProgramNow = subscriptionActive && quizCompleted && analysesUploaded;
+
+    if (canCreateProgramNow && programRequests.length >= 2) {
+      currentResponseMode = 'detailed';
+      // Индекс замены задаётся при выборе кнопки "Заменить запрос ..."
+      pendingReplaceRequestIndex = null;
+      showProgramReplaceModal(programRequests);
+      return;
+    }
+  }
   
-  // Обновляем currentResponseMode для текущей очереди в processAiQueue
+  // Обычное поведение
   currentResponseMode = mode;
   pendingReplaceRequestIndex = null;
   
@@ -1446,8 +1463,8 @@ function showProgramReplaceModal(requests) {
       <button class="action-btn replace-btn" onclick="selectReplaceRequest(1)">
         🔄 Заменить: "${shortRequest(requests[1])}"
       </button>
-      <button class="action-btn health-btn" onclick="goToHealthPage()">
-        💚 Перейти в Здоровье
+      <button class="action-btn health-btn" onclick="selectCuratorMode()">
+        💬 Ответить без составления программы
       </button>
       <button class="action-btn cancel-btn" onclick="closeProgramActionsModal()">
         ✕ Отмена
@@ -1548,22 +1565,16 @@ function selectReplaceRequest(index) {
   console.log(`📝 Replace request ${index + 1} selected`);
   closeProgramActionsModal();
   
-  // Фиксируем индекс замены для следующего сохранения
+  // На этапе выбора ПЕРЕД отправкой сообщения:
+  // 1) фиксируем индекс заменяемого запроса,
+  // 2) включаем подробный режим,
+  // 3) запускаем обработку очереди сообщений (отправку текущего промпта в ИИ).
   pendingReplaceRequestIndex = index;
-
-  // Сохраняем индекс замены в черновик
-  if (lastProgramDraft) {
-    lastProgramDraft.replaceRequestIndex = index;
-  }
+  currentResponseMode = 'detailed';
   
-  // Находим кнопку создания программы и нажимаем её
-  const createBtn = document.querySelector('.create-program-btn:not([disabled])');
-  if (createBtn) {
-    createProgramFromDraft(createBtn);
-  } else {
-    // Если кнопки нет, вызываем напрямую
-    createProgramFromDraft(null);
-  }
+  // Сообщение уже добавлено в pendingAiMessages в sendChatMessage,
+  // поэтому здесь просто запускаем его обработку.
+  processAiQueue();
 }
 window.selectReplaceRequest = selectReplaceRequest;
 
