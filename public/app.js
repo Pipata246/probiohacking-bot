@@ -2982,9 +2982,13 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Кнопка создания персональной программы
+  // Кнопка создания персональной программы / консультации
   if (e.target.closest('.create-program-btn')) {
     const btn = e.target.closest('.create-program-btn');
+    // Вкладка "Здоровье": временно отключаем кнопку "Получить консультацию"
+    if (btn.closest('.health-page')) {
+      return;
+    }
     createProgramFromDraft(btn);
     return;
   }
@@ -4464,9 +4468,10 @@ async function sendMessageToAI(message, mode = 'detailed') {
           // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
           const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
             ? currentHealthProgram.requests : [];
-          if (programRequests.length >= 2 && data.canCreateProgram) {
+          const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
+          if (canUseDraft && programRequests.length >= 2 && data.canCreateProgram) {
             showProgramReplaceModal(programRequests);
-          } else if (data.canCreateProgram) {
+          } else if (canUseDraft && data.canCreateProgram) {
             addCreateProgramButton(true);
           }
         } else {
@@ -4566,9 +4571,10 @@ async function sendMessageToAI(message, mode = 'detailed') {
         // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
         const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
           ? currentHealthProgram.requests : [];
-        if (programRequests.length >= 2 && data.canCreateProgram) {
+        const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
+        if (canUseDraft && programRequests.length >= 2 && data.canCreateProgram) {
           showProgramReplaceModal(programRequests);
-        } else if (data.canCreateProgram) {
+        } else if (canUseDraft && data.canCreateProgram) {
           addCreateProgramButton(true);
         }
       } else {
