@@ -4048,7 +4048,7 @@ async function createProgramFromDraft(button) {
 
     if (button) {
       button.disabled = true;
-      button.textContent = 'Сохраняем программу...';
+      button.textContent = 'Составляем программу...';
     }
 
     // Формируем список запросов программы по логике "до 2 запросов + замена".
@@ -4478,9 +4478,10 @@ async function sendMessageToAI(message, mode = 'detailed') {
           // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
           const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
             ? currentHealthProgram.requests : [];
-          if (programRequests.length >= 2 && data.canCreateProgram) {
+          const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
+          if (canUseDraft && programRequests.length >= 2 && data.canCreateProgram) {
             showProgramReplaceModal(programRequests);
-          } else if (data.canCreateProgram) {
+          } else if (canUseDraft && data.canCreateProgram) {
             addCreateProgramButton(true);
           }
         } else {
@@ -4580,9 +4581,10 @@ async function sendMessageToAI(message, mode = 'detailed') {
         // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
         const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
           ? currentHealthProgram.requests : [];
-        if (programRequests.length >= 2 && data.canCreateProgram) {
+        const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
+        if (canUseDraft && programRequests.length >= 2 && data.canCreateProgram) {
           showProgramReplaceModal(programRequests);
-        } else if (data.canCreateProgram) {
+        } else if (canUseDraft && data.canCreateProgram) {
           addCreateProgramButton(true);
         }
       } else {
