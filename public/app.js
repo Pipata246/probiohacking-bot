@@ -1375,15 +1375,14 @@ function selectResponseMode(mode) {
   // Удаляем весь bot-message контейнер с selector внутри
   removeModeSelector();
 
-  // Если пользователь выбрал подробный ответ и уже есть 2 запроса в программе,
+  // Если пользователь выбрал подробный ответ и у него уже есть 2 запроса в сохранённой программе,
   // сначала спрашиваем, какой запрос заменить или отвечать без изменения программы.
   if (mode === 'detailed') {
     const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
       ? currentHealthProgram.requests
       : [];
-    const canCreateProgramNow = subscriptionActive && quizCompleted && analysesUploaded;
-
-    if (canCreateProgramNow && programRequests.length >= 2) {
+    
+    if (programRequests.length >= 2) {
       currentResponseMode = 'detailed';
       // Индекс замены задаётся при выборе кнопки "Заменить запрос ..."
       pendingReplaceRequestIndex = null;
