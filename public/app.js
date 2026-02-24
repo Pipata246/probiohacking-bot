@@ -4003,6 +4003,10 @@ function renderDoctorsList(doctors) {
       .slice(0, 2)
       .toUpperCase() || 'Dr';
 
+    const aboutHtml = doctor.about
+      ? doctor.about.replace(/\n/g, '<br>')
+      : 'Описание пока не добавлено.';
+
     card.innerHTML = `
       <div class="doctor-header">
         <div class="doctor-avatar"></div>
@@ -4022,8 +4026,8 @@ function renderDoctorsList(doctors) {
           </svg>
         </button>
       </div>
-      <div class="doctor-details"${doctor.about ? '' : ' style="display: none;"'}>
-        ${doctor.about ? doctor.about.replace(/\n/g, '<br>') : ''}
+      <div class="doctor-details" style="display: none;">
+        ${aboutHtml}
       </div>
     `;
 
@@ -4047,13 +4051,11 @@ function renderDoctorsList(doctors) {
         const isExpanded = card.classList.contains('expanded');
         if (isExpanded) {
           card.classList.remove('expanded');
-          detailsEl.style.display = doctor.about ? 'none' : 'none';
+          detailsEl.style.display = 'none';
           plusIcon.style.display = 'block';
           minusIcon.style.display = 'none';
         } else {
-          if (doctor.about) {
-            detailsEl.style.display = 'block';
-          }
+          detailsEl.style.display = 'block';
           card.classList.add('expanded');
           plusIcon.style.display = 'none';
           minusIcon.style.display = 'block';
