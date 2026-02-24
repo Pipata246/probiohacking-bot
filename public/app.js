@@ -1374,24 +1374,8 @@ function selectResponseMode(mode) {
   
   // Удаляем весь bot-message контейнер с selector внутри
   removeModeSelector();
-
-  // Если пользователь выбрал подробный ответ и у него уже есть 2 запроса в сохранённой программе,
-  // сначала спрашиваем, какой запрос заменить или отвечать без изменения программы.
-  if (mode === 'detailed') {
-    const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
-      ? currentHealthProgram.requests
-      : [];
-    
-    if (programRequests.length >= 2) {
-      currentResponseMode = 'detailed';
-      // Индекс замены задаётся при выборе кнопки "Заменить запрос ..."
-      pendingReplaceRequestIndex = null;
-      showProgramReplaceModal(programRequests);
-      return;
-    }
-  }
   
-  // Обычное поведение
+  // Простое переключение режима: без логики замены запросов
   currentResponseMode = mode;
   pendingReplaceRequestIndex = null;
   
@@ -4494,15 +4478,17 @@ async function sendMessageToAI(message, mode = 'detailed') {
           }
           pendingReplaceRequestIndex = null;
           
-          // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
-          const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
-            ? currentHealthProgram.requests : [];
-          const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
-          if (canUseDraft && programRequests.length >= 2 && data.canCreateProgram) {
-            showProgramReplaceModal(programRequests);
-          } else if (canUseDraft && data.canCreateProgram) {
-            addCreateProgramButton(true);
-          }
+        // После подробного ответа: если можно создать программу и черновик валидный,
+        // показываем кнопку "Составить программу" ТОЛЬКО когда в программе меньше 2 запросов.
+        const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
+          ? currentHealthProgram.requests : [];
+        const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
+        if (canUseDraft && data.canCreateProgram && programRequests.length < 2) {
+          addCreateProgramButton(true);
+        } else if (programRequests.length >= 2) {
+          // У пользователя уже есть программа по двум запросам — даём понятное сообщение
+          addBotMessage('У вас уже есть составленная программа по двум запросам. Для её изменения обратитесь к персональному куратору.');
+        }
         } else {
           lastProgramDraft = null;
         }
@@ -4597,14 +4583,16 @@ async function sendMessageToAI(message, mode = 'detailed') {
         // Сбрасываем pendingReplaceRequestIndex после сохранения в черновик
         pendingReplaceRequestIndex = null;
 
-        // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
+        // После подробного ответа: если можно создать программу и черновик валидный,
+        // показываем кнопку "Составить программу" ТОЛЬКО когда в программе меньше 2 запросов.
         const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
           ? currentHealthProgram.requests : [];
         const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
-        if (canUseDraft && programRequests.length >= 2 && data.canCreateProgram) {
-          showProgramReplaceModal(programRequests);
-        } else if (canUseDraft && data.canCreateProgram) {
+        if (canUseDraft && data.canCreateProgram && programRequests.length < 2) {
           addCreateProgramButton(true);
+        } else if (programRequests.length >= 2) {
+          // У пользователя уже есть программа по двум запросам — даём понятное сообщение
+          addBotMessage('У вас уже есть составленная программа по двум запросам. Для её изменения обратитесь к персональному куратору.');
         }
       } else {
         // В режиме краткого ответа не сохраняем черновик и не показываем кнопку программы
