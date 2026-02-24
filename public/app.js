@@ -2363,9 +2363,11 @@ function showPage(pageName) {
   const healthPage = document.getElementById('healthPage');
   const diaryPage = document.getElementById('diaryPage');
   const adminPage = document.getElementById('adminPage');
+  const consultationPage = document.getElementById('consultationPage');
   if (healthPage) allPages.push(healthPage);
   if (diaryPage) allPages.push(diaryPage);
   if (adminPage) allPages.push(adminPage);
+  if (consultationPage) allPages.push(consultationPage);
   
   allPages.forEach(page => {
     if (page && page.classList.contains('active')) {
@@ -2431,6 +2433,20 @@ function showPage(pageName) {
       updateDiagnosticsUI();
       console.log('🎯 Текущая страница установлена:', currentPage);
       break;
+    case 'consultation': {
+      const consultationPageEl = document.getElementById('consultationPage');
+      if (consultationPageEl) {
+        consultationPageEl.style.display = 'flex';
+        requestAnimationFrame(() => {
+          consultationPageEl.classList.add('active');
+        });
+      }
+      currentPage = 'consultation';
+      isChatMode = false;
+      isInRecommendedTests = false;
+      updateBottomNavActiveItem();
+      break;
+    }
     case 'diary': {
       const diaryPage = document.getElementById('diaryPage');
       const diaryGate = document.getElementById('diaryGate');
@@ -2654,7 +2670,7 @@ function updateAllNavigations() {
           shouldBeActive = (currentPage === 'diagnostics' || currentPage === 'recommendedTests' || isDiagnosticFormMode);
           break;
         case 2: // Здоровье
-          shouldBeActive = (currentPage === 'health');
+          shouldBeActive = (currentPage === 'health' || currentPage === 'consultation');
           break;
         case 3: // Дневник
           shouldBeActive = (currentPage === 'diary');
@@ -2983,8 +2999,9 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('.create-program-btn')) {
     const btn = e.target.closest('.create-program-btn');
     
-    // Кнопка на вкладке "Здоровье" («Получить консультацию») — пока ничего не делает
+    // Кнопка на вкладке "Здоровье" («Получить консультацию») — открывает вкладку «Консультация»
     if (btn.closest('.health-page')) {
+      showPage('consultation');
       return;
     }
 
@@ -7810,10 +7827,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   }
   
-  // Обработчик кнопки "Начать диагностику"
+  // Обработчик кнопки "Получить консультацию" на приветственном экране
   if (splashStartBtn) {
     splashStartBtn.addEventListener('click', () => {
-      console.log('🎯 Нажата кнопка "Начать диагностику"');
+      console.log('🎯 Нажата кнопка "Получить консультацию"');
       showApp();
     });
   }
