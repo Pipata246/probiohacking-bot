@@ -31,6 +31,8 @@ app.all('/api/save-all-quiz-answers', require('./api/save-all-quiz-answers.js'))
 app.get('/api/health-program', require('./api/health-program.js'));
 app.all('/api/diary', require('./api/diary.js'));
 app.post('/api/save-program', require('./api/save-program.js'));
+app.all('/api/doctors', require('./api/doctors.js'));
+app.all('/api/doctor-avatars', require('./api/doctor-avatars.js'));
 
 // SetWebhook — обычно вызывается вручную один раз
 app.all('/api/setWebhook', require('./api/setWebhook.js'));

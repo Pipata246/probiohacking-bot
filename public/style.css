@@ -4154,10 +4154,12 @@ body.chat-overlay-visible .search-container {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 4px;
 }
 
 .doctor-card {
   background: #FEF7EC;
+  border: 1px solid rgba(59, 79, 107, 0.06);
   border-radius: 16px;
   padding: 14px 14px 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -5792,6 +5794,55 @@ body.chat-overlay-visible .search-container {
   color: #111827;
 }
 
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.admin-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3B4F6B;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 79, 107, 0.2);
+  background: #FFFFFF;
+  font-size: 14px;
+  color: #111827;
+  font-family: inherit;
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
+}
+
+.admin-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(59, 79, 107, 0.2);
+  background: #FFFFFF;
+  font-size: 14px;
+  color: #111827;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.admin-textarea:focus {
+  outline: none;
+  border-color: #3C805B;
+  box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
+}
+
 .admin-doctors-add-btn {
   width: 100%;
   justify-content: center;
@@ -6309,6 +6360,16 @@ body.chat-overlay-visible .search-container {
 
 /* ========== ADMIN DIARY ========== */
 .admin-diary-view {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ========== ADMIN DOCTORS ========== */
+.admin-doctors-view {
   display: none;
   flex-direction: column;
   flex: 1;
