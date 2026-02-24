@@ -2985,10 +2985,24 @@ document.addEventListener('click', (e) => {
   // Кнопка создания персональной программы / консультации
   if (e.target.closest('.create-program-btn')) {
     const btn = e.target.closest('.create-program-btn');
-    // Вкладка "Здоровье": временно отключаем кнопку "Получить консультацию"
+    
+    // Кнопка на вкладке "Здоровье" («Получить консультацию») — пока ничего не делает
     if (btn.closest('.health-page')) {
       return;
     }
+
+    // Кнопка "Создать программу" на главной — просто переходим в раздел "Здоровье" с проверкой подписки
+    if (btn.closest('.recommendations-card')) {
+      checkSubscriptionBeforeAction(
+        'openHealthFromMainCreateProgram',
+        () => showPage('health'),
+        'Персональная программа',
+        'Для доступа к персональной программе и дневнику оформите подписку в боте.'
+      );
+      return;
+    }
+
+    // Кнопка под ответом ИИ в чате — сохраняем программу в БД
     createProgramFromDraft(btn);
     return;
   }
@@ -4037,31 +4051,42 @@ async function createProgramFromDraft(button) {
       button.textContent = 'Сохраняем программу...';
     }
 
-    // Формируем итоговый список запросов программы.
-    // Берём все предыдущие запросы из сохранённой программы + текущий запрос,
-    // убираем дубли и ограничиваем список первыми тремя.
-    const existingRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
+    // Формируем список запросов программы по логике "до 2 запросов + замена".
+    const existingRaw = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
       ? currentHealthProgram.requests
       : [];
-    const newRequestText = (lastProgramDraft.requestText || '').trim();
-
-    const rawRequests = [
-      ...existingRequests,
-      ...(newRequestText ? [newRequestText] : [])
-    ]
+    const existingRequests = existingRaw
       .map((r) => (r || '').trim())
       .filter(Boolean);
 
-    const uniqueRequests = [];
-    const seen = new Set();
-    for (const r of rawRequests) {
-      const key = r.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      uniqueRequests.push(r);
+    const newRequestText = (lastProgramDraft.requestText || '').trim();
+    const replaceIndex = (typeof lastProgramDraft.replaceRequestIndex === 'number')
+      ? lastProgramDraft.replaceRequestIndex
+      : null;
+
+    let requests = [];
+
+    if (existingRequests.length >= 2 && replaceIndex !== null && replaceIndex >= 0 && replaceIndex < existingRequests.length) {
+      // Пользователь выбрал, какой из двух запросов заменить — заменяем его новым
+      requests = [...existingRequests];
+      if (newRequestText) {
+        requests[replaceIndex] = newRequestText;
+      }
+    } else if (existingRequests.length === 1) {
+      // В программе один запрос — добавляем новый вторым (если он не дублирует первый)
+      const first = existingRequests[0];
+      if (newRequestText && newRequestText !== first) {
+        requests = [first, newRequestText];
+      } else {
+        requests = [first];
+      }
+    } else if (existingRequests.length === 0) {
+      // Программы ещё нет — создаём из одного нового запроса
+      requests = newRequestText ? [newRequestText] : [];
+    } else {
+      // Защита: если 2+ запросов, но индекс замены не указан — оставляем первые два как есть
+      requests = existingRequests.slice(0, 2);
     }
-    // Максимум 3 запроса в программе
-    const requests = uniqueRequests.slice(0, 3);
 
     // API ожидает объект с полями supplements, nutrition, stress, sleep, goals
     const hp = lastProgramDraft.healthProgram;
@@ -4082,7 +4107,7 @@ async function createProgramFromDraft(button) {
       },
       healthProgram,
       diaryEntries: lastProgramDraft.diaryEntries || [],
-      // Для совместимости: один "последний" запрос и полный список всех запросов программы
+      // Для совместимости: один "последний" запрос (берём актуальный) и полный список всех запросов программы
       request: requests.length > 0 ? requests[requests.length - 1] : (newRequestText || ''),
       requests
     };
@@ -4453,10 +4478,9 @@ async function sendMessageToAI(message, mode = 'detailed') {
           // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
           const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
             ? currentHealthProgram.requests : [];
-          const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
-          if (canUseDraft && programRequests.length >= 2 && data.canCreateProgram) {
+          if (programRequests.length >= 2 && data.canCreateProgram) {
             showProgramReplaceModal(programRequests);
-          } else if (canUseDraft && data.canCreateProgram) {
+          } else if (data.canCreateProgram) {
             addCreateProgramButton(true);
           }
         } else {
@@ -4556,10 +4580,9 @@ async function sendMessageToAI(message, mode = 'detailed') {
         // Если уже 2 запроса в программе — показываем выбор действий вместо кнопки
         const programRequests = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
           ? currentHealthProgram.requests : [];
-        const canUseDraft = !!(lastProgramDraft && lastProgramDraft.healthProgram);
-        if (canUseDraft && programRequests.length >= 2 && data.canCreateProgram) {
+        if (programRequests.length >= 2 && data.canCreateProgram) {
           showProgramReplaceModal(programRequests);
-        } else if (canUseDraft && data.canCreateProgram) {
+        } else if (data.canCreateProgram) {
           addCreateProgramButton(true);
         }
       } else {
