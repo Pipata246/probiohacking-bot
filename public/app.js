@@ -9326,6 +9326,69 @@ function renderAdminDoctorsList(doctors) {
     });
   });
 }
+
+// Загрузка аватара врача в Supabase Storage
+async function uploadDoctorAvatar(file) {
+  // Простейшая санитизация имени файла
+  function sanitizeFileNameSimple(name) {
+    const dotIndex = name.lastIndexOf('.');
+    const base = dotIndex >= 0 ? name.slice(0, dotIndex) : name;
+    const ext = dotIndex >= 0 ? name.slice(dotIndex) : '';
+
+    let cleaned = base
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .replace(/_+/g, '_')
+      .toLowerCase()
+      .substring(0, 50);
+
+    if (!cleaned) cleaned = 'avatar';
+    return cleaned + ext.toLowerCase();
+  }
+
+  const safeFileName = sanitizeFileNameSimple(file.name);
+  const fileName = `${Date.now()}_${safeFileName}`;
+  const filePath = `avatars/${fileName}`;
+
+  const response = await fetch('/api/doctor-avatars', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      fileName,
+      fileType: file.type,
+      fileSize: file.size,
+      filePath
+    })
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!data.success || !data.uploadUrl || !data.publicUrl) {
+    throw new Error(data.error || 'Ошибка при получении URL для аватара');
+  }
+
+  const uploadResult = await fetch(data.uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type
+    },
+    body: file
+  });
+
+  if (!uploadResult.ok) {
+    const text = await uploadResult.text();
+    throw new Error(text || `Ошибка загрузки аватара: ${uploadResult.status}`);
+  }
+
+  return data.publicUrl;
+}
 // Сохранение изменений статуса админа (отдельная функция для списка пользователей)
 async function saveAdminStatusChange() {
   if (!adminPendingChanges.adminStatus) return;
@@ -9713,13 +9776,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const fullNameInput = document.getElementById('doctorFullNameInput');
       const specializationInput = document.getElementById('doctorSpecializationInput');
       const experienceInput = document.getElementById('doctorExperienceInput');
-      const avatarUrlInput = document.getElementById('doctorAvatarUrlInput');
+      const avatarFileInput = document.getElementById('doctorAvatarFileInput');
       const aboutInput = document.getElementById('doctorAboutInput');
 
       const full_name = fullNameInput?.value.trim();
       const specialization = specializationInput?.value.trim();
       const experience = experienceInput?.value.trim();
-      const avatar_url = avatarUrlInput?.value.trim();
       const about = aboutInput?.value.trim();
 
       if (!full_name || !specialization) {
@@ -9730,6 +9792,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         adminDoctorsAddBtn.disabled = true;
         adminDoctorsAddBtn.textContent = 'Добавление...';
+
+        // Загружаем аватар, если файл выбран
+        let avatar_url = null;
+        const file = avatarFileInput?.files?.[0] || null;
+        if (file) {
+          avatar_url = await uploadDoctorAvatar(file);
+        }
 
         const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
         const response = await fetch('/api/admin?action=doctors', {
@@ -9761,7 +9830,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fullNameInput) fullNameInput.value = '';
         if (specializationInput) specializationInput.value = '';
         if (experienceInput) experienceInput.value = '';
-        if (avatarUrlInput) avatarUrlInput.value = '';
+        if (avatarFileInput) avatarFileInput.value = '';
         if (aboutInput) aboutInput.value = '';
 
         await loadAdminDoctors();

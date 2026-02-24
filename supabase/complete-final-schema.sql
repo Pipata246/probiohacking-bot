@@ -534,6 +534,14 @@ ON CONFLICT (id) DO UPDATE SET
   file_size_limit = 52428800,
   allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'application/pdf'];
 
+-- Создаем bucket для аватаров врачей (если не существует)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('doctor-avatars', 'doctor-avatars', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/jpg', 'image/webp'])
+ON CONFLICT (id) DO UPDATE SET
+  public = true,
+  file_size_limit = 5242880,
+  allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+
 -- Политика 1: Разрешить загрузку файлов всем (через signed URL с SERVICE_ROLE_KEY)
 -- ВАЖНО: В коде используется supabaseAdmin с SERVICE_ROLE_KEY, который обходит политики
 -- Но политика нужна на случай прямых загрузок через anon key
@@ -559,6 +567,21 @@ ON storage.objects
 FOR DELETE
 TO anon
 USING (bucket_id = 'analysis-photos');
+
+-- Политики для doctor-avatars (аналогично, только картинки)
+DROP POLICY IF EXISTS "Allow anon users to upload doctor avatars" ON storage.objects;
+CREATE POLICY "Allow anon users to upload doctor avatars"
+ON storage.objects
+FOR INSERT
+TO anon
+WITH CHECK (bucket_id = 'doctor-avatars');
+
+DROP POLICY IF EXISTS "Allow public read access to doctor avatars" ON storage.objects;
+CREATE POLICY "Allow public read access to doctor avatars"
+ON storage.objects
+FOR SELECT
+TO public
+USING (bucket_id = 'doctor-avatars');
 
 -- ============================================
 -- ФУНКЦИЯ ДЛЯ ПРОВЕРКИ И ОБНОВЛЕНИЯ СТАТУСА ПОДПИСКИ

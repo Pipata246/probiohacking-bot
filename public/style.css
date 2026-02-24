@@ -5782,6 +5782,16 @@ body.chat-overlay-visible .search-container {
   margin-bottom: 16px;
 }
 
+.admin-input-file {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #D1D5DB;
+  background: #FFFFFF;
+  font-size: 14px;
+  color: #111827;
+}
+
 .admin-doctors-add-btn {
   width: 100%;
   justify-content: center;
