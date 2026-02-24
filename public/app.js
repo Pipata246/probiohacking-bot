@@ -1548,6 +1548,9 @@ function selectReplaceRequest(index) {
   console.log(`📝 Replace request ${index + 1} selected`);
   closeProgramActionsModal();
   
+  // Фиксируем индекс замены для следующего сохранения
+  pendingReplaceRequestIndex = index;
+
   // Сохраняем индекс замены в черновик
   if (lastProgramDraft) {
     lastProgramDraft.replaceRequestIndex = index;
@@ -4052,9 +4055,15 @@ async function createProgramFromDraft(button) {
     }
 
     // Формируем список запросов программы по логике "до 2 запросов + замена".
-    const existingRaw = (currentHealthProgram && Array.isArray(currentHealthProgram.requests))
-      ? currentHealthProgram.requests
-      : [];
+    // В приоритете используем список из модального окна (replaceModalProgramRequests),
+    // чтобы гарантированно работать с теми двумя запросами, которые видел пользователь.
+    const modalRequests = (Array.isArray(replaceModalProgramRequests) && replaceModalProgramRequests.length >= 2)
+      ? replaceModalProgramRequests
+      : null;
+    const existingRaw = modalRequests
+      || ((currentHealthProgram && Array.isArray(currentHealthProgram.requests))
+        ? currentHealthProgram.requests
+        : []);
     const existingRequests = existingRaw
       .map((r) => (r || '').trim())
       .filter(Boolean);
