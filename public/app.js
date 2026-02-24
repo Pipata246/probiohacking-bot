@@ -2730,14 +2730,22 @@ updateAvatar(document.getElementById('healthAvatar'), user, userName);
 updateAvatar(document.getElementById('diaryAvatar'), user, userName);
 updateAvatar(document.getElementById('recommendedTestsAvatar'), user, userName);
 updateAvatar(document.getElementById('adminAvatar'), user, userName);
+updateAvatar(document.getElementById('consultationAvatar'), user, userName);
 
 // Принудительное обновление всех аватарок
 function forceUpdateAllAvatars() {
   console.log('Принудительное обновление всех аватарок...');
   
   const avatarElements = [
-    'avatar', 'sidebarAvatar', 'knowledgeAvatar', 'diagnosticsAvatar', 
-    'healthAvatar', 'diaryAvatar', 'recommendedTestsAvatar', 'adminAvatar'
+    'avatar',
+    'sidebarAvatar',
+    'knowledgeAvatar',
+    'diagnosticsAvatar',
+    'healthAvatar',
+    'diaryAvatar',
+    'recommendedTestsAvatar',
+    'adminAvatar',
+    'consultationAvatar'
   ];
   
   avatarElements.forEach(id => {
