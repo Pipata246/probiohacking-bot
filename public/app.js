@@ -9261,6 +9261,8 @@ function renderAdminDoctorsList(doctors) {
       .slice(0, 2)
       .toUpperCase() || 'Dr';
 
+    const aboutText = doctor.about || '';
+
     item.innerHTML = `
       <div class="admin-doctor-header">
         <div class="doctor-avatar"></div>
@@ -9270,13 +9272,35 @@ function renderAdminDoctorsList(doctors) {
             ${doctor.specialization || 'Специалист'}
             ${doctor.experience ? ' • ' + doctor.experience : ''}
           </div>
+          <div class="admin-doctor-desc">${aboutText ? aboutText.replace(/\n/g, '<br>') : 'Описание пока не добавлено.'}</div>
         </div>
       </div>
-      <div class="admin-field" style="margin-top: 4px;">
-        <label class="admin-label">Описание</label>
-        <textarea class="admin-textarea admin-doctor-about-input" rows="3" data-doctor-id="${doctor.id}">${doctor.about || ''}</textarea>
+      <div class="admin-doctor-edit">
+        <div class="admin-field">
+          <label class="admin-label">ФИО</label>
+          <input type="text" class="admin-input admin-doctor-name-input" value="${doctor.full_name || ''}">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Специализация</label>
+          <input type="text" class="admin-input admin-doctor-spec-input" value="${doctor.specialization || ''}">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Стаж</label>
+          <input type="text" class="admin-input admin-doctor-exp-input" value="${doctor.experience || ''}">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Аватар врача</label>
+          <input type="file" class="admin-input-file admin-doctor-avatar-input" accept="image/*">
+        </div>
+        <div class="admin-field">
+          <label class="admin-label">Описание врача</label>
+          <textarea class="admin-textarea admin-doctor-about-input" rows="4">${aboutText}</textarea>
+        </div>
       </div>
       <div class="admin-doctor-actions">
+        <button class="admin-doctor-edit-btn" data-doctor-id="${doctor.id}">Редактировать</button>
+        <button class="admin-doctor-save-btn" data-doctor-id="${doctor.id}">Сохранить</button>
+        <button class="admin-doctor-cancel-btn" data-doctor-id="${doctor.id}">Отмена</button>
         <button class="admin-doctor-delete-btn" data-doctor-id="${doctor.id}">Удалить</button>
       </div>
     `;
@@ -9294,7 +9318,111 @@ function renderAdminDoctorsList(doctors) {
     list.appendChild(item);
   });
 
-  // Навешиваем обработчики удаления
+  // Обработчики редактирования
+  list.querySelectorAll('.admin-doctor-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.admin-doctor-item');
+      if (!item) return;
+      const editBlock = item.querySelector('.admin-doctor-edit');
+      const saveBtn = item.querySelector('.admin-doctor-save-btn');
+      const cancelBtn = item.querySelector('.admin-doctor-cancel-btn');
+      if (!editBlock || !saveBtn || !cancelBtn) return;
+
+      editBlock.style.display = 'block';
+      saveBtn.style.display = 'inline-flex';
+      cancelBtn.style.display = 'inline-flex';
+      btn.style.display = 'none';
+    });
+  });
+
+  list.querySelectorAll('.admin-doctor-cancel-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.admin-doctor-item');
+      if (!item) return;
+      const editBlock = item.querySelector('.admin-doctor-edit');
+      const editBtn = item.querySelector('.admin-doctor-edit-btn');
+      const saveBtn = item.querySelector('.admin-doctor-save-btn');
+      if (editBlock) editBlock.style.display = 'none';
+      if (saveBtn) saveBtn.style.display = 'none';
+      if (editBtn) editBtn.style.display = 'inline-flex';
+      btn.style.display = 'none';
+    });
+  });
+
+  // Обработчики сохранения изменений врача
+  list.querySelectorAll('.admin-doctor-save-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const doctorId = btn.dataset.doctorId;
+      if (!doctorId) return;
+      const item = btn.closest('.admin-doctor-item');
+      if (!item) return;
+
+      const nameInput = item.querySelector('.admin-doctor-name-input');
+      const specInput = item.querySelector('.admin-doctor-spec-input');
+      const expInput = item.querySelector('.admin-doctor-exp-input');
+      const avatarInput = item.querySelector('.admin-doctor-avatar-input');
+      const aboutInput = item.querySelector('.admin-doctor-about-input');
+
+      const full_name = nameInput?.value.trim() || '';
+      const specialization = specInput?.value.trim() || '';
+      const experience = expInput?.value.trim() || '';
+      const about = aboutInput?.value.trim() || '';
+
+      if (!full_name || !specialization) {
+        alert('Пожалуйста, заполните ФИО и специализацию.');
+        return;
+      }
+
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Сохранение...';
+
+        let avatar_url = doctor.avatar_url || null;
+        const file = avatarInput?.files?.[0] || null;
+        if (file) {
+          avatar_url = await uploadDoctorAvatar(file);
+        }
+
+        const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+        const response = await fetch(`/api/admin?action=doctors&doctorId=${doctorId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
+          },
+          body: JSON.stringify({
+            full_name,
+            specialization,
+            experience,
+            avatar_url,
+            about
+          })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.error || 'Ошибка сохранения врача');
+        }
+
+        // Перезагружаем списки
+        await loadAdminDoctors();
+        loadDoctors().catch(err => console.error('❌ Error reloading doctors after update:', err));
+      } catch (error) {
+        console.error('❌ Error updating doctor:', error);
+        alert('Не удалось сохранить врача: ' + (error.message || 'неизвестная ошибка'));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Сохранить';
+      }
+    });
+  });
+
+  // Обработчики удаления
   list.querySelectorAll('.admin-doctor-delete-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const doctorId = btn.dataset.doctorId;

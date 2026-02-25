@@ -5891,11 +5891,64 @@ body.chat-overlay-visible .search-container {
   color: #6B7280;
 }
 
+.admin-doctor-desc {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #4B5563;
+  line-height: 1.5;
+}
+
+.admin-doctor-edit {
+  margin-top: 8px;
+  display: none;
+}
+
 .admin-doctor-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 6px;
+}
+
+.admin-doctor-edit-btn,
+.admin-doctor-save-btn,
+.admin-doctor-cancel-btn {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.admin-doctor-edit-btn {
+  background: rgba(60, 128, 91, 0.12);
+  color: #3C805B;
+}
+
+.admin-doctor-edit-btn:active {
+  background: rgba(60, 128, 91, 0.22);
+}
+
+.admin-doctor-save-btn {
+  background: #3C805B;
+  color: #FEF7EC;
+  display: none;
+}
+
+.admin-doctor-save-btn:active {
+  background: #2d6346;
+}
+
+.admin-doctor-cancel-btn {
+  background: rgba(107, 114, 128, 0.12);
+  color: #4B5563;
+  display: none;
+}
+
+.admin-doctor-cancel-btn:active {
+  background: rgba(107, 114, 128, 0.22);
 }
 
 .admin-doctor-delete-btn {
