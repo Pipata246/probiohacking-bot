@@ -9443,10 +9443,15 @@ function renderAdminDoctorsList(doctors) {
 
         // Перезагружаем списки
         await loadAdminDoctors();
-        loadDoctors().catch(err => console.error('❌ Error reloading doctors after update:', err));
+        if (typeof loadDoctors === 'function') {
+          try {
+            loadDoctors().catch(err => console.error('❌ Error reloading doctors after update:', err));
+          } catch (e) {
+            console.warn('loadDoctors is not available in this context');
+          }
+        }
       } catch (error) {
         console.error('❌ Error updating doctor:', error);
-        alert('Не удалось сохранить врача: ' + (error.message || 'неизвестная ошибка'));
       } finally {
         btn.disabled = false;
         btn.textContent = 'Сохранить';
@@ -9997,10 +10002,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await loadAdminDoctors();
         // Обновляем список врачей на вкладке консультации, чтобы сразу увидеть изменения
-        loadDoctors().catch(err => console.error('❌ Error reloading doctors after add:', err));
+        if (typeof loadDoctors === 'function') {
+          try {
+            loadDoctors().catch(err => console.error('❌ Error reloading doctors after add:', err));
+          } catch (e) {
+            console.warn('loadDoctors is not available in this context');
+          }
+        }
       } catch (error) {
         console.error('❌ Error adding doctor:', error);
-        alert('Не удалось добавить врача: ' + (error.message || 'неизвестная ошибка'));
       } finally {
         adminDoctorsAddBtn.disabled = false;
         adminDoctorsAddBtn.textContent = 'Добавить врача';
