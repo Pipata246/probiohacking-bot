@@ -5918,7 +5918,7 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-doctor-expand-btn svg {
-  position: absolute;
+  position: static;
 }
 
 .admin-doctor-edit {

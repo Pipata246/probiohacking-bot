@@ -9252,6 +9252,7 @@ function renderAdminDoctorsList(doctors) {
     const item = document.createElement('div');
     item.className = 'admin-doctor-item';
     item.dataset.id = doctor.id;
+    item.dataset.avatarUrl = doctor.avatar_url || '';
 
     const initials = (doctor.full_name || '')
       .split(' ')
@@ -9408,7 +9409,7 @@ function renderAdminDoctorsList(doctors) {
         btn.disabled = true;
         btn.textContent = 'Сохранение...';
 
-        let avatar_url = doctor.avatar_url || null;
+        let avatar_url = item.dataset.avatarUrl || null;
         const file = avatarInput?.files?.[0] || null;
         if (file) {
           avatar_url = await uploadDoctorAvatar(file);
