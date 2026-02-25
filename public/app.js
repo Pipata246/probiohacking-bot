@@ -4842,7 +4842,11 @@ async function loadAppData() {
   appDataPromise = Promise.all([
     loadPhotosFromSupabase().catch(e => console.warn('Photos load error:', e)),
     checkQuizStatus().catch(e => console.warn('Quiz status error:', e)),
-    loadActiveChat().catch(e => console.warn('Chat load error:', e))
+    loadActiveChat().catch(e => console.warn('Chat load error:', e)),
+    // Предзагружаем список врачей для вкладки консультации
+    (typeof loadDoctors === 'function'
+      ? loadDoctors().catch(e => console.warn('Doctors load error:', e))
+      : Promise.resolve())
     // Убрана предзагрузка истории чатов для ускорения
   ]);
   
