@@ -5898,6 +5898,29 @@ body.chat-overlay-visible .search-container {
   line-height: 1.5;
 }
 
+.admin-doctor-expand-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #3C805B;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #FEF7EC;
+  transition: background-color 0.2s ease;
+}
+
+.admin-doctor-expand-btn:active {
+  background: #2d6346;
+}
+
+.admin-doctor-expand-btn svg {
+  position: absolute;
+}
+
 .admin-doctor-edit {
   margin-top: 8px;
   display: none;

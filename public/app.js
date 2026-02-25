@@ -9272,8 +9272,16 @@ function renderAdminDoctorsList(doctors) {
             ${doctor.specialization || 'Специалист'}
             ${doctor.experience ? ' • ' + doctor.experience : ''}
           </div>
-          <div class="admin-doctor-desc">${aboutText ? aboutText.replace(/\n/g, '<br>') : 'Описание пока не добавлено.'}</div>
+          <div class="admin-doctor-desc" style="display: none;">${aboutText ? aboutText.replace(/\n/g, '<br>') : 'Описание пока не добавлено.'}</div>
         </div>
+        <button class="admin-doctor-expand-btn" type="button" aria-label="Показать описание">
+          <svg class="admin-doctor-icon-plus" width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="admin-doctor-icon-minus" width="16" height="16" viewBox="0 0 20 20" fill="none" style="display: none;">
+            <path d="M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
       <div class="admin-doctor-edit">
         <div class="admin-field">
@@ -9316,6 +9324,29 @@ function renderAdminDoctorsList(doctors) {
     }
 
     list.appendChild(item);
+  });
+
+  // Обработчики редактирования
+  list.querySelectorAll('.admin-doctor-expand-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.admin-doctor-item');
+      if (!item) return;
+      const desc = item.querySelector('.admin-doctor-desc');
+      const plus = btn.querySelector('.admin-doctor-icon-plus');
+      const minus = btn.querySelector('.admin-doctor-icon-minus');
+      if (!desc || !plus || !minus) return;
+
+      const isVisible = desc.style.display !== 'none';
+      if (isVisible) {
+        desc.style.display = 'none';
+        plus.style.display = 'block';
+        minus.style.display = 'none';
+      } else {
+        desc.style.display = 'block';
+        plus.style.display = 'none';
+        minus.style.display = 'block';
+      }
+    });
   });
 
   // Обработчики редактирования
