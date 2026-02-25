@@ -3935,19 +3935,23 @@ function typeMessage(text, callback) {
     }
   };
 
-// Загрузка списка врачей для вкладки консультации
+// Загрузка списка врачей для вкладки консультации (полностью переписано)
 async function loadDoctors() {
   const list = document.getElementById('doctorsList');
-  if (!list) return;
+  if (!list) {
+    console.warn('doctorsList container not found in DOM');
+    return;
+  }
+
+  // Плейсхолдер "загрузка"
+  list.innerHTML = `
+    <div class="admin-loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Загрузка врачей...</div>
+    </div>
+  `;
 
   try {
-    list.innerHTML = `
-      <div class="admin-loading">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">Загрузка врачей...</div>
-      </div>
-    `;
-
     const response = await fetch('/api/doctors', {
       method: 'GET',
       headers: {
@@ -3957,23 +3961,22 @@ async function loadDoctors() {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || `HTTP ${response.status}`);
+      const text = await response.text();
+      throw new Error(text || `HTTP ${response.status}`);
     }
 
     const data = await response.json();
-    if (!data.success) {
-      throw new Error(data.error || 'Ошибка загрузки врачей');
-    }
+    const doctors = Array.isArray(data?.doctors) ? data.doctors : [];
 
-    renderDoctorsList(data.doctors || []);
+    renderDoctorsList(doctors);
   } catch (error) {
-    console.error('❌ Error loading doctors:', error);
-    if (list) {
-      list.innerHTML = `
-        <div class="admin-error">Не удалось загрузить список врачей. Попробуйте позже.</div>
-      `;
-    }
+    console.error('❌ Error loading doctors for consultation:', error);
+    list.innerHTML = `
+      <div class="admin-error">
+        Не удалось загрузить список врачей.<br>
+        ${error.message || 'Попробуйте позже.'}
+      </div>
+    `;
   }
 }
 
