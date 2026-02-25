@@ -4179,6 +4179,7 @@ body.chat-overlay-visible .search-container {
   height: 40px;
   border-radius: 50%;
   background: #E5E7EB;
+  border: 2px solid #3C805B;
   display: flex;
   align-items: center;
   justify-content: center;
