@@ -779,7 +779,13 @@
                     </div>
                 </div>
                 
-                <button class="create-program-btn">Список врачей</button>
+                <button
+                    class="create-program-btn"
+                    id="openDoctorsModalBtn"
+                    onclick="(function(){var m=document.getElementById('doctorsModal');if(m){m.style.display='flex';m.classList.add('visible');}if(window.loadDoctorsForModal){window.loadDoctorsForModal().catch(function(){})}})()"
+                >
+                    Список врачей
+                </button>
             </div>
 
             <!-- Кнопка повторного прохождения диагностики (показывается при quiz_completed=true) -->
@@ -2581,19 +2587,7 @@
             </div>
             <p class="consultation-subtitle">Выберите специалиста, чтобы увидеть подробную информацию.</p>
             <div class="doctors-list" id="doctorsModalList">
-                <!-- ТЕСТОВЫЙ БЛОК: должен быть виден в модалке -->
-                <div class="doctor-card">
-                    <div class="doctor-header">
-                        <div class="doctor-avatar">TV</div>
-                        <div class="doctor-main">
-                            <div class="doctor-name">Тестовый врач</div>
-                            <div class="doctor-meta">Специализация • стаж 10 лет</div>
-                        </div>
-                    </div>
-                    <div class="doctor-details" style="display: block;">
-                        Это тестовый блок. Если вы видите эту карточку, значит модалка и верстка работают, а проблему нужно искать в загрузке данных через JavaScript.
-                    </div>
-                </div>
+                <!-- Список врачей будет подгружен динамически -->
             </div>
         </div>
     </div>
