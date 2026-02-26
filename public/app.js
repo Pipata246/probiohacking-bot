@@ -3935,15 +3935,17 @@ function typeMessage(text, callback) {
     }
   };
 
-// Загрузка списка врачей для вкладки консультации (полностью переписано)
+// Загрузка списка врачей для вкладки "Консультация" (список врачей)
 async function loadDoctors() {
   const list = document.getElementById('doctorsList');
   if (!list) {
-    console.warn('doctorsList container not found in DOM');
+    console.warn('[doctors] #doctorsList container not found in DOM');
     return;
   }
 
-  // Плейсхолдер "загрузка"
+  console.log('[doctors] loading doctors from /api/doctors...');
+
+  // Плейсхолдер "идёт загрузка"
   list.innerHTML = `
     <div class="admin-loading">
       <div class="loading-spinner"></div>
@@ -3961,16 +3963,18 @@ async function loadDoctors() {
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text || `HTTP ${response.status}`);
+      const rawText = await response.text().catch(() => '');
+      console.error('[doctors] bad response', response.status, rawText);
+      throw new Error(rawText || `HTTP ${response.status}`);
     }
 
     const data = await response.json();
-    const doctors = Array.isArray(data?.doctors) ? data.doctors : [];
+    const doctors = Array.isArray(data && data.doctors) ? data.doctors : [];
 
+    console.log(`[doctors] loaded ${doctors.length} doctors`);
     renderDoctorsList(doctors);
   } catch (error) {
-    console.error('❌ Error loading doctors for consultation:', error);
+    console.error('❌ [doctors] Error loading doctors for consultation:', error);
     list.innerHTML = `
       <div class="admin-error">
         Не удалось загрузить список врачей.<br>
@@ -3982,10 +3986,13 @@ async function loadDoctors() {
 
 function renderDoctorsList(doctors) {
   const list = document.getElementById('doctorsList');
-  if (!list) return;
+  if (!list) {
+    console.warn('[doctors] #doctorsList container not found when rendering');
+    return;
+  }
 
-  if (!doctors.length) {
-    // Если врачей нет, просто очищаем контейнер без заглушек
+  if (!Array.isArray(doctors) || doctors.length === 0) {
+    console.log('[doctors] empty doctors array, clearing list');
     list.innerHTML = '';
     return;
   }
@@ -4067,6 +4074,13 @@ function renderDoctorsList(doctors) {
 
     list.appendChild(card);
   });
+}
+
+// Явно экспортируем функции в window, чтобы к ним
+// могла обращаться админка и другие части приложения
+if (typeof window !== 'undefined') {
+  window.loadDoctors = loadDoctors;
+  window.renderDoctorsList = renderDoctorsList;
 }
 
   typeChar();
