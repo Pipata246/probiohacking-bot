@@ -3945,7 +3945,9 @@ function typeMessage(text, callback) {
     }
   };
 
-// Универсальная загрузка списка врачей в указанный контейнер
+// Универсальная загрузка списка врачей в указанный контейнер.
+// Берём данные ровно из того же эндпоинта, что и админка,
+// чтобы список полностью совпадал.
 async function loadDoctorsInto(containerId) {
   const list = document.getElementById(containerId);
   if (!list) {
@@ -3963,63 +3965,27 @@ async function loadDoctorsInto(containerId) {
   `;
 
   try {
-    let doctors = [];
+    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
+    const ts = Date.now();
 
-    // 1) Публичный эндпоинт /api/doctors
-    try {
-      const ts = Date.now();
-      const response = await fetch(`/api/doctors?_t=${ts}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        const rawText = await response.text().catch(() => '');
-        console.warn('[doctors] public /api/doctors bad response', response.status, rawText);
-      } else {
-        const data = await response.json();
-        doctors = Array.isArray(data && data.doctors) ? data.doctors : [];
-        console.log(`[doctors] public api returned ${doctors.length} doctors`);
+    const response = await fetch(`/api/admin?action=doctors&_t=${ts}`, {
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
-    } catch (e) {
-      console.warn('[doctors] public /api/doctors failed:', e);
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      throw new Error(errorText || `HTTP ${response.status}`);
     }
 
-    // 2) Фолбэк: загружаем как в админке через /api/admin?action=doctors
-    if ((!Array.isArray(doctors) || doctors.length === 0) && window.Telegram?.WebApp?.initData) {
-      try {
-        console.log('[doctors] fallback to /api/admin?action=doctors');
-        const telegramWebAppData = window.Telegram.WebApp.initData;
-        const ts = Date.now();
-        const responseAdmin = await fetch(`/api/admin?action=doctors&_t=${ts}`, {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'X-Telegram-WebApp-Data': telegramWebAppData
-          }
-        });
+    const data = await response.json();
+    const doctors = Array.isArray(data?.doctors) ? data.doctors : [];
 
-        if (!responseAdmin.ok) {
-          const txt = await responseAdmin.text().catch(() => '');
-          console.warn('[doctors] admin /api/admin?action=doctors bad response', responseAdmin.status, txt);
-        } else {
-          const dataAdmin = await responseAdmin.json();
-          if (dataAdmin && dataAdmin.success && Array.isArray(dataAdmin.doctors)) {
-            doctors = dataAdmin.doctors;
-            console.log(`[doctors] admin api returned ${doctors.length} doctors`);
-          } else {
-            console.warn('[doctors] admin api returned no doctors or success=false');
-          }
-        }
-      } catch (e2) {
-        console.warn('[doctors] fallback admin request failed:', e2);
-      }
-    }
-
+    console.log('[doctors] admin api (user view) returned count:', doctors.length);
     renderDoctorsListInto(containerId, doctors);
   } catch (error) {
     console.error('❌ [doctors] Error loading doctors:', error);
