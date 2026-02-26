@@ -4083,6 +4083,19 @@ if (typeof window !== 'undefined') {
   window.renderDoctorsList = renderDoctorsList;
 }
 
+// Пробуем предзагрузить список врачей сразу при инициализации,
+// чтобы карточки уже были в DOM, когда пользователь откроет вкладку.
+try {
+  const doctorsListEl = document.getElementById('doctorsList');
+  if (doctorsListEl) {
+    loadDoctors().catch(err => {
+      console.warn('[doctors] initial load error:', err);
+    });
+  }
+} catch (e) {
+  console.warn('[doctors] initial load failed:', e);
+}
+
   typeChar();
 }
 
