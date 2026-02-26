@@ -3985,9 +3985,8 @@ function renderDoctorsList(doctors) {
   if (!list) return;
 
   if (!doctors.length) {
-    list.innerHTML = `
-      <div class="admin-message">Список врачей пока пуст. Врачи появятся здесь, когда вы добавите их через админку.</div>
-    `;
+    // Если врачей нет, просто очищаем контейнер без заглушек
+    list.innerHTML = '';
     return;
   }
 
