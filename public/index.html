@@ -677,15 +677,6 @@
             <div class="avatar" id="healthAvatar">AM</div>
         </header>
 
-        <!-- Кнопка-иконка списка врачей, не двигающая аватарку -->
-        <button class="icon-circle-btn doctors-fab" id="openDoctorsModalBtn" aria-label="Список врачей">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M12 8V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                <circle cx="12" cy="16" r="0.9" fill="currentColor"/>
-            </svg>
-        </button>
-
         <div class="health-content">
             <div class="priority-goals-card">
                 <div class="goals-header">
@@ -772,7 +763,25 @@
                     </button>
                 </div>
             </div>
-            
+
+            <!-- Блок персонального куратора и кнопка "Список врачей" -->
+            <div class="curator-section">
+                <div class="curator-card">
+                    <div class="curator-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="7" r="4" stroke="#6B7280" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="curator-content">
+                        <h4 class="curator-title">Персональный куратор и команда врачей</h4>
+                        <p class="curator-description">Эксперт по здоровью и профильные специалисты помогут адаптировать вашу программу на основе диагностики и анализов.</p>
+                    </div>
+                </div>
+                
+                <button class="create-program-btn">Список врачей</button>
+            </div>
+
             <!-- Кнопка повторного прохождения диагностики (показывается при quiz_completed=true) -->
             <div class="retake-diagnostic-card" id="retakeDiagnosticCard" style="display: none;">
                 <div class="retake-card-content">
