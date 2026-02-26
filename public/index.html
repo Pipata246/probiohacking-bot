@@ -675,6 +675,14 @@
                 <span></span>
             </button>
             <div class="avatar" id="healthAvatar">AM</div>
+            <!-- Кнопка-иконка для открытия списка врачей -->
+            <button class="icon-circle-btn" id="openDoctorsModalBtn" aria-label="Список врачей">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M12 8V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="12" cy="16" r="0.9" fill="currentColor"/>
+                </svg>
+            </button>
         </header>
 
         <div class="health-content">
@@ -762,24 +770,6 @@
                         </svg>
                     </button>
                 </div>
-            </div>
-
-            <div class="curator-section">
-                <div class="curator-card">
-                    <div class="curator-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <circle cx="12" cy="7" r="4" stroke="#6B7280" stroke-width="2"/>
-                        </svg>
-                    </div>
-                    <div class="curator-content">
-                        <h4 class="curator-title">Персональный куратор</h4>
-                        <p class="curator-description">Эксперт по здоровью и команда врачей помогут адаптировать вашу программу</p>
-                    </div>
-                </div>
-                
-                <!-- Новая кнопка "Список врачей" (в таком же стиле) -->
-                <button class="create-program-btn doctors-list-btn">Список врачей</button>
             </div>
             
             <!-- Кнопка повторного прохождения диагностики (показывается при quiz_completed=true) -->
@@ -2563,6 +2553,25 @@
                     <button class="onboarding-btn onboarding-btn-back" id="onboardingBack">Назад</button>
                     <button class="onboarding-btn onboarding-btn-next" id="onboardingNext">Далее</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка со списком врачей (открывается из вкладки Здоровье) -->
+    <div class="doctors-modal-overlay" id="doctorsModal" style="display: none;">
+        <div class="doctors-modal">
+            <div class="doctors-modal-header">
+                <h2 class="consultation-title">Наши врачи</h2>
+                <button class="doctors-modal-close" id="closeDoctorsModalBtn" aria-label="Закрыть список врачей">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 6L18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <p class="consultation-subtitle">Выберите специалиста, чтобы увидеть подробную информацию.</p>
+            <div class="doctors-list" id="doctorsModalList">
+                <!-- Врачи будут подгружены динамически -->
             </div>
         </div>
     </div>

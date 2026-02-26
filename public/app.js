@@ -3006,6 +3006,27 @@ document.addEventListener('click', (e) => {
     return;
   }
 
+  // Открытие модалки со списком врачей с вкладки "Здоровье"
+  if (e.target.closest('#openDoctorsModalBtn')) {
+    const modal = document.getElementById('doctorsModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.classList.add('visible');
+      loadDoctorsForModal().catch(err => console.warn('[doctors] modal load error:', err));
+    }
+    return;
+  }
+
+  // Закрытие модалки со списком врачей (по крестику или клику по фону)
+  if (e.target.closest('#closeDoctorsModalBtn') || (e.target.closest('#doctorsModal') && !e.target.closest('.doctors-modal'))) {
+    const modal = document.getElementById('doctorsModal');
+    if (modal) {
+      modal.classList.remove('visible');
+      modal.style.display = 'none';
+    }
+    return;
+  }
+
   // Новая кнопка "Список врачей" (всегда открывает вкладку со списком врачей, без проверки подписки)
   if (e.target.closest('.doctors-list-btn')) {
     showPage('consultation');
@@ -3935,17 +3956,16 @@ function typeMessage(text, callback) {
     }
   };
 
-// Загрузка списка врачей для вкладки "Консультация" (список врачей)
-async function loadDoctors() {
-  const list = document.getElementById('doctorsList');
+// Универсальная загрузка списка врачей в указанный контейнер
+async function loadDoctorsInto(containerId) {
+  const list = document.getElementById(containerId);
   if (!list) {
-    console.warn('[doctors] #doctorsList container not found in DOM');
+    console.warn('[doctors] container not found in DOM:', containerId);
     return;
   }
 
-  console.log('[doctors] loading doctors from /api/doctors...');
+  console.log('[doctors] loading doctors into', containerId);
 
-  // Плейсхолдер "идёт загрузка"
   list.innerHTML = `
     <div class="admin-loading">
       <div class="loading-spinner"></div>
@@ -3956,7 +3976,7 @@ async function loadDoctors() {
   try {
     let doctors = [];
 
-    // 1) Публичный эндпоинт /api/doctors (как и было изначально)
+    // 1) Публичный эндпоинт /api/doctors
     try {
       const ts = Date.now();
       const response = await fetch(`/api/doctors?_t=${ts}`, {
@@ -3979,11 +3999,10 @@ async function loadDoctors() {
       console.warn('[doctors] public /api/doctors failed:', e);
     }
 
-    // 2) Если публичный эндпоинт вернул пусто или не сработал,
-    //    пробуем ЗАГРУЗИТЬ ТАК ЖЕ, КАК В АДМИНКЕ: /api/admin?action=doctors
+    // 2) Фолбэк: загружаем как в админке через /api/admin?action=doctors
     if ((!Array.isArray(doctors) || doctors.length === 0) && window.Telegram?.WebApp?.initData) {
       try {
-        console.log('[doctors] fallback to /api/admin?action=doctors (same as admin panel)');
+        console.log('[doctors] fallback to /api/admin?action=doctors');
         const telegramWebAppData = window.Telegram.WebApp.initData;
         const ts = Date.now();
         const responseAdmin = await fetch(`/api/admin?action=doctors&_t=${ts}`, {
@@ -4012,9 +4031,9 @@ async function loadDoctors() {
       }
     }
 
-    renderDoctorsList(doctors);
+    renderDoctorsListInto(containerId, doctors);
   } catch (error) {
-    console.error('❌ [doctors] Error loading doctors for consultation:', error);
+    console.error('❌ [doctors] Error loading doctors:', error);
     list.innerHTML = `
       <div class="admin-error">
         Не удалось загрузить список врачей.<br>
@@ -4024,15 +4043,20 @@ async function loadDoctors() {
   }
 }
 
-function renderDoctorsList(doctors) {
-  const list = document.getElementById('doctorsList');
+// Старая функция-обёртка для страницы консультации (если она ещё используется)
+async function loadDoctors() {
+  return loadDoctorsInto('doctorsList');
+}
+
+function renderDoctorsListInto(containerId, doctors) {
+  const list = document.getElementById(containerId);
   if (!list) {
-    console.warn('[doctors] #doctorsList container not found when rendering');
+    console.warn('[doctors] render container not found:', containerId);
     return;
   }
 
   if (!Array.isArray(doctors) || doctors.length === 0) {
-    console.log('[doctors] empty doctors array, clearing list');
+    console.log('[doctors] empty doctors array, clearing', containerId);
     list.innerHTML = '';
     return;
   }
@@ -4116,24 +4140,31 @@ function renderDoctorsList(doctors) {
   });
 }
 
+// Удобная обёртка для модалки врачей
+async function loadDoctorsForModal() {
+  return loadDoctorsInto('doctorsModalList');
+}
+
 // Явно экспортируем функции в window, чтобы к ним
 // могла обращаться админка и другие части приложения
 if (typeof window !== 'undefined') {
   window.loadDoctors = loadDoctors;
-  window.renderDoctorsList = renderDoctorsList;
+  window.loadDoctorsInto = loadDoctorsInto;
+  window.loadDoctorsForModal = loadDoctorsForModal;
 }
 
 // Пробуем предзагрузить список врачей сразу при инициализации,
 // чтобы карточки уже были в DOM, когда пользователь откроет вкладку.
+// Предзагрузка врачей для модалки (если контейнер уже в DOM)
 try {
-  const doctorsListEl = document.getElementById('doctorsList');
-  if (doctorsListEl) {
-    loadDoctors().catch(err => {
-      console.warn('[doctors] initial load error:', err);
+  const doctorsModalListEl = document.getElementById('doctorsModalList');
+  if (doctorsModalListEl) {
+    loadDoctorsForModal().catch(err => {
+      console.warn('[doctors] initial modal load error:', err);
     });
   }
 } catch (e) {
-  console.warn('[doctors] initial load failed:', e);
+  console.warn('[doctors] initial modal load failed:', e);
 }
 
   typeChar();
