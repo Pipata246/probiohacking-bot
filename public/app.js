@@ -4032,60 +4032,12 @@ async function loadDoctorsInto(containerId) {
   }
 }
 
-// Загрузка врачей для вкладки "Врачи" (consultationPage) — как в админке
+// Загрузка врачей для пользовательской вкладки консультации.
+// Используем общий механизм loadDoctorsInto, который сначала берёт данные
+// из публичного эндпоинта /api/doctors (таблица doctors), а затем,
+// при необходимости, делает фолбэк на /api/admin?action=doctors.
 async function loadDoctors() {
-  const list = document.getElementById('doctorsList');
-  if (!list) {
-    console.warn('[doctors] #doctorsList container not found in DOM');
-    return;
-  }
-
-  console.log('[doctors] loading doctors from /api/admin?action=doctors...');
-
-  list.innerHTML = `
-    <div class="admin-loading">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Загрузка врачей...</div>
-    </div>
-  `;
-
-  try {
-    const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    const ts = Date.now();
-
-    const headers = {
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache'
-    };
-    if (telegramWebAppData) {
-      headers['X-Telegram-WebApp-Data'] = telegramWebAppData;
-    }
-
-    const response = await fetch(`/api/admin?action=doctors&_t=${ts}`, {
-      method: 'GET',
-      headers
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      console.error('[doctors] admin doctors bad response:', response.status, errorText);
-      throw new Error(errorText || `HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    const doctors = Array.isArray(data?.doctors) ? data.doctors : [];
-
-    console.log('[doctors] loaded doctors count:', doctors.length);
-    renderDoctorsListInto('doctorsList', doctors);
-  } catch (error) {
-    console.error('❌ [doctors] Error loading doctors:', error);
-    list.innerHTML = `
-      <div class="admin-error">
-        Не удалось загрузить список врачей.<br>
-        ${error.message || 'Попробуйте позже.'}
-      </div>
-    `;
-  }
+  return loadDoctorsInto('doctorsList');
 }
 
 function renderDoctorsListInto(containerId, doctors) {
