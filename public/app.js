@@ -4050,8 +4050,12 @@ function renderDoctorsListInto(containerId, doctors) {
   }
 
   if (!Array.isArray(doctors) || doctors.length === 0) {
-    console.log('[doctors] empty doctors array, clearing', containerId);
-    list.innerHTML = '';
+    console.log('[doctors] empty doctors array for', containerId);
+    list.innerHTML = `
+      <div class="admin-message">
+        Список врачей пока пуст. Врачи появятся здесь, когда вы добавите их через админку.
+      </div>
+    `;
     return;
   }
 
