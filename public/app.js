@@ -2673,12 +2673,15 @@ function updateAllNavigations() {
           shouldBeActive = (currentPage === 'diagnostics' || currentPage === 'recommendedTests' || isDiagnosticFormMode);
           break;
         case 2: // Здоровье
-          shouldBeActive = (currentPage === 'health' || currentPage === 'consultation');
+          shouldBeActive = (currentPage === 'health');
           break;
         case 3: // Дневник
           shouldBeActive = (currentPage === 'diary');
           break;
-        case 4: // База знаний
+        case 4: // Врачи
+          shouldBeActive = (currentPage === 'consultation');
+          break;
+        case 5: // База знаний
           shouldBeActive = (currentPage === 'knowledge');
           break;
       }
@@ -2920,7 +2923,10 @@ document.addEventListener('click', (e) => {
           showPage('diary');
         }
         break;
-      case 4: // База знаний
+      case 4: // Врачи
+        showPage('consultation');
+        break;
+      case 5: // База знаний
         showPage('knowledge');
         break;
     }
@@ -3020,14 +3026,9 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('.create-program-btn')) {
     const btn = e.target.closest('.create-program-btn');
 
-    // Кнопка на вкладке "Здоровье" в блоке куратора — открывает модалку со списком врачей
-    if (btn.closest('.health-page')) {
-      const modal = document.getElementById('doctorsModal');
-      if (modal) {
-        modal.style.display = 'flex';
-        modal.classList.add('visible');
-        loadDoctorsForModal().catch(err => console.warn('[doctors] modal load error:', err));
-      }
+    // Кнопка на вкладке "Здоровье" в блоке куратора — теперь просто открывает страницу врачей
+    if (btn.closest('.health-page') && btn.classList.contains('doctors-list-btn')) {
+      showPage('consultation');
       return;
     }
 
