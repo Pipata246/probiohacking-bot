@@ -3954,24 +3954,64 @@ async function loadDoctors() {
   `;
 
   try {
-    const response = await fetch('/api/doctors', {
-      method: 'GET',
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
+    let doctors = [];
 
-    if (!response.ok) {
-      const rawText = await response.text().catch(() => '');
-      console.error('[doctors] bad response', response.status, rawText);
-      throw new Error(rawText || `HTTP ${response.status}`);
+    // 1) Публичный эндпоинт /api/doctors (как и было изначально)
+    try {
+      const ts = Date.now();
+      const response = await fetch(`/api/doctors?_t=${ts}`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        const rawText = await response.text().catch(() => '');
+        console.warn('[doctors] public /api/doctors bad response', response.status, rawText);
+      } else {
+        const data = await response.json();
+        doctors = Array.isArray(data && data.doctors) ? data.doctors : [];
+        console.log(`[doctors] public api returned ${doctors.length} doctors`);
+      }
+    } catch (e) {
+      console.warn('[doctors] public /api/doctors failed:', e);
     }
 
-    const data = await response.json();
-    const doctors = Array.isArray(data && data.doctors) ? data.doctors : [];
+    // 2) Если публичный эндпоинт вернул пусто или не сработал,
+    //    пробуем ЗАГРУЗИТЬ ТАК ЖЕ, КАК В АДМИНКЕ: /api/admin?action=doctors
+    if ((!Array.isArray(doctors) || doctors.length === 0) && window.Telegram?.WebApp?.initData) {
+      try {
+        console.log('[doctors] fallback to /api/admin?action=doctors (same as admin panel)');
+        const telegramWebAppData = window.Telegram.WebApp.initData;
+        const ts = Date.now();
+        const responseAdmin = await fetch(`/api/admin?action=doctors&_t=${ts}`, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+            'X-Telegram-WebApp-Data': telegramWebAppData
+          }
+        });
 
-    console.log(`[doctors] loaded ${doctors.length} doctors`);
+        if (!responseAdmin.ok) {
+          const txt = await responseAdmin.text().catch(() => '');
+          console.warn('[doctors] admin /api/admin?action=doctors bad response', responseAdmin.status, txt);
+        } else {
+          const dataAdmin = await responseAdmin.json();
+          if (dataAdmin && dataAdmin.success && Array.isArray(dataAdmin.doctors)) {
+            doctors = dataAdmin.doctors;
+            console.log(`[doctors] admin api returned ${doctors.length} doctors`);
+          } else {
+            console.warn('[doctors] admin api returned no doctors or success=false');
+          }
+        }
+      } catch (e2) {
+        console.warn('[doctors] fallback admin request failed:', e2);
+      }
+    }
+
     renderDoctorsList(doctors);
   } catch (error) {
     console.error('❌ [doctors] Error loading doctors for consultation:', error);
