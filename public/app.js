@@ -3005,17 +3005,17 @@ document.addEventListener('click', (e) => {
     showMyTestsPage();
     return;
   }
+
+  // Новая кнопка "Список врачей" (всегда открывает вкладку со списком врачей, без проверки подписки)
+  if (e.target.closest('.doctors-list-btn')) {
+    showPage('consultation');
+    return;
+  }
   
-  // Кнопка создания персональной программы / консультации
+  // Кнопка создания персональной программы
   if (e.target.closest('.create-program-btn')) {
     const btn = e.target.closest('.create-program-btn');
     
-    // Кнопка на вкладке "Здоровье" («Получить консультацию») — открывает вкладку «Консультация»
-    if (btn.closest('.health-page')) {
-      showPage('consultation');
-      return;
-    }
-
     // Кнопка "Создать программу" на главной — просто переходим в раздел "Здоровье" с проверкой подписки
     if (btn.closest('.recommendations-card')) {
       checkSubscriptionBeforeAction(
