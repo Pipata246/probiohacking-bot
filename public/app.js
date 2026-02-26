@@ -3006,17 +3006,6 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-  // Открытие модалки со списком врачей с вкладки "Здоровье"
-  if (e.target.closest('#openDoctorsModalBtn')) {
-    const modal = document.getElementById('doctorsModal');
-    if (modal) {
-      modal.style.display = 'flex';
-      modal.classList.add('visible');
-      loadDoctorsForModal().catch(err => console.warn('[doctors] modal load error:', err));
-    }
-    return;
-  }
-
   // Закрытие модалки со списком врачей (по крестику или клику по фону)
   if (e.target.closest('#closeDoctorsModalBtn') || (e.target.closest('#doctorsModal') && !e.target.closest('.doctors-modal'))) {
     const modal = document.getElementById('doctorsModal');
@@ -3027,16 +3016,21 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-  // Новая кнопка "Список врачей" (всегда открывает вкладку со списком врачей, без проверки подписки)
-  if (e.target.closest('.doctors-list-btn')) {
-    showPage('consultation');
-    return;
-  }
-  
   // Кнопка создания персональной программы
   if (e.target.closest('.create-program-btn')) {
     const btn = e.target.closest('.create-program-btn');
-    
+
+    // Кнопка на вкладке "Здоровье" в блоке куратора — открывает модалку со списком врачей
+    if (btn.closest('.health-page')) {
+      const modal = document.getElementById('doctorsModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('visible');
+        loadDoctorsForModal().catch(err => console.warn('[doctors] modal load error:', err));
+      }
+      return;
+    }
+
     // Кнопка "Создать программу" на главной — просто переходим в раздел "Здоровье" с проверкой подписки
     if (btn.closest('.recommendations-card')) {
       checkSubscriptionBeforeAction(
