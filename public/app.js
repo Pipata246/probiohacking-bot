@@ -2678,10 +2678,7 @@ function updateAllNavigations() {
         case 3: // Дневник
           shouldBeActive = (currentPage === 'diary');
           break;
-        case 4: // Врачи
-          shouldBeActive = (currentPage === 'consultation');
-          break;
-        case 5: // База знаний
+        case 4: // База знаний
           shouldBeActive = (currentPage === 'knowledge');
           break;
       }
@@ -2923,10 +2920,7 @@ document.addEventListener('click', (e) => {
           showPage('diary');
         }
         break;
-      case 4: // Врачи
-        showPage('consultation');
-        break;
-      case 5: // База знаний
+      case 4: // База знаний
         showPage('knowledge');
         break;
     }
