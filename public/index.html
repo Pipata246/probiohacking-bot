@@ -675,15 +675,16 @@
                 <span></span>
             </button>
             <div class="avatar" id="healthAvatar">AM</div>
-            <!-- Кнопка-иконка для открытия списка врачей -->
-            <button class="icon-circle-btn" id="openDoctorsModalBtn" aria-label="Список врачей">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M12 8V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                    <circle cx="12" cy="16" r="0.9" fill="currentColor"/>
-                </svg>
-            </button>
         </header>
+
+        <!-- Кнопка-иконка списка врачей, не двигающая аватарку -->
+        <button class="icon-circle-btn doctors-fab" id="openDoctorsModalBtn" aria-label="Список врачей">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M12 8V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="12" cy="16" r="0.9" fill="currentColor"/>
+            </svg>
+        </button>
 
         <div class="health-content">
             <div class="priority-goals-card">

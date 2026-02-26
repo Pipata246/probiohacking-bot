@@ -4255,16 +4255,14 @@ body.chat-overlay-visible .search-container {
 
 /* Кнопка-иконка в хедере здоровья для открытия списка врачей */
 .icon-circle-btn {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  border: 1px solid rgba(254, 247, 236, 0.8);
-  background: rgba(254, 247, 236, 0.12);
+  border: 1px solid rgba(254, 247, 236, 0.9);
+  background: rgba(254, 247, 236, 0.16);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-left: auto;
-  margin-right: 16px;
   color: #FEF7EC;
   cursor: pointer;
 }
@@ -4274,7 +4272,15 @@ body.chat-overlay-visible .search-container {
 }
 
 .icon-circle-btn:active {
-  background: rgba(254, 247, 236, 0.22);
+  background: rgba(254, 247, 236, 0.26);
+}
+
+/* Плавающая кнопка врачей на странице Здоровье (не двигает аватарку) */
+.health-page .doctors-fab {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 44px) + 12px);
+  right: 20px;
+  z-index: 550;
 }
 
 /* Модалка со списком врачей над вкладкой Здоровье */
