@@ -3510,13 +3510,37 @@ function stripStructuredProgramJson(text) {
   const startIdx = text.indexOf(START);
   const endIdx = text.indexOf(END);
   
-  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
-    return text;
+  // 1) Основной вариант: вырезаем блок между явными маркерами
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    const before = text.slice(0, startIdx).trimEnd();
+    const after = text.slice(endIdx + END.length).trimStart();
+    return `${before}\n\n${after}`.trim();
   }
-  
-  const before = text.slice(0, startIdx).trimEnd();
-  const after = text.slice(endIdx + END.length).trimStart();
-  return `${before}\n\n${after}`.trim();
+
+  // 2) Фолбэк: эвристика, если маркеров нет, но в ответе остался JSON
+  try {
+    // Ищем последнее вхождение "health" или "diary" и ближайшую открывающую фигурную скобку перед ним
+    const healthPos = text.lastIndexOf('"health"');
+    const diaryPos = text.lastIndexOf('"diary"');
+    const anchor = Math.max(healthPos, diaryPos);
+
+    if (anchor !== -1) {
+      const beforeAnchor = text.slice(0, anchor);
+      const jsonStart = beforeAnchor.lastIndexOf('{');
+      const jsonEnd = text.lastIndexOf('}');
+
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        const before = text.slice(0, jsonStart).trimEnd();
+        const after = text.slice(jsonEnd + 1).trimStart();
+        return `${before}\n\n${after}`.trim();
+      }
+    }
+  } catch (e) {
+    console.warn('stripStructuredProgramJson heuristic failed:', e.message);
+  }
+
+  // Если ничего не нашли — возвращаем текст как есть
+  return text;
 }
 
 function addUserMessage(text) {
