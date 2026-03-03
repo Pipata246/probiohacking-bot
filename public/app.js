@@ -246,10 +246,27 @@ function showOnboardingStep(stepIndex) {
 
   // Подсветка элемента навигации
   if (step.highlightNav !== undefined) {
-    const navItems = document.querySelectorAll('.bottom-nav .nav-item');
-    if (navItems[step.highlightNav]) {
-      navItems[step.highlightNav].classList.add('onboarding-highlight');
-      highlightedElement = navItems[step.highlightNav];
+    // Ищем ТОЛЬКО видимую навигацию (на активной странице)
+    let visibleNav = null;
+    const allNavs = document.querySelectorAll('.bottom-nav');
+    allNavs.forEach(nav => {
+      if (visibleNav) return;
+      const rect = nav.getBoundingClientRect();
+      const style = window.getComputedStyle(nav);
+      if (rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== 'none' &&
+          style.visibility !== 'hidden') {
+        visibleNav = nav;
+      }
+    });
+
+    if (visibleNav) {
+      const navItems = visibleNav.querySelectorAll('.nav-item:not(.admin-nav-item)');
+      if (navItems[step.highlightNav]) {
+        navItems[step.highlightNav].classList.add('onboarding-highlight');
+        highlightedElement = navItems[step.highlightNav];
+      }
     }
   }
 
