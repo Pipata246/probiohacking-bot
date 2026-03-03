@@ -3517,6 +3517,12 @@ function stripStructuredProgramJson(text) {
     return `${before}\n\n${after}`.trim();
   }
 
+  // 1a) Если есть стартовый маркер, но нет финального (обрезанный JSON),
+  // просто обрезаем всё от маркера до конца текста.
+  if (startIdx !== -1 && (endIdx === -1 || endIdx <= startIdx)) {
+    return text.slice(0, startIdx).trimEnd();
+  }
+
   // 2) Фолбэк: эвристика, если маркеров нет, но в ответе остался JSON
   try {
     // Ищем последнее вхождение "health" или "diary" и ближайшую открывающую фигурную скобку перед ним
