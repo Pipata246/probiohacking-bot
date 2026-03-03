@@ -7998,10 +7998,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   // Функция для показа приложения (после клика на кнопку)
   async function showApp() {
     try {
+      // Сразу прячем обе кнопки на приветственном экране
+      if (splashStartBtn) splashStartBtn.style.display = 'none';
+      if (splashContinueWithInstructionBtn) splashContinueWithInstructionBtn.style.display = 'none';
+
       // Показываем лоадер если данные ещё загружаются
       if (!appDataLoaded && splashLoader) {
         splashLoader.style.display = 'block';
-        if (splashStartBtn) splashStartBtn.style.display = 'none';
       }
       
       // Ждём загрузки данных
