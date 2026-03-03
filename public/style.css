@@ -5427,6 +5427,10 @@ body.chat-overlay-visible .search-container {
 /* CTA блок */
 .splash-cta {
   margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .splash-cta-text {

@@ -223,11 +223,6 @@ function showOnboardingStep(stepIndex) {
     tooltip.style.display = 'block';
     // Сбрасываем классы позиции
     tooltip.classList.remove('position-center', 'position-above-nav', 'position-below-element');
-    
-    // Анимация смены контента
-    tooltip.classList.remove('slide-animate');
-    void tooltip.offsetWidth; // Триггер reflow для перезапуска анимации
-    tooltip.classList.add('slide-animate');
   }
   if (finalScreen) finalScreen.style.display = 'none';
 
