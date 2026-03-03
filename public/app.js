@@ -3621,6 +3621,10 @@ function addBotMessage(text) {
   const messageDiv = document.createElement('div');
   messageDiv.className = 'bot-message';
 
+  // Убираем служебный JSON с программой, если он есть,
+  // чтобы при загрузке истории чатов пользователь не видел его.
+  text = stripStructuredProgramJson(text);
+
   // Извлекаем и удаляем кнопки из текста
   const buttonRegex = /\[BUTTON:(DIAGNOSTIC|ANALYSIS):([^\]]+)\]/g;
   const buttons = [];
