@@ -2363,11 +2363,9 @@ function showPage(pageName) {
   const healthPage = document.getElementById('healthPage');
   const diaryPage = document.getElementById('diaryPage');
   const adminPage = document.getElementById('adminPage');
-  const consultationPage = document.getElementById('consultationPage');
   if (healthPage) allPages.push(healthPage);
   if (diaryPage) allPages.push(diaryPage);
   if (adminPage) allPages.push(adminPage);
-  if (consultationPage) allPages.push(consultationPage);
   
   allPages.forEach(page => {
     if (page && page.classList.contains('active')) {
@@ -2433,23 +2431,6 @@ function showPage(pageName) {
       updateDiagnosticsUI();
       console.log('🎯 Текущая страница установлена:', currentPage);
       break;
-    case 'consultation': {
-      const consultationPageEl = document.getElementById('consultationPage');
-      if (consultationPageEl) {
-        consultationPageEl.style.display = 'flex';
-        requestAnimationFrame(() => {
-          consultationPageEl.classList.add('active');
-        });
-      }
-      currentPage = 'consultation';
-      isChatMode = false;
-      isInRecommendedTests = false;
-      // Загружаем список врачей при открытии вкладки консультации
-      loadDoctors().catch(err => {
-        console.error('❌ Error loading doctors:', err);
-      });
-      break;
-    }
     case 'diary': {
       const diaryPage = document.getElementById('diaryPage');
       const diaryGate = document.getElementById('diaryGate');
@@ -3009,12 +2990,6 @@ document.addEventListener('click', (e) => {
   // Кнопка создания персональной программы
   if (e.target.closest('.create-program-btn')) {
     const btn = e.target.closest('.create-program-btn');
-
-    // Кнопка на вкладке "Здоровье" в блоке куратора — теперь просто открывает страницу врачей
-    if (btn.closest('.health-page') && btn.classList.contains('doctors-list-btn')) {
-      showPage('consultation');
-      return;
-    }
 
     // Кнопка "Создать программу" на главной — просто переходим в раздел "Здоровье" с проверкой подписки
     if (btn.closest('.recommendations-card')) {
@@ -3935,213 +3910,6 @@ function typeMessage(text, callback) {
     }
   };
 
-// Универсальная загрузка списка врачей в указанный контейнер.
-// 1) Публичный GET /api/doctors (для обычных пользователей)
-// 2) Фолбэк GET /api/admin?action=doctors (как в админке), если публичный вернул пусто
-async function loadDoctorsInto(containerId) {
-  const list = document.getElementById(containerId);
-  if (!list) {
-    console.warn('[doctors] container not found in DOM:', containerId);
-    return;
-  }
-
-  console.log('[doctors] loading doctors into', containerId);
-
-  list.innerHTML = `
-    <div class="admin-loading">
-      <div class="loading-spinner"></div>
-      <div class="loading-text">Загрузка врачей...</div>
-    </div>
-  `;
-
-  try {
-    let doctors = [];
-
-    // 1) Публичный эндпоинт /api/doctors
-    try {
-      const ts = Date.now();
-      const response = await fetch(`/api/doctors?_t=${ts}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-
-      if (!response.ok) {
-        const rawText = await response.text().catch(() => '');
-        console.warn('[doctors] public /api/doctors bad response', response.status, rawText);
-      } else {
-        const data = await response.json();
-        // поддерживаем как {success, doctors}, так и просто {doctors}
-        const listFromApi = Array.isArray(data?.doctors) ? data.doctors : [];
-        doctors = listFromApi;
-        console.log('[doctors] public api returned count:', doctors.length);
-      }
-    } catch (e) {
-      console.warn('[doctors] public /api/doctors failed:', e);
-    }
-
-    // 2) Фолбэк: загружаем как в админке через /api/admin?action=doctors
-    if ((!Array.isArray(doctors) || doctors.length === 0) && window.Telegram?.WebApp?.initData) {
-      try {
-        console.log('[doctors] fallback to /api/admin?action=doctors');
-        const telegramWebAppData = window.Telegram.WebApp.initData;
-
-        const responseAdmin = await fetch('/api/admin?action=doctors', {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
-          }
-        });
-
-        if (!responseAdmin.ok) {
-          const txt = await responseAdmin.text().catch(() => '');
-          console.warn('[doctors] admin /api/admin?action=doctors bad response', responseAdmin.status, txt);
-        } else {
-          const dataAdmin = await responseAdmin.json();
-          if (dataAdmin && dataAdmin.success && Array.isArray(dataAdmin.doctors)) {
-            doctors = dataAdmin.doctors;
-            console.log('[doctors] admin api returned count:', doctors.length);
-          } else {
-            console.warn('[doctors] admin api returned no doctors or success=false');
-          }
-        }
-      } catch (e2) {
-        console.warn('[doctors] fallback admin request failed:', e2);
-      }
-    }
-
-    renderDoctorsListInto(containerId, doctors);
-  } catch (error) {
-    console.error('❌ [doctors] Error loading doctors:', error);
-    list.innerHTML = `
-      <div class="admin-error">
-        Не удалось загрузить список врачей.<br>
-        ${error.message || 'Попробуйте позже.'}
-      </div>
-    `;
-  }
-}
-
-// Загрузка врачей для пользовательской вкладки консультации.
-// Используем общий механизм loadDoctorsInto, который делает
-// тот же запрос, что и админка: GET /api/admin?action=doctors.
-async function loadDoctors() {
-  return loadDoctorsInto('doctorsList');
-}
-
-function renderDoctorsListInto(containerId, doctors) {
-  const list = document.getElementById(containerId);
-  if (!list) {
-    console.warn('[doctors] render container not found:', containerId);
-    return;
-  }
-
-  if (!Array.isArray(doctors) || doctors.length === 0) {
-    console.log('[doctors] empty doctors array for', containerId);
-    list.innerHTML = `
-      <div class="admin-message">
-        Список врачей пока пуст. Врачи появятся здесь, когда вы добавите их через админку.
-      </div>
-    `;
-    return;
-  }
-
-  // Явно показываем, что врачи загружены, даже если стили карточек
-  // по какой-то причине не срабатывают.
-  list.innerHTML = `
-    <div class="admin-section-title" style="margin-bottom: 12px;">
-      Найдено врачей: ${doctors.length}
-    </div>
-  `;
-
-  doctors.forEach(doctor => {
-    const card = document.createElement('div');
-    card.className = 'doctor-card';
-    card.dataset.id = doctor.id;
-
-    const initials = (doctor.full_name || '')
-      .split(' ')
-      .filter(Boolean)
-      .map(part => part[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase() || 'Dr';
-
-    const aboutHtml = doctor.about
-      ? doctor.about.replace(/\n/g, '<br>')
-      : 'Описание пока не добавлено.';
-
-    card.innerHTML = `
-      <div class="doctor-header">
-        <div class="doctor-avatar"></div>
-        <div class="doctor-main">
-          <div class="doctor-name">${doctor.full_name || 'Врач'}</div>
-          <div class="doctor-meta">
-            ${doctor.specialization || 'Специалист'}
-            ${doctor.experience ? ' • ' + doctor.experience : ''}
-          </div>
-        </div>
-        <button class="doctor-expand-btn" type="button" aria-label="Подробнее о враче">
-          <svg class="doctor-icon-plus" width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <svg class="doctor-icon-minus" width="20" height="20" viewBox="0 0 20 20" fill="none" style="display: none;">
-            <path d="M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-      <div class="doctor-details" style="display: none;">
-        ${aboutHtml}
-      </div>
-    `;
-
-    const avatarEl = card.querySelector('.doctor-avatar');
-    if (avatarEl) {
-      if (doctor.avatar_url) {
-        avatarEl.style.backgroundImage = `url(${doctor.avatar_url})`;
-        avatarEl.textContent = '';
-      } else {
-        avatarEl.textContent = initials;
-      }
-    }
-
-    const expandBtn = card.querySelector('.doctor-expand-btn');
-    const detailsEl = card.querySelector('.doctor-details');
-    const plusIcon = card.querySelector('.doctor-icon-plus');
-    const minusIcon = card.querySelector('.doctor-icon-minus');
-
-    if (expandBtn && detailsEl && plusIcon && minusIcon) {
-      expandBtn.addEventListener('click', () => {
-        const isExpanded = card.classList.contains('expanded');
-        if (isExpanded) {
-          card.classList.remove('expanded');
-          detailsEl.style.display = 'none';
-          plusIcon.style.display = 'block';
-          minusIcon.style.display = 'none';
-        } else {
-          detailsEl.style.display = 'block';
-          card.classList.add('expanded');
-          plusIcon.style.display = 'none';
-          minusIcon.style.display = 'block';
-        }
-      });
-    }
-
-    list.appendChild(card);
-  });
-}
-
-// Явно экспортируем функции в window, чтобы к ним
-// могла обращаться админка и другие части приложения
-if (typeof window !== 'undefined') {
-  window.loadDoctors = loadDoctors;
-  window.loadDoctorsInto = loadDoctorsInto;
-}
-
   typeChar();
 }
 
@@ -4917,11 +4685,7 @@ async function loadAppData() {
   appDataPromise = Promise.all([
     loadPhotosFromSupabase().catch(e => console.warn('Photos load error:', e)),
     checkQuizStatus().catch(e => console.warn('Quiz status error:', e)),
-    loadActiveChat().catch(e => console.warn('Chat load error:', e)),
-    // Предзагружаем список врачей для вкладки консультации
-    (typeof loadDoctors === 'function'
-      ? loadDoctors().catch(e => console.warn('Doctors load error:', e))
-      : Promise.resolve())
+    loadActiveChat().catch(e => console.warn('Chat load error:', e))
     // Убрана предзагрузка истории чатов для ускорения
   ]);
   
@@ -9520,15 +9284,8 @@ function renderAdminDoctorsList(doctors) {
           throw new Error(result.error || 'Ошибка сохранения врача');
         }
 
-        // Перезагружаем списки
+        // Перезагружаем список врачей в админке
         await loadAdminDoctors();
-        if (typeof loadDoctors === 'function') {
-          try {
-            loadDoctors().catch(err => console.error('❌ Error reloading doctors after update:', err));
-          } catch (e) {
-            console.warn('loadDoctors is not available in this context');
-          }
-        }
       } catch (error) {
         console.error('❌ Error updating doctor:', error);
       } finally {
@@ -10080,14 +9837,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (aboutInput) aboutInput.value = '';
 
         await loadAdminDoctors();
-        // Обновляем список врачей на вкладке консультации, чтобы сразу увидеть изменения
-        if (typeof loadDoctors === 'function') {
-          try {
-            loadDoctors().catch(err => console.error('❌ Error reloading doctors after add:', err));
-          } catch (e) {
-            console.warn('loadDoctors is not available in this context');
-          }
-        }
       } catch (error) {
         console.error('❌ Error adding doctor:', error);
       } finally {
