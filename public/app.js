@@ -2363,9 +2363,11 @@ function showPage(pageName) {
   const healthPage = document.getElementById('healthPage');
   const diaryPage = document.getElementById('diaryPage');
   const adminPage = document.getElementById('adminPage');
+  const doctorsPage = document.getElementById('doctorsPage');
   if (healthPage) allPages.push(healthPage);
   if (diaryPage) allPages.push(diaryPage);
   if (adminPage) allPages.push(adminPage);
+  if (doctorsPage) allPages.push(doctorsPage);
   
   allPages.forEach(page => {
     if (page && page.classList.contains('active')) {
@@ -2431,6 +2433,21 @@ function showPage(pageName) {
       updateDiagnosticsUI();
       console.log('🎯 Текущая страница установлена:', currentPage);
       break;
+    case 'doctors': {
+      const doctorsPage = document.getElementById('doctorsPage');
+      if (doctorsPage) {
+        doctorsPage.style.display = 'flex';
+        requestAnimationFrame(() => {
+          doctorsPage.classList.add('active');
+        });
+      } else {
+        console.error('❌ Элемент doctorsPage НЕ НАЙДЕН!');
+      }
+      currentPage = 'doctors';
+      isChatMode = false;
+      isInRecommendedTests = false;
+      break;
+    }
     case 'diary': {
       const diaryPage = document.getElementById('diaryPage');
       const diaryGate = document.getElementById('diaryGate');
@@ -4751,6 +4768,9 @@ async function loadAppData() {
 let publicDoctorsLoaded = false;
 
 async function openPublicDoctorsSection() {
+  // Переходим на отдельную страницу со списком врачей
+  showPage('doctors');
+
   const section = document.getElementById('publicDoctorsSection');
   if (!section) {
     console.warn('[doctors] publicDoctorsSection not found');
