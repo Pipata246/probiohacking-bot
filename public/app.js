@@ -3006,16 +3006,6 @@ document.addEventListener('click', (e) => {
     return;
   }
 
-  // Закрытие модалки со списком врачей (по крестику или клику по фону)
-  if (e.target.closest('#closeDoctorsModalBtn') || (e.target.closest('#doctorsModal') && !e.target.closest('.doctors-modal'))) {
-    const modal = document.getElementById('doctorsModal');
-    if (modal) {
-      modal.classList.remove('visible');
-      modal.style.display = 'none';
-    }
-    return;
-  }
-
   // Кнопка создания персональной программы
   if (e.target.closest('.create-program-btn')) {
     const btn = e.target.closest('.create-program-btn');
@@ -4145,31 +4135,11 @@ function renderDoctorsListInto(containerId, doctors) {
   });
 }
 
-// Удобная обёртка для модалки врачей
-async function loadDoctorsForModal() {
-  return loadDoctorsInto('doctorsModalList');
-}
-
 // Явно экспортируем функции в window, чтобы к ним
 // могла обращаться админка и другие части приложения
 if (typeof window !== 'undefined') {
   window.loadDoctors = loadDoctors;
   window.loadDoctorsInto = loadDoctorsInto;
-  window.loadDoctorsForModal = loadDoctorsForModal;
-}
-
-// Пробуем предзагрузить список врачей сразу при инициализации,
-// чтобы карточки уже были в DOM, когда пользователь откроет вкладку.
-// Предзагрузка врачей для модалки (если контейнер уже в DOM)
-try {
-  const doctorsModalListEl = document.getElementById('doctorsModalList');
-  if (doctorsModalListEl) {
-    loadDoctorsForModal().catch(err => {
-      console.warn('[doctors] initial modal load error:', err);
-    });
-  }
-} catch (e) {
-  console.warn('[doctors] initial modal load failed:', e);
 }
 
   typeChar();
