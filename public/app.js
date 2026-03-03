@@ -2446,6 +2446,10 @@ function showPage(pageName) {
       currentPage = 'doctors';
       isChatMode = false;
       isInRecommendedTests = false;
+      // Обновляем аватарки (в том числе на странице врачей)
+      if (typeof forceUpdateAllAvatars === 'function') {
+        forceUpdateAllAvatars();
+      }
       break;
     }
     case 'diary': {
