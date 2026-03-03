@@ -4060,7 +4060,13 @@ function renderDoctorsListInto(containerId, doctors) {
     return;
   }
 
-  list.innerHTML = '';
+  // Явно показываем, что врачи загружены, даже если стили карточек
+  // по какой-то причине не срабатывают.
+  list.innerHTML = `
+    <div class="admin-section-title" style="margin-bottom: 12px;">
+      Найдено врачей: ${doctors.length}
+    </div>
+  `;
 
   doctors.forEach(doctor => {
     const card = document.createElement('div');
