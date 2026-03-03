@@ -5454,6 +5454,18 @@ body.chat-overlay-visible .search-container {
   background: #f5f5f5;
 }
 
+.splash-continue-link {
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: rgba(254, 247, 236, 0.95);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 
 @keyframes fadeInUp {
   0% {

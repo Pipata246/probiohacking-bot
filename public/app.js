@@ -7962,6 +7962,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   const mainApp = document.getElementById('mainApp');
   const splashStartBtn = document.getElementById('splashStartBtn');
   const splashLoader = document.getElementById('splashLoader');
+  const splashContinueWithInstructionBtn = document.getElementById('splashContinueWithInstructionBtn');
 
   // Загружаем данные в фоновом режиме
   let appDataLoaded = false;
@@ -8025,6 +8026,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     splashStartBtn.addEventListener('click', () => {
       console.log('🎯 Нажата кнопка "Получить консультацию"');
       showApp();
+    });
+  }
+
+  // Обработчик кнопки "Продолжить с инструкцией" на приветственном экране
+  if (splashContinueWithInstructionBtn) {
+    splashContinueWithInstructionBtn.addEventListener('click', async () => {
+      console.log('🎯 Нажата кнопка "Продолжить с инструкцией"');
+      // Сначала сразу открываем приложение
+      await showApp();
+      // И сразу запускаем инструкцию, без ожидания действий пользователя
+      try {
+        startOnboarding();
+      } catch (e) {
+        console.warn('Не удалось запустить инструкцию:', e);
+      }
     });
   }
   
