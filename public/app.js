@@ -3002,8 +3002,13 @@ document.addEventListener('click', (e) => {
       return;
     }
 
-    // Кнопка под ответом ИИ в чате — сохраняем программу в БД
-    createProgramFromDraft(btn);
+    // Кнопка под ответом ИИ в чате (в блоке status-recommendations) — сохраняем программу в БД
+    if (btn.closest('.status-recommendations')) {
+      createProgramFromDraft(btn);
+      return;
+    }
+
+    // Для всех остальных кнопок с классом create-program-btn ничего не делаем
     return;
   }
   
