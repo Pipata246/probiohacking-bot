@@ -3020,11 +3020,11 @@ document.addEventListener('click', (e) => {
       return;
     }
 
-    // Кнопка "Создать программу" на главной — просто переходим в раздел "Здоровье" с проверкой подписки
+    // Кнопка "Создать программу" на главной — переходим в раздел "Диагностика" с проверкой подписки
     if (btn.closest('.recommendations-card')) {
       checkSubscriptionBeforeAction(
         'openHealthFromMainCreateProgram',
-        () => showPage('health'),
+        () => showPage('diagnostics'),
         'Персональная программа',
         'Для доступа к персональной программе и дневнику оформите подписку в боте.'
       );
