@@ -3966,13 +3966,12 @@ async function loadDoctorsInto(containerId) {
 
   try {
     const telegramWebAppData = window.Telegram?.WebApp?.initData || null;
-    const ts = Date.now();
 
-    const response = await fetch(`/api/admin?action=doctors&_t=${ts}`, {
+    // Делаем тот же GET-запрос, что и админка:
+    // GET /api/admin?action=doctors с X-Telegram-WebApp-Data при наличии.
+    const response = await fetch('/api/admin?action=doctors', {
       method: 'GET',
       headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
         ...(telegramWebAppData && { 'X-Telegram-WebApp-Data': telegramWebAppData })
       }
     });
@@ -3983,7 +3982,11 @@ async function loadDoctorsInto(containerId) {
     }
 
     const data = await response.json();
-    const doctors = Array.isArray(data?.doctors) ? data.doctors : [];
+    if (!data.success) {
+      throw new Error(data.error || 'Ошибка загрузки врачей');
+    }
+
+    const doctors = Array.isArray(data.doctors) ? data.doctors : [];
 
     console.log('[doctors] admin api (user view) returned count:', doctors.length);
     renderDoctorsListInto(containerId, doctors);
@@ -3999,9 +4002,8 @@ async function loadDoctorsInto(containerId) {
 }
 
 // Загрузка врачей для пользовательской вкладки консультации.
-// Используем общий механизм loadDoctorsInto, который сначала берёт данные
-// из публичного эндпоинта /api/doctors (таблица doctors), а затем,
-// при необходимости, делает фолбэк на /api/admin?action=doctors.
+// Используем общий механизм loadDoctorsInto, который делает
+// тот же запрос, что и админка: GET /api/admin?action=doctors.
 async function loadDoctors() {
   return loadDoctorsInto('doctorsList');
 }
