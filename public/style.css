@@ -4253,6 +4253,12 @@ body.chat-overlay-visible .search-container {
   display: block;
 }
 
+/* Публичный список врачей на странице Здоровье */
+.health-doctors-section {
+  margin-top: 20px;
+}
+
+
 /* Кнопка-иконка в хедере здоровья для открытия списка врачей */
 .icon-circle-btn {
   width: 42px;

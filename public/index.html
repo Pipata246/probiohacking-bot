@@ -782,6 +782,15 @@
                 <button class="create-program-btn doctors-list-btn">Список врачей</button>
             </div>
 
+            <!-- Секция со списком врачей (открывается по кнопке "Список врачей") -->
+            <div class="health-doctors-section" id="publicDoctorsSection" style="display: none;">
+                <h3 class="consultation-title">Наши врачи</h3>
+                <p class="consultation-subtitle">Выберите специалиста, чтобы увидеть подробную информацию.</p>
+                <div class="doctors-list" id="publicDoctorsList">
+                    <!-- Список врачей будет подгружен динамически -->
+                </div>
+            </div>
+
             <!-- Кнопка повторного прохождения диагностики (показывается при quiz_completed=true) -->
             <div class="retake-diagnostic-card" id="retakeDiagnosticCard" style="display: none;">
                 <div class="retake-card-content">
