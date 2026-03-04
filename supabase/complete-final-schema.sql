@@ -599,6 +599,9 @@ BEGIN
   UPDATE public.users
   SET 
     subscription_active = false,
+    -- Если подписка истекла и не была продлена, очищаем дату начала,
+    -- чтобы при новом оформлении можно было записать актуальную дату старта
+    subscription_start_date = NULL,
     updated_at = now()
   WHERE 
     subscription_active = true
