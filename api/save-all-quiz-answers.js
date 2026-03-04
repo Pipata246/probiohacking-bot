@@ -54,18 +54,48 @@ module.exports = async function handler(req, res) {
       const completionDate = data?.quiz_completion_date;
       
       if (quizCompleted && completionDate) {
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const now = new Date();
         const quizDate = new Date(completionDate);
+
+        // Дата окончания актуальности диагностики = дата прохождения + 1 месяц
+        const expiryDate = new Date(quizDate);
+        expiryDate.setMonth(expiryDate.getMonth() + 1);
         
-        // Если прошёл месяц - сбрасываем статус
-        if (quizDate < oneMonthAgo) {
-          console.log('Quiz expired! Resetting status to FALSE');
-          
-          await supabase
-            .from('users')
-            .update({ quiz_completed: false })
-            .eq('telegram_id', user.id);
+        // Если срок истёк — полностью сбрасываем связанную диагностику и программу
+        if (expiryDate < now) {
+          console.log('Quiz expired! Resetting quiz, answers, program and diary for telegram_id:', user.id);
+
+          try {
+            // 1) Удаляем все ответы квиза пользователя
+            await supabase
+              .from('quiz_answers')
+              .delete()
+              .eq('telegram_id', user.id);
+
+            // 2) Удаляем персональную программу и дневник
+            await supabase
+              .from('health_programs')
+              .delete()
+              .eq('telegram_id', user.id);
+
+            await supabase
+              .from('diary_entries')
+              .delete()
+              .eq('telegram_id', user.id);
+
+            // 3) Сбрасываем статус квиза и программы у пользователя
+            await supabase
+              .from('users')
+              .update({ 
+                quiz_completed: false,
+                quiz_completion_date: null,
+                program_created: false,
+                updated_at: new Date().toISOString()
+              })
+              .eq('telegram_id', user.id);
+          } catch (resetError) {
+            console.error('Error while resetting expired quiz data:', resetError);
+          }
           
           quizCompleted = false;
         }

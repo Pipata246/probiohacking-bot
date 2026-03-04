@@ -36,10 +36,10 @@ module.exports = async (req, res) => {
 
     const telegramId = telegramUser.id;
 
-    // Ищем пользователя по telegram_id
+    // Ищем пользователя по telegram_id (нужны id и дата последней диагностики)
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id')
+      .select('id, quiz_completion_date')
       .eq('telegram_id', telegramId)
       .single();
 
@@ -106,10 +106,28 @@ module.exports = async (req, res) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      // По умолчанию — 30 дней, но если есть дата актуальной диагностики,
+      // ограничиваем расписание датой окончания её актуальности
+      let daysCount = 30;
+      if (user.quiz_completion_date) {
+        const quizDate = new Date(user.quiz_completion_date);
+        const expiryDate = new Date(quizDate);
+        expiryDate.setMonth(expiryDate.getMonth() + 1);
+
+        if (expiryDate >= today) {
+          const diffMs = expiryDate.getTime() - today.getTime();
+          // +1, чтобы включить последний день (до конца актуальности диагностики)
+          daysCount = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+        } else {
+          // На всякий случай: если диагностика уже не актуальна, не создаём записи
+          daysCount = 0;
+        }
+      }
+
       const rows = [];
 
-      // Создаём расписание на ближайшие 30 дней
-      for (let offset = 0; offset < 30; offset++) {
+      // Создаём расписание до конца актуальности диагностики (или на 30 дней, если даты нет)
+      for (let offset = 0; offset < daysCount; offset++) {
         const day = new Date(today);
         day.setDate(today.getDate() + offset);
         const dateStr = day.toISOString().slice(0, 10); // YYYY-MM-DD
