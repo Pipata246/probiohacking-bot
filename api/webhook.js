@@ -4,6 +4,8 @@ const { createClient } = require('@supabase/supabase-js');
 const token = process.env.BOT_TOKEN;
 // URL мини-аппа на нашем VPS-домене
 const miniAppUrl = process.env.MINI_APP_URL || 'https://probio-hacking.store';
+// URL публичной оферты (можно переопределить через env)
+const publicOfferUrl = process.env.PUBLIC_OFFER_URL || `${miniAppUrl}/offer.html`;
 
 // Создаем бота с опциями для serverless окружения
 const bot = new TelegramBot(token, { polling: false });
@@ -36,6 +38,9 @@ function getMainKeyboard() {
         [
           { text: '📖 Инструкция' },
           { text: '🚀 Открыть мини ап' }
+        ],
+        [
+          { text: 'ℹ️ Информация' }
         ]
       ],
       resize_keyboard: true,
@@ -413,6 +418,22 @@ module.exports = async (req, res) => {
 
           await bot.sendMessage(chatId, instructionMessage, {
             parse_mode: 'Markdown'
+          });
+          return res.status(200).json({ ok: true });
+        }
+
+        // Кнопка "Информация" — показываем ссылку на публичную оферту
+        if (text === 'ℹ️ Информация') {
+          const infoMessage = '📄 Публичная оферта сервиса PROBIOHACKING доступна по ссылке ниже.';
+
+          await bot.sendMessage(chatId, infoMessage, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: 'Открыть публичную оферту', url: publicOfferUrl }
+                ]
+              ]
+            }
           });
           return res.status(200).json({ ok: true });
         }
