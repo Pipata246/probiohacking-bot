@@ -338,10 +338,25 @@ module.exports = async (req, res) => {
         // Команда /start
         if (text === '/start') {
           const welcomeMessage = `🤖 PROBIOHACKING — ваш цифровой наставник по здоровью
-
+          
 Откройте Mini App для персональной диагностики и рекомендаций`;
+          
+          // Сообщение с inline‑кнопками (мини‑апп + публичная оферта)
+          await bot.sendMessage(chatId, welcomeMessage, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: '🚀 Открыть мини ап', web_app: { url: miniAppUrl } }
+                ],
+                [
+                  { text: '📄 Публичная оферта', url: publicOfferUrl }
+                ]
+              ]
+            }
+          });
 
-          await bot.sendMessage(chatId, welcomeMessage, getMainKeyboard());
+          // Отдельным сообщением включаем основное меню (reply‑клавиатура)
+          await bot.sendMessage(chatId, 'Выберите действие:', getMainKeyboard());
           return res.status(200).json({ ok: true });
         }
 
