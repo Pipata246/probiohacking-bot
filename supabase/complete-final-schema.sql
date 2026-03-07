@@ -272,6 +272,22 @@ CREATE TABLE IF NOT EXISTS public.diary_entries (
   CONSTRAINT diary_entries_pkey PRIMARY KEY (id)
 );
 
+-- Таблица ожидающих оплаты Robokassa (InvId → telegram_id, months для активации подписки после ResultURL)
+CREATE TABLE IF NOT EXISTS public.robokassa_payments (
+  inv_id bigint NOT NULL,
+  telegram_id bigint NOT NULL,
+  months integer NOT NULL,
+  out_sum numeric(10,2) NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  processed_at timestamp with time zone,
+  CONSTRAINT robokassa_payments_pkey PRIMARY KEY (inv_id)
+);
+
+-- Индекс для поиска необработанных платежей
+CREATE INDEX IF NOT EXISTS idx_robokassa_payments_processed ON public.robokassa_payments(processed_at) WHERE processed_at IS NULL;
+
+GRANT ALL ON public.robokassa_payments TO anon;
+
 -- Таблица ВРАЧИ: справочник специалистов для вкладки консультации
 CREATE TABLE IF NOT EXISTS public.doctors (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

@@ -37,6 +37,10 @@ app.all('/api/doctor-avatars', require('./api/doctor-avatars.js'));
 // SetWebhook — обычно вызывается вручную один раз
 app.all('/api/setWebhook', require('./api/setWebhook.js'));
 
+// Robokassa: создание ссылки на оплату и ResultURL
+app.post('/api/robokassa-create-payment', require('./api/robokassa-create-payment.js'));
+app.all('/api/robokassa-result', require('./api/robokassa-result.js'));
+
 // Статические файлы (Mini App)
 app.use(express.static(path.join(__dirname, 'public')));
 
