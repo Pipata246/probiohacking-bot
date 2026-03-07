@@ -83,24 +83,8 @@ async function getUserSubscriptionData(telegramId) {
   }
 }
 
-// Оплата через Robokassa: получаем ссылку на оплату (переадресация в браузер)
-async function getRobokassaPaymentUrl(telegramId, months) {
-  const baseUrl = process.env.MINI_APP_URL || 'https://probio-hacking.store';
-  const url = `${baseUrl.replace(/\/$/, '')}/api/robokassa-create-payment`;
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ telegramId, months })
-    });
-    const data = await res.json().catch(() => null);
-    if (res.ok && data && data.success && data.paymentUrl) return data.paymentUrl;
-    return null;
-  } catch (e) {
-    console.error('getRobokassaPaymentUrl error:', e);
-    return null;
-  }
-}
+// Оплата через Robokassa: генерация ссылки напрямую (без HTTP-запроса к себе)
+const { createPaymentLink } = require('../lib/robokassa.js');
 
 // Функция для форматирования информации о подписке
 function formatSubscriptionInfo(subData) {
@@ -181,7 +165,11 @@ module.exports = async (req, res) => {
           const periodText = period === 1 ? '1 месяц' : period === 3 ? '3 месяца' : '1 год';
           const telegramId = callback_query.from.id;
 
-          const paymentUrl = await getRobokassaPaymentUrl(telegramId, period);
+          const result = await createPaymentLink(telegramId, period);
+          const paymentUrl = result.paymentUrl || null;
+          if (result.error) {
+            console.error('Robokassa createPaymentLink:', result.error);
+          }
 
           if (paymentUrl) {
             await bot.answerCallbackQuery(callback_query.id, {
