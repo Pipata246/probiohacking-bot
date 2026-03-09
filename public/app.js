@@ -2428,49 +2428,107 @@ function showPage(pageName) {
         } else if (!isLoadingActiveChat && !isCreatingNewChat) {
           loadActiveChat();
         }
-        // После нажатия «Создать программу»: показываем анимированный индикатор «думает», затем описание программы
+        // После нажатия «Создать программу»: «Составляю программу» до первого чанка, затем стриминг текста как в обычном чате
         try {
           if (sessionStorage.getItem('showProgramDescriptionAfterQuiz') === '1') {
             sessionStorage.removeItem('showProgramDescriptionAfterQuiz');
-            setTimeout(function runProgramDescriptionInChat() {
+            setTimeout(function runProgramDescriptionStream() {
               const container = document.getElementById('chatMessages')?.querySelector('.chat-messages-container');
               if (!container) return;
               addBotTypingIndicator('Составляю программу');
-              const telegramWebAppData = window.Telegram?.WebApp?.initData || '';
+              var telegramWebAppData = window.Telegram?.WebApp?.initData || '';
               var controller = new AbortController();
               var timeoutId = setTimeout(function () { controller.abort(); }, 120000);
-              fetch('/api/program-description', {
+              fetch('/api/program-description-stream', {
                 headers: { 'X-Telegram-WebApp-Data': telegramWebAppData },
                 signal: controller.signal
-              })
-                .then(function (r) {
-                  clearTimeout(timeoutId);
-                  return r.json().then(function (data) {
-                    if (!r.ok) {
-                      var err = new Error(data && data.error ? data.error : 'Ошибка ' + r.status);
-                      err.data = data;
-                      throw err;
-                    }
-                    return data;
+              }).then(function (response) {
+                clearTimeout(timeoutId);
+                if (!response.ok) {
+                  return response.json().then(function (data) {
+                    removeTypingIndicator();
+                    addBotMessage('Не удалось составить программу. ' + (data && data.error ? data.error : 'Ошибка ' + response.status));
+                  }).catch(function () {
+                    removeTypingIndicator();
+                    addBotMessage('Не удалось составить программу. Ошибка ' + response.status);
                   });
-                })
-                .then(function (data) {
+                }
+                var contentType = (response.headers.get('content-type') || '').toLowerCase();
+                if (!contentType.includes('text/event-stream')) {
                   removeTypingIndicator();
-                  if (data && data.description) {
-                    addBotMessage(data.description);
-                  } else {
-                    addBotMessage('Не удалось загрузить описание программы. ' + (data && data.error ? data.error : ''));
-                  }
-                })
-                .catch(function (err) {
-                  clearTimeout(timeoutId);
-                  removeTypingIndicator();
-                  var msg = (err && err.message) ? err.message : 'Не удалось загрузить описание программы.';
-                  if (err && err.name === 'AbortError') {
-                    msg = 'Запрос занял слишком много времени. Откройте раздел «Здоровье» — программа может быть уже сохранена.';
-                  }
-                  addBotMessage(msg);
-                });
+                  addBotMessage('Неверный ответ сервера.');
+                  return;
+                }
+                var reader = response.body.getReader();
+                var decoder = new TextDecoder();
+                var buffer = '';
+                var fullText = '';
+                var streamBubble = null;
+                var firstChunk = true;
+
+                function processLine(line) {
+                  if (!line.startsWith('data: ')) return;
+                  var jsonStr = line.slice(6).trim();
+                  if (!jsonStr) return;
+                  try {
+                    var parsed = JSON.parse(jsonStr);
+                    if (parsed.error) {
+                      removeTypingIndicator();
+                      if (streamBubble) streamBubble.remove();
+                      addBotMessage('Ошибка: ' + parsed.error);
+                      return;
+                    }
+                    if (parsed.chunk) {
+                      if (firstChunk) {
+                        firstChunk = false;
+                        removeTypingIndicator();
+                        streamBubble = createStreamingBubble();
+                      }
+                      fullText += parsed.chunk;
+                      updateStreamingBubble(streamBubble, fullText);
+                      chatMessagesScrollToBottom();
+                    }
+                    if (parsed.done && streamBubble) {
+                      finalizeStreamingBubble(streamBubble);
+                      chatMessagesScrollToBottom();
+                    }
+                  } catch (e) {}
+                }
+
+                function readNext() {
+                  reader.read().then(function (result) {
+                    if (result.done) {
+                      if (buffer.trim()) {
+                        var lines = buffer.split('\n');
+                        for (var i = 0; i < lines.length; i++) processLine(lines[i]);
+                      }
+                      if (streamBubble) finalizeStreamingBubble(streamBubble);
+                      chatMessagesScrollToBottom();
+                      return;
+                    }
+                    buffer += decoder.decode(result.value, { stream: true });
+                    var lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    for (var i = 0; i < lines.length; i++) processLine(lines[i]);
+                    return readNext();
+                  }).catch(function (err) {
+                    if (err.name !== 'AbortError') {
+                      removeTypingIndicator();
+                      if (streamBubble) streamBubble.remove();
+                      addBotMessage(err && err.message ? err.message : 'Ошибка загрузки.');
+                    }
+                  });
+                }
+                readNext();
+              }).catch(function (err) {
+                clearTimeout(timeoutId);
+                removeTypingIndicator();
+                var msg = (err && err.message) ? err.message : 'Не удалось составить программу.';
+                if (err && err.name === 'AbortError') {
+                  msg = 'Запрос занял слишком много времени. Откройте раздел «Здоровье» — программа может быть уже сохранена.';
+                }
+                addBotMessage(msg);
+              });
             }, 800);
           }
         } catch (e) {

@@ -255,3 +255,6 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ success: false, error: msg });
   }
 };
+
+module.exports.loadDiagnosticAndProgram = loadDiagnosticAndProgram;
+module.exports.buildDescriptionPrompt = buildDescriptionPrompt;
