@@ -460,6 +460,25 @@ async function handleAnalysisPhotos(req, res) {
       console.log('✅ analyses_uploaded status set to FALSE (no photos left)');
     }
 
+    // Если квиз пройден, после удаления фото пересоздаём программу
+    try {
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('quiz_completed')
+        .eq('telegram_id', telegramId)
+        .single();
+      if (userRow && userRow.quiz_completed) {
+        try {
+          const { generateProgramForUser } = require('../lib/programGenerator.js');
+          generateProgramForUser(telegramId);
+        } catch (e) {
+          console.error('Error starting programGenerator after analysis delete:', e);
+        }
+      }
+    } catch (e) {
+      console.error('Error checking quiz_completed after analysis delete:', e);
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Фото успешно удалено',
