@@ -5589,24 +5589,36 @@ function createDiagnosticFormUI() {
             console.log('🗑️ Удаляем форму...');
             diagnosticFormOverlay.remove();
             document.body.classList.remove('chat-overlay-visible');
+
+            // После завершения диагностики загружаем актуальную программу и дневник
+            try {
+              await loadHealthProgramFromApi();
+            } catch (e) {
+              console.warn('Health program reload error after diagnostic:', e);
+            }
+            try {
+              await loadDiaryFromApi();
+            } catch (e) {
+              console.warn('Diary reload error after diagnostic:', e);
+            }
             
             console.log('✅ Показываем Telegram уведомление...');
             if (window.Telegram?.WebApp) {
-              // Показываем уведомление и переходим на главную после нажатия "Хорошо"
+              // Уведомление о том, что программа составлена на основе результатов квиза
               window.Telegram.WebApp.showAlert(
-                'Спасибо! Ваши ответы сохранены.\nТеперь ИИ будет давать персонализированные рекомендации.',
+                'Диагностика завершена.\nПерсональная программа составлена на основе ваших ответов и доступна в разделе «Здоровье».',
                 () => {
-                  console.log('🏠 Переходим на главную страницу...');
-                  showPage('main'); // Переход на главную
+                  console.log('💚 Переходим в раздел Здоровье...');
+                  showPage('health'); // Переход в «Здоровье»
                 }
               );
             } else {
               // Fallback для тестирования
-              console.log('🏠 Переходим на главную страницу...');
-              showPage('main');
+              console.log('💚 Переходим в раздел Здоровье...');
+              showPage('health');
             }
             
-            console.log('📊 Диагностика завершена и сохранена в БД');
+            console.log('📊 Диагностика завершена, программа пересчитана и сохранена в БД');
           } else {
             // Если сохранение не удалось, показываем ошибку
             console.error('❌ Ошибка при сохранении результатов квиза');
