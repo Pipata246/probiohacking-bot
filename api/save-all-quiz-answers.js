@@ -1,5 +1,4 @@
 const { createClient } = require('@supabase/supabase-js');
-const { generateProgramForUser } = require('../lib/programGenerator.js');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -305,12 +304,7 @@ module.exports = async function handler(req, res) {
     
     console.log('🎉 FINAL SUCCESS RESPONSE:', finalResponse);
 
-    // Автогенерация программы после успешного квиза — ждём завершения перед ответом
-    try {
-      await generateProgramForUser(telegramId);
-    } catch (e) {
-      console.error('Error running programGenerator after quiz:', e);
-    }
+    // Программа создаётся в чате при запросе описания (/api/program-description), не здесь
 
     return res.json(finalResponse);
 

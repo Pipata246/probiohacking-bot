@@ -2032,6 +2032,16 @@ body.chat-overlay-visible .search-container {
    align-items: center;
  }
 
+ /* Бегающие точки — индикатор «думает» */
+ .typing-dots-animated .typing-text {
+   animation: typing-dots-pulse 1.2s ease-in-out infinite;
+ }
+
+ @keyframes typing-dots-pulse {
+   0%, 100% { opacity: 1; }
+   50% { opacity: 0.75; }
+ }
+
  .ai-actions {
    margin-top: 12px;
    width: 100%;

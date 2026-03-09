@@ -2428,23 +2428,19 @@ function showPage(pageName) {
         } else if (!isLoadingActiveChat && !isCreatingNewChat) {
           loadActiveChat();
         }
-        // После нажатия «Создать программу» в конце квиза — показать описание программы от ИИ (фитотерапевт, блоки + таблица)
+        // После нажатия «Создать программу»: показываем анимированный индикатор «думает», затем описание программы
         try {
           if (sessionStorage.getItem('showProgramDescriptionAfterQuiz') === '1') {
             sessionStorage.removeItem('showProgramDescriptionAfterQuiz');
-            // Даём loadActiveChat/loadChatMessages время подгрузить историю, затем добавляем описание в конец чата
             setTimeout(function runProgramDescriptionInChat() {
               const container = document.getElementById('chatMessages')?.querySelector('.chat-messages-container');
               if (!container) return;
-              addBotMessage('Получил ваши диагностические данные. Составляю описание персональной программы…');
+              addBotTypingIndicator('Составляю программу');
               const telegramWebAppData = window.Telegram?.WebApp?.initData || '';
               fetch('/api/program-description', { headers: { 'X-Telegram-WebApp-Data': telegramWebAppData } })
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
-                  var lastBot = container.querySelector('.bot-message:last-of-type');
-                  if (lastBot && lastBot.querySelector('.message-text') && lastBot.querySelector('.message-text').textContent.indexOf('Составляю описание') !== -1) {
-                    lastBot.remove();
-                  }
+                  removeTypingIndicator();
                   if (data && data.description) {
                     addBotMessage(data.description);
                   } else {
@@ -2452,10 +2448,7 @@ function showPage(pageName) {
                   }
                 })
                 .catch(function () {
-                  var lastBot = container.querySelector('.bot-message:last-of-type');
-                  if (lastBot && lastBot.querySelector('.message-text') && lastBot.querySelector('.message-text').textContent.indexOf('Составляю описание') !== -1) {
-                    lastBot.remove();
-                  }
+                  removeTypingIndicator();
                   addBotMessage('Не удалось загрузить описание программы. Попробуйте открыть раздел «Здоровье».');
                 });
             }, 800);
@@ -3650,7 +3643,7 @@ function addBotMessageWithButton(text, buttonText, buttonAction) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function addBotTypingIndicator() {
+function addBotTypingIndicator(customMessage) {
   const chatMessages = document.getElementById('chatMessages');
   if (!chatMessages) {
     console.error('❌ addBotTypingIndicator: chatMessages not found');
@@ -3663,14 +3656,14 @@ function addBotTypingIndicator() {
     return false;
   }
   
-  // Удаляем индикатор загрузки если есть
   const loadingOverlay = container.querySelector('.chat-loading-overlay');
   if (loadingOverlay) {
     loadingOverlay.remove();
   }
   
+  const baseText = customMessage && String(customMessage).trim() ? String(customMessage).trim() : 'Анализируем ваши данные';
   const messageDiv = document.createElement('div');
-  messageDiv.className = 'bot-message typing-indicator';
+  messageDiv.className = 'bot-message typing-indicator typing-dots-animated';
   messageDiv.id = 'typingIndicator';
   messageDiv.innerHTML = `
     <div class="bot-avatar">
@@ -3682,7 +3675,7 @@ function addBotTypingIndicator() {
       </svg>
     </div>
     <div class="message-bubble">
-      <div class="typing-text" id="typingTextAnimated">Анализируем ваши данные.</div>
+      <div class="typing-text" id="typingTextAnimated">${baseText}.</div>
       <div class="message-text" id="typingText" style="display:none;"></div>
       <div class="ai-actions" id="typingActions" style="display:none;"></div>
     </div>
@@ -3690,21 +3683,20 @@ function addBotTypingIndicator() {
   container.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   
-  // Анимация точек в тексте
-  let dotCount = 0;
+  let dotCount = 1;
   const typingTextEl = messageDiv.querySelector('#typingTextAnimated');
   const typingInterval = setInterval(() => {
     if (!typingTextEl || !document.getElementById('typingIndicator')) {
       clearInterval(typingInterval);
       return;
     }
-    dotCount = (dotCount + 1) % 4; // 0, 1, 2, 3 точки
+    dotCount = (dotCount % 3) + 1; // 1, 2, 3 точки — бегающие
     const dots = '.'.repeat(dotCount);
-    typingTextEl.textContent = `Анализируем ваши данные${dots}`;
-  }, 500);
+    typingTextEl.textContent = baseText + dots;
+  }, 400);
   
-  // Сохраняем interval ID для очистки при удалении
   messageDiv.dataset.typingInterval = typingInterval;
+  messageDiv.dataset.typingBaseText = baseText;
   
   return true;
 }
@@ -5624,28 +5616,16 @@ function createDiagnosticFormUI() {
             diagnosticFormOverlay.remove();
             document.body.classList.remove('chat-overlay-visible');
 
-            // После завершения диагностики загружаем актуальную программу и дневник
-            try {
-              await loadHealthProgramFromApi();
-            } catch (e) {
-              console.warn('Health program reload error after diagnostic:', e);
-            }
-            try {
-              await loadDiaryFromApi();
-            } catch (e) {
-              console.warn('Diary reload error after diagnostic:', e);
-            }
-            
-            // После «Создать программу» перебрасываем в чат — ИИ опишет программу по блокам и таблице
+            // Только ответы сохранены. Программа будет составлена в чате после закрытия уведомления.
             try {
               sessionStorage.setItem('showProgramDescriptionAfterQuiz', '1');
             } catch (e) {}
-            console.log('✅ Показываем уведомление и переходим в чат...');
+            console.log('✅ Показываем уведомление, затем переход в чат...');
             if (window.Telegram?.WebApp) {
               window.Telegram.WebApp.showAlert(
-                'Диагностика завершена.\nПерсональная программа составлена. Открываю чат с описанием программы.',
+                'Ваши ответы сохранены. Закройте уведомление, чтобы составить программу.',
                 () => {
-                  console.log('💚 Переходим в чат для описания программы...');
+                  console.log('💚 Переходим в чат для составления программы...');
                   showPage('chat');
                 }
               );
@@ -5654,7 +5634,7 @@ function createDiagnosticFormUI() {
               showPage('chat');
             }
             
-            console.log('📊 Диагностика завершена, программа пересчитана и сохранена в БД');
+            console.log('📊 Ответы квиза сохранены в БД');
           } else {
             // Если сохранение не удалось, показываем ошибку
             console.error('❌ Ошибка при сохранении результатов квиза');

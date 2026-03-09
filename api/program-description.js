@@ -1,9 +1,10 @@
 /**
- * API: текст описания программы для чата (фитотерапевт, по блокам + таблица).
- * Вызывается только после нажатия «Создать программу» и редиректа в чат.
+ * API: составление программы в БД (здоровье + дневник до окончания квиза) и текст описания для чата.
+ * Вызывается при открытии чата после нажатия «Создать программу»: сначала создаёт программу, затем описание.
  */
 const https = require('https');
 const { createClient } = require('@supabase/supabase-js');
+const { generateProgramForUser } = require('../lib/programGenerator.js');
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
@@ -220,6 +221,14 @@ module.exports = async function handler(req, res) {
     const telegramId = user.id;
     if (!telegramId) {
       return res.status(401).json({ success: false, error: 'Invalid user' });
+    }
+
+    // Сначала создаём и сохраняем программу и дневник в БД (здоровье + дневник до окончания квиза)
+    try {
+      await generateProgramForUser(telegramId);
+    } catch (e) {
+      console.error('program-description: generateProgramForUser error:', e);
+      return res.status(500).json({ success: false, error: 'Не удалось составить программу в БД' });
     }
 
     const data = await loadDiagnosticAndProgram(telegramId);
