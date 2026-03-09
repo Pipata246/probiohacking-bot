@@ -2432,6 +2432,7 @@ function showPage(pageName) {
         try {
           if (sessionStorage.getItem('showProgramDescriptionAfterQuiz') === '1') {
             sessionStorage.removeItem('showProgramDescriptionAfterQuiz');
+            // Задержка, чтобы loadActiveChat успел подгрузить историю; индикатор не снимем до появления первого символа ответа
             setTimeout(function runProgramDescriptionStream() {
               const container = document.getElementById('chatMessages')?.querySelector('.chat-messages-container');
               if (!container) return;
@@ -2479,14 +2480,17 @@ function showPage(pageName) {
                       return;
                     }
                     if (parsed.chunk) {
+                      fullText += parsed.chunk;
                       if (firstChunk) {
                         firstChunk = false;
-                        removeTypingIndicator();
                         streamBubble = createStreamingBubble();
+                        updateStreamingBubble(streamBubble, fullText);
+                        chatMessagesScrollToBottom();
+                        removeTypingIndicator();
+                      } else {
+                        updateStreamingBubble(streamBubble, fullText);
+                        chatMessagesScrollToBottom();
                       }
-                      fullText += parsed.chunk;
-                      updateStreamingBubble(streamBubble, fullText);
-                      chatMessagesScrollToBottom();
                     }
                     if (parsed.done && streamBubble) {
                       finalizeStreamingBubble(streamBubble);
@@ -2529,7 +2533,7 @@ function showPage(pageName) {
                 }
                 addBotMessage(msg);
               });
-            }, 800);
+            }, 1500);
           }
         } catch (e) {
           console.warn('showProgramDescriptionAfterQuiz check failed:', e);
