@@ -1514,8 +1514,8 @@ function sendChatMessage(message) {
     return;
   }
   pendingAiMessages.push(trimmed);
-  // 🚀 Показываем выбор режима вместо сразу обработки
-  showResponseModeSelector();
+  // Сразу отправляем сообщение в ИИ в едином режиме (без выбора пользователя)
+  processAiQueue();
 }
 
 // Создание нового чата (становится активным)
