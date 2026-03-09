@@ -7509,46 +7509,83 @@ function getDayKey(dayElement) {
   return dayElement.getAttribute('data-date');
 }
 
+// Парсинг notes в формате "Дозировка: ... Цель: ... Условия: ..."
+function parseDiaryNotes(notes) {
+  if (!notes || typeof notes !== 'string') return null;
+  var s = notes.trim();
+  var dosage = '';
+  var purpose = '';
+  var conditions = '';
+  var idxGoal = s.indexOf('Цель:');
+  var idxCond = s.indexOf('Условия:');
+  if (idxGoal !== -1) {
+    dosage = s.slice(0, idxGoal).replace(/^Дозировка:\s*/i, '').trim();
+    if (idxCond !== -1 && idxCond > idxGoal) {
+      purpose = s.slice(idxGoal + 5, idxCond).trim();
+      conditions = s.slice(idxCond + 9).trim();
+    } else {
+      purpose = s.slice(idxGoal + 5).trim();
+    }
+  } else if (idxCond !== -1) {
+    dosage = s.slice(0, idxCond).replace(/^Дозировка:\s*/i, '').trim();
+    conditions = s.slice(idxCond + 9).trim();
+  } else {
+    return null;
+  }
+  if (!dosage && !purpose && !conditions) return null;
+  return { dosage: dosage, purpose: purpose, conditions: conditions };
+}
+
 // Функция для загрузки записей выбранного дня
 function loadDayEntries(dayKey) {
   const entriesContainer = document.querySelector('.diary-entries');
   const entries = diaryData[dayKey] || [];
-  
   entriesContainer.innerHTML = '';
-  
-  entries.forEach(entry => {
-    const entryElement = document.createElement('div');
-    entryElement.className = 'diary-entry';
-    entryElement.setAttribute('data-entry-id', entry.id);
-    
-    // В режиме редактирования добавляем простой синий крестик
-    if (isEditMode) {
-      entryElement.innerHTML = `
-        <span class="entry-time">${entry.time}</span>
-        <span class="entry-text">${entry.text}</span>
-        <span class="delete-entry-x" onclick="confirmDeleteEntry('${entry.id}')">×</span>
-      `;
-      
-      // Добавляем обработчик клика для обмена местами
-      entryElement.addEventListener('click', function(e) {
-        // Если кликнули по крестику - не обрабатываем
-        if (e.target.closest('.delete-entry-x')) {
-          return;
-        }
-        handleEntryClick(this);
-      });
-    } else {
-      entryElement.innerHTML = `
-        <span class="entry-time">${entry.time}</span>
-        <span class="entry-text">${entry.text}</span>
-      `;
-    }
-    
-    entriesContainer.appendChild(entryElement);
-  });
-  
-  // Обновляем заголовок
+
+  var hasStructured = entries.some(function (e) { return parseDiaryNotes(e.notes); });
+
+  if (hasStructured && entries.length > 0 && !isEditMode) {
+    var tableWrap = document.createElement('div');
+    tableWrap.className = 'diary-table-wrap';
+    tableWrap.innerHTML = '<table class="diary-table"><thead><tr><th>Время</th><th>Название</th><th>Дозировка и схема</th><th>Цель и обоснование</th><th>Важные условия</th></tr></thead><tbody></tbody></table>';
+    var tbody = tableWrap.querySelector('tbody');
+    entries.forEach(function (entry) {
+      var parsed = parseDiaryNotes(entry.notes);
+      var row = document.createElement('tr');
+      row.setAttribute('data-entry-id', entry.id);
+      if (parsed) {
+        row.innerHTML = '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name">' + escapeHtml(entry.text) + '</td><td class="diary-dosage">' + escapeHtml(parsed.dosage) + '</td><td class="diary-purpose">' + escapeHtml(parsed.purpose) + '</td><td class="diary-conditions">' + escapeHtml(parsed.conditions) + '</td>';
+      } else {
+        row.innerHTML = '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name" colspan="4">' + escapeHtml(entry.text) + (entry.notes ? '<br><span class="diary-notes-plain">' + escapeHtml(entry.notes) + '</span>' : '') + '</td>';
+      }
+      tbody.appendChild(row);
+    });
+    entriesContainer.appendChild(tableWrap);
+  } else {
+    entries.forEach(function (entry) {
+      var entryElement = document.createElement('div');
+      entryElement.className = 'diary-entry';
+      entryElement.setAttribute('data-entry-id', entry.id);
+      if (isEditMode) {
+        entryElement.innerHTML = '<span class="entry-time">' + escapeHtml(entry.time) + '</span><span class="entry-text">' + escapeHtml(entry.text) + '</span><span class="delete-entry-x" onclick="confirmDeleteEntry(\'' + escapeHtml(entry.id) + '\')">×</span>';
+        entryElement.addEventListener('click', function (e) {
+          if (e.target.closest('.delete-entry-x')) return;
+          handleEntryClick(this);
+        });
+      } else {
+        entryElement.innerHTML = '<span class="entry-time">' + escapeHtml(entry.time) + '</span><span class="entry-text">' + escapeHtml(entry.text) + '</span>';
+      }
+      entriesContainer.appendChild(entryElement);
+    });
+  }
+
   updateEntriesTitle(dayKey);
+}
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  var s = String(str);
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // Функция для обновления заголовка записей

@@ -4818,6 +4818,64 @@ body.chat-overlay-visible .search-container {
   background: rgba(107, 114, 128, 0.5);
 }
 
+/* Табличный вид дневника (Время | Название | Дозировка | Цель | Условия) */
+.diary-table-wrap {
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.diary-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: clamp(11px, 2.6vw, 13px);
+  font-family: 'Inter', sans-serif;
+}
+
+.diary-table th,
+.diary-table td {
+  padding: 8px 6px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(107, 114, 128, 0.15);
+}
+
+.diary-table th {
+  font-weight: 600;
+  color: #4A8B6C;
+  background: rgba(74, 139, 108, 0.08);
+  white-space: nowrap;
+}
+
+.diary-table td.diary-time {
+  color: #6B7280;
+  font-weight: 500;
+  white-space: nowrap;
+  width: 52px;
+}
+
+.diary-table td.diary-name {
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.diary-table td.diary-dosage,
+.diary-table td.diary-purpose,
+.diary-table td.diary-conditions {
+  color: #374151;
+  line-height: 1.35;
+}
+
+.diary-table tr:hover td {
+  background: rgba(107, 114, 128, 0.04);
+}
+
+.diary-notes-plain {
+  font-size: 0.95em;
+  color: #6B7280;
+}
+
 .diary-entry {
   display: flex;
   align-items: center;
