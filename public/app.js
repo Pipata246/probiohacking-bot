@@ -1289,109 +1289,14 @@ function showResponseModeSelector() {
     return;
   }
 
-  // Проверяем если уже есть selector
-  if (container.querySelector('.response-mode-selector')) {
-    console.log('Mode selector already visible');
-    return;
-  }
-
-  // Создаём контейнер для сообщения с кнопками
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'bot-message';
-  messageDiv.innerHTML = `
-    <div class="bot-avatar">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="9" fill="#4A8B6C"/>
-        <path d="M9 11C9 11 10.5 9.5 12 9.5C13.5 9.5 15 11 15 11M9 15C9 15 10.5 13.5 12 13.5C13.5 13.5 15 15 15 15" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="10" cy="11" r="0.5" fill="white"/>
-        <circle cx="14" cy="11" r="0.5" fill="white"/>
-      </svg>
-    </div>
-    <div class="message-bubble">
-      <div class="response-mode-selector">
-        <button class="mode-btn-compact quick-mode-btn" onclick="selectResponseMode('quick')">
-          ⚡ Краткий ответ
-        </button>
-        <button class="mode-btn-compact detailed-mode-btn" onclick="selectResponseMode('detailed')">
-          📋 Подробная консультация
-        </button>
-      </div>
-    </div>
-  `;
-
-  container.appendChild(messageDiv);
-
-  // Добавляем стили если их еще нет
-  if (!document.querySelector('style[data-response-mode-styles]')) {
-    const style = document.createElement('style');
-    style.setAttribute('data-response-mode-styles', 'true');
-    style.textContent = `
-      .response-mode-selector {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 0;
-      }
-      
-      .mode-btn-compact {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px 20px;
-        background: transparent;
-        border: 2px solid rgba(255, 255, 255, 0.7);
-        border-radius: 24px;
-        color: white;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        text-align: center;
-        font-family: inherit;
-      }
-      
-      .mode-btn-compact:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: white;
-        transform: translateY(-1px);
-      }
-      
-      .mode-btn-compact:active {
-        transform: translateY(0);
-      }
-      
-      .quick-mode-btn {
-        border-color: rgba(255, 255, 255, 0.7);
-      }
-      
-      .detailed-mode-btn {
-        border-color: rgba(255, 255, 255, 0.7);
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  // Прокручиваем в конец
-  setTimeout(() => {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }, 50);
-
-  console.log('✅ Mode selector shown');
+  // Сейчас селектор режима больше не используется — ИИ всегда отвечает в одном режиме.
 }
 
-// Обработчик выбора режима
-function selectResponseMode(mode) {
-  console.log(`📝 Response mode selected: ${mode}`);
-  
-  // Удаляем весь bot-message контейнер с selector внутри
+// Обработчик выбора режима больше не используется, но оставлен как no-op для совместимости
+function selectResponseMode() {
+  console.log('selectResponseMode called, режимы больше не используются');
   removeModeSelector();
-  
-  // Простое переключение режима: без логики замены запросов
-  currentResponseMode = mode;
   pendingReplaceRequestIndex = null;
-  
-  // Обрабатываем очередь
   processAiQueue();
 }
 
@@ -1573,8 +1478,8 @@ function selectReplaceRequest(index) {
 }
 window.selectReplaceRequest = selectReplaceRequest;
 
-// Текущий режим ответа
-let currentResponseMode = 'detailed'; // По умолчанию детальный
+// Текущий режим ответа (один режим — подробный)
+let currentResponseMode = 'detailed'; // по сути фиксированный режим
 
 // Отправка сообщения
 function sendChatMessage(message) {
@@ -4397,8 +4302,8 @@ function processAiQueue() {
   console.log('✅ Processing message:', next?.substring(0, 50) + '...');
   isAiBusy = true;
   setChatSendButtonMode('stop');
-  // 🚀 Отправляем с текущим режимом (quick или detailed)
-  sendMessageToAI(next, currentResponseMode);
+  // Всегда используем один режим ответа (подробный)
+  sendMessageToAI(next, 'detailed');
 }
 
 async function sendMessageToAI(message, mode = 'detailed') {
