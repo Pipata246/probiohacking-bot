@@ -2426,8 +2426,42 @@ function showPage(pageName) {
         if (currentChatId) {
           loadChatMessages(currentChatId, false);
         } else if (!isLoadingActiveChat && !isCreatingNewChat) {
-          // Вызываем loadActiveChat только если он не выполняется
           loadActiveChat();
+        }
+        // После нажатия «Создать программу» в конце квиза — показать описание программы от ИИ (фитотерапевт, блоки + таблица)
+        try {
+          if (sessionStorage.getItem('showProgramDescriptionAfterQuiz') === '1') {
+            sessionStorage.removeItem('showProgramDescriptionAfterQuiz');
+            // Даём loadActiveChat/loadChatMessages время подгрузить историю, затем добавляем описание в конец чата
+            setTimeout(function runProgramDescriptionInChat() {
+              const container = document.getElementById('chatMessages')?.querySelector('.chat-messages-container');
+              if (!container) return;
+              addBotMessage('Получил ваши диагностические данные. Составляю описание персональной программы…');
+              const telegramWebAppData = window.Telegram?.WebApp?.initData || '';
+              fetch('/api/program-description', { headers: { 'X-Telegram-WebApp-Data': telegramWebAppData } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                  var lastBot = container.querySelector('.bot-message:last-of-type');
+                  if (lastBot && lastBot.querySelector('.message-text') && lastBot.querySelector('.message-text').textContent.indexOf('Составляю описание') !== -1) {
+                    lastBot.remove();
+                  }
+                  if (data && data.description) {
+                    addBotMessage(data.description);
+                  } else {
+                    addBotMessage('Не удалось загрузить описание программы. ' + (data && data.error ? data.error : ''));
+                  }
+                })
+                .catch(function () {
+                  var lastBot = container.querySelector('.bot-message:last-of-type');
+                  if (lastBot && lastBot.querySelector('.message-text') && lastBot.querySelector('.message-text').textContent.indexOf('Составляю описание') !== -1) {
+                    lastBot.remove();
+                  }
+                  addBotMessage('Не удалось загрузить описание программы. Попробуйте открыть раздел «Здоровье».');
+                });
+            }, 800);
+          }
+        } catch (e) {
+          console.warn('showProgramDescriptionAfterQuiz check failed:', e);
         }
       }
       break;
@@ -5602,20 +5636,22 @@ function createDiagnosticFormUI() {
               console.warn('Diary reload error after diagnostic:', e);
             }
             
-            console.log('✅ Показываем Telegram уведомление...');
+            // После «Создать программу» перебрасываем в чат — ИИ опишет программу по блокам и таблице
+            try {
+              sessionStorage.setItem('showProgramDescriptionAfterQuiz', '1');
+            } catch (e) {}
+            console.log('✅ Показываем уведомление и переходим в чат...');
             if (window.Telegram?.WebApp) {
-              // Уведомление о том, что программа составлена на основе результатов квиза
               window.Telegram.WebApp.showAlert(
-                'Диагностика завершена.\nПерсональная программа составлена на основе ваших ответов и доступна в разделе «Здоровье».',
+                'Диагностика завершена.\nПерсональная программа составлена. Открываю чат с описанием программы.',
                 () => {
-                  console.log('💚 Переходим в раздел Здоровье...');
-                  showPage('health'); // Переход в «Здоровье»
+                  console.log('💚 Переходим в чат для описания программы...');
+                  showPage('chat');
                 }
               );
             } else {
-              // Fallback для тестирования
-              console.log('💚 Переходим в раздел Здоровье...');
-              showPage('health');
+              console.log('💚 Переходим в чат...');
+              showPage('chat');
             }
             
             console.log('📊 Диагностика завершена, программа пересчитана и сохранена в БД');

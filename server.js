@@ -29,6 +29,7 @@ app.all('/api/chats', require('./api/chats.js'));
 app.all('/api/init-user', require('./api/init-user.js'));
 app.all('/api/save-all-quiz-answers', require('./api/save-all-quiz-answers.js'));
 app.get('/api/health-program', require('./api/health-program.js'));
+app.all('/api/program-description', require('./api/program-description.js'));
 app.all('/api/diary', require('./api/diary.js'));
 app.post('/api/save-program', require('./api/save-program.js'));
 app.all('/api/doctors', require('./api/doctors.js'));
