@@ -376,6 +376,25 @@ async function handleAnalysisPhotos(req, res) {
 
     console.log('✅ analyses_uploaded status set to TRUE');
 
+    // Если квиз уже пройден, пересоздаём программу с учётом новых анализов (асинхронно)
+    try {
+      const { data: userRow } = await supabase
+        .from('users')
+        .select('quiz_completed')
+        .eq('telegram_id', telegramId)
+        .single();
+      if (userRow && userRow.quiz_completed) {
+        try {
+          const { generateProgramForUser } = require('../lib/programGenerator.js');
+          generateProgramForUser(telegramId);
+        } catch (e) {
+          console.error('Error starting programGenerator after analysis upload:', e);
+        }
+      }
+    } catch (e) {
+      console.error('Error checking quiz_completed after analysis upload:', e);
+    }
+
     return res.status(200).json({
       success: true,
       photo: data,

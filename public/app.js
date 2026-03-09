@@ -7446,14 +7446,6 @@ function initializeDiary() {
   // Обновляем календарь с актуальными датами (сегодня всегда первый)
   updateCalendarHTML();
   
-  // Инициализируем данные для сегодняшнего дня (демо только если нет сохранённой программы)
-  initializeDiaryData();
-  
-  // Очищаем старые записи (старше 7 дней) для демо-режима
-  if (!programCreated) {
-    cleanupOldEntries();
-  }
-  
   // Автоматически выбираем сегодняшний день (первый в списке)
   const todayElement = document.querySelector('.diary-day.active');
   if (todayElement) {
