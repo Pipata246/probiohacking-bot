@@ -175,7 +175,7 @@ module.exports = async (req, res) => {
             await bot.answerCallbackQuery(callback_query.id, {
               text: `Ссылка на оплату подписки на ${periodText} создана`
             });
-            await bot.sendMessage(chatId,
+            const sent = await bot.sendMessage(chatId,
               `💳 Оплата подписки на *${periodText}*\n\nНажмите кнопку ниже — откроется страница оплаты Robokassa в браузере. После успешной оплаты подписка активируется автоматически.`,
               {
                 parse_mode: 'Markdown',
@@ -186,6 +186,23 @@ module.exports = async (req, res) => {
                 }
               }
             );
+            // Сохраняем message_id для последующего удаления после оплаты
+            try {
+              if (sent && sent.message_id && result.invId) {
+                const { createClient } = require('@supabase/supabase-js');
+                const supabase = createClient(
+                  process.env.SUPABASE_URL,
+                  process.env.SUPABASE_ANON_KEY,
+                  { persistSession: false, autoRefreshToken: false }
+                );
+                await supabase
+                  .from('robokassa_payments')
+                  .update({ message_id: sent.message_id })
+                  .eq('inv_id', result.invId);
+              }
+            } catch (e) {
+              console.warn('Failed to save payment message_id:', e.message);
+            }
           } else {
             await bot.answerCallbackQuery(callback_query.id, {
               text: 'Ошибка при создании ссылки на оплату. Попробуйте позже.',

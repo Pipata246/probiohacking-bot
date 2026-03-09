@@ -36,7 +36,7 @@ async function updateSubscriptionAfterPayment(telegramId, months) {
     })
     .eq('telegram_id', telegramId);
 
-  return !error;
+  return { ok: !error, endDate };
 }
 
 module.exports = async (req, res) => {
@@ -82,7 +82,7 @@ module.exports = async (req, res) => {
 
   const { data: row, error: fetchError } = await supabase
     .from('robokassa_payments')
-    .select('inv_id, telegram_id, months, processed_at')
+    .select('inv_id, telegram_id, months, processed_at, message_id')
     .eq('inv_id', invIdNum)
     .single();
 
@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
   const telegramId = Number(row.telegram_id);
   const months = Number(row.months) || 1;
 
-  const updated = await updateSubscriptionAfterPayment(telegramId, months);
+  const { ok: updated, endDate } = await updateSubscriptionAfterPayment(telegramId, months);
   if (!updated) {
     console.error('Robokassa Result: failed to update user subscription', telegramId);
   }
@@ -110,14 +110,33 @@ module.exports = async (req, res) => {
     .update({ processed_at: new Date().toISOString() })
     .eq('inv_id', invIdNum);
 
-  if (updated && bot) {
-    const periodText = months === 1 ? '1 месяц' : months === 3 ? '3 месяца' : '1 год';
+  // Пытаемся удалить исходное сообщение с кнопкой оплаты, если оно известно
+  if (bot && row.message_id) {
     try {
-      await bot.sendMessage(telegramId,
-        `✅ Оплата успешно обработана!\n\nВаша подписка активирована на ${periodText}.\nТеперь у вас есть доступ ко всем функциям приложения.`
-      );
+      await bot.deleteMessage(telegramId, row.message_id);
     } catch (e) {
-      console.warn('Robokassa Result: could not send Telegram notification', e.message);
+      console.warn('Robokassa Result: could not delete payment message', e.message);
+    }
+  }
+
+  if (bot) {
+    try {
+      if (updated) {
+        const endText = endDate
+          ? new Date(endDate).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+          : '';
+        await bot.sendMessage(
+          telegramId,
+          `✅ Ваша подписка успешно оплачена и будет действовать до ${endText}.`
+        );
+      } else {
+        await bot.sendMessage(
+          telegramId,
+          '❌ Оплата получена, но не удалось обновить статус подписки. Пожалуйста, свяжитесь с поддержкой.'
+        );
+      }
+    } catch (e) {
+      console.warn('Robokassa Result: could not send final notification', e.message);
     }
   }
 

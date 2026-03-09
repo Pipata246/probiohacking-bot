@@ -288,6 +288,22 @@ CREATE INDEX IF NOT EXISTS idx_robokassa_payments_processed ON public.robokassa_
 
 GRANT ALL ON public.robokassa_payments TO anon;
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'robokassa_payments'
+      AND column_name = 'message_id'
+  ) THEN
+    ALTER TABLE public.robokassa_payments
+      ADD COLUMN message_id bigint;
+    RAISE NOTICE 'Добавлена колонка message_id в robokassa_payments';
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'Ошибка при добавлении колонки message_id в robokassa_payments: %', SQLERRM;
+END $$;
+
 -- Таблица ВРАЧИ: справочник специалистов для вкладки консультации
 CREATE TABLE IF NOT EXISTS public.doctors (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
