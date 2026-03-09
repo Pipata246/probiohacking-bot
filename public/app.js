@@ -1838,6 +1838,9 @@ async function loadChatMessages(chatId, isReadOnly = false) {
           }
           if (msg.response_text) {
             addBotMessage(msg.response_text);
+            if (msg.request_type === 'program') {
+              appendHealthButtonToLastBotMessage();
+            }
           }
         });
         
@@ -2492,8 +2495,7 @@ function showPage(pageName) {
                         chatMessagesScrollToBottom();
                       }
                     }
-                    if (parsed.done && streamBubble) {
-                      finalizeStreamingBubble(streamBubble);
+                    if (parsed.done) {
                       chatMessagesScrollToBottom();
                     }
                   } catch (e) {}
@@ -2506,7 +2508,19 @@ function showPage(pageName) {
                         var lines = buffer.split('\n');
                         for (var i = 0; i < lines.length; i++) processLine(lines[i]);
                       }
-                      if (streamBubble) finalizeStreamingBubble(streamBubble);
+                      if (streamBubble) {
+                        fullText += '\n\nПрограмма составлена. Вы можете просмотреть её в разделе «Здоровье».';
+                        updateStreamingBubble(streamBubble, fullText);
+                        finalizeStreamingBubble(streamBubble);
+                        appendHealthButtonToLastBotMessage();
+                        if (currentChatId && fullText) {
+                          fetch('/api/chats', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-Telegram-WebApp-Data': telegramWebAppData },
+                            body: JSON.stringify({ action: 'addProgramMessage', chatId: currentChatId, descriptionText: fullText })
+                          }).catch(function () {});
+                        }
+                      }
                       chatMessagesScrollToBottom();
                       return;
                     }
@@ -3699,6 +3713,22 @@ function addBotMessage(text) {
     addActionButtons(messageDiv, buttons);
   }
   
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function appendHealthButtonToLastBotMessage() {
+  const chatMessages = document.getElementById('chatMessages');
+  const container = chatMessages?.querySelector('.chat-messages-container');
+  if (!container) return;
+  const lastBot = container.querySelector('.bot-message:last-of-type');
+  if (!lastBot) return;
+  const bubble = lastBot.querySelector('.message-bubble');
+  if (!bubble) return;
+  const btn = document.createElement('button');
+  btn.className = 'message-button';
+  btn.textContent = 'Перейти в Здоровье';
+  btn.onclick = function () { showPage('health'); };
+  bubble.appendChild(btn);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 

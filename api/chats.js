@@ -1,5 +1,5 @@
 // API для работы с чатами
-const { chatService, userService } = require('../supabase/client.js');
+const { chatService, userService, requestService } = require('../supabase/client.js');
 const { initUserFromWebApp } = require('../supabase/userMiddleware.js');
 
 module.exports = async (req, res) => {
@@ -104,6 +104,27 @@ module.exports = async (req, res) => {
           chat,
           message: 'Switched to chat successfully'
         });
+      }
+
+      // Сохранение сообщения «описание программы» в историю чата (чтобы не пропадало при выходе)
+      if (action === 'addProgramMessage') {
+        const { chatId, descriptionText } = req.body || {};
+        if (!chatId || descriptionText == null) {
+          return res.status(400).json({ success: false, error: 'chatId and descriptionText required' });
+        }
+        const fullResponse = String(descriptionText).trim();
+        const requestId = await requestService.saveRequestToChat(
+          userInfo.telegramId,
+          'Составление программы',
+          fullResponse,
+          'program',
+          { userId: userInfo.id },
+          chatId
+        );
+        if (!requestId) {
+          return res.status(500).json({ success: false, error: 'Failed to save message' });
+        }
+        return res.status(200).json({ success: true, requestId });
       }
 
       return res.status(400).json({ success: false, error: 'Invalid action' });
