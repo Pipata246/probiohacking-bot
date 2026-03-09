@@ -172,6 +172,10 @@ function callDeepseek(prompt) {
         res.on('end', () => {
           try {
             const json = JSON.parse(data);
+            if (res.statusCode !== 200 || json.error) {
+              const errMsg = json?.error?.message || json?.error || 'Ошибка AI (DeepSeek)';
+              return reject(new Error(errMsg));
+            }
             const content = json?.choices?.[0]?.message?.content || '';
             resolve(content);
           } catch (e) {
@@ -228,24 +232,26 @@ module.exports = async function handler(req, res) {
       await generateProgramForUser(telegramId);
     } catch (e) {
       console.error('program-description: generateProgramForUser error:', e);
-      return res.status(500).json({ success: false, error: 'Не удалось составить программу в БД' });
+      return res.status(500).json({ success: false, error: 'Не удалось составить программу в БД. ' + (e && e.message ? e.message : '') });
     }
 
     const data = await loadDiagnosticAndProgram(telegramId);
     if (!data) {
-      return res.status(404).json({ success: false, error: 'Diagnostic or program not found' });
+      console.error('program-description: loadDiagnosticAndProgram returned null for', telegramId);
+      return res.status(404).json({ success: false, error: 'Нет данных диагностики. Пройдите квиз заново.' });
     }
 
     const prompt = buildDescriptionPrompt(data);
     const description = await callDeepseek(prompt);
 
     if (!description || !description.trim()) {
-      return res.status(500).json({ success: false, error: 'Empty response from AI' });
+      return res.status(500).json({ success: false, error: 'ИИ не вернул описание. Попробуйте позже.' });
     }
 
     return res.status(200).json({ description: description.trim() });
   } catch (e) {
     console.error('program-description error:', e);
-    return res.status(500).json({ success: false, error: e.message || 'Server error' });
+    const msg = (e && e.message) ? e.message : 'Ошибка сервера';
+    return res.status(500).json({ success: false, error: msg });
   }
 };

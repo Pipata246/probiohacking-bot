@@ -384,12 +384,10 @@ async function handleAnalysisPhotos(req, res) {
         .eq('telegram_id', telegramId)
         .single();
       if (userRow && userRow.quiz_completed) {
-        try {
-          const { generateProgramForUser } = require('../lib/programGenerator.js');
-          generateProgramForUser(telegramId);
-        } catch (e) {
+        const { generateProgramForUser } = require('../lib/programGenerator.js');
+        generateProgramForUser(telegramId).catch((e) => {
           console.error('Error starting programGenerator after analysis upload:', e);
-        }
+        });
       }
     } catch (e) {
       console.error('Error checking quiz_completed after analysis upload:', e);
@@ -468,12 +466,10 @@ async function handleAnalysisPhotos(req, res) {
         .eq('telegram_id', telegramId)
         .single();
       if (userRow && userRow.quiz_completed) {
-        try {
-          const { generateProgramForUser } = require('../lib/programGenerator.js');
-          generateProgramForUser(telegramId);
-        } catch (e) {
+        const { generateProgramForUser } = require('../lib/programGenerator.js');
+        generateProgramForUser(telegramId).catch((e) => {
           console.error('Error starting programGenerator after analysis delete:', e);
-        }
+        });
       }
     } catch (e) {
       console.error('Error checking quiz_completed after analysis delete:', e);

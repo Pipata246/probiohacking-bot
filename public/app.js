@@ -2437,8 +2437,23 @@ function showPage(pageName) {
               if (!container) return;
               addBotTypingIndicator('Составляю программу');
               const telegramWebAppData = window.Telegram?.WebApp?.initData || '';
-              fetch('/api/program-description', { headers: { 'X-Telegram-WebApp-Data': telegramWebAppData } })
-                .then(function (r) { return r.json(); })
+              var controller = new AbortController();
+              var timeoutId = setTimeout(function () { controller.abort(); }, 120000);
+              fetch('/api/program-description', {
+                headers: { 'X-Telegram-WebApp-Data': telegramWebAppData },
+                signal: controller.signal
+              })
+                .then(function (r) {
+                  clearTimeout(timeoutId);
+                  return r.json().then(function (data) {
+                    if (!r.ok) {
+                      var err = new Error(data && data.error ? data.error : 'Ошибка ' + r.status);
+                      err.data = data;
+                      throw err;
+                    }
+                    return data;
+                  });
+                })
                 .then(function (data) {
                   removeTypingIndicator();
                   if (data && data.description) {
@@ -2447,9 +2462,14 @@ function showPage(pageName) {
                     addBotMessage('Не удалось загрузить описание программы. ' + (data && data.error ? data.error : ''));
                   }
                 })
-                .catch(function () {
+                .catch(function (err) {
+                  clearTimeout(timeoutId);
                   removeTypingIndicator();
-                  addBotMessage('Не удалось загрузить описание программы. Попробуйте открыть раздел «Здоровье».');
+                  var msg = (err && err.message) ? err.message : 'Не удалось загрузить описание программы.';
+                  if (err && err.name === 'AbortError') {
+                    msg = 'Запрос занял слишком много времени. Откройте раздел «Здоровье» — программа может быть уже сохранена.';
+                  }
+                  addBotMessage(msg);
                 });
             }, 800);
           }
