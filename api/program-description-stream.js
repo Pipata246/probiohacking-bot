@@ -15,6 +15,11 @@ function sendSSE(res, obj) {
   res.write(`data: ${JSON.stringify(obj)}\n\n`);
 }
 
+/** SSE-комментарий (не вызывает message в EventSource, но держит соединение и сбрасывает буфер прокси) */
+function sendKeepalive(res) {
+  res.write(': keepalive\n\n');
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -51,26 +56,52 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ success: false, error: 'Invalid user' });
     }
 
-    // 1) Создаём и сохраняем программу в БД (health_programs, diary_entries)
-    try {
-      await generateProgramForUser(telegramId);
-    } catch (e) {
-      console.error('program-description-stream: generateProgramForUser error:', e);
-      return res.status(500).json({ success: false, error: (e && e.message) ? e.message : 'Не удалось составить программу в БД' });
-    }
-
-    const data = await loadDiagnosticAndProgram(telegramId);
-    if (!data) {
-      return res.status(404).json({ success: false, error: 'Нет данных диагностики.' });
-    }
-
-    const prompt = buildDescriptionPrompt(data);
-
-    // 2) SSE-заголовки и стриминг ответа DeepSeek
+    // Важно: сначала открываем SSE и шлём байты — иначе nginx/прокси даёт 504, пока generateProgramForUser ждёт DeepSeek
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders && res.flushHeaders();
+    sendSSE(res, { status: 'composing', message: 'Составляю программу в БД…' });
+    if (typeof res.flush === 'function') res.flush();
+
+    const keepaliveMs = 12000;
+    const keepaliveTimer = setInterval(() => {
+      try {
+        sendKeepalive(res);
+        if (typeof res.flush === 'function') res.flush();
+      } catch (e) {
+        clearInterval(keepaliveTimer);
+      }
+    }, keepaliveMs);
+
+    // 1) Создаём и сохраняем программу в БД (health_programs, diary_entries)
+    try {
+      await generateProgramForUser(telegramId);
+    } catch (e) {
+      clearInterval(keepaliveTimer);
+      console.error('program-description-stream: generateProgramForUser error:', e);
+      sendSSE(res, {
+        error: (e && e.message) ? e.message : 'Не удалось составить программу в БД'
+      });
+      res.end();
+      return;
+    }
+
+    const data = await loadDiagnosticAndProgram(telegramId);
+    if (!data) {
+      clearInterval(keepaliveTimer);
+      sendSSE(res, { error: 'Нет данных диагностики.' });
+      res.end();
+      return;
+    }
+
+    const prompt = buildDescriptionPrompt(data);
+    clearInterval(keepaliveTimer);
+    sendSSE(res, { status: 'streaming', message: 'Генерирую описание…' });
+    if (typeof res.flush === 'function') res.flush();
+
+    // 2) Стриминг ответа DeepSeek (заголовки уже отправлены)
 
     const payload = {
       model: 'deepseek-chat',

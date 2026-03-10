@@ -2442,7 +2442,8 @@ function showPage(pageName) {
               addBotTypingIndicator('Составляю программу');
               var telegramWebAppData = window.Telegram?.WebApp?.initData || '';
               var controller = new AbortController();
-              var timeoutId = setTimeout(function () { controller.abort(); }, 120000);
+              // Генерация программы + стрим описания могут занимать несколько минут — не обрывать раньше прокси/nginx
+              var timeoutId = setTimeout(function () { controller.abort(); }, 300000);
               fetch('/api/program-description-stream', {
                 headers: { 'X-Telegram-WebApp-Data': telegramWebAppData },
                 signal: controller.signal
