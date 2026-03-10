@@ -4794,9 +4794,12 @@ body.chat-overlay-visible .search-container {
   flex-direction: column;
   gap: clamp(10px, 2.5vh, 14px);
   flex: 1;
-  overflow-y: auto; /* ДОБАВЛЯЕМ СКРОЛЛ */
-  overflow-x: hidden;
-  padding-right: 6px; /* Отступ для скроллбара */
+  min-width: 0; /* иначе flex-ребёнок растягивается по ширине таблицы и горизонтальный скролл не появляется */
+  overflow-y: auto;
+  overflow-x: auto; /* листание таблицы влево-вправо */
+  padding-right: 6px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 /* Стили скроллбара для записей дневника */
@@ -4819,56 +4822,117 @@ body.chat-overlay-visible .search-container {
 }
 
 /* Табличный вид дневника (Время | Название | Дозировка | Цель | Условия) */
+/* Текст явно тёмный: страница дневника на зелёном фоне — без color наследуется светлый и на бежевой карточке не читается */
+.diary-table-scroll-hint {
+  margin: 0 0 10px 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  background: rgba(74, 139, 108, 0.1);
+  border-radius: 8px;
+  line-height: 1.35;
+}
+
 .diary-table-wrap {
+  flex-shrink: 0;
+  min-width: 0; /* ограничить ширину по карточке — скролл остаётся внутри wrap */
   overflow-x: auto;
+  overflow-y: visible;
   width: 100%;
+  max-width: 100%;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  /* отступ снизу под горизонтальный скроллбар, чтобы не прилипал к краю */
+  padding-bottom: 8px;
+  margin-bottom: -4px;
+}
+
+/* Горизонтальный скролл — заметный, как у календаря дней */
+.diary-table-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+.diary-table-wrap::-webkit-scrollbar-track {
+  background: rgba(107, 114, 128, 0.12);
+  border-radius: 4px;
+}
+.diary-table-wrap::-webkit-scrollbar-thumb {
+  background: rgba(74, 139, 108, 0.45);
+  border-radius: 4px;
+}
+.diary-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 139, 108, 0.65);
 }
 
 .diary-table {
-  width: 100%;
-  min-width: 560px;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
-  font-size: clamp(11px, 2.6vw, 13px);
+  font-size: clamp(12px, 2.8vw, 14px);
   font-family: 'Inter', sans-serif;
+  background: #FEF7EC;
+  color: #111827; /* базовый тёмный для всей таблицы */
 }
 
 .diary-table th,
 .diary-table td {
-  padding: 8px 6px;
+  padding: 10px 10px;
   text-align: left;
   vertical-align: top;
-  border-bottom: 1px solid rgba(107, 114, 128, 0.15);
+  border-bottom: 1px solid rgba(55, 65, 81, 0.12);
+  color: #111827; /* всегда тёмный текст в ячейках */
 }
 
 .diary-table th {
   font-weight: 600;
-  color: #4A8B6C;
-  background: rgba(74, 139, 108, 0.08);
+  color: #1e4d3a;
+  background: rgba(74, 139, 108, 0.14);
   white-space: nowrap;
 }
 
 .diary-table td.diary-time {
-  color: #6B7280;
-  font-weight: 500;
+  color: #374151 !important;
+  font-weight: 600;
   white-space: nowrap;
-  width: 52px;
+  width: 56px;
+  background: rgba(254, 247, 236, 0.98);
 }
 
 .diary-table td.diary-name {
-  font-weight: 500;
-  min-width: 100px;
+  font-weight: 600;
+  color: #111827 !important;
+  min-width: 160px;
+  max-width: 280px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .diary-table td.diary-dosage,
 .diary-table td.diary-purpose,
 .diary-table td.diary-conditions {
-  color: #374151;
-  line-height: 1.35;
+  color: #1f2937 !important;
+  line-height: 1.45;
+  min-width: 140px;
+  max-width: 260px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .diary-table tr:hover td {
-  background: rgba(107, 114, 128, 0.04);
+  background: rgba(74, 139, 108, 0.06);
+}
+
+.diary-table tr:hover td.diary-time {
+  background: rgba(74, 139, 108, 0.08);
+}
+
+.diary-table tbody tr.diary-table-row-clickable {
+  cursor: pointer;
+}
+
+.diary-table tbody tr.diary-table-row-clickable:active td {
+  background: rgba(74, 139, 108, 0.1);
 }
 
 .diary-notes-plain {
@@ -4997,6 +5061,49 @@ body.chat-overlay-visible .search-container {
 .diary-modal-input::placeholder {
   color: #9CA3AF;
   font-size: clamp(13px, 3.2vw, 15px);
+}
+
+.diary-modal-textarea {
+  width: 100%;
+  padding: clamp(10px, 2.5vw, 14px);
+  border: 1px solid #D1D5DB;
+  border-radius: clamp(8px, 2vw, 12px);
+  font-size: clamp(13px, 3.2vw, 15px);
+  color: #111827;
+  background: #FFFFFF;
+  resize: vertical;
+  min-height: 48px;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.4;
+}
+
+.diary-modal-textarea:focus {
+  outline: none;
+  border-color: #2A3F5F;
+  box-shadow: 0 0 0 3px rgba(42, 63, 95, 0.1);
+}
+
+.diary-table td.diary-actions {
+  width: 44px;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.diary-table .delete-entry-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #b91c1c;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
 }
 
 .diary-modal-footer {
@@ -6641,22 +6748,51 @@ body.chat-overlay-visible .search-container {
   font-family: inherit;
 }
 
-.admin-diary-notes-input {
+.admin-diary-notes-input,
+.admin-diary-dosage-input,
+.admin-diary-purpose-input,
+.admin-diary-conditions-input {
   width: 100%;
   padding: 8px 12px;
   background: rgba(60, 128, 91, 0.05);
   border: 1px solid rgba(59, 79, 107, 0.1);
   border-radius: 8px;
-  color: #666;
+  color: #333;
   font-size: 13px;
   font-family: inherit;
-  resize: none;
+  resize: vertical;
+  min-height: 44px;
   box-sizing: border-box;
+}
+
+.admin-diary-structured {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.admin-diary-structured label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3C805B;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.admin-diary-add-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3C805B;
+  margin-top: 4px;
 }
 
 .admin-diary-time-input:focus,
 .admin-diary-title-input:focus,
-.admin-diary-notes-input:focus {
+.admin-diary-notes-input:focus,
+.admin-diary-dosage-input:focus,
+.admin-diary-purpose-input:focus,
+.admin-diary-conditions-input:focus {
   outline: none;
   border-color: #3C805B;
   box-shadow: 0 0 0 3px rgba(60, 128, 91, 0.1);
@@ -6751,7 +6887,8 @@ body.chat-overlay-visible .search-container {
 }
 
 .admin-diary-notes-add {
-  resize: none;
+  resize: vertical;
+  min-height: 44px;
 }
 
 .admin-diary-add-buttons {

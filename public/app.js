@@ -3320,7 +3320,28 @@ document.addEventListener('click', (e) => {
     return;
   }
   
-  // Дневник - клик по записи для редактирования
+  // Дневник - клик по строке таблицы (редактирование с дозировкой, целью, условиями)
+  var tableRow = e.target.closest('.diary-table tbody tr[data-entry-id]');
+  if (tableRow && !e.target.closest('.delete-entry-x')) {
+    var tableEntryId = tableRow.getAttribute('data-entry-id');
+    var dayEntries = diaryData[currentSelectedDay] || [];
+    var tableEntry = dayEntries.find(function (en) { return String(en.id) === String(tableEntryId); });
+    if (tableEntry) {
+      openDiaryModal(tableEntry.id, tableEntry.text, tableEntry.time, tableEntry.notes || '');
+      return;
+    }
+  }
+  // Удаление из таблицы в режиме редактирования
+  if (e.target.closest('.diary-table .delete-entry-x')) {
+    var delBtn = e.target.closest('.delete-entry-x');
+    var delId = delBtn.getAttribute('data-entry-id');
+    if (delId) {
+      confirmDeleteEntry(delId);
+      return;
+    }
+  }
+
+  // Дневник - клик по записи для редактирования (список без таблицы)
   if (e.target.closest('.diary-entry')) {
     const entry = e.target.closest('.diary-entry');
     
@@ -3337,7 +3358,9 @@ document.addEventListener('click', (e) => {
     const entryId = entry.getAttribute('data-entry-id');
     const entryText = entry.querySelector('.entry-text').textContent;
     const entryTime = entry.querySelector('.entry-time').textContent;
-    openDiaryModal(entryId, entryText, entryTime);
+    const dayList = diaryData[currentSelectedDay] || [];
+    const listEntry = dayList.find(function (en) { return String(en.id) === String(entryId); });
+    openDiaryModal(entryId, entryText, entryTime, listEntry ? (listEntry.notes || '') : '');
     return;
   }
   
@@ -7537,6 +7560,15 @@ function parseDiaryNotes(notes) {
   return { dosage: dosage, purpose: purpose, conditions: conditions };
 }
 
+// Сборка notes для БД в формате таблицы дневника
+function buildDiaryNotes(dosage, purpose, conditions) {
+  var d = (dosage != null ? String(dosage) : '').trim();
+  var p = (purpose != null ? String(purpose) : '').trim();
+  var c = (conditions != null ? String(conditions) : '').trim();
+  if (!d && !p && !c) return '';
+  return 'Дозировка: ' + (d || '—') + ' Цель: ' + (p || '—') + ' Условия: ' + (c || '—');
+}
+
 // Функция для загрузки записей выбранного дня
 function loadDayEntries(dayKey) {
   const entriesContainer = document.querySelector('.diary-entries');
@@ -7545,24 +7577,34 @@ function loadDayEntries(dayKey) {
 
   var hasStructured = entries.some(function (e) { return parseDiaryNotes(e.notes); });
 
-  if (hasStructured && entries.length > 0 && !isEditMode) {
+  // Таблица показывается и в обычном режиме (клик — редактирование), и в режиме редактирования (+ удаление)
+  if (hasStructured && entries.length > 0) {
     var tableWrap = document.createElement('div');
     tableWrap.className = 'diary-table-wrap';
-    tableWrap.innerHTML = '<table class="diary-table"><thead><tr><th>Время</th><th>Название</th><th>Дозировка и схема</th><th>Цель и обоснование</th><th>Важные условия</th></tr></thead><tbody></tbody></table>';
+    tableWrap.setAttribute('role', 'region');
+    tableWrap.setAttribute('aria-label', 'Таблица дневника, прокрутка влево-вправо');
+    var headCols = '<th>Время</th><th>Название</th><th>Дозировка и схема</th><th>Цель и обоснование</th><th>Важные условия</th>';
+    if (isEditMode) headCols += '<th class="diary-actions"> </th>';
+    tableWrap.innerHTML = '<p class="diary-table-scroll-hint">Нажмите на строку, чтобы изменить запись. Листайте влево-вправо для всех колонок.</p><table class="diary-table"><thead><tr>' + headCols + '</tr></thead><tbody></tbody></table>';
     var tbody = tableWrap.querySelector('tbody');
     entries.forEach(function (entry) {
       var parsed = parseDiaryNotes(entry.notes);
       var row = document.createElement('tr');
       row.setAttribute('data-entry-id', entry.id);
+      row.className = 'diary-table-row-clickable';
+      var actionsCell = '';
+      if (isEditMode) {
+        actionsCell = '<td class="diary-actions"><span class="delete-entry-x" data-entry-id="' + escapeHtml(entry.id) + '" title="Удалить">×</span></td>';
+      }
       if (parsed) {
-        row.innerHTML = '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name">' + escapeHtml(entry.text) + '</td><td class="diary-dosage">' + escapeHtml(parsed.dosage) + '</td><td class="diary-purpose">' + escapeHtml(parsed.purpose) + '</td><td class="diary-conditions">' + escapeHtml(parsed.conditions) + '</td>';
+        row.innerHTML = '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name">' + escapeHtml(entry.text) + '</td><td class="diary-dosage">' + escapeHtml(parsed.dosage) + '</td><td class="diary-purpose">' + escapeHtml(parsed.purpose) + '</td><td class="diary-conditions">' + escapeHtml(parsed.conditions) + '</td>' + actionsCell;
       } else {
-        row.innerHTML = '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name" colspan="4">' + escapeHtml(entry.text) + (entry.notes ? '<br><span class="diary-notes-plain">' + escapeHtml(entry.notes) + '</span>' : '') + '</td>';
+        row.innerHTML = '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name" colspan="4">' + escapeHtml(entry.text) + (entry.notes ? '<br><span class="diary-notes-plain">' + escapeHtml(entry.notes) + '</span>' : '') + '</td>' + actionsCell;
       }
       tbody.appendChild(row);
     });
     entriesContainer.appendChild(tableWrap);
-  } else {
+  } else if (!hasStructured || entries.length === 0) {
     entries.forEach(function (entry) {
       var entryElement = document.createElement('div');
       entryElement.className = 'diary-entry';
@@ -7625,23 +7667,37 @@ function switchToDay(dayElement) {
   console.log(`Переключились на день: ${newDayKey}`);
 }
 
-function openDiaryModal(entryId = null, entryText = '', entryTime = '') {
+function openDiaryModal(entryId = null, entryText = '', entryTime = '', notes = '') {
   const modal = document.getElementById('diaryModal');
   const modalTitle = document.getElementById('diaryModalTitle');
   const modalInput = document.getElementById('diaryModalInput');
   const modalBtn = document.getElementById('diaryModalBtn');
   const hourSelect = document.getElementById('hourSelect');
   const minuteSelect = document.getElementById('minuteSelect');
+  const dosageEl = document.getElementById('diaryModalDosage');
+  const purposeEl = document.getElementById('diaryModalPurpose');
+  const conditionsEl = document.getElementById('diaryModalConditions');
   
   // Инициализируем селекторы времени если они пустые
   initializeTimeSelectors();
   
+  function fillStructuredFields(notesStr) {
+    var parsed = parseDiaryNotes(notesStr || '');
+    if (dosageEl) dosageEl.value = parsed ? parsed.dosage : '';
+    if (purposeEl) purposeEl.value = parsed ? parsed.purpose : '';
+    if (conditionsEl) conditionsEl.value = parsed ? parsed.conditions : '';
+    if (!parsed && notesStr && typeof notesStr === 'string' && notesStr.trim()) {
+      if (dosageEl && !dosageEl.value) dosageEl.value = notesStr.trim();
+    }
+  }
+
   if (entryId) {
     // Режим редактирования
     currentEditingEntryId = entryId;
     modalTitle.textContent = 'Редактировать запись';
     modalInput.value = entryText;
     modalBtn.textContent = 'Сохранить';
+    fillStructuredFields(notes);
     
     // Устанавливаем время из записи
     if (entryTime) {
@@ -7654,6 +7710,9 @@ function openDiaryModal(entryId = null, entryText = '', entryTime = '') {
     currentEditingEntryId = null;
     modalTitle.textContent = 'Новая запись';
     modalInput.value = '';
+    if (dosageEl) dosageEl.value = '';
+    if (purposeEl) purposeEl.value = '';
+    if (conditionsEl) conditionsEl.value = '';
     modalBtn.textContent = 'Закрепить';
     
     // Устанавливаем текущее время по умолчанию
@@ -7680,6 +7739,9 @@ function saveDiaryEntry() {
   const modalInput = document.getElementById('diaryModalInput');
   const hourSelect = document.getElementById('hourSelect');
   const minuteSelect = document.getElementById('minuteSelect');
+  const dosageEl = document.getElementById('diaryModalDosage');
+  const purposeEl = document.getElementById('diaryModalPurpose');
+  const conditionsEl = document.getElementById('diaryModalConditions');
   const entryText = modalInput.value.trim();
   
   if (!entryText) {
@@ -7709,8 +7771,17 @@ function saveDiaryEntry() {
     }
   }
 
+  var notesToSave = buildDiaryNotes(
+    dosageEl ? dosageEl.value : '',
+    purposeEl ? purposeEl.value : '',
+    conditionsEl ? conditionsEl.value : ''
+  );
+  if (!notesToSave && existingEntry && existingEntry.notes && !parseDiaryNotes(existingEntry.notes)) {
+    notesToSave = existingEntry.notes;
+  }
+
   // Сохраняем в БД
-  upsertDiaryEntryOnServer(existingEntry ? existingEntry.id : null, entryDate, selectedTime, entryText, existingEntry?.notes || '')
+  upsertDiaryEntryOnServer(existingEntry ? existingEntry.id : null, entryDate, selectedTime, entryText, notesToSave)
     .then((savedEntry) => {
       const savedId = String(savedEntry.id);
 
@@ -9042,6 +9113,12 @@ async function viewUserDiary(userId) {
         <div class="admin-diary-date-header">${formattedDate}</div>`;
       
       entriesByDate[date].forEach(entry => {
+        const parsed = parseDiaryNotes(entry.notes || '');
+        const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const d = parsed ? parsed.dosage : '';
+        const p = parsed ? parsed.purpose : '';
+        const c = parsed ? parsed.conditions : '';
+        const rawNotes = parsed ? '' : (entry.notes || '');
         html += `
           <div class="admin-diary-entry" data-entry-id="${entry.id}">
             <div class="admin-diary-entry-row">
@@ -9053,7 +9130,14 @@ async function viewUserDiary(userId) {
                 </svg>
               </button>
             </div>
-            <textarea class="admin-diary-notes-input" data-entry-id="${entry.id}" rows="2" placeholder="Примечания">${(entry.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+            <div class="admin-diary-structured">
+              <label>Дозировка и схема</label>
+              <textarea class="admin-diary-dosage-input" data-entry-id="${entry.id}" rows="2" placeholder="Дозировка и схема">${esc(d || rawNotes)}</textarea>
+              <label>Цель и обоснование</label>
+              <textarea class="admin-diary-purpose-input" data-entry-id="${entry.id}" rows="2" placeholder="Цель">${esc(p)}</textarea>
+              <label>Важные условия</label>
+              <textarea class="admin-diary-conditions-input" data-entry-id="${entry.id}" rows="2" placeholder="Условия">${esc(c)}</textarea>
+            </div>
           </div>
         `;
       });
@@ -9067,33 +9151,34 @@ async function viewUserDiary(userId) {
     // Добавляем обработчики
     document.getElementById('adminAddDiaryEntryBtn')?.addEventListener('click', () => showAddDiaryEntryForm(userId));
     
-    // Обработчики изменений для существующих записей
-    diaryContent.querySelectorAll('.admin-diary-time-input, .admin-diary-title-input, .admin-diary-notes-input').forEach(input => {
+    // Обработчики изменений для существующих записей (в т.ч. три поля → одна строка notes)
+    function collectAdminDiaryNotes(entryDiv) {
+      const timeInput = entryDiv.querySelector('.admin-diary-time-input');
+      const titleInput = entryDiv.querySelector('.admin-diary-title-input');
+      const dosageInput = entryDiv.querySelector('.admin-diary-dosage-input');
+      const purposeInput = entryDiv.querySelector('.admin-diary-purpose-input');
+      const conditionsInput = entryDiv.querySelector('.admin-diary-conditions-input');
+      const built = buildDiaryNotes(
+        dosageInput ? dosageInput.value : '',
+        purposeInput ? purposeInput.value : '',
+        conditionsInput ? conditionsInput.value : ''
+      );
+      return {
+        entryId: entryDiv.getAttribute('data-entry-id'),
+        entry_time: timeInput ? timeInput.value : '',
+        title: titleInput ? titleInput.value : '',
+        notes: built || (dosageInput ? dosageInput.value : '').trim(),
+        action: 'update'
+      };
+    }
+    diaryContent.querySelectorAll('.admin-diary-time-input, .admin-diary-title-input, .admin-diary-dosage-input, .admin-diary-purpose-input, .admin-diary-conditions-input').forEach(input => {
       input.addEventListener('input', () => {
-        const entryId = input.dataset.entryId;
         const entryDiv = input.closest('.admin-diary-entry');
-        const timeInput = entryDiv.querySelector('.admin-diary-time-input');
-        const titleInput = entryDiv.querySelector('.admin-diary-title-input');
-        const notesInput = entryDiv.querySelector('.admin-diary-notes-input');
-        
-        const existing = adminPendingChanges.diary.findIndex(c => c.entryId === entryId && c.action !== 'delete');
-        if (existing >= 0) {
-          adminPendingChanges.diary[existing] = {
-            entryId,
-            entry_time: timeInput.value,
-            title: titleInput.value,
-            notes: notesInput.value,
-            action: 'update'
-          };
-        } else {
-          adminPendingChanges.diary.push({
-            entryId,
-            entry_time: timeInput.value,
-            title: titleInput.value,
-            notes: notesInput.value,
-            action: 'update'
-          });
-        }
+        if (!entryDiv) return;
+        const payload = collectAdminDiaryNotes(entryDiv);
+        const existing = adminPendingChanges.diary.findIndex(c => c.entryId === payload.entryId && c.action !== 'delete');
+        if (existing >= 0) adminPendingChanges.diary[existing] = payload;
+        else adminPendingChanges.diary.push(payload);
         updateAdminSaveButton();
       });
     });
@@ -9138,7 +9223,12 @@ function showAddDiaryEntryForm(userId) {
         <input type="time" class="admin-diary-time-add" id="adminDiaryNewTime" value="08:00">
       </div>
       <input type="text" class="admin-diary-title-add" id="adminDiaryNewTitle" placeholder="Название записи">
-      <textarea class="admin-diary-notes-add" id="adminDiaryNewNotes" rows="2" placeholder="Примечания (необязательно)"></textarea>
+      <label class="admin-diary-add-label">Дозировка и схема</label>
+      <textarea class="admin-diary-notes-add" id="adminDiaryNewDosage" rows="2" placeholder="Дозировка и схема"></textarea>
+      <label class="admin-diary-add-label">Цель и обоснование</label>
+      <textarea class="admin-diary-notes-add" id="adminDiaryNewPurpose" rows="2" placeholder="Цель"></textarea>
+      <label class="admin-diary-add-label">Важные условия</label>
+      <textarea class="admin-diary-notes-add" id="adminDiaryNewConditions" rows="2" placeholder="Условия"></textarea>
       <div class="admin-diary-add-buttons">
         <button class="admin-diary-add-cancel" id="adminDiaryCancelAdd">Отмена</button>
         <button class="admin-diary-add-confirm" id="adminDiaryConfirmAdd">Добавить</button>
@@ -9156,7 +9246,11 @@ function showAddDiaryEntryForm(userId) {
     const date = document.getElementById('adminDiaryNewDate')?.value;
     const time = document.getElementById('adminDiaryNewTime')?.value;
     const title = document.getElementById('adminDiaryNewTitle')?.value?.trim();
-    const notes = document.getElementById('adminDiaryNewNotes')?.value?.trim();
+    const notes = buildDiaryNotes(
+      document.getElementById('adminDiaryNewDosage')?.value,
+      document.getElementById('adminDiaryNewPurpose')?.value,
+      document.getElementById('adminDiaryNewConditions')?.value
+    );
     
     if (!date || !time || !title) {
       alert('Заполните дату, время и название');
