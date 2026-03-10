@@ -3322,7 +3322,7 @@ document.addEventListener('click', (e) => {
   
   // Дневник - клик по строке таблицы (редактирование с дозировкой, целью, условиями)
   var tableRow = e.target.closest('.diary-table tbody tr[data-entry-id]');
-  if (tableRow && !e.target.closest('.delete-entry-x')) {
+  if (tableRow && !e.target.closest('.delete-entry-x') && !e.target.closest('.diary-actions')) {
     var tableEntryId = tableRow.getAttribute('data-entry-id');
     var dayEntries = diaryData[currentSelectedDay] || [];
     var tableEntry = dayEntries.find(function (en) { return String(en.id) === String(tableEntryId); });
@@ -3333,6 +3333,8 @@ document.addEventListener('click', (e) => {
   }
   // Удаление из таблицы в режиме редактирования
   if (e.target.closest('.diary-table .delete-entry-x')) {
+    e.preventDefault();
+    e.stopPropagation();
     var delBtn = e.target.closest('.delete-entry-x');
     var delId = delBtn.getAttribute('data-entry-id');
     if (delId) {
@@ -7584,8 +7586,12 @@ function loadDayEntries(dayKey) {
     tableWrap.setAttribute('role', 'region');
     tableWrap.setAttribute('aria-label', 'Таблица дневника, прокрутка влево-вправо');
     var headCols = '<th>Время</th><th>Название</th><th>Дозировка и схема</th><th>Цель и обоснование</th><th>Важные условия</th>';
-    if (isEditMode) headCols += '<th class="diary-actions"> </th>';
-    tableWrap.innerHTML = '<p class="diary-table-scroll-hint">Нажмите на строку, чтобы изменить запись. Листайте влево-вправо для всех колонок.</p><table class="diary-table"><thead><tr>' + headCols + '</tr></thead><tbody></tbody></table>';
+    // Колонка удаления — слева, чтобы крестики были видны без прокрутки вправо
+    if (isEditMode) headCols = '<th class="diary-actions diary-actions-head" title="Удаление записей"></th>' + headCols;
+    var hintText = isEditMode
+      ? 'Режим редактирования: синие крестики слева — удалить запись (в том числе из БД). Строка без крестика — открыть для изменения.'
+      : 'Нажмите на строку, чтобы изменить запись. Листайте влево-вправо для всех колонок.';
+    tableWrap.innerHTML = '<p class="diary-table-scroll-hint">' + hintText + '</p><table class="diary-table' + (isEditMode ? ' diary-table-edit-mode' : '') + '"><thead><tr>' + headCols + '</tr></thead><tbody></tbody></table>';
     var tbody = tableWrap.querySelector('tbody');
     entries.forEach(function (entry) {
       var parsed = parseDiaryNotes(entry.notes);
@@ -7594,12 +7600,12 @@ function loadDayEntries(dayKey) {
       row.className = 'diary-table-row-clickable';
       var actionsCell = '';
       if (isEditMode) {
-        actionsCell = '<td class="diary-actions"><span class="delete-entry-x" data-entry-id="' + escapeHtml(entry.id) + '" title="Удалить">×</span></td>';
+        actionsCell = '<td class="diary-actions"><span class="delete-entry-x diary-delete-btn" role="button" tabindex="0" data-entry-id="' + escapeHtml(entry.id) + '" title="Удалить запись">×</span></td>';
       }
       if (parsed) {
-        row.innerHTML = '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name">' + escapeHtml(entry.text) + '</td><td class="diary-dosage">' + escapeHtml(parsed.dosage) + '</td><td class="diary-purpose">' + escapeHtml(parsed.purpose) + '</td><td class="diary-conditions">' + escapeHtml(parsed.conditions) + '</td>' + actionsCell;
+        row.innerHTML = actionsCell + '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name">' + escapeHtml(entry.text) + '</td><td class="diary-dosage">' + escapeHtml(parsed.dosage) + '</td><td class="diary-purpose">' + escapeHtml(parsed.purpose) + '</td><td class="diary-conditions">' + escapeHtml(parsed.conditions) + '</td>';
       } else {
-        row.innerHTML = '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name" colspan="4">' + escapeHtml(entry.text) + (entry.notes ? '<br><span class="diary-notes-plain">' + escapeHtml(entry.notes) + '</span>' : '') + '</td>' + actionsCell;
+        row.innerHTML = actionsCell + '<td class="diary-time">' + escapeHtml(entry.time) + '</td><td class="diary-name" colspan="4">' + escapeHtml(entry.text) + (entry.notes ? '<br><span class="diary-notes-plain">' + escapeHtml(entry.notes) + '</span>' : '') + '</td>';
       }
       tbody.appendChild(row);
     });

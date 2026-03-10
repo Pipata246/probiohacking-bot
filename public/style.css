@@ -5084,26 +5084,59 @@ body.chat-overlay-visible .search-container {
   box-shadow: 0 0 0 3px rgba(42, 63, 95, 0.1);
 }
 
-.diary-table td.diary-actions {
+.diary-table td.diary-actions,
+.diary-table th.diary-actions {
   width: 44px;
+  min-width: 44px;
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #FEF7EC;
+  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.08);
 }
 
-.diary-table .delete-entry-x {
+.diary-table th.diary-actions-head {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 600;
+  background: rgba(74, 139, 108, 0.12);
+}
+
+.diary-table tbody tr:hover td.diary-actions {
+  background: rgba(74, 139, 108, 0.08);
+}
+
+/* Синие крестики удаления (как в списке) — в таблице без position:absolute */
+.diary-table .delete-entry-x.diary-delete-btn,
+.diary-table .diary-delete-btn {
+  position: static;
+  transform: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: rgba(220, 38, 38, 0.12);
-  color: #b91c1c;
-  font-size: 20px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(42, 63, 95, 0.1);
+  color: #2A3F5F;
+  font-size: 22px;
+  font-weight: 700;
   line-height: 1;
   cursor: pointer;
   user-select: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.diary-table .diary-delete-btn:hover {
+  background: rgba(42, 63, 95, 0.2);
+  color: #1E2D42;
+}
+
+.diary-table .diary-delete-btn:active {
+  background: rgba(42, 63, 95, 0.28);
 }
 
 .diary-modal-footer {
