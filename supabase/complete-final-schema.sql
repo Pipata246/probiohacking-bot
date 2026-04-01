@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   analyses_uploaded boolean DEFAULT false,
   quiz_completion_date timestamp with time zone,
   admin boolean NOT NULL DEFAULT false,
-  subscription_active boolean NOT NULL DEFAULT false,
+  -- null => безлимитная подписка по умолчанию
+  subscription_active boolean DEFAULT NULL,
   free_requests_count integer NOT NULL DEFAULT 0,
   subscription_start_date timestamp with time zone,
   subscription_end_date timestamp with time zone,
@@ -73,8 +74,12 @@ BEGIN
     AND table_name = 'users' 
     AND column_name = 'subscription_active'
   ) THEN
-    ALTER TABLE public.users ADD COLUMN subscription_active boolean NOT NULL DEFAULT false;
+    ALTER TABLE public.users ADD COLUMN subscription_active boolean DEFAULT NULL;
     RAISE NOTICE 'Добавлена колонка subscription_active';
+  ELSE
+    -- Приводим к новой семантике: NULL разрешён и означает "безлимит"
+    ALTER TABLE public.users ALTER COLUMN subscription_active DROP NOT NULL;
+    ALTER TABLE public.users ALTER COLUMN subscription_active DROP DEFAULT;
   END IF;
   
      -- Добавляем free_requests_count если её нет

@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
   const result = await createPaymentLink(telegramId, months);
 
   if (result.error) {
-    const code = result.error === 'Payment system not configured' ? 503 : 400;
+    const code = (result.error === 'Payment system not configured' || result.error === 'Payments disabled') ? 503 : 400;
     return res.status(code).json({ success: false, error: result.error });
   }
 

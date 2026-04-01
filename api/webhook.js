@@ -28,11 +28,12 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Функция для создания постоянной клавиатуры (нижнее меню)
 function getMainKeyboard() {
+  const paymentsEnabled = process.env.PAYMENTS_ENABLED !== '0';
   return {
     reply_markup: {
       keyboard: [
         [
-          { text: '💳 Оплатить подписку' },
+          ...(paymentsEnabled ? [{ text: '💳 Оплатить подписку' }] : []),
           { text: '👤 Профиль' }
         ],
         [
@@ -92,7 +93,8 @@ function formatSubscriptionInfo(subData) {
     return '❌ Не удалось загрузить информацию о подписке';
   }
 
-  const isActive = subData.subscription_active === true;
+  // null => безлимитная (активна по умолчанию)
+  const isActive = subData.subscription_active !== false;
   const startDate = subData.subscription_start_date 
     ? new Date(subData.subscription_start_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : '—';
@@ -161,6 +163,15 @@ module.exports = async (req, res) => {
         }
 
         if (data.startsWith('payment_')) {
+          const paymentsEnabled = process.env.PAYMENTS_ENABLED !== '0';
+          if (!paymentsEnabled) {
+            await bot.answerCallbackQuery(callback_query.id, {
+              text: 'Платежи временно отключены',
+              show_alert: true
+            });
+            return res.status(200).json({ ok: true });
+          }
+
           const period = parseInt(data.split('_')[1]);
           const periodText = period === 1 ? '1 месяц' : period === 3 ? '3 месяца' : '1 год';
           const telegramId = callback_query.from.id;
@@ -268,8 +279,9 @@ module.exports = async (req, res) => {
             }
           };
 
-          // Если подписка неактивна, добавляем кнопку оплаты
-          if (subData && !subData.subscription_active) {
+          // Если подписка явно неактивна (false), добавляем кнопку оплаты (если платежи включены)
+          const paymentsEnabled = process.env.PAYMENTS_ENABLED !== '0';
+          if (paymentsEnabled && subData && subData.subscription_active === false) {
             keyboard.reply_markup.inline_keyboard.push([
               { text: '💳 Оплатить подписку', callback_data: 'show_payment_options' }
             ]);
@@ -284,6 +296,12 @@ module.exports = async (req, res) => {
 
         // Кнопка "Оплатить подписку"
         if (text === '💳 Оплатить подписку') {
+          const paymentsEnabled = process.env.PAYMENTS_ENABLED !== '0';
+          if (!paymentsEnabled) {
+            await bot.sendMessage(chatId, 'Платежи временно отключены. Подписка сейчас безлимитная.', getMainKeyboard());
+            return res.status(200).json({ ok: true });
+          }
+
           const paymentMessage = '💳 **Выберите период подписки:**';
           
           await bot.sendMessage(chatId, paymentMessage, {

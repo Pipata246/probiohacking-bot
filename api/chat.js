@@ -513,7 +513,7 @@ module.exports = async (req, res) => {
 
     // Initialize user first
     let userInfo = null;
-    let subscriptionActive = false;
+    let subscriptionActive = true; // null => безлимит (по умолчанию)
     let freeRequestsCount = 0;
     
     if (telegramUser && telegramUser.id) {
@@ -536,7 +536,7 @@ module.exports = async (req, res) => {
             .single();
           
           if (!userError && userData) {
-            subscriptionActive = userData.subscription_active === true;
+            subscriptionActive = userData.subscription_active !== false;
             freeRequestsCount = userData.free_requests_count ?? 0;
             console.log('Subscription status:', { subscriptionActive, freeRequestsCount });
           }

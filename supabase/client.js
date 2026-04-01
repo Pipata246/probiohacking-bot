@@ -88,7 +88,11 @@ const userService = {
           first_name: firstName,
           last_name: lastName,
           username: username,
-          language_code: languageCode
+          language_code: languageCode,
+          // null => безлимитная подписка по умолчанию
+          subscription_active: null,
+          subscription_start_date: null,
+          subscription_end_date: null
         })
         .select()
         .single();
@@ -575,7 +579,11 @@ async function initUserFromWebApp(req) {
           first_name: user.first_name,
           last_name: user.last_name,
           username: user.username,
-          language_code: user.language_code || 'ru'
+          language_code: user.language_code || 'ru',
+          // null => безлимитная подписка по умолчанию
+          subscription_active: null,
+          subscription_start_date: null,
+          subscription_end_date: null
         })
         .select()
         .single();

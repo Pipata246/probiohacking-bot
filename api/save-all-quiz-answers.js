@@ -107,7 +107,8 @@ module.exports = async function handler(req, res) {
         quiz_completed: quizCompleted,
         quiz_completion_date: quizCompleted ? (data?.quiz_completion_date || null) : null,
         admin: data?.admin === true,
-        subscription_active: data?.subscription_active === true,
+        // null => безлимитная (активна по умолчанию)
+        subscription_active: data?.subscription_active !== false,
         subscription_start_date: data?.subscription_start_date || null,
         subscription_end_date: data?.subscription_end_date || null,
         free_requests_count: data?.free_requests_count ?? 0,

@@ -293,7 +293,8 @@ module.exports = async function handler(req, res) {
 
       return res.json({ 
         success: true, 
-        subscription_active: userData?.subscription_active || false,
+        // null => безлимитная (активна по умолчанию)
+        subscription_active: userData?.subscription_active !== false,
         subscription_start_date: userData?.subscription_start_date || null,
         subscription_end_date: userData?.subscription_end_date || null
       });

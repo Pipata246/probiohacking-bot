@@ -532,7 +532,8 @@ function handleUserSubscriptionUpdate(payload) {
     });
     
     // Обновляем локальные переменные
-    subscriptionActive = newRecord.subscription_active === true;
+    // null => безлимитная (активна по умолчанию)
+    subscriptionActive = newRecord.subscription_active !== false;
     freeRequestsCount = newRecord.free_requests_count ?? 0;
     
     // Обновляем UI
@@ -599,7 +600,7 @@ let quizCompletionDate = null;
 let isAdmin = false;
 let diaryInitialized = false; // Флаг инициализации дневника
 let lastProgramDraft = null;  // Черновик персональной программы (health + diary) из последнего ответа ИИ
-let subscriptionActive = false; // Статус подписки
+let subscriptionActive = true; // Статус подписки (null => безлимитная по умолчанию)
 let freeRequestsCount = 0; // Количество запросов бесплатного пользователя
 let programCreated = false; // Флаг: у пользователя уже есть сохраненная программа здоровья
 let analysesUploaded = false; // Флаг: загружены ли анализы
@@ -784,7 +785,8 @@ async function checkQuizStatus() {
       quizCompleted = data.quiz_completed ?? data.quizCompleted ?? false;
       quizCompletionDate = data.quiz_completion_date || null;
       isAdmin = data.admin === true;
-      subscriptionActive = data.subscription_active === true;
+      // null => безлимитная (активна по умолчанию)
+      subscriptionActive = data.subscription_active !== false;
       freeRequestsCount = data.free_requests_count ?? 0;
       programCreated = data.program_created === true || data.programCreated === true || programCreated;
       analysesUploaded = data.analyses_uploaded === true || data.analysesUploaded === true || analysesUploaded;
@@ -8820,7 +8822,8 @@ async function viewUserSubscription(userId) {
     const subscriptionContent = document.getElementById('adminSubscriptionContent');
     if (!subscriptionView || !subscriptionContent) return;
 
-    const subscriptionActive = data.subscription_active === true;
+    // null => безлимитная (активна по умолчанию)
+    const subscriptionActive = data.subscription_active !== false;
     const subscriptionStartDate = data.subscription_start_date || '';
     const subscriptionEndDate = data.subscription_end_date || '';
 
