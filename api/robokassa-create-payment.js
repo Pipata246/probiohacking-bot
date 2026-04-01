@@ -12,6 +12,11 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ success: false, error: 'Method not allowed' });
 
+  // Temporarily block payments regardless of other config
+  if (process.env.PAYMENTS_ENABLED === '0') {
+    return res.status(503).json({ success: false, error: 'Payments disabled' });
+  }
+
   const { telegramId, months } = req.body || {};
   const result = await createPaymentLink(telegramId, months);
 

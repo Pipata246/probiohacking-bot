@@ -142,6 +142,8 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     try {
       const { message, callback_query } = req.body;
+      const paymentsEnabled = process.env.PAYMENTS_ENABLED !== '0';
+      const paymentsUnavailableText = 'Функция оплаты временно недоступна.';
 
       // Обработка callback_query (нажатия на inline кнопки)
       if (callback_query) {
@@ -149,6 +151,14 @@ module.exports = async (req, res) => {
         const data = callback_query.data;
 
         if (data === 'show_payment_options') {
+          if (!paymentsEnabled) {
+            await bot.answerCallbackQuery(callback_query.id, {
+              text: paymentsUnavailableText,
+              show_alert: true
+            });
+            return res.status(200).json({ ok: true });
+          }
+
           const paymentMessage = '💳 **Выберите период подписки:**';
           
           await bot.editMessageText(paymentMessage, {
@@ -163,10 +173,9 @@ module.exports = async (req, res) => {
         }
 
         if (data.startsWith('payment_')) {
-          const paymentsEnabled = process.env.PAYMENTS_ENABLED !== '0';
           if (!paymentsEnabled) {
             await bot.answerCallbackQuery(callback_query.id, {
-              text: 'Платежи временно отключены',
+              text: paymentsUnavailableText,
               show_alert: true
             });
             return res.status(200).json({ ok: true });
@@ -296,9 +305,8 @@ module.exports = async (req, res) => {
 
         // Кнопка "Оплатить подписку"
         if (text === '💳 Оплатить подписку') {
-          const paymentsEnabled = process.env.PAYMENTS_ENABLED !== '0';
           if (!paymentsEnabled) {
-            await bot.sendMessage(chatId, 'Платежи временно отключены. Подписка сейчас безлимитная.', getMainKeyboard());
+            await bot.sendMessage(chatId, paymentsUnavailableText, getMainKeyboard());
             return res.status(200).json({ ok: true });
           }
 
